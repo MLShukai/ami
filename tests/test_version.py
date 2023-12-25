@@ -1,4 +1,4 @@
-from python_template import __version__
+from ami import __version__
 
 
 def test_version():
