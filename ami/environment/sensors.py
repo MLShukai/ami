@@ -24,3 +24,39 @@ class BaseSensor(ABC):
     def teardown(self) -> None:
         """Called at the end of interaction with the agent."""
         pass
+
+
+class SensorWrapper(BaseSensor):
+    """Wraps the sensor class for modifying the observation.
+
+    You must override :meth:`wrap_observation` method.
+    """
+
+    def __init__(self, sensor: BaseSensor, *args: Any, **kwds: Any) -> None:
+        """Constructs the wrapper class.
+
+        Args:
+            sensor: Instance of the sensor that will be wrapped.
+        """
+        self._sensor = sensor
+
+    @abstractmethod
+    def wrap_observation(self, observation: Any) -> Any:
+        """Wraps the observation and return it.
+
+        Args:
+            observation: The observation read from the wrapped sensor.
+
+        Returns:
+            observation: The modified observation.
+        """
+        raise NotImplementedError
+
+    def read(self) -> Any:
+        return self.wrap_observation(self._sensor.read())
+
+    def setup(self) -> None:
+        return self._sensor.setup()
+
+    def teardown(self) -> None:
+        return self._sensor.teardown()
