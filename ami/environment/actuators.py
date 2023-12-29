@@ -33,6 +33,11 @@ class ActuatorWrapper(BaseActuator):
     """
 
     def __init__(self, actuator: BaseActuator, *args: Any, **kwds: Any) -> None:
+        """Constructs the wrapper class.
+
+        Args:
+            actuator: Instance of actuator that will be wrapped.
+        """
         self._actuator = actuator
 
     @abstractmethod
