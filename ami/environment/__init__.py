@@ -1,2 +1,2 @@
 """This file contain import statements."""
-from . import sensors
+from . import actuators, sensors
