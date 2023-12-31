@@ -6,6 +6,8 @@ from collections import UserDict
 from enum import StrEnum
 from typing import Any, Self
 
+from torch.utils.data import Dataset
+
 
 class DataKeys(StrEnum):
     """Enumerates all the names of data obtained from the interaction between
@@ -34,3 +36,55 @@ class StepData(UserDict[DataKeys, Any]):
             self: deep copied data.
         """
         return copy.deepcopy(self)
+
+
+class BaseDataPool(ABC):
+    """Base class for all data pool objects.
+
+    Please use the `init` method as the constructor instead of `__init__`. To renew this class, `__init__` stores the constructor's `args` and `kwds`, which are then used in the `new` method.
+
+    Implement the following methods:
+    - `add`: To store a single step of data from the agent.
+    - `concatenate`: To concatenate the current data with new data.
+    - `make_dataset`: To create a PyTorch dataset class for training.
+    """
+
+    def __init__(self, *args: Any, **kwds: Any) -> None:
+        """Stores constructor arguments for renewing the data pool."""
+        self._init_args = args
+        self._init_kwds = kwds
+        self.init(*args, **kwds)
+
+    def init(self, *args: Any, **kwds: Any) -> None:
+        """User constructor."""
+        pass
+
+    @abstractmethod
+    def add(self, step_data: StepData) -> None:
+        """Stores a single step of data from the agent.
+
+        Args:
+            step_data: A single step of data from the agent.
+        """
+        raise NotImplementedError
+
+    @abstractmethod
+    def concatenate(self, new_data: Self) -> None:
+        """Concatenates the current data with new data.
+
+        Args:
+            new_data: Data that is more recent than the current data.
+        """
+        raise NotImplementedError
+
+    @abstractmethod
+    def make_dataset(self) -> Dataset:
+        """Makes the dataset object for training.
+
+        Returns:
+            dataset: Dataset object for training.
+        """
+        raise NotImplementedError
+
+    def new(self) -> Self:
+        return self.__class__(*self._init_args, **self._init_kwds)
