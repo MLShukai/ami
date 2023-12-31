@@ -72,6 +72,10 @@ class BaseThread(ABC):
     def __init__(self) -> None:
         self._worker_thread = threading.Thread(target=self.worker)
 
+    def __init_subclass__(cls) -> None:
+        if not hasattr(cls, "_thread_type"):
+            raise NotImplementedError("Thread class must define `_thread_type` attribute.")
+
     @property
     def thread_type(self) -> ThreadTypes:
         """thread type is readonly variable."""
@@ -82,6 +86,7 @@ class BaseThread(ABC):
 
         please override this method.
         """
+        raise NotImplementedError
 
     def start(self):
         self._worker_thread.start()
