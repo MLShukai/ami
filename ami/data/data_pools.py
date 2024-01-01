@@ -50,8 +50,8 @@ class BaseDataPool(ABC):
 
     def __init__(self, *args: Any, **kwds: Any) -> None:
         """Stores constructor arguments for renewing the data pool."""
-        self._init_args = args
-        self._init_kwds = kwds
+        self._init_args = copy.deepcopy(args)
+        self._init_kwds = copy.deepcopy(kwds)
         self.init(*args, **kwds)
 
     def init(self, *args: Any, **kwds: Any) -> None:
