@@ -1,7 +1,6 @@
 """This file contains interface classes and aggregation classes."""
-from __future__ import annotations
-
 import threading
+from typing import Self
 
 from torch.utils.data import Dataset
 
@@ -38,11 +37,6 @@ class DataCollector:
             self.renew()
             return return_data
 
-    @property
-    def data_user(self) -> DataUser:
-        """To user object, used in the training thread."""
-        return DataUser(self)
-
 
 class DataUser:
     """Uses the collected data in training thread."""
@@ -73,3 +67,31 @@ class DataUser:
         with self._lock:
             self._pool = self._pool.new()
             self.collector.renew()
+
+
+class DataUsersAggregation(dict[str, DataUser]):
+    """A class for aggregating `DataUsers` to share them from the inference
+    thread to the training thread."""
+
+
+class DataCollectorsAggregation(dict[str, DataCollector]):
+    """A class for aggregating `DataCollectors` to invoke their `collect`
+    methods within the agent class."""
+
+    def collect(self, step_data: StepData) -> None:
+        """Calls the `collect` method on every `DataCollector` item."""
+        for v in self.values():
+            v.collect(step_data)
+
+    @classmethod
+    def from_data_pools(cls, **data_pools: BaseDataPool) -> Self:
+        """Constructs the class from data pools.
+
+        Args:
+            **data_pools: Key-value pairs of names and corresponding implemented DataPool objects.
+        """
+        return cls({k: DataCollector(v) for k, v in data_pools.items()})
+
+    def get_data_users(self) -> DataUsersAggregation:
+        """Creates a `DataUsersAggregation` from the item's value."""
+        return DataUsersAggregation({k: DataUser(v) for k, v in self.items()})
