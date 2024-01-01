@@ -55,7 +55,11 @@ class BaseDataPool(ABC):
         self.init(*args, **kwds)
 
     def init(self, *args: Any, **kwds: Any) -> None:
-        """User constructor."""
+        """User-defined constructor.
+
+        The arguments must be constants as they are reused in the new
+        instance.
+        """
         pass
 
     @abstractmethod
