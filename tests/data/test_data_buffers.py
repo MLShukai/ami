@@ -8,7 +8,7 @@ from ami.data.data_buffers import BaseDataBuffer, DataKeys, StepData
 
 
 class TestStepData:
-    def test_copy(self):
+    def test_copy(self) -> None:
         sd = StepData()
         sd["a"] = [1, 2, 3]
 

@@ -20,5 +20,5 @@ class TestSensorWrapper:
     def sensor_wrapper(self) -> IncrementSensorWrapper:
         return IncrementSensorWrapper(IntSensorImpl())
 
-    def test_read(self, sensor_wrapper):
+    def test_read(self, sensor_wrapper: SensorWrapper) -> None:
         assert sensor_wrapper.read() == 1

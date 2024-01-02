@@ -11,7 +11,7 @@ from ami.threads.base_threads import (
 
 
 class TestSharedObjectPool:
-    def test_get_and_register(self):
+    def test_get_and_register(self) -> None:
         pool = SharedObjectPool()
 
         pool.register(ThreadTypes.MAIN, "int", 0)
@@ -24,13 +24,13 @@ class TestSharedObjectPool:
 
 
 class TestBaseThreads:
-    def test_not_implemented_thread_type(self):
+    def test_not_implemented_thread_type(self) -> None:
         with pytest.raises(NotImplementedError):
 
             class _(BaseThread):
                 pass
 
-    def test_threads(self):
+    def test_threads(self) -> None:
         main = BaseMainThread()
         infer = BaseInferenceThread()
         train = BaseTrainingThread()

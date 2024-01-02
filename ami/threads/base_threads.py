@@ -21,7 +21,7 @@ class SharedObjectPool:
     All objects shared between threads are contained in this class.
     """
 
-    _objects: OrderedDict[ThreadTypes, OrderedDict]
+    _objects: OrderedDict[ThreadTypes, OrderedDict[str, Any]]
 
     def __init__(self) -> None:
         """Constructs this class."""
@@ -88,7 +88,7 @@ class BaseThread(ABC):
         """
         raise NotImplementedError
 
-    def start(self):
+    def start(self) -> None:
         self._worker_thread.start()
 
     def attach_shared_object_pool(self, shared_object_pool: SharedObjectPool) -> None:

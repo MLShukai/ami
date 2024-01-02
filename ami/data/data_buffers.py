@@ -25,7 +25,7 @@ class DataKeys(StrEnum):
     NEXT_VALUE = "next_value"  # v_{t+1}
 
 
-class StepData(dict[DataKeys, Any]):
+class StepData(dict[str, Any]):
     """Dictionary that holds the data obtained from one step of the agent."""
 
     def copy(self) -> Self:
