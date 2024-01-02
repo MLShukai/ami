@@ -4,7 +4,7 @@ import pytest
 import torch
 from torch.utils.data import TensorDataset
 
-from ami.data.data_pools import BaseDataPool, DataKeys, StepData
+from ami.data.data_buffers import BaseDataBuffer, DataKeys, StepData
 
 
 class TestStepData:
@@ -17,7 +17,7 @@ class TestStepData:
         assert sd["a"] is not copied["a"]
 
 
-class DataPoolImpl(BaseDataPool):
+class DataBufferImpl(BaseDataBuffer):
     def init(self) -> None:
         self.obs: list[torch.Tensor] = []
 
@@ -31,20 +31,20 @@ class DataPoolImpl(BaseDataPool):
         return TensorDataset(torch.stack(self.obs))
 
 
-class TestDataPool:
+class TestDataBuffer:
     @pytest.fixture
-    def data_pool(self) -> DataPoolImpl:
-        return DataPoolImpl()
+    def data_buffer(self) -> DataBufferImpl:
+        return DataBufferImpl()
 
     @pytest.fixture
-    def data_pool_added(self, data_pool: DataPoolImpl) -> DataPoolImpl:
+    def data_buffer_added(self, data_buffer: DataBufferImpl) -> DataBufferImpl:
         step_data = StepData({DataKeys.OBSERVATION: torch.randn(10)})
-        data_pool.add(step_data)
-        return data_pool
+        data_buffer.add(step_data)
+        return data_buffer
 
-    def test_new(self, data_pool_added: DataPoolImpl) -> None:
+    def test_new(self, data_buffer_added: DataBufferImpl) -> None:
 
-        new = data_pool_added.new()
-        assert new is not data_pool_added
+        new = data_buffer_added.new()
+        assert new is not data_buffer_added
         assert new.obs == []
-        assert new.obs != data_pool_added.obs
+        assert new.obs != data_buffer_added.obs

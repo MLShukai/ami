@@ -9,13 +9,13 @@ from ami.data.utils import (
     DataUsersAggregation,
 )
 
-from .test_data_pools import DataPoolImpl
+from .test_data_buffers import DataBufferImpl
 
 
 class TestDataCollectorAndUser:
     @pytest.fixture
     def collector(self) -> DataCollector:
-        return DataCollector(DataPoolImpl())
+        return DataCollector(DataBufferImpl())
 
     @pytest.fixture
     def user(self, collector: DataCollector) -> DataUser:
@@ -32,10 +32,10 @@ class TestDataCollectorAndUser:
 
     def test_move_data(self, collector: DataCollector) -> None:
 
-        pool = collector._pool
-        moved_pool = collector.move_data()
-        assert pool is moved_pool
-        assert pool is not collector._pool
+        buffer = collector._buffer
+        moved_buffer = collector.move_data()
+        assert buffer is moved_buffer
+        assert buffer is not collector._buffer
 
     # --- Testing User ---
     def test_get_new_dataset(self, collector: DataCollector, user: DataUser, step_data: StepData) -> None:
@@ -51,22 +51,22 @@ class TestDataCollectorAndUser:
     def test_clear(self, collector: DataCollector, user: DataUser, step_data: StepData) -> None:
         collector.collect(step_data)
 
-        collector_pool = collector._pool
-        user_pool = user._pool
+        collector_buffer = collector._buffer
+        user_buffer = user._buffer
         user.clear()
 
-        assert collector_pool is not collector._pool
-        assert user_pool is not user._pool
+        assert collector_buffer is not collector._buffer
+        assert user_buffer is not user._buffer
 
 
 class TestDataCollectorsAggregation:
     @pytest.fixture
-    def pool(self) -> DataPoolImpl:
-        return DataPoolImpl()
+    def buffer(self) -> DataBufferImpl:
+        return DataBufferImpl()
 
     @pytest.fixture
-    def collector(self, pool: DataPoolImpl) -> DataCollector:
-        return DataCollector(pool)
+    def collector(self, buffer: DataBufferImpl) -> DataCollector:
+        return DataCollector(buffer)
 
     @pytest.fixture
     def step_data(self) -> StepData:
@@ -79,8 +79,8 @@ class TestDataCollectorsAggregation:
     def test_collect(self, collectors_aggregation: DataCollectorsAggregation, step_data: StepData) -> None:
         collectors_aggregation.collect(step_data)
 
-    def test_from_pools(self, pool: DataPoolImpl) -> None:
-        collectors = DataCollectorsAggregation.from_data_pools(b=pool)
+    def test_from_buffers(self, buffer: DataBufferImpl) -> None:
+        collectors = DataCollectorsAggregation.from_data_buffers(b=buffer)
         assert isinstance(collectors["b"], DataCollector)
 
     def test_get_data_users(self, collectors_aggregation: DataCollectorsAggregation) -> None:

@@ -1,4 +1,4 @@
-"""This file contains all names (keys) of data, base data pool and its
+"""This file contains all names (keys) of data, base data buffer and its
 implementations."""
 import copy
 from abc import ABC, abstractmethod
@@ -37,8 +37,8 @@ class StepData(dict[str, Any]):
         return copy.deepcopy(self)
 
 
-class BaseDataPool(ABC):
-    """Base class for all data pool objects.
+class BaseDataBuffer(ABC):
+    """Base class for all data buffer objects.
 
     Please use the `init` method as the constructor instead of `__init__`. To renew this class, `__init__` stores the constructor's `args` and `kwds`, which are then used in the `new` method.
 
@@ -49,7 +49,7 @@ class BaseDataPool(ABC):
     """
 
     def __init__(self, *args: Any, **kwds: Any) -> None:
-        """Stores constructor arguments for renewing the data pool, and throw
+        """Stores constructor arguments for renewing the data buffer, and throw
         them to :meth:`init`."""
         self._init_args = copy.deepcopy(args)
         self._init_kwds = copy.deepcopy(kwds)
