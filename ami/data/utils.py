@@ -1,6 +1,6 @@
 """This file contains interface classes and aggregation classes."""
 import threading
-from typing import Self
+from typing import Any, Self
 
 from torch.utils.data import Dataset
 
@@ -47,12 +47,12 @@ class DataUser:
         self._lock = threading.RLock()  # For data user is referred from multiple threads.
         self._buffer = collector.new_data_buffer
 
-    def get_dataset(self) -> Dataset:
+    def get_dataset(self) -> Dataset[Any]:
         """Retrieves the dataset from the current data buffer."""
         with self._lock:
             return self._buffer.make_dataset()
 
-    def get_new_dataset(self) -> Dataset:
+    def get_new_dataset(self) -> Dataset[Any]:
         """Retrieves the dataset, concatenated with the new data buffer, and
         updates the internal data buffer accordingly."""
         with self._lock:

@@ -85,11 +85,3 @@ repos:
       - id: codespell
         args:
           - --skip=logs/**,data/**,*.ipynb
-
-  # type checking
-  - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: "v1.7.0"
-    hooks:
-      - id: mypy
-        args: [--config-file=pyproject.toml]
-        additional_dependencies: [pytest]

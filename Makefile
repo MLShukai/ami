@@ -22,4 +22,7 @@ test: ## Run not slow tests
 test-full: ## Run all tests and coverage.
 	poetry run pytest -v --slow
 
-run: format test-full
+type:
+	poetry run mypy .
+
+run: format test-full type
