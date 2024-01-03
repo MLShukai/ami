@@ -40,3 +40,7 @@ jobs:
       - name: Run pytest
         run: |
           poetry run pytest
+
+      - name: Run mypy
+        run: |
+          poetry run mypy --config-file=pyproject.toml .
