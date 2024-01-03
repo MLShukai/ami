@@ -82,7 +82,7 @@ class BaseDataBuffer(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def make_dataset(self) -> Dataset:
+    def make_dataset(self) -> Dataset[Any]:
         """Makes the dataset object for training.
 
         Returns:
