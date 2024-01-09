@@ -1,4 +1,3 @@
-import pytest
 import torch
 
 from ami.models.aggregations import InferencesAggregation, ModelsAggregation

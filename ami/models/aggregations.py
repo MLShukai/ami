@@ -1,7 +1,5 @@
 """This file contains aggregation classes used for sharing model between the
 training and inference threads."""
-from typing import Self
-
 from .base_model import BaseModel, Inference
 
 
