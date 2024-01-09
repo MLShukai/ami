@@ -8,7 +8,7 @@ from ami.models.base_model import BaseModel, Inference
 from tests.helpers import skip_if_gpu_is_not_available
 
 
-class Model(BaseModel):
+class ModelImpl(BaseModel):
     def __init__(self, default_device: torch.device, has_inference: bool) -> None:
         super().__init__(default_device=default_device, has_inference=has_inference)
 
@@ -21,7 +21,7 @@ class Model(BaseModel):
 class TestBaseModelAndInference:
     def test_device_cpu(self):
         device = torch.device("cpu")
-        m = Model(device, True)
+        m = ModelImpl(device, True)
 
         assert m.device == device
         m.to_default_device()
@@ -29,7 +29,7 @@ class TestBaseModelAndInference:
 
     @skip_if_gpu_is_not_available()
     def test_device_gpu(self, gpu_device: torch.device):
-        m = Model(gpu_device, True)
+        m = ModelImpl(gpu_device, True)
 
         assert m.device.type == "cpu"
         m.to_default_device()
@@ -37,19 +37,19 @@ class TestBaseModelAndInference:
         assert m.device.index == gpu_device.index
 
     def test_create_inference(self):
-        m = Model("cpu", True)
+        m = ModelImpl("cpu", True)
         inference = m.create_inference()
         assert isinstance(inference, Inference)
         assert inference.model is not m
         assert inference.model.p is not m.p
         assert inference.model.p == m.p
 
-        m = Model("cpu", False)
+        m = ModelImpl("cpu", False)
         with pytest.raises(RuntimeError):
             m.create_inference()
 
     def test_infer_cpu(self):
-        m = Model("cpu", True)
+        m = ModelImpl("cpu", True)
         m.to_default_device()
         inference = m.create_inference()
 
@@ -58,7 +58,7 @@ class TestBaseModelAndInference:
 
     @skip_if_gpu_is_not_available()
     def test_infer_gpu(self, gpu_device: torch.device):
-        m = Model(gpu_device, True)
+        m = ModelImpl(gpu_device, True)
         m.to_default_device()
         inference = m.create_inference()
 
