@@ -1,5 +1,5 @@
-"""This file contains the abstract base actuator, actuator wrappers, and
-implemented actuator classes."""
+"""This file contains the abstract base actuator and actuator wrappers
+class."""
 from abc import ABC, abstractmethod
 from typing import Any
 
@@ -26,7 +26,7 @@ class BaseActuator(ABC):
         pass
 
 
-class ActuatorWrapper(BaseActuator):
+class BaseActuatorWrapper(BaseActuator):
     """Wraps the actuator class for modifying the action.
 
     You must override :meth:`wrap_action` method for wrapping action.

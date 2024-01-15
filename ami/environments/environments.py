@@ -3,7 +3,7 @@ classes."""
 from abc import ABC, abstractmethod
 from typing import Any
 
-from .actuators import BaseActuator
+from .actuators.base_actuator import BaseActuator
 from .sensors import BaseSensor
 
 
