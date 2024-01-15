@@ -1,14 +1,16 @@
 """This file contains the abstract base sensor and sensor wrapper class."""
 from abc import ABC, abstractmethod
-from typing import Any
+from typing import Any, Generic
+
+from .._types import ObsType, WrapperObsType
 
 
-class BaseSensor(ABC):
+class BaseSensor(ABC, Generic[ObsType]):
     """Abstract base sensor class for observing data from the real
     environment."""
 
     @abstractmethod
-    def read(self) -> Any:
+    def read(self) -> ObsType:
         """Read and return data from the actual sensor.
 
         Returns:
@@ -25,13 +27,13 @@ class BaseSensor(ABC):
         pass
 
 
-class SensorWrapper(BaseSensor):
+class SensorWrapper(BaseSensor[WrapperObsType], Generic[WrapperObsType, ObsType]):
     """Wraps the sensor class for modifying the observation.
 
     You must override :meth:`wrap_observation` method.
     """
 
-    def __init__(self, sensor: BaseSensor, *args: Any, **kwds: Any) -> None:
+    def __init__(self, sensor: BaseSensor[ObsType], *args: Any, **kwds: Any) -> None:
         """Constructs the wrapper class.
 
         Args:
@@ -40,7 +42,7 @@ class SensorWrapper(BaseSensor):
         self._sensor = sensor
 
     @abstractmethod
-    def wrap_observation(self, observation: Any) -> Any:
+    def wrap_observation(self, observation: ObsType) -> WrapperObsType:
         """Wraps the observation and return it.
 
         Args:
@@ -51,7 +53,7 @@ class SensorWrapper(BaseSensor):
         """
         raise NotImplementedError
 
-    def read(self) -> Any:
+    def read(self) -> WrapperObsType:
         return self.wrap_observation(self._sensor.read())
 
     def setup(self) -> None:
