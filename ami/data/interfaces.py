@@ -5,7 +5,8 @@ from typing import Any
 
 from torch.utils.data import Dataset
 
-from .data_buffers import BaseDataBuffer, StepData
+from .buffers.base_data_buffer import BaseDataBuffer
+from .step_data import StepData
 
 
 class DataCollector:

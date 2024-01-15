@@ -4,7 +4,7 @@ import torch
 from ami.data.step_data import DataKeys, StepData
 from ami.data.utils import DataCollector, DataCollectorsDict, DataUsersDict
 
-from .test_data_buffers import DataBufferImpl
+from .buffers.test_base_data_buffer import DataBufferImpl
 
 
 class TestDataCollectorsDict:

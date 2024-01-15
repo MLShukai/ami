@@ -2,8 +2,9 @@
 utilities."""
 from typing import Self
 
-from .data_buffers import BaseDataBuffer, StepData
+from .buffers.base_data_buffer import BaseDataBuffer
 from .interfaces import DataCollector, DataUser
+from .step_data import StepData
 
 
 class DataUsersDict(dict[str, DataUser]):
