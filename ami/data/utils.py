@@ -1,5 +1,21 @@
 """This file contains dictionary classes used for Hydra instantiation
-utilities."""
+utilities.
+
+Assumed usage:
+
+    ```yaml:config.yaml
+    _target_: ami.data.utils.DataCollectorsDict.from_data_buffers
+
+    some_buffer:
+        _target_: <path.to.SomeBuffer>
+        some_arg: ...
+    ```
+
+    >>> import hydra
+    >>> from omegaconf import OmegaConf
+    >>> cfg = OmegaConf.load("config.yaml")
+    >>> collector = hydra.utils.instantiate(cfg)
+"""
 from typing import Self
 
 from .buffers.base_data_buffer import BaseDataBuffer
