@@ -1,14 +1,16 @@
 """This file contains the abstract base environment class."""
 from abc import ABC, abstractmethod
-from typing import Any
+from typing import Any, Generic
+
+from ._types import ActType, ObsType
 
 
-class BaseEnvironment(ABC):
+class BaseEnvironment(ABC, Generic[ObsType, ActType]):
     """Abstract base environment class for interacting with real
     environment."""
 
     @abstractmethod
-    def observe(self) -> Any:
+    def observe(self) -> ObsType:
         """Observes the data from real environment.
 
         Returns:
@@ -16,7 +18,7 @@ class BaseEnvironment(ABC):
         """
 
     @abstractmethod
-    def affect(self, action: Any) -> None:
+    def affect(self, action: ActType) -> None:
         """Affects the action to the real environment.
 
         Args:
