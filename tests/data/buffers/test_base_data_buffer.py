@@ -4,17 +4,8 @@ import pytest
 import torch
 from torch.utils.data import TensorDataset
 
-from ami.data.data_buffers import BaseDataBuffer, DataKeys, StepData
-
-
-class TestStepData:
-    def test_copy(self) -> None:
-        sd = StepData()
-        sd["a"] = [1, 2, 3]
-
-        copied = sd.copy()
-        assert sd is not copied
-        assert sd["a"] is not copied["a"]
+from ami.data.buffers.base_data_buffer import BaseDataBuffer
+from ami.data.step_data import DataKeys, StepData
 
 
 class DataBufferImpl(BaseDataBuffer):
