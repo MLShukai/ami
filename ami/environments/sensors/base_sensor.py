@@ -1,5 +1,4 @@
-"""This file contains the abstract base sensor, sensor wrappers, and
-implemented sensor classes."""
+"""This file contains the abstract base sensor and sensor wrapper class."""
 from abc import ABC, abstractmethod
 from typing import Any
 

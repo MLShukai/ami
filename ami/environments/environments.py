@@ -4,7 +4,7 @@ from abc import ABC, abstractmethod
 from typing import Any
 
 from .actuators.base_actuator import BaseActuator
-from .sensors import BaseSensor
+from .sensors.base_sensor import BaseSensor
 
 
 class BaseEnvironment(ABC):

@@ -2,7 +2,7 @@
 behaviors."""
 import pytest
 
-from ami.environments.sensors import BaseSensor, SensorWrapper
+from ami.environments.sensors.base_sensor import BaseSensor, SensorWrapper
 
 
 class IntSensorImpl(BaseSensor):
