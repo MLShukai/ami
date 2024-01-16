@@ -2,7 +2,7 @@
 behaviors."""
 import pytest
 
-from ami.environments.sensors.base_sensor import BaseSensor, SensorWrapper
+from ami.environments.sensors.base_sensor import BaseSensor, BaseSensorWrapper
 
 
 class IntSensorImpl(BaseSensor):
@@ -10,7 +10,7 @@ class IntSensorImpl(BaseSensor):
         return 0
 
 
-class IncrementSensorWrapper(SensorWrapper):
+class IncrementSensorWrapper(BaseSensorWrapper):
     def wrap_observation(self, observation: int) -> int:
         return observation + 1
 
@@ -20,5 +20,5 @@ class TestSensorWrapper:
     def sensor_wrapper(self) -> IncrementSensorWrapper:
         return IncrementSensorWrapper(IntSensorImpl())
 
-    def test_read(self, sensor_wrapper: SensorWrapper) -> None:
+    def test_read(self, sensor_wrapper: BaseSensorWrapper) -> None:
         assert sensor_wrapper.read() == 1

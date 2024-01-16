@@ -27,7 +27,7 @@ class BaseSensor(ABC, Generic[ObsType]):
         pass
 
 
-class SensorWrapper(BaseSensor[WrapperObsType], Generic[WrapperObsType, ObsType]):
+class BaseSensorWrapper(BaseSensor[WrapperObsType], Generic[WrapperObsType, ObsType]):
     """Wraps the sensor class for modifying the observation.
 
     You must override :meth:`wrap_observation` method.
