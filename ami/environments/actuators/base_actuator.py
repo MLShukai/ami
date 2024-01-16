@@ -1,15 +1,17 @@
-"""This file contains the abstract base actuator, actuator wrappers, and
-implemented actuator classes."""
+"""This file contains the abstract base actuator and actuator wrappers
+class."""
 from abc import ABC, abstractmethod
-from typing import Any
+from typing import Any, Generic
+
+from .._types import ActType, WrapperActType
 
 
-class BaseActuator(ABC):
+class BaseActuator(ABC, Generic[ActType]):
     """Abstract base actuator class for affecting actiion to the real
     environment."""
 
     @abstractmethod
-    def operate(self, action: Any) -> None:
+    def operate(self, action: ActType) -> None:
         """Operates the real actuator by `action`.
 
         Args:
@@ -26,13 +28,13 @@ class BaseActuator(ABC):
         pass
 
 
-class ActuatorWrapper(BaseActuator):
+class BaseActuatorWrapper(BaseActuator[WrapperActType], Generic[WrapperActType, ActType]):
     """Wraps the actuator class for modifying the action.
 
     You must override :meth:`wrap_action` method for wrapping action.
     """
 
-    def __init__(self, actuator: BaseActuator, *args: Any, **kwds: Any) -> None:
+    def __init__(self, actuator: BaseActuator[ActType], *args: Any, **kwds: Any) -> None:
         """Constructs the wrapper class.
 
         Args:
@@ -41,7 +43,7 @@ class ActuatorWrapper(BaseActuator):
         self._actuator = actuator
 
     @abstractmethod
-    def wrap_action(self, action: Any) -> Any:
+    def wrap_action(self, action: WrapperActType) -> ActType:
         """Wraps the action and return it.
 
         Args:
@@ -52,7 +54,7 @@ class ActuatorWrapper(BaseActuator):
         """
         raise NotImplementedError
 
-    def operate(self, action: Any) -> None:
+    def operate(self, action: WrapperActType) -> None:
         return self._actuator.operate(self.wrap_action(action))
 
     def setup(self) -> None:

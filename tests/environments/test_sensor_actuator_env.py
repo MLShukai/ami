@@ -1,7 +1,11 @@
 import pytest
 from pytest_mock import MockerFixture
 
-from ami.environments.environments import BaseActuator, BaseSensor, SensorActuatorEnv
+from ami.environments.sensor_actuator_env import (
+    BaseActuator,
+    BaseSensor,
+    SensorActuatorEnv,
+)
 
 
 class TestSensorActuatorEnv:

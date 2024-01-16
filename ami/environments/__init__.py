@@ -1,3 +1,2 @@
 """This file contains import statements."""
-from . import actuators, environments, sensors
-from .environments import SensorActuatorEnv
+from . import actuators, base_environment, sensor_actuator_env, sensors
