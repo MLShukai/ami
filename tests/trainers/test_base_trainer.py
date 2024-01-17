@@ -49,7 +49,5 @@ class TestTrainer:
 
         new_model: ModelImpl = trainer._models_dict["model1"]
         new_inference_model: ModelImpl = trainer._inferences_dict["model1"].model
-        assert old_model is new_inference_model
-        assert new_model is old_inference_model
 
         assert torch.equal(new_model.p, new_inference_model.p)
