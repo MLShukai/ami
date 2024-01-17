@@ -1,8 +1,10 @@
 import pytest
+import torch
 
 from ami.data.utils import DataUsersDict
 from ami.models.utils import ModelsDict
 from ami.trainers.base_trainer import BaseTrainer
+from tests.helpers import ModelImpl
 
 
 class TrainerImpl(BaseTrainer):
@@ -37,9 +39,17 @@ class TestTrainer:
         assert "model1" in trainer._synchronized_model_names
 
     def test_sync_a_model(self, trainer: TrainerImpl) -> None:
-        old_model, old_inference_model = trainer._models_dict["model1"], trainer._inferences_dict["model1"].model
-        trainer._sync_a_model("model1")
-        new_model, new_inference_model = trainer._models_dict["model1"], trainer._inferences_dict["model1"].model
+        old_model: ModelImpl = trainer._models_dict["model1"]
+        old_inference_model: ModelImpl = trainer._inferences_dict["model1"].model
 
+        old_model.p.data += 1
+        assert not torch.equal(old_model.p, old_inference_model.p)
+
+        trainer._sync_a_model("model1")
+
+        new_model: ModelImpl = trainer._models_dict["model1"]
+        new_inference_model: ModelImpl = trainer._inferences_dict["model1"].model
         assert old_model is new_inference_model
         assert new_model is old_inference_model
+
+        assert torch.equal(new_model.p, new_inference_model.p)
