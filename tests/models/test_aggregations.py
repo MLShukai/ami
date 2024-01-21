@@ -1,9 +1,7 @@
 import torch
 
 from ami.models.utils import InferencesDict, ModelsDict
-from tests.helpers import skip_if_gpu_is_not_available
-
-from .test_base_model import ModelImpl
+from tests.helpers import ModelImpl, skip_if_gpu_is_not_available
 
 
 class TestAggregations:

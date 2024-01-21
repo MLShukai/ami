@@ -5,17 +5,7 @@ import torch
 import torch.nn as nn
 
 from ami.models.base_model import BaseModel, Inference
-from tests.helpers import skip_if_gpu_is_not_available
-
-
-class ModelImpl(BaseModel):
-    def __init__(self, default_device: torch.device, has_inference: bool) -> None:
-        super().__init__(default_device=default_device, has_inference=has_inference)
-
-        self.p = nn.Parameter(torch.randn(()))
-
-    def forward(self, input: torch.Tensor) -> torch.Tensor:
-        return self.p * input
+from tests.helpers import ModelImpl, skip_if_gpu_is_not_available
 
 
 class TestBaseModelAndInference:

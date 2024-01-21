@@ -6,20 +6,7 @@ from torch.utils.data import TensorDataset
 
 from ami.data.buffers.base_data_buffer import BaseDataBuffer
 from ami.data.step_data import DataKeys, StepData
-
-
-class DataBufferImpl(BaseDataBuffer):
-    def init(self) -> None:
-        self.obs: list[torch.Tensor] = []
-
-    def add(self, step_data: StepData) -> None:
-        self.obs.append(step_data[DataKeys.OBSERVATION])
-
-    def concatenate(self, new_data: Self) -> None:
-        self.obs += new_data.obs
-
-    def make_dataset(self) -> TensorDataset:
-        return TensorDataset(torch.stack(self.obs))
+from tests.helpers import DataBufferImpl
 
 
 class TestDataBuffer:
