@@ -26,3 +26,11 @@ type:
 	poetry run mypy .
 
 run: format test-full type
+
+docker-build: ## Build docker image.
+	docker build -t ami --no-cache .
+
+docker-run: ## Run built docker image.
+	docker run -it --gpus all \
+	--mount type=volume,source=ami,target=/workspace \
+	ami

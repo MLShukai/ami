@@ -1,16 +1,18 @@
-# Project Name
+# AMI: Autonomous Machine Intelligence
 
-## プロジェクトを開始する前に
+## 開発環境セットアップ
 
-次の箇所を自分のプロジェクトに合わせて変更してください。
+### Docker
 
-### パッケージ名
+VRChatやOBSなどのホストOSに依存したものを除いた、Pythonなどの開発環境はDockerイメージにまとめてある。
+事前に次のツールをインストールしておく。
 
-- project名を`python_template`から自分のプロジェクト名へ。
-- [`pyproject.toml`の`name`をプロジェクト名へ](/pyproject.toml)
-- [`tests/test_version.py`のimport文をパッケージ名へ](/tests/test_version.py)
+なお、Linux系OS上から実行することを前提とする。
 
-## 依存関係
+- docker
+- make
 
-- poetry: `pip install poetry`で入手します。`poetry install`で全てのパッケージがインストールされます。
-- make: OSに合わせてインストールしてください。
+```sh
+make docker-build
+make docker-run
+```
