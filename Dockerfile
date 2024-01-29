@@ -9,7 +9,7 @@ ADD ./ /workspace/
 ARG DEBIAN_FRONTEND=noninteractive
 RUN ln -sf /usr/share/zoneinfo/Asia/Tokyo /etc/localtime
 RUN perl -p -i.bak -e 's%(deb(?:-src|)\s+)https?://(?!archive\.canonical\.com|security\.ubuntu\.com)[^\s]+%$1http://ftp.naist.jp/pub/Linux/ubuntu/%' /etc/apt/sources.list
-RUN apt-get uplsdate && apt-get install -y \
+RUN apt-get update && apt-get install -y \
     curl \
     git \
     make \
