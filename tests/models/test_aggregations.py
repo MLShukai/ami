@@ -1,7 +1,13 @@
 import torch
 
-from ami.models.utils import InferencesDict, ModelsDict
-from tests.helpers import ModelImpl, skip_if_gpu_is_not_available
+from ami.models.model_wrapper import ModelWrapper
+from ami.models.utils import (
+    InferencesDict,
+    InferenceWrappersDict,
+    ModelsDict,
+    ModelWrappersDict,
+)
+from tests.helpers import ModelImpl, ModelMultiplyP, skip_if_gpu_is_not_available
 
 
 class TestAggregations:
@@ -21,3 +27,25 @@ class TestAggregations:
         assert isinstance(ia, InferencesDict)
         assert "a" in ia
         assert "b" not in ia
+
+
+class TestWrappersDict:
+    @skip_if_gpu_is_not_available()
+    def test_send_to_default_device(self, gpu_device: torch.device):
+        mwd = ModelWrappersDict(
+            a=ModelWrapper(ModelMultiplyP(), "cpu", True), b=ModelWrapper(ModelMultiplyP(), gpu_device, True)
+        )
+
+        mwd.send_to_default_device()
+        assert mwd["a"].device.type == "cpu"
+        assert mwd["b"].device == gpu_device
+
+    def test_create_inferences(self):
+        mwd = ModelWrappersDict(
+            a=ModelWrapper(ModelMultiplyP(), "cpu", True), b=ModelWrapper(ModelMultiplyP(), "cpu", False)
+        )
+
+        iwd = mwd.create_inferences()
+        assert isinstance(iwd, InferenceWrappersDict)
+        assert "a" in iwd
+        assert "b" not in iwd
