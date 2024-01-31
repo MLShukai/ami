@@ -1,6 +1,5 @@
 import pytest
 import torch
-import torch.nn as nn
 
 from ami.models.model_wrapper import InferenceWrapper, ModelWrapper
 from tests.helpers import ModelMultiplyP, skip_if_gpu_is_not_available
@@ -53,3 +52,13 @@ class TestWrappers:
         data = torch.randn(10)
         out: torch.Tensor = inference(data)
         assert out.device == gpu_device
+
+    def test_freeze_model_and_unfreeze_model(self) -> None:
+        mw = ModelWrapper(ModelMultiplyP(), "cpu", True)
+        assert mw.model.p.requires_grad is True
+
+        mw.freeze_model()
+        assert mw.model.p.requires_grad is False
+
+        mw.unfreeze_model()
+        assert mw.model.p.requires_grad is True

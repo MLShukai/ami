@@ -78,6 +78,16 @@ class ModelWrapper(nn.Module, Generic[ModuleType]):
         """Sends the model to the default computing device."""
         self.model.to(self._default_device)
 
+    def freeze_model(self) -> None:
+        """Freezes the model parameters (sets `requires_grad` to `False`)."""
+        for p in self.model.parameters():
+            p.requires_grad = False
+
+    def unfreeze_model(self) -> None:
+        """Un-freezes the model parameters (sets `requires_grad` to `True`)."""
+        for p in self.model.parameters():
+            p.requires_grad = True
+
     def create_inference(self) -> InferenceWrapper[ModuleType]:
         """Creates the inference wrapper for the inference thread.
 
