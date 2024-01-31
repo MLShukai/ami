@@ -40,12 +40,15 @@ class TestWrappersDict:
         assert mwd["a"].device.type == "cpu"
         assert mwd["b"].device == gpu_device
 
-    def test_create_inferences(self):
+    def test_inference_wrappers_dict(self):
         mwd = ModelWrappersDict(
             a=ModelWrapper(ModelMultiplyP(), "cpu", True), b=ModelWrapper(ModelMultiplyP(), "cpu", False)
         )
 
-        iwd = mwd.create_inferences()
+        iwd = mwd.inference_wrappers_dict
         assert isinstance(iwd, InferenceWrappersDict)
         assert "a" in iwd
         assert "b" not in iwd
+
+        iwd2 = mwd.inference_wrappers_dict
+        assert iwd is iwd2
