@@ -4,8 +4,9 @@ import torch
 
 from ami.data.step_data import DataKeys, StepData
 from ami.data.utils import DataCollectorsDict, DataUsersDict
-from ami.models.utils import InferencesDict, ModelsDict
-from tests.helpers import DataBufferImpl, ModelImpl, get_gpu_device
+from ami.models.model_wrapper import ModelWrapper
+from ami.models.utils import InferencesDict, ModelsDict, ModelWrappersDict
+from tests.helpers import DataBufferImpl, ModelImpl, ModelMultiplyP, get_gpu_device
 
 
 @pytest.fixture
@@ -25,6 +26,25 @@ def models_dict(gpu_device: torch.device | None) -> ModelsDict:
         {"model1": ModelImpl("cpu", True), "model2": ModelImpl("cpu", False), "model3": ModelImpl(device, True)}
     )
 
+    d.send_to_default_device()
+    return d
+
+
+@pytest.fixture
+def model_wrappers_dict(gpu_device: torch.device | None) -> ModelWrappersDict:
+    if gpu_device is not None:
+        device = gpu_device
+    else:
+        device = "cpu"
+
+    d = ModelWrappersDict(
+        {
+            "model1": ModelWrapper(ModelMultiplyP(), "cpu", True),
+            "model2": ModelWrapper(ModelMultiplyP(), "cpu", True),
+            "model_device": ModelWrapper(ModelMultiplyP(), device, True),
+            "model_no_inference": ModelWrapper(ModelMultiplyP(), "cpu", False),
+        }
+    )
     d.send_to_default_device()
     return d
 
