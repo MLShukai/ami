@@ -57,6 +57,8 @@ class ModelWrapper(nn.Module, Generic[ModuleType]):
         """Performs the inference.
 
         Tensors in `args` and `kwds` are sent to the computing device.
+        If you override this method, be careful to send the input tensor
+        to the computing device.
         """
         device = self.device
         new_args, new_kwds = [], {}
@@ -117,7 +119,9 @@ class InferenceWrapper(Generic[ModuleType]):
     def model(self) -> ModuleType:
         """Returns the internal dnn model.
 
-        Do not access this property in the inference thread.
+        Do not access this property in the inference thread. This
+        property is used to switch the model between training and
+        inference model."
         """
         return self._wrapper.model
 
