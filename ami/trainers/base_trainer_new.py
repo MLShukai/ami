@@ -45,6 +45,8 @@ class BaseTrainer(ABC):
 
     @property
     def _inference_wrappers_dict(self) -> InferenceWrappersDict:
+        """Retrieves the `inference_wrappers_dict` from the model wrappers
+        dictionary."""
         return self._model_wrappers_dict.inference_wrappers_dict
 
     def on_model_wrappers_dict_attached(self) -> None:
