@@ -25,6 +25,15 @@ def skip_if_gpu_is_not_available():
     return pytest.mark.skipif(get_gpu_device() is None, reason="GPU devices are not found!")
 
 
+class ModelMultiplyP(nn.Module):
+    def __init__(self, *args, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
+        self.p = nn.Parameter(torch.randn(()))
+
+    def forward(self, input: torch.Tensor) -> torch.Tensor:
+        return self.p * input
+
+
 class ModelImpl(BaseModel):
     def __init__(self, default_device: torch.device, has_inference: bool) -> None:
         super().__init__(default_device=default_device, has_inference=has_inference)
