@@ -59,6 +59,8 @@ class TestWrappers:
 
         mw.freeze_model()
         assert mw.model.p.requires_grad is False
+        assert mw.model.training is False
 
         mw.unfreeze_model()
         assert mw.model.p.requires_grad is True
+        assert mw.model.training is True

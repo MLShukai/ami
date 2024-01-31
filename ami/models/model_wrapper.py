@@ -79,14 +79,18 @@ class ModelWrapper(nn.Module, Generic[ModuleType]):
         self.model.to(self._default_device)
 
     def freeze_model(self) -> None:
-        """Freezes the model parameters (sets `requires_grad` to `False`)."""
+        """Freezes the model parameters (sets `requires_grad` to `False`) and
+        switches to evaluation mode."""
         for p in self.model.parameters():
             p.requires_grad = False
+        self.eval()
 
     def unfreeze_model(self) -> None:
-        """Un-freezes the model parameters (sets `requires_grad` to `True`)."""
+        """Un-freezes the model parameters (sets `requires_grad` to `True`) and
+        switches to training mode."""
         for p in self.model.parameters():
             p.requires_grad = True
+        self.train()
 
     def create_inference(self) -> InferenceWrapper[ModuleType]:
         """Creates the inference wrapper for the inference thread.
@@ -102,7 +106,7 @@ class ModelWrapper(nn.Module, Generic[ModuleType]):
         """
         if self.has_inference:
             copied_self = copy.deepcopy(self)
-            copied_self.eval()
+            copied_self.freeze_model()
             return InferenceWrapper(copied_self)
 
         raise RuntimeError("The model has no inference component!")
