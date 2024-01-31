@@ -44,7 +44,7 @@ class TestTrainer:
     @pytest.fixture
     def trainer(self, model_wrappers_dict: ModelWrappersDict, data_users_dict: DataUsersDict) -> TrainerImpl:
         trainer = TrainerImpl()
-        trainer.attach_model_and_inference_wrappers_dict(model_wrappers_dict, model_wrappers_dict.create_inferences())
+        trainer.attach_model_wrappers_dict(model_wrappers_dict)
         trainer.attach_data_users_dict(data_users_dict)
         return trainer
 
@@ -85,15 +85,15 @@ class TestTrainer:
         assert_model_frozen(m2)
 
     def test_sync_a_model(self, trainer: TrainerImpl) -> None:
-        old_wrapper: ModelWrapper[ModelMultiplyP] = trainer._model_wrappers_dict["model1"]
-        old_inference: InferenceWrapper[ModelMultiplyP] = trainer._inference_wrappers_dict["model1"]
+        wrapper: ModelWrapper[ModelMultiplyP] = trainer._model_wrappers_dict["model1"]
+        inference: InferenceWrapper[ModelMultiplyP] = trainer._inference_wrappers_dict["model1"]
 
-        old_wrapper.model.p.data += 1
-        assert not torch.equal(old_wrapper.model.p, old_inference.model.p)
+        wrapper.model.p.data += 1
+        assert not torch.equal(wrapper.model.p, inference.model.p)
 
         trainer._sync_a_model("model1")
 
-        new_wrapper: ModelWrapper[ModelMultiplyP] = trainer._model_wrappers_dict["model1"]
-        new_inference: InferenceWrapper[ModelMultiplyP] = trainer._inference_wrappers_dict["model1"]
+        assert torch.equal(wrapper.model.p, inference.model.p)
 
-        assert torch.equal(new_wrapper.model.p, new_inference.model.p)
+        assert_model_training(wrapper.model)
+        assert_model_frozen(inference.model)
