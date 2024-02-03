@@ -9,7 +9,7 @@ from ..data.utils import DataUsersDict
 from ..models.model_wrapper import ModelWrapper
 from ..models.utils import InferenceWrappersDict, ModelWrappersDict
 
-_model_wrapper_t: TypeAlias = ModelWrapper[nn.Module]
+ModelWrapperType: TypeAlias = ModelWrapper[nn.Module]
 
 
 class BaseTrainer(ABC):
@@ -74,13 +74,13 @@ class BaseTrainer(ABC):
         """
         pass
 
-    def _get_model(self, name: str) -> _model_wrapper_t:
+    def _get_model(self, name: str) -> ModelWrapperType:
         """Retrieves the model from the models dictionary by `name`."""
         if name not in self._model_wrappers_dict:
             raise KeyError(f"The specified model name '{name}' does not exist.")
         return self._model_wrappers_dict[name]
 
-    def get_frozen_model(self, name: str) -> _model_wrapper_t:
+    def get_frozen_model(self, name: str) -> ModelWrapperType:
         """Retrieves the parameter-frozen (with `requires_grad=False`) model
         used for inference in the training flow."""
         model = self._get_model(name)
@@ -90,7 +90,7 @@ class BaseTrainer(ABC):
         model.freeze_model()
         return model
 
-    def get_training_model(self, name: str) -> _model_wrapper_t:
+    def get_training_model(self, name: str) -> ModelWrapperType:
         """Retrieves the model to be trained by this trainer.
 
         If the specified model includes an inference model, it is
