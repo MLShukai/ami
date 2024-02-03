@@ -1,4 +1,4 @@
-FROM nvidia/cuda:12.1.0-runtime-ubuntu22.04
+FROM ubuntu:22.04
 
 # Setup workspace
 RUN mkdir /workspace
