@@ -23,6 +23,34 @@ class BaseTrainer(ABC):
         - `train`: To implement the training process.
 
     DNN models and data buffers become available after the thread has started.
+
+    ExampleCode:
+        ```py
+        class VAETrainer(BaseTrainer):
+
+            def __init__(
+                    self,
+                    device:torch.device = torch.device("cuda:0"),
+                    batch_size:int = 16,
+                    lr:float = 0.001
+            ) -> None:
+                self.device = device
+                self.batch_size = batch_size
+                self.lr = lr
+
+            def on_model_wrappers_dict_attached(self) -> None:
+                self.encoder = self.get_training_model("frame_encoder")
+                self.decoder = self.get_training_model("frame_decoder")
+
+            def on_data_users_dict_attached(self) -> None:
+                self.buffer = self.get_data_user("frame_buffer")
+
+            def train(self) -> None:
+                # ... getting dataset.
+                # ... configure optimizer.
+                # ... send models to computing device.
+                # ... training loop.
+        ```
     """
 
     _model_wrappers_dict: ModelWrappersDict
