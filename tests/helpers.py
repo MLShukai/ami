@@ -8,7 +8,6 @@ from torch.utils.data import TensorDataset
 
 from ami.data.buffers.base_data_buffer import BaseDataBuffer
 from ami.data.step_data import DataKeys, StepData
-from ami.models.base_model import BaseModel
 
 
 def get_gpu_device() -> torch.device | None:
@@ -28,16 +27,6 @@ def skip_if_gpu_is_not_available():
 class ModelMultiplyP(nn.Module):
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
-        self.p = nn.Parameter(torch.randn(()))
-
-    def forward(self, input: torch.Tensor) -> torch.Tensor:
-        return self.p * input
-
-
-class ModelImpl(BaseModel):
-    def __init__(self, default_device: torch.device, has_inference: bool) -> None:
-        super().__init__(default_device=default_device, has_inference=has_inference)
-
         self.p = nn.Parameter(torch.randn(()))
 
     def forward(self, input: torch.Tensor) -> torch.Tensor:
