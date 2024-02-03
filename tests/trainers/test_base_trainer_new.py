@@ -28,13 +28,13 @@ class TrainerImpl(BaseTrainer):
         self.model2(data)
 
 
-def assert_model_training(model: ModelWrapper[nn.Module]) -> None:
+def assert_model_training(model: nn.Module) -> None:
     for p in model.parameters():
         assert p.requires_grad is True
     assert model.training is True
 
 
-def assert_model_frozen(model: ModelWrapper[nn.Module]) -> None:
+def assert_model_frozen(model: nn.Module) -> None:
     for p in model.parameters():
         assert p.requires_grad is False
     assert model.training is False
