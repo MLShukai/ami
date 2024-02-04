@@ -3,7 +3,7 @@ class."""
 from abc import ABC, abstractmethod
 from typing import Any, Generic
 
-from .._types import ActType, WrapperActType
+from ..._types import ActType, WrapperActType
 
 
 class BaseActuator(ABC, Generic[ActType]):
