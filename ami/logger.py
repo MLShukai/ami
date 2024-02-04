@@ -17,10 +17,12 @@ def get_inference_thread_logger(name: str) -> logging.Logger:
 
 
 def __get_thread_logger(thread_name: str, module_name: str) -> logging.Logger:
-    if module_name == "__main__":
-        return logging.getLogger(thread_name)
-    return logging.getLogger(f"{thread_name}.{module_name}")
+    if not module_name:
+        raise ValueError("Module name is empty")
 
+    # ドット始まり・終わり・途中のドットが2つ以上はエラー
+    if module_name.startswith(".") or module_name.endswith(".") or ".." in module_name:
+        raise ValueError(f'Invalid module name: "{module_name}"')
 
 # Initialization
 with open("sample/logging.yaml") as file:
