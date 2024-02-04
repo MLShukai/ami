@@ -22,3 +22,6 @@ def __get_thread_logger(thread_name: str, module_name: str) -> logging.Logger:
         raise ValueError(f'Invalid module name: "{module_name}"')
 
     return logging.getLogger(f"{thread_name}.{module_name}")
+
+
+logging.captureWarnings(True)

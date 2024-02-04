@@ -7,7 +7,6 @@ with open("samples/logging.yaml") as file:
     config = yaml.safe_load(file)
 
 logging.config.dictConfig(config)
-logging.captureWarnings(True)
 
 from ami.logger import (
     get_inference_thread_logger,
