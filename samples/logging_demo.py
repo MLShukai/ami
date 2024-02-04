@@ -2,13 +2,18 @@ import logging
 import logging.config
 
 import yaml
+
 with open("samples/logging.yaml") as file:
     config = yaml.safe_load(file)
 
 logging.config.dictConfig(config)
 logging.captureWarnings(True)
 
-from ami.logger import get_main_thread_logger, get_training_thread_logger, get_inference_thread_logger
+from ami.logger import (
+    get_inference_thread_logger,
+    get_main_thread_logger,
+    get_training_thread_logger,
+)
 
 main_logger = get_main_thread_logger("demo")
 training_logger = get_training_thread_logger("demo")
