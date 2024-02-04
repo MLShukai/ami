@@ -46,6 +46,6 @@ handlers:
 
 formatters:
   simple:
-    format: %(asctime)s %(levelname).4s %(name).16s | %(message)s
+    format: "%(asctime)s %(levelname).4s %(name).16s | %(message)s"
 
 version: 1
