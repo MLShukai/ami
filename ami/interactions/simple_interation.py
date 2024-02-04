@@ -1,12 +1,10 @@
-from typing import Generic
-
 from ._types import ActType, ObsType
 from .agents.base_agent import BaseAgent
 from .base_interaction import BaseInteraction
 from .environments.base_environment import BaseEnvironment
 
 
-class SimpleInteraction(BaseInteraction, Generic[ActType, ObsType]):
+class SimpleInteraction(BaseInteraction):
     """A simple implementation of the interaction protocol between an
     environment and an agent."""
 

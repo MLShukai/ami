@@ -24,7 +24,7 @@ class TestSimpleInteraction:
         return agent
 
     @pytest.fixture
-    def simple_interaction(self, mock_env, mock_agent) -> SimpleInteraction[str, str]:
+    def simple_interaction(self, mock_env, mock_agent) -> SimpleInteraction:
         return SimpleInteraction(mock_env, mock_agent)
 
     def test_setup(self, mock_env: Mock, mock_agent: Mock) -> None:
