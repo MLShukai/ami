@@ -17,6 +17,7 @@ pytest = "^7.4.3"
 pytest-slow = "^0.0.3"
 pytest-mock = "^3.12.0"
 mypy = "^1.8.0"
+types-pyyaml = "^6.0.12.12"
 
 [build-system]
 requires = ["poetry-core"]
