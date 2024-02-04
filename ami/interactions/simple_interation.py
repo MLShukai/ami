@@ -1,17 +1,9 @@
-from ._types import ActType, ObsType
-from .agents.base_agent import BaseAgent
 from .base_interaction import BaseInteraction
-from .environments.base_environment import BaseEnvironment
 
 
 class SimpleInteraction(BaseInteraction):
     """A simple implementation of the interaction protocol between an
     environment and an agent."""
-
-    def __init__(self, environment: BaseEnvironment[ObsType, ActType], agent: BaseAgent[ObsType, ActType]) -> None:
-        """Initializes the interaction with specified environment and agent."""
-        self.environment = environment
-        self.agent = agent
 
     def setup(self) -> None:
         self.environment.setup()
