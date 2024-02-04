@@ -10,7 +10,7 @@ class BaseInteraction(ABC):
 
     @abstractmethod
     def step(self) -> None:
-        """Performs a step of interaction.
+        """Executes a single step of interaction.
 
         This method is called repeatedly by the inference thread.
         """
