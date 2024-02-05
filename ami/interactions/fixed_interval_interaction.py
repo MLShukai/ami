@@ -12,16 +12,16 @@ class FixedIntervalInteraction(Interaction):
         self,
         environment: BaseEnvironment[ObsType, ActType],
         agent: BaseAgent[ObsType, ActType],
-        adjustor: BaseIntervalAdjustor,
+        interval_adjustor: BaseIntervalAdjustor,
     ) -> None:
         super().__init__(environment, agent)
-        self.adjustor = adjustor
+        self.interval_adjustor = interval_adjustor
 
     def setup(self) -> None:
-        self.adjustor.reset()
+        self.interval_adjustor.reset()
         super().setup()
-        self.adjustor.adjust()  # For acting in setup.
+        self.interval_adjustor.adjust()  # For acting in setup.
 
     def step(self) -> None:
         super().step()
-        self.adjustor.adjust()
+        self.interval_adjustor.adjust()
