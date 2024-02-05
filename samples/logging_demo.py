@@ -14,9 +14,9 @@ from ami.logger import (
     get_training_thread_logger,
 )
 
-main_logger = get_main_thread_logger("demo")
-training_logger = get_training_thread_logger("demo")
-inference_logger = get_inference_thread_logger("demo")
+main_logger = get_main_thread_logger("very_very_long_module_name")
+training_logger = get_training_thread_logger("very_very_long_module_name")
+inference_logger = get_inference_thread_logger("very_very_long_module_name")
 
 main_logger.debug("This is a debug message")
 training_logger.info("This is an info message")
