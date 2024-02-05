@@ -20,7 +20,7 @@ class FixedIntervalInteraction(Interaction):
     def setup(self) -> None:
         self.adjustor.reset()
         super().setup()
-        self.adjustor.adjust()
+        self.adjustor.adjust()  # For acting in setup.
 
     def step(self) -> None:
         super().step()
