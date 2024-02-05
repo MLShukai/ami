@@ -1,3 +1,6 @@
+# log files
+logs/*/*.log
+
 poetry.lock
 
 # Byte-compiled / optimized / DLL files
