@@ -32,5 +32,5 @@ class TestSleepIntervalAdjustor:
         adjustor = SleepIntervalAdjustor(interval)
         mean, std = compute_adjustor_spec(adjustor, num_trial)
         print(mean, std)
-        assert mean == pytest.approx(interval, rel=0.1)  # 2桁まで誤差は許容
+        assert mean == pytest.approx(interval, abs=0.001)  # 許容誤差 0.001秒
         assert std < interval * 0.1
