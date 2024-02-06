@@ -1,7 +1,9 @@
 import logging
 import logging.config
+import os
 
 import yaml
+import rootutils
 
 from ami.logger import (
     get_inference_thread_logger,
@@ -9,8 +11,12 @@ from ami.logger import (
     get_training_thread_logger,
 )
 
-with open("samples/logging.yaml") as file:
+PROJECT_ROOT = rootutils.setup_root(__file__, indicator=".project-root", pythonpath=True)
+
+with open(PROJECT_ROOT / "samples/logging.yaml") as file:
     config = yaml.safe_load(file)
+
+os.makedirs(PROJECT_ROOT / "logs/logging_demo", exist_ok=True)
 
 logging.config.dictConfig(config)
 

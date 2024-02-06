@@ -18,25 +18,25 @@ handlers:
 
   root_file:
     class: logging.handlers.TimedRotatingFileHandler
-    filename: logs/root/root.log
+    filename: logs/logging_demo/root.log
     when: D
     formatter: simple
 
   main_file:
     class: logging.handlers.TimedRotatingFileHandler
-    filename: logs/main/main.log
+    filename: logs/logging_demo/main.log
     when: D
     formatter: simple
 
   training_file:
     class: logging.handlers.TimedRotatingFileHandler
-    filename: logs/training/training.log
+    filename: logs/logging_demo/training.log
     when: D
     formatter: simple
 
   inference_file:
     class: logging.handlers.TimedRotatingFileHandler
-    filename: logs/inference/inference.log
+    filename: logs/logging_demo/inference.log
     when: D
     formatter: simple
 
