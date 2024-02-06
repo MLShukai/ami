@@ -6,8 +6,8 @@ from abc import ABC, abstractmethod
 class BaseIntervalAdjustor(ABC):
     """Adjusts the loop to run at a fixed interval."""
 
-    # Initial start time is set to negative infinity for mathematical reasons.
-    _start_time: float = -math.inf
+    # Initial reset time is set to negative infinity for mathematical reasons.
+    _last_reset_time: float = -math.inf
 
     def __init__(self, interval: float, offset: float = 0.0) -> None:
         """Constructs the IntervalAdjustor.
@@ -27,8 +27,8 @@ class BaseIntervalAdjustor(ABC):
         Returns:
             float: The start time after resetting the timer, as a high precision time counter.
         """
-        self._start_time = time.perf_counter()
-        return self._start_time
+        self._last_reset_time = time.perf_counter()
+        return self._last_reset_time
 
     @abstractmethod
     def adjust(self) -> float:
@@ -46,8 +46,8 @@ class SleepIntervalAdjustor(BaseIntervalAdjustor):
     next interval begins."""
 
     def adjust(self) -> float:
-        if (remaining_time := (self._start_time + self._time_to_wait) - time.perf_counter()) > 0:
+        if (remaining_time := (self._last_reset_time + self._time_to_wait) - time.perf_counter()) > 0:
             time.sleep(remaining_time)
-        delta_time = time.perf_counter() - self._start_time
+        delta_time = time.perf_counter() - self._last_reset_time
         self.reset()
         return delta_time
