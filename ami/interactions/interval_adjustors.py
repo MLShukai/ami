@@ -31,6 +31,11 @@ class BaseIntervalAdjustor(ABC):
         return self._last_reset_time
 
     @abstractmethod
+    def _adjust(self) -> None:
+        """The actual implementation of the interval adjustor, which is wrapped
+        by the public method `adjust`."""
+        raise NotImplementedError
+
     def adjust(self) -> float:
         """Waits until the interval has elapsed since the last `adjust` or
         `reset` call.
@@ -38,16 +43,16 @@ class BaseIntervalAdjustor(ABC):
         Returns:
             float: The elapsed time since the last call, ensuring the loop runs at the specified interval.
         """
-        raise NotImplementedError
+        self._adjust()
+        delta_time = time.perf_counter() - self._last_reset_time
+        self.reset()
+        return delta_time
 
 
 class SleepIntervalAdjustor(BaseIntervalAdjustor):
     """Adjusts the interval using `time.sleep` to pause execution until the
     next interval begins."""
 
-    def adjust(self) -> float:
+    def _adjust(self) -> None:
         if (remaining_time := (self._last_reset_time + self._time_to_wait) - time.perf_counter()) > 0:
             time.sleep(remaining_time)
-        delta_time = time.perf_counter() - self._last_reset_time
-        self.reset()
-        return delta_time
