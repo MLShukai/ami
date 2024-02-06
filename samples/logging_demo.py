@@ -2,8 +2,8 @@ import logging
 import logging.config
 import os
 
-import yaml
 import rootutils
+import yaml
 
 from ami.logger import (
     get_inference_thread_logger,
