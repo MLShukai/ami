@@ -3,16 +3,17 @@ import logging.config
 
 import yaml
 
-with open("samples/logging.yaml") as file:
-    config = yaml.safe_load(file)
-
-logging.config.dictConfig(config)
-
 from ami.logger import (
     get_inference_thread_logger,
     get_main_thread_logger,
     get_training_thread_logger,
 )
+
+with open("samples/logging.yaml") as file:
+    config = yaml.safe_load(file)
+
+logging.config.dictConfig(config)
+
 
 main_logger = get_main_thread_logger("very_very_long_module_name")
 training_logger = get_training_thread_logger("very_very_long_module_name")
