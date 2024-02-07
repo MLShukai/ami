@@ -1,6 +1,6 @@
 from typing import Any, Generic
 
-from ._types import ActType, ObsType
+from .._types import ActType, ObsType
 from .actuators.base_actuator import BaseActuator
 from .base_environment import BaseEnvironment
 from .sensors.base_sensor import BaseSensor

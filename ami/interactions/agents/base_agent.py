@@ -2,8 +2,7 @@
 from abc import ABC, abstractmethod
 from typing import Generic, TypeVar
 
-ActType = TypeVar("ActType")
-ObsType = TypeVar("ObsType")
+from .._types import ActType, ObsType
 
 
 class BaseAgent(ABC, Generic[ObsType, ActType]):
