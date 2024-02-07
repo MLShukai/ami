@@ -15,7 +15,7 @@ class SmallDeconvNet(nn.Module):
         channels: int,
         dim_in: int,
         positional_bias: bool = True,
-        nl: Callable = nn.LeakyReLU(negative_slope=0.2),
+        nl: Callable[[Tensor], Tensor] = nn.LeakyReLU(negative_slope=0.2),
     ):
         """Reconstruct images from latent variables. `strides` differs from
         original implementation. For the original implementation, see
@@ -62,7 +62,7 @@ class SmallDeconvNet(nn.Module):
         self.nl = nl
 
     @property
-    def init_output_size(self):
+    def init_output_size(self) -> tuple[int, int]:
         """Execute `_compute_input_shape` for the same number of times as
         convolution layers.
 
@@ -105,7 +105,7 @@ class SmallDeconvNet(nn.Module):
             (edge_output_dim - 1 - out_pad - dilation * (kernel_size - 1) + 2 * edge_padding) / edge_stride + 1
         )
 
-    def forward(self, x: Tensor):
+    def forward(self, x: Tensor) -> Tensor:
         x = self.fc_init(x)
         x = x.view(-1, 1, self.init_output_size[0], self.init_output_size[1])
         x = self.nl(self.deconv1(x))

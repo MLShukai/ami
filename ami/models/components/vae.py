@@ -1,16 +1,17 @@
-from typing import Callable, Optional
+from typing import Callable 
 
 import torch
 import torch.nn as nn
 from torch import Tensor
 from torch.distributions.normal import Normal
+from torch.distributions import Distribution
 
 from .small_conv_net import SmallConvNet
 from .small_deconv_net import SmallDeconvNet
 
 
 class Encoder(nn.Module):
-    def __init__(self, base_model: nn.Module, min_stddev=1e-7) -> None:
+    def __init__(self, base_model: nn.Module, min_stddev: float=1e-7) -> None:
         """Construct encoder for VAE. output channel size of the `base_model`
         is twice the size of the latent space.
 
@@ -22,7 +23,7 @@ class Encoder(nn.Module):
         self.conv_net = base_model
         self.min_stddev = min_stddev
 
-    def forward(self, x: Tensor):
+    def forward(self, x: Tensor) -> Normal:
         mu_sigma = self.conv_net(x)
         mu, sigma = torch.chunk(mu_sigma, chunks=2, dim=-1)
         sigma = torch.nn.functional.softplus(sigma) + self.min_stddev
@@ -31,7 +32,7 @@ class Encoder(nn.Module):
 
 
 class Decoder(nn.Module):
-    def __init__(self, base_model: nn.Module):
+    def __init__(self, base_model: Callable[[Tensor], Tensor]):
         """Construct decoder for VAE.
 
         Args:
@@ -40,7 +41,7 @@ class Decoder(nn.Module):
         super().__init__()
         self.deconv_net = base_model
 
-    def forward(self, z: Tensor):
+    def forward(self, z: Tensor) -> Tensor:
         rec_img = self.deconv_net(z)
         return rec_img
 
@@ -57,7 +58,7 @@ class VAE(nn.Module):
         self.encoder = encoder
         self.decoder = decoder
 
-    def forward(self, x: Tensor) -> tuple[Tensor, Tensor]:
+    def forward(self, x: Tensor) -> tuple[Tensor, Normal]:
         z_dist: Normal = self.encoder(x)
         z_sampled = z_dist.rsample()
         x_reconstructed = self.decoder(z_sampled)
