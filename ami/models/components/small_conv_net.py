@@ -5,6 +5,10 @@ import torch.nn as nn
 from torch import Tensor
 
 
+def _identity(tensor: Tensor) -> Tensor:
+    return tensor
+
+
 class SmallConvNet(nn.Module):
     def __init__(
         self,
@@ -31,12 +35,14 @@ class SmallConvNet(nn.Module):
             last_nl (Optional[nn.Module], optional): NonLinearFunction for activation for the last layer. Defaults to None. https://github.com/openai/large-scale-curiosity/blob/master/auxiliary_tasks.py#L46
         """
         super().__init__()
+        batch_norm_cls = nn.BatchNorm2d if do_batchnorm else nn.Identity
+
         self.conv2d1 = nn.Conv2d(channels, 32, 8, stride=4)
-        self.bn1 = nn.BatchNorm2d(32) if do_batchnorm else lambda x: x
+        self.bn1 = batch_norm_cls(32)
         self.conv2d2 = nn.Conv2d(32, 64, 4, stride=2)
-        self.bn2 = nn.BatchNorm2d(64) if do_batchnorm else lambda x: x
+        self.bn2 = batch_norm_cls(64)
         self.conv2d3 = nn.Conv2d(64, 64, 3, stride=1)
-        self.bn3 = nn.BatchNorm2d(64) if do_batchnorm else lambda x: x
+        self.bn3 = batch_norm_cls(64)
         self.fc = nn.Linear(
             ((((height - (8 - 4)) // 4 - (4 - 2)) // 2 - (3 - 1)) // 1)
             * ((((width - (8 - 4)) // 4 - (4 - 2)) // 2 - (3 - 1)) // 1)
@@ -44,9 +50,11 @@ class SmallConvNet(nn.Module):
             dim_out,
         )
         self.nl = nl
-        self.last_nl = last_nl if last_nl is not None else lambda x: x
+        if last_nl is None:
+            last_nl = _identity
+        self.last_nl = last_nl
         self.do_batchnorm = do_batchnorm
-        self.layernorm = nn.LayerNorm(dim_out) if do_layernorm else lambda x: x
+        self.layernorm = nn.LayerNorm(dim_out) if do_layernorm else nn.Identity()
 
     def forward(self, x: Tensor) -> Tensor:
         x = self.bn1(self.conv2d1(x))
