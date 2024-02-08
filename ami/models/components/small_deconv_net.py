@@ -62,14 +62,14 @@ class SmallDeconvNet(nn.Module):
         self.nl = nl
 
     @property
-    def init_output_size(self) -> tuple[int, int]:
+    def init_output_size(self) -> tuple[int, ...]:
         """Execute `_compute_input_shape` for the same number of times as
         convolution layers.
 
         Returns:
             tuple[int, int]: Required size for self.conv1.
         """
-        output_size = (self.height, self.width)
+        output_size: tuple[int, ...] = (self.height, self.width)
         for kernel_size, stride, padding in zip(self.kernel_sizes[::-1], self.strides[::-1], self.paddings[::-1]):
             output_size = tuple(map(self._compute_input_shape, output_size, kernel_size, stride, padding))
         return output_size
