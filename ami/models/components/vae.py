@@ -1,17 +1,13 @@
-from typing import Callable 
+from typing import Callable
 
 import torch
 import torch.nn as nn
 from torch import Tensor
 from torch.distributions.normal import Normal
-from torch.distributions import Distribution
-
-from .small_conv_net import SmallConvNet
-from .small_deconv_net import SmallDeconvNet
 
 
 class Encoder(nn.Module):
-    def __init__(self, base_model: nn.Module, min_stddev: float=1e-7) -> None:
+    def __init__(self, base_model: nn.Module, min_stddev: float = 1e-7) -> None:
         """Construct encoder for VAE. output channel size of the `base_model`
         is twice the size of the latent space.
 
