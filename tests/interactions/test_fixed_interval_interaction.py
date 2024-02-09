@@ -5,8 +5,11 @@ import pytest
 from ami.interactions.fixed_interval_interaction import FixedIntervalInteraction
 from ami.interactions.interval_adjustors import SleepIntervalAdjustor
 
+from ..helpers import skip_if_platform_is_not_linux
+
 
 class TestFixedIntervalInteraction:
+    @skip_if_platform_is_not_linux()
     @pytest.mark.parametrize("interval", [0.1])
     def test_intervals(self, mock_env, mock_agent, interval: float):
         interaction = FixedIntervalInteraction(
