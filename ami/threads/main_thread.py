@@ -13,13 +13,6 @@ class WebApiHandler:
     """Web API handler class."""
 
     _logger: Logger
-    _registered = False
-
-    def __new__(cls, *args, **kwargs) -> Self:
-        """Make this class a singleton."""
-        if not hasattr(cls, "_instance"):
-            cls._instance = super().__new__(cls)
-        return cls._instance
 
     def __init__(self, controller: ThreadController):
         self._logger = get_main_thread_logger(self.__class__.__name__)
@@ -32,8 +25,6 @@ class WebApiHandler:
 
     def _register_handlers(self) -> None:
         """Register API handlers."""
-        if self._registered:
-            return
 
         bottle.get("/api/status", callback=self._get_status)
         bottle.post("/api/start", callback=self._post_start)
@@ -103,7 +94,6 @@ class WebApiHandler:
 class MainThread(BaseMainThread):
     """Main thread class."""
 
-    _instance: Self
     _logger: Logger
     _controller: ThreadController
     _handler: WebApiHandler
