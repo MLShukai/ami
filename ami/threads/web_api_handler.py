@@ -20,7 +20,7 @@ class WebApiHandler:
 
         self._register_handlers()
 
-    def run(self):
+    def run(self) -> None:
         bottle.run(host=self._host, port=self._port)
 
     def _register_handlers(self) -> None:
