@@ -1,0 +1,47 @@
+root:
+  handlers: [root_console, root_file]
+  level: NOTSET
+
+loggers:
+  main:
+    handlers: [main_file]
+  training:
+    handlers: [training_file]
+  inference:
+    handlers: [inference_file]
+
+handlers:
+  root_console:
+    class: logging.StreamHandler
+    stream: ext://sys.stdout
+    formatter: simple
+
+  root_file:
+    class: logging.handlers.TimedRotatingFileHandler
+    filename: logs/logging_demo/root.log
+    when: D
+    formatter: simple
+
+  main_file:
+    class: logging.handlers.TimedRotatingFileHandler
+    filename: logs/logging_demo/main.log
+    when: D
+    formatter: simple
+
+  training_file:
+    class: logging.handlers.TimedRotatingFileHandler
+    filename: logs/logging_demo/training.log
+    when: D
+    formatter: simple
+
+  inference_file:
+    class: logging.handlers.TimedRotatingFileHandler
+    filename: logs/logging_demo/inference.log
+    when: D
+    formatter: simple
+
+formatters:
+  simple:
+    format: "%(asctime)s %(levelname).4s %(name)-.16s | %(message)s"
+
+version: 1

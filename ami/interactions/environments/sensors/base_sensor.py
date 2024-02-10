@@ -2,7 +2,7 @@
 from abc import ABC, abstractmethod
 from typing import Any, Generic
 
-from .._types import ObsType, WrapperObsType
+from ..._types import ObsType, WrapperObsType
 
 
 class BaseSensor(ABC, Generic[ObsType]):

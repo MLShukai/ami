@@ -10,6 +10,7 @@ python = "^3.11"
 torch = "^2.1.2"
 numpy = "^1.26.2"
 torchvision = "^0.17.0"
+rootutils = "^1.0.7"
 
 
 [tool.poetry.group.dev.dependencies]
@@ -18,6 +19,7 @@ pytest = "^7.4.3"
 pytest-slow = "^0.0.3"
 pytest-mock = "^3.12.0"
 mypy = "^1.8.0"
+types-pyyaml = "^6.0.12.12"
 
 [build-system]
 requires = ["poetry-core"]

@@ -2,7 +2,7 @@
 from abc import ABC, abstractmethod
 from typing import Any, Generic
 
-from ._types import ActType, ObsType
+from .._types import ActType, ObsType
 
 
 class BaseEnvironment(ABC, Generic[ObsType, ActType]):
