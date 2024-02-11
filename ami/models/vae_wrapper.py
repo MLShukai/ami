@@ -1,8 +1,8 @@
 import torch
 import torch.nn as nn
 
-from .components.vae import VAE
 from .model_wrapper import ModelWrapper
+from .vae import VAE
 
 
 class VAEWrapper(ModelWrapper[nn.Module]):

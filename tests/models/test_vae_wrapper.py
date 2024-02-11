@@ -3,7 +3,7 @@ import torch
 
 from ami.models.components.small_conv_net import SmallConvNet
 from ami.models.components.small_deconv_net import SmallDeconvNet
-from ami.models.components.vae import VAE, Decoder, Encoder
+from ami.models.vae import VAE, Decoder, Encoder
 from ami.models.vae_wrapper import VAEWrapper
 
 channels = 3
