@@ -22,6 +22,7 @@ class MainThread(BaseThread):
         self.share_object(
             SharedObjectNames.THREAD_COMMAND_HANDLERS,
             {
+                # TrainingとInference間でHandlerインスタンスを分離。
                 ThreadTypes.TRAINING: ThreadCommandHandler(self.thread_controller),
                 ThreadTypes.INFERENCE: ThreadCommandHandler(self.thread_controller),
             },
