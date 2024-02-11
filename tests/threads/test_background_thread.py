@@ -3,6 +3,7 @@ import time
 import pytest
 
 from ami.threads.background_thread import BackgroundThread
+from ami.threads.thread_control import ThreadCommandHandler
 from ami.threads.thread_types import ThreadTypes
 
 WAIT_TIME = 0.001
@@ -23,6 +24,11 @@ class TestBackgroundThread:
                 THREAD_TYPE = ThreadTypes.MAIN
 
             Error()
+
+    def test_thread_command_handler(self, main_thread, shared_object_pool):
+        bt = BackgroundThreadImpl()
+        bt.attach_shared_object_pool(shared_object_pool)
+        assert isinstance(bt.thread_command_handler, ThreadCommandHandler)
 
     def test_thread_background(self) -> None:
         bt = BackgroundThreadImpl()
