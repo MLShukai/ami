@@ -66,7 +66,7 @@ class WebApiHandler:
         self._registered = True
 
     def _get_status(self) -> PayloadType:
-        status: str = ""
+        status: str
         if self._controller.is_shutdown():
             status = "stopped"
         elif not self._controller.is_resumed():
