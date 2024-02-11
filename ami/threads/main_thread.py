@@ -5,6 +5,7 @@ from .thread_types import ThreadTypes
 
 
 class MainThread(BaseThread):
+    """Implements the main thread functionality within the ami system."""
 
     THREAD_TYPE = ThreadTypes.MAIN
 
@@ -14,6 +15,8 @@ class MainThread(BaseThread):
         self.thread_controller = ThreadController()
 
     def on_shared_object_pool_attached(self) -> None:
+        """Shares the thread command handlers with the training and inference
+        threads."""
         super().on_shared_object_pool_attached()
 
         self.share_object(
@@ -23,3 +26,6 @@ class MainThread(BaseThread):
                 ThreadTypes.INFERENCE: ThreadCommandHandler(self.thread_controller),
             },
         )
+
+    def worker(self) -> None:
+        pass
