@@ -83,7 +83,7 @@ class WebApiHandler:
             status = "active"
 
         self._logger.info(f"_get_status: returning status = {status}")
-        return {"result": "ok", "status": status}
+        return {"status": status}
 
     def _post_pause(self) -> PayloadType:
         self._logger.info("Pausing threads")
