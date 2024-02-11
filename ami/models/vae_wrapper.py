@@ -15,4 +15,5 @@ class VAEWrapper(ModelWrapper[nn.Module]):
         super().__init__(model, default_device=default_device, has_inference=has_inference)
 
     def infer(self, x: torch.Tensor) -> torch.Tensor:
-        return self.model.encoder(x.to(self.device)).rsample()
+        z: torch.Tensor = self.model.encoder(x.to(self.device)).rsample()
+        return z
