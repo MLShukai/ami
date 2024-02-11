@@ -10,9 +10,44 @@ PayloadType: TypeAlias = dict[str, str]
 
 
 class WebApiHandler:
-    """Web API handler class."""
+    """Web API handler class.
+
+    This class provides a simple Web API for controlling the ThreadController.
+
+    Examples:
+        > curl http://localhost:8080/api/status
+        {"status": "active"}
+
+        > curl -I http://localhost:8080/api/status
+        HTTP/1.0 200 OK
+        Date: Thu, 08 Feb 2024 09:40:52 GMT
+        Server: WSGIServer/0.2 CPython/3.11.7
+        Content-Type: application/json
+        Content-Length: 20
+
+        > curl http://localhost:8080/api/shutdown
+        {"error": "Invalid API method"}
+
+        > curl -I http://localhost:8080/api/shutdown
+        HTTP/1.0 405 Method Not Allowed
+        Date: Thu, 08 Feb 2024 09:38:22 GMT
+        Server: WSGIServer/0.2 CPython/3.11.7
+        Allow: POST
+        Content-Type: application/json
+        Content-Length: 31
+
+        > curl -X POST http://localhost:8080/api/shutdown
+        {"result": "ok", "status": "stopped"}
+    """
 
     def __init__(self, controller: ThreadController, host: str = "localhost", port: int = 8080) -> None:
+        """Initialize the WebApiHandler.
+
+        Args:
+            controller: ThreadController object to control.
+            host: Hostname to run the API server on.
+            port: Port to run the API server on.
+        """
         self._logger = get_main_thread_logger(self.__class__.__name__)
         self._controller = controller
         self._host = host
@@ -21,6 +56,7 @@ class WebApiHandler:
         self._register_handlers()
 
     def run(self) -> None:
+        """Run the API server."""
         bottle.run(host=self._host, port=self._port)
 
     def _register_handlers(self) -> None:
