@@ -23,11 +23,11 @@ class BaseThread(ABC):
 
     def __init__(self) -> None:
         """Constructs the class and sets the logger."""
-        self.logger = get_thread_logger(self.THREAD_TYPE, self.__class__.__name__)
 
-    def __init_subclass__(cls) -> None:
-        if not hasattr(cls, "THREAD_TYPE"):
+        if not hasattr(self, "THREAD_TYPE"):
             raise NotImplementedError("Thread class must define `THREAD_TYPE` attribute.")
+
+        self.logger = get_thread_logger(self.THREAD_TYPE, self.__class__.__name__)
 
     def worker(self) -> None:
         """The program for this thread.

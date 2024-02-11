@@ -28,8 +28,10 @@ class TestBaseThread:
     def test_not_implemented_thread_type(self) -> None:
         with pytest.raises(NotImplementedError):
 
-            class _(BaseThread):
+            class T(BaseThread):
                 pass
+
+            T()
 
     def test_run(self, caplog: pytest.LogCaptureFixture):
         t = ThreadImplWithError()
