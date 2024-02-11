@@ -1,12 +1,59 @@
 """This file contains the abstract base agent class."""
 from abc import ABC, abstractmethod
-from typing import Generic, TypeVar
+from typing import Generic
 
+import torch.nn as nn
+
+from ...data.utils import DataCollector, DataCollectorsDict
+from ...models.utils import InferenceWrapper, InferenceWrappersDict
 from .._types import ActType, ObsType
 
 
 class BaseAgent(ABC, Generic[ObsType, ActType]):
-    """Abstract base agent class for communicating with the environment."""
+    """Abstract base agent class for interacting with the environment.
+
+    Methods to override:
+        - `on_inference_models_attached`: Retrieves inference models for the agent.
+        - `step`: Processes an observation from the environment and returns an action.
+
+    NOTE: The `data_collectors` attribute is initialized and available before the `setup` method is called.
+    """
+
+    _inference_models: InferenceWrappersDict
+    data_collectors: DataCollectorsDict
+
+    def attach_inference_models(self, inference_models: InferenceWrappersDict) -> None:
+        """Attaches the inference models (wrappers dict) to this agent."""
+        self._inference_models = inference_models
+        self.on_inference_models_attached()
+
+    def on_inference_models_attached(self) -> None:
+        """Callback method for when infernece models are attached to the agent.
+
+        Override this method to retrieve DNN models for inference. Use
+        `get_inference_model` to retrieve a model.
+        """
+        pass
+
+    def attach_data_collectors(self, data_collectors: DataCollectorsDict) -> None:
+        """Attaches the data collectors (dict) to this agent."""
+        self._data_collectors = data_collectors
+        self.on_data_collectors_attached()
+
+    def on_data_collectors_attached(self) -> None:
+        """Callback method for when data collectors are attached to this
+        agent."""
+        pass
+
+    def get_inference_model(self, name: str) -> InferenceWrapper[nn.Module]:
+        if name not in self._inference_models:
+            raise KeyError(f"The specified model name '{name}' does not exist.")
+        return self._inference_models[name]
+
+    def get_data_collector(self, name: str) -> DataCollector:
+        if name not in self.data_collectors:
+            raise KeyError(f"The specified data collector name '{name}' does not exist.")
+        return self.data_collectors[name]
 
     @abstractmethod
     def step(self, observation: ObsType) -> ActType:
