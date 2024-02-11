@@ -11,6 +11,8 @@ torch = "^2.1.2"
 numpy = "^1.26.2"
 torchvision = "^0.17.0"
 rootutils = "^1.0.7"
+bottle = "^0.12.25"
+webtest = "^3.0.0"
 
 
 [tool.poetry.group.dev.dependencies]
