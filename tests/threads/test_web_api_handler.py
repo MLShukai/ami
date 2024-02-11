@@ -1,7 +1,7 @@
-import pytest
-# import app
 from typing import Generator
+
 import bottle
+import pytest
 from webtest import TestApp
 
 from ami.threads.thread_control import ThreadController
@@ -20,12 +20,10 @@ class TestWebApiHandler:
 
         app.reset()
 
-
     def test_get_status(self, app: TestApp) -> None:
         response = app.get("http://localhost:8080/api/status")
         assert response.status_code == 200
         assert response.json == {"status": "active"}
-
 
     def test_post_pause_resume(self, app: TestApp) -> None:
         response = app.get("http://localhost:8080/api/status")
