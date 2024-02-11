@@ -15,27 +15,19 @@ class WebApiHandler:
     This class provides a simple Web API for controlling the ThreadController.
 
     Examples:
+        GET /api/status: Get the status of the system.
         > curl http://localhost:8080/api/status
-        {"status": "active"}
+        {"status": "active"} # or "paused" or "stopped"
 
-        > curl -I http://localhost:8080/api/status
-        HTTP/1.0 200 OK
-        Date: Thu, 08 Feb 2024 09:40:52 GMT
-        Server: WSGIServer/0.2 CPython/3.11.7
-        Content-Type: application/json
-        Content-Length: 20
+        POST /api/pause: Pause the system. (status: active -> paused)
+        > curl -X POST http://localhost:8080/api/pause
+        {"result": "ok", "status": "paused"}
 
-        > curl http://localhost:8080/api/shutdown
-        {"error": "Invalid API method"}
+        POST /api/resume: Resume the system. (status: paused -> active)
+        > curl -X POST http://localhost:8080/api/resume
+        {"result": "ok", "status": "active"}
 
-        > curl -I http://localhost:8080/api/shutdown
-        HTTP/1.0 405 Method Not Allowed
-        Date: Thu, 08 Feb 2024 09:38:22 GMT
-        Server: WSGIServer/0.2 CPython/3.11.7
-        Allow: POST
-        Content-Type: application/json
-        Content-Length: 31
-
+        POST /api/shutdown: Shutdown the system. (status: active or paused -> stopped)
         > curl -X POST http://localhost:8080/api/shutdown
         {"result": "ok", "status": "stopped"}
     """
