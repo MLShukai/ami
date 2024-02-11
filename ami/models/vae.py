@@ -5,6 +5,8 @@ import torch.nn as nn
 from torch import Tensor
 from torch.distributions.normal import Normal
 
+from .model_wrapper import ModelWrapper
+
 
 class Encoder(nn.Module):
     def __init__(self, base_model: nn.Module, min_stddev: float = 1e-7) -> None:
@@ -59,3 +61,9 @@ class VAE(nn.Module):
         z_sampled = z_dist.rsample()
         x_reconstructed = self.decoder(z_sampled)
         return x_reconstructed, z_dist
+
+
+class EncoderWrapper(ModelWrapper[Encoder]):
+    def infer(self, x: torch.Tensor) -> torch.Tensor:
+        z: torch.Tensor = self.model.forward(x.to(self.device)).rsample()
+        return z
