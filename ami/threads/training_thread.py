@@ -2,6 +2,6 @@ from .background_thread import BackgroundThread
 from .thread_types import ThreadTypes
 
 
-class TrainingnThread(BackgroundThread):
+class TrainingThread(BackgroundThread):
 
     THREAD_TYPE = ThreadTypes.TRAINING
