@@ -1,8 +1,16 @@
 import threading
 from collections import OrderedDict
+from enum import StrEnum, auto
 from typing import Any
 
 from .thread_types import ThreadTypes
+
+
+class SharedObjectNames(StrEnum):
+    """Enumerates shared object names for the purpose of registering and
+    retrieving shared objects within a system."""
+
+    THREAD_COMMAND_HANDLERS = auto()
 
 
 class SharedObjectPool:
