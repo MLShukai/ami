@@ -1,6 +1,6 @@
 import logging
 
-from .threads.base_threads import ThreadTypes
+from .threads.thread_types import ThreadTypes
 
 # Integration with the `warning` module.
 # https://docs.python.org/3.11/library/logging.html#integration-with-the-warnings-module
