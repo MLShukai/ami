@@ -1,6 +1,8 @@
 from abc import ABC
+from typing import Any
 
 from ..logger import get_thread_logger
+from .shared_object_pool import SharedObjectPool
 from .thread_types import ThreadTypes
 
 
@@ -14,6 +16,7 @@ class BaseThread(ABC):
     """
 
     THREAD_TYPE: ThreadTypes
+    _shared_object_pool: SharedObjectPool
 
     def __init__(self) -> None:
         """Constructs the class and sets the logger."""
@@ -43,3 +46,29 @@ class BaseThread(ABC):
         except Exception:
             self.logger.exception("An exception occurred in the worker thread.")
             raise
+
+    def attach_shared_object_pool(self, shared_object_pool: SharedObjectPool) -> None:
+        self._shared_object_pool = shared_object_pool
+        self.on_shared_object_pool_attached()
+
+    def on_shared_object_pool_attached(self) -> None:
+        """For sharing objects, please override this callback and use
+        `share_object` method."""
+
+    def share_object(self, name: str, obj: Any) -> None:
+        """Shares object to other threads.
+
+        Args:
+            name: Object name.
+            obj: Actual object.
+        """
+        self._shared_object_pool.register(self.THREAD_TYPE, name, obj)
+
+    def get_shared_object(self, shared_from: ThreadTypes, name: str) -> Any:
+        """Gets the shared object.
+
+        Args:
+            shared_from: The thread type that shared the object to be retrieved.
+            name: Object name.
+        """
+        return self._shared_object_pool.get(shared_from, name)
