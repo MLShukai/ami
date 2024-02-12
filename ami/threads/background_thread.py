@@ -12,8 +12,6 @@ class BackgroundThread(BaseThread):
     The `THREAD_TYPE` attribute must not be set to `ThreadType.MAIN`.
     """
 
-    _thread_command_handler: ThreadCommandHandler | None = None
-
     def __init__(self) -> None:
         super().__init__()
         self._thread = threading.Thread(target=self.run)
