@@ -1,7 +1,6 @@
 import threading
 
 from .base_thread import BaseThread
-from .thread_control import ThreadCommandHandler
 from .thread_types import ThreadTypes
 
 
@@ -10,8 +9,6 @@ class BackgroundThread(BaseThread):
 
     The `THREAD_TYPE` attribute must not be set to `ThreadType.MAIN`.
     """
-
-    _thread_command_handler: ThreadCommandHandler | None = None
 
     def __init__(self) -> None:
         super().__init__()
