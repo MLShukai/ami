@@ -37,7 +37,7 @@ class BaseAgent(ABC, Generic[ObsType, ActType]):
 
     def attach_data_collectors(self, data_collectors: DataCollectorsDict) -> None:
         """Attaches the data collectors (dict) to this agent."""
-        self._data_collectors = data_collectors
+        self.data_collectors = data_collectors
         self.on_data_collectors_attached()
 
     def on_data_collectors_attached(self) -> None:

@@ -5,7 +5,7 @@ import torch
 from ami.data.step_data import DataKeys, StepData
 from ami.data.utils import DataCollectorsDict, DataUsersDict
 from ami.models.model_wrapper import ModelWrapper
-from ami.models.utils import ModelWrappersDict
+from ami.models.utils import InferenceWrappersDict, ModelWrappersDict
 from tests.helpers import DataBufferImpl, ModelMultiplyP, get_gpu_device
 
 
@@ -32,6 +32,11 @@ def model_wrappers_dict(gpu_device: torch.device | None) -> ModelWrappersDict:
     )
     d.send_to_default_device()
     return d
+
+
+@pytest.fixture
+def inference_wrappers_dict(model_wrappers_dict: ModelWrappersDict) -> InferenceWrappersDict:
+    return model_wrappers_dict.inference_wrappers_dict
 
 
 @pytest.fixture
