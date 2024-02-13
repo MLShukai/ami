@@ -1,6 +1,6 @@
 from .base_thread import BaseThread
 from .shared_object_pool import SharedObjectNames
-from .thread_control import ThreadCommandHandler, ThreadController
+from .thread_control import ThreadController
 from .thread_types import ThreadTypes
 
 
