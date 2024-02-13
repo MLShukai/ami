@@ -19,4 +19,4 @@ class MainThread(BaseThread):
         threads."""
         super().on_shared_object_pool_attached()
 
-        self.share_object(SharedObjectNames.THREAD_COMMAND_HANDLERS, self.thread_controller.create_handlers())
+        self.share_object(SharedObjectNames.THREAD_COMMAND_HANDLERS, self.thread_controller.handlers)

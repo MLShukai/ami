@@ -14,6 +14,10 @@ class ThreadController:
         self._shutdown_event = threading.Event()
         self._resume_event = threading.Event()  # For pause and resume.
 
+        # Training Thread とInference Thread 間でHandlerインスタンスを分離。
+        self.training_handler = ThreadCommandHandler(self)
+        self.inference_handler = ThreadCommandHandler(self)
+
         self.activate()
         self.resume()  # default resume.
 
@@ -53,13 +57,13 @@ class ThreadController:
         """
         return self._resume_event.wait(timeout)
 
-    def create_handlers(self) -> dict[ThreadTypes, ThreadCommandHandler]:
-        """Creates the thread command handler instances for the training and
-        inference thread."""
+    @property
+    def handlers(self) -> dict[ThreadTypes, ThreadCommandHandler]:
+        """Creates the thread command handlers dict for registering to shared
+        object pool."""
         handlers = {
-            # Training Thread とInference Thread 間でHandlerインスタンスを分離。
-            ThreadTypes.TRAINING: ThreadCommandHandler(self),
-            ThreadTypes.INFERENCE: ThreadCommandHandler(self),
+            ThreadTypes.TRAINING: self.training_handler,
+            ThreadTypes.INFERENCE: self.inference_handler,
         }
         return handlers
 

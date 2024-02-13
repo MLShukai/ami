@@ -94,7 +94,7 @@ def test_manage_loop() -> None:
 
 def test_create_handlers():
     controller = ThreadController()
-    handlers = controller.create_handlers()
+    handlers = controller.handlers
     assert ThreadTypes.MAIN not in handlers
     assert ThreadTypes.TRAINING in handlers
     assert ThreadTypes.INFERENCE in handlers
