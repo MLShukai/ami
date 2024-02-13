@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import threading
 
+from .thread_types import ThreadTypes
+
 
 class ThreadController:
     """The controller class for sending commands from the main thread to
@@ -50,6 +52,16 @@ class ThreadController:
             bool: True if the event was set (resumed) before the timeout, False otherwise (timed out).
         """
         return self._resume_event.wait(timeout)
+
+    def create_handlers(self) -> dict[ThreadTypes, ThreadCommandHandler]:
+        """Creates the thread command handler instances for the training and
+        inference thread."""
+        handlers = {
+            # Training Thread とInference Thread 間でHandlerインスタンスを分離。
+            ThreadTypes.TRAINING: ThreadCommandHandler(self),
+            ThreadTypes.INFERENCE: ThreadCommandHandler(self),
+        }
+        return handlers
 
 
 class ThreadCommandHandler:

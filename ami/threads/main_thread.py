@@ -19,11 +19,4 @@ class MainThread(BaseThread):
         threads."""
         super().on_shared_object_pool_attached()
 
-        self.share_object(
-            SharedObjectNames.THREAD_COMMAND_HANDLERS,
-            {
-                # Training Thread とInference Thread 間でHandlerインスタンスを分離。
-                ThreadTypes.TRAINING: ThreadCommandHandler(self.thread_controller),
-                ThreadTypes.INFERENCE: ThreadCommandHandler(self.thread_controller),
-            },
-        )
+        self.share_object(SharedObjectNames.THREAD_COMMAND_HANDLERS, self.thread_controller.create_handlers())
