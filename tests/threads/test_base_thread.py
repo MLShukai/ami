@@ -3,23 +3,27 @@ import logging
 import pytest
 
 from ami.threads.background_thread import BackgroundThread
-from ami.threads.base_thread import BaseThread
-from ami.threads.shared_object_pool import SharedObjectPool
+from ami.threads.base_thread import BaseThread, attach_shared_objects_pool_to_threads
 from ami.threads.thread_types import ThreadTypes
 
 
 class MainThreadImpl(BaseThread):
     THREAD_TYPE = ThreadTypes.MAIN
 
+    def __init__(self) -> None:
+        super().__init__()
+        self.share_object("a", "object")
+
     def worker(self) -> None:
         self.logger.info("worker")
-
-    def on_shared_object_pool_attached(self) -> None:
-        self.share_object("a", "object")
 
 
 class TrainingThreadImpl(BackgroundThread):
     THREAD_TYPE = ThreadTypes.TRAINING
+
+    def on_shared_objects_pool_attached(self) -> None:
+        super().on_shared_objects_pool_attached()
+        self.a = self.get_shared_object(ThreadTypes.MAIN, "a")
 
 
 class ThreadImplWithError(BaseThread):
@@ -47,12 +51,18 @@ class TestBaseThread:
         assert e.message == "An exception occurred in the worker thread."
         assert e.levelno == logging.ERROR
 
-    def test_object_sharing(self):
-        mt = MainThreadImpl()
-        tt = TrainingThreadImpl()
 
-        sop = SharedObjectPool()
-        mt.attach_shared_object_pool(sop)
-        tt.attach_shared_object_pool(sop)
+def test_attach_shared_objects_pool_to_threads():
+    mt = MainThreadImpl()
+    tt = TrainingThreadImpl()
 
-        assert tt.get_shared_object(ThreadTypes.MAIN, "a") == "object"
+    with pytest.raises(AttributeError):
+        tt.a
+
+    attach_shared_objects_pool_to_threads(mt, tt)
+
+    assert tt.a == "object"
+
+    # Test duplication detection.
+    with pytest.raises(RuntimeError):
+        attach_shared_objects_pool_to_threads(tt, tt)
