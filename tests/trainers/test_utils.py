@@ -21,6 +21,10 @@ class TestTrainersList:
         assert trainers.get_next_trainer() is trainer1
         assert trainers.get_next_trainer() is trainer2
 
+        with pytest.raises(RuntimeError):
+            empty_trainers = TrainersList()
+            empty_trainers.get_next_trainer()
+
     def test_attach_model_wrappers_dict(self, model_wrappers_dict):
         trainer1 = TrainerImpl()
         trainer2 = TrainerImpl()
