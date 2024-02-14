@@ -1,5 +1,3 @@
-from typing import Any
-
 from ..data.utils import DataUsersDict
 from ..models.utils import ModelWrappersDict
 from .base_trainer import BaseTrainer
