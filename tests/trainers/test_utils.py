@@ -6,10 +6,6 @@ from .test_base_trainer import TrainerImpl
 
 
 class TestTrainersList:
-    @pytest.fixture
-    def trainers(self, model_wrappers_dict, data_users_dict) -> TrainersList:
-        trainers = TrainersList([TrainerImpl(), TrainerImpl()])
-
     def test_get_next_trainer(self):
         trainer1 = TrainerImpl()
         trainer2 = TrainerImpl()
