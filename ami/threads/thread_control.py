@@ -14,9 +14,13 @@ class ThreadController:
         self._shutdown_event = threading.Event()
         self._resume_event = threading.Event()  # For pause and resume.
 
-        # Training Thread とInference Thread 間でHandlerインスタンスを分離。
-        self.training_handler = ThreadCommandHandler(self)
-        self.inference_handler = ThreadCommandHandler(self)
+        # Thread間でHandlerインスタンスを分離。
+        self.handlers: dict[ThreadTypes, ThreadCommandHandler] = dict()
+        for thread_type in ThreadTypes:
+            if thread_type is ThreadTypes.MAIN:
+                continue
+
+            self.handlers[thread_type] = ThreadCommandHandler(self)
 
         self.activate()
         self.resume()  # default resume.
@@ -56,16 +60,6 @@ class ThreadController:
             bool: True if the event was set (resumed) before the timeout, False otherwise (timed out).
         """
         return self._resume_event.wait(timeout)
-
-    @property
-    def handlers(self) -> dict[ThreadTypes, ThreadCommandHandler]:
-        """Creates the thread command handlers dict for registering to shared
-        object pool."""
-        handlers = {
-            ThreadTypes.TRAINING: self.training_handler,
-            ThreadTypes.INFERENCE: self.inference_handler,
-        }
-        return handlers
 
 
 class ThreadCommandHandler:
