@@ -3,7 +3,6 @@ import time
 import pytest
 
 from ami.threads.background_thread import BackgroundThread
-from ami.threads.shared_object_pool import SharedObjectPool
 from ami.threads.thread_control import ThreadCommandHandler
 from ami.threads.thread_types import ThreadTypes
 
@@ -40,7 +39,7 @@ class TestBackgroundThread:
         assert time.perf_counter() - start_time > WAIT_TIME
 
     def test_thread_command_handler(self):
-        _, _, it, tt = setup_threads()
+        _, it, tt = setup_threads()
         assert isinstance(it.thread_command_handler, ThreadCommandHandler)
         assert isinstance(tt.thread_command_handler, ThreadCommandHandler)
         assert it.thread_command_handler is not tt.thread_command_handler, "must be other instance."

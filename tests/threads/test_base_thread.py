@@ -2,7 +2,6 @@ import logging
 
 import pytest
 
-from ami.threads.background_thread import BackgroundThread
 from ami.threads.base_thread import BaseThread, attach_shared_objects_pool_to_threads
 from ami.threads.thread_types import ThreadTypes
 
@@ -18,8 +17,8 @@ class MainThreadImpl(BaseThread):
         self.logger.info("worker")
 
 
-class TrainingThreadImpl(BackgroundThread):
-    THREAD_TYPE = ThreadTypes.TRAINING
+class OtherThreadImpl(BaseThread):
+    THREAD_TYPE = ThreadTypes.TRAINING  # 適当に
 
     def on_shared_objects_pool_attached(self) -> None:
         super().on_shared_objects_pool_attached()
@@ -54,7 +53,7 @@ class TestBaseThread:
 
 def test_attach_shared_objects_pool_to_threads():
     mt = MainThreadImpl()
-    tt = TrainingThreadImpl()
+    tt = OtherThreadImpl()
 
     with pytest.raises(AttributeError):
         tt.a
