@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import threading
 
-from .thread_types import ThreadTypes
+from .thread_types import BACKGROUND_THREAD_TYPES, ThreadTypes
 
 
 class ThreadController:
@@ -16,10 +16,7 @@ class ThreadController:
 
         # Thread間でHandlerインスタンスを分離。
         self.handlers: dict[ThreadTypes, ThreadCommandHandler] = dict()
-        for thread_type in ThreadTypes:
-            if thread_type is ThreadTypes.MAIN:
-                continue
-
+        for thread_type in BACKGROUND_THREAD_TYPES:
             self.handlers[thread_type] = ThreadCommandHandler(self)
 
         self.activate()
