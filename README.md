@@ -24,6 +24,8 @@
 
 ### VRChatとの連携
 
+NOTE: VRChatとやりとりを行わない場合はこの手順は不要である。
+
 [vrchat-ioのドキュメンテーション](https://github.com/Geson-anko/vrchat-io?tab=readme-ov-file#vrchat)を参考に、VRChatやOBSをインストールする。
 
 NVIDIA Driver の **バージョン 525以下**ではSteamが正常に動作しないため注意してください。(提供されている最新の安定版Driverを使うこと。)
