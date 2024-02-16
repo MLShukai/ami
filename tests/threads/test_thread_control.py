@@ -7,7 +7,11 @@ import copy
 import threading
 import time
 
-from ami.threads.thread_control import ThreadCommandHandler, ThreadController
+from ami.threads.thread_control import (
+    ThreadCommandHandler,
+    ThreadController,
+    ThreadTypes,
+)
 
 
 class Counter:
@@ -86,3 +90,11 @@ def test_manage_loop() -> None:
     controller.shutdown()
 
     thread.join()
+
+
+def test_create_handlers():
+    controller = ThreadController()
+    handlers = controller.handlers
+    assert ThreadTypes.MAIN not in handlers
+    assert ThreadTypes.TRAINING in handlers
+    assert ThreadTypes.INFERENCE in handlers

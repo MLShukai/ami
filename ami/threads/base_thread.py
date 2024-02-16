@@ -12,10 +12,11 @@ SharedObjectsPoolType: TypeAlias = OrderedDict[ThreadTypes, SharedObjectsDictTyp
 class BaseThread(ABC):
     """Base class for all thread objects.
 
-    Subclasses must define `THREAD_TYPE` as a class attribute. Implement the `worker` method to specify thread behavior.
-
     You must define the `THREAD_TYPE` attribute in the subclass's class field.
     Override the :meth:`worker` method for the thread's program.
+
+    Use `share_object` in the constructor to share objects between threads.
+    Override `on_shared_object_pool_attached` and use `get_shared_object` to retrieve shared objects.
 
     NOTE: Cannot create multiple threads of the same type due to competition in the value sharing namespace.
     """
@@ -63,7 +64,8 @@ class BaseThread(ABC):
     def on_shared_objects_pool_attached(self) -> None:
         """Callback for when the shared object pool is attached.
 
-        Override for custom behavior.
+        Override for custom behavior. Use `get_shared_object` to
+        retrieve shared objects.
         """
 
     def share_object(self, name: str, obj: Any) -> None:
