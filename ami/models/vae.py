@@ -1,3 +1,4 @@
+from abc import ABC, abstractmethod
 from typing import Callable
 
 import torch
@@ -5,42 +6,52 @@ import torch.nn as nn
 from torch import Tensor
 from torch.distributions.normal import Normal
 
+from .components.small_conv_net import SmallConvNet
+from .components.small_deconv_net import SmallDeconvNet
 from .model_wrapper import ModelWrapper
 
 
-class Encoder(nn.Module):
-    def __init__(self, base_model: nn.Module, min_stddev: float = 1e-7) -> None:
-        """Construct encoder for VAE. output channel size of the `base_model`
-        is twice the size of the latent space.
-
-        Args:
-            base_model (nn.Module): The base convolutional neural network model for encoding.
-            min_stddev (float, optional): Small value added to stddev for preventing stddev from being zero. Defaults to 1e-7.
-        """
+class Encoder(ABC, nn.Module):
+    def __init__(self) -> None:
         super().__init__()
-        self.conv_net = base_model
-        self.min_stddev = min_stddev
+
+    @abstractmethod
+    def forward(self, x: Tensor) -> Normal:
+        raise NotImplementedError
+
+
+class Decoder(ABC, nn.Module):
+    def __init__(self) -> None:
+        super().__init__()
+
+    @abstractmethod
+    def forward(self, x: Tensor) -> Tensor:
+        raise NotImplementedError
+
+
+class Conv2dEncoder(Encoder):
+    def __init__(self, height: int, width: int, channels: int, latent_dim: int) -> None:
+        super().__init__()
+        self.conv_net = SmallConvNet(height, width, channels, latent_dim)
+        self.linear_mu = nn.Linear(latent_dim, latent_dim)
+        self.linear_sigma = nn.Linear(latent_dim, latent_dim)
 
     def forward(self, x: Tensor) -> Normal:
-        mu_sigma = self.conv_net(x)
-        mu, sigma = torch.chunk(mu_sigma, chunks=2, dim=-1)
-        sigma = torch.nn.functional.softplus(sigma) + self.min_stddev
+        latent = self.conv_net(x)
+        mu = self.linear_mu(latent)
+        sigma = self.linear_sigma(latent)
+        sigma = torch.nn.functional.softplus(sigma) + 1e-7
         distribution = Normal(mu, sigma)
         return distribution
 
 
-class Decoder(nn.Module):
-    def __init__(self, base_model: Callable[[Tensor], Tensor]):
-        """Construct decoder for VAE.
-
-        Args:
-            base_model (nn.Module): base_model (nn.Module): The base convolutional neural network model for decoding.
-        """
+class Conv2dDecoder(Decoder):
+    def __init__(self, height: int, width: int, channels: int, latent_dim: int) -> None:
         super().__init__()
-        self.deconv_net = base_model
+        self.deconv_net = SmallDeconvNet(height, width, channels, latent_dim)
 
     def forward(self, z: Tensor) -> Tensor:
-        rec_img = self.deconv_net(z)
+        rec_img: Tensor = self.deconv_net(z)
         return rec_img
 
 
