@@ -2,6 +2,26 @@
 
 ## 開発環境セットアップ
 
+### ベースシステム
+
+ハードウェア要件
+
+- Intel / AMD の64bit CPU
+- GPU: NVIDIA GPU. (AMD Radeonでも技術的には対応可能だと思われる。未検証)
+- HD 以上の画質の ディスプレイ (VRChatの起動のため。)
+
+ソフトウェア要件
+
+- Linux OS, 特に Ubuntu 22.04 LTS. (他のLinux OSでも依存アプリケーション (VRChatなど) が正常にインストールできれば問題ないだろう。)
+
+  NOTE: **VRChatやOBSを起動するためにはDesktop環境が必須**
+
+- 最新かつ安定版 NVIDIA Driver (2024/02/16 時点では **version 535**)
+
+  Ubuntuの場合は `sudo ubuntu-drivers install`でハードウェアに最も適したドライバーが自動でインストールされる。
+
+  参考: <https://ubuntu.com/server/docs/nvidia-drivers-installation>
+
 ### VRChatとの連携
 
 [vrchat-ioのドキュメンテーション](https://github.com/Geson-anko/vrchat-io?tab=readme-ov-file#vrchat)を参考に、VRChatやOBSをインストールする。
