@@ -12,18 +12,12 @@ from .model_wrapper import ModelWrapper
 
 
 class Encoder(ABC, nn.Module):
-    def __init__(self) -> None:
-        super().__init__()
-
     @abstractmethod
     def forward(self, x: Tensor) -> Normal:
         raise NotImplementedError
 
 
 class Decoder(ABC, nn.Module):
-    def __init__(self) -> None:
-        super().__init__()
-
     @abstractmethod
     def forward(self, x: Tensor) -> Tensor:
         raise NotImplementedError
