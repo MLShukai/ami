@@ -5,7 +5,9 @@ from omegaconf import DictConfig
 
 from ami.logger import get_main_thread_logger
 
-PROJECT_ROOT = rootutils.setup_root(__file__, indicator=".project-root", pythonpath=True)
+# Add the project root path to environment vartiable `PROJECT_ROOT`
+# to refer in the config file by `${oc.env:PROJECT_ROOT}`.
+rootutils.setup_root(__file__, indicator=".project-root", pythonpath=True)
 
 logger = get_main_thread_logger(__name__)
 
