@@ -1,0 +1,58 @@
+# https://github.com/ashleve/lightning-hydra-template/blob/main/configs/hydra/default.yaml
+
+# https://hydra.cc/docs/configure_hydra/intro/
+
+# enable color logging
+defaults:
+  - override hydra_logging: colorlog
+  - override job_logging: colorlog
+
+# output directory, generated dynamically on each run
+run:
+  dir: ${paths.log_dir}/${task_name}/runs/${now:%Y-%m-%d}_${now:%H-%M-%S}
+sweep:
+  dir: ${paths.log_dir}/${task_name}/multiruns/${now:%Y-%m-%d}_${now:%H-%M-%S}
+  subdir: ${hydra.job.num}
+
+job_logging:
+  root:
+    handlers: [root_console, root_file]
+    level: INFO
+
+  loggers:
+    main:
+      handlers: [main_file]
+    training:
+      handlers: [training_file]
+    inference:
+      handlers: [inference_file]
+
+  handlers:
+    root_console:
+      class: logging.StreamHandler
+      stream: ext://sys.stdout
+      formatter: colorlog
+
+    root_file:
+      class: logging.handlers.TimedRotatingFileHandler
+      filename: ${hydra.runtime.output_dir}/root.log
+      when: D
+      formatter: simple
+
+    main_file:
+      class: logging.handlers.TimedRotatingFileHandler
+      filename: ${hydra.runtime.output_dir}/main.log
+      when: D
+      formatter: simple
+
+    training_file:
+      class: logging.handlers.TimedRotatingFileHandler
+      filename: ${hydra.runtime.output_dir}/training.log
+      when: D
+      formatter: simple
+
+    inference_file:
+      class: logging.handlers.TimedRotatingFileHandler
+      filename: ${hydra.runtime.output_dir}/inference.log
+      when: D
+      formatter: simple
