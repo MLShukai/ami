@@ -24,6 +24,7 @@ class RandomDataBuffer(BaseDataBuffer):
         if self.__current_len < self.__max_len:
             for key in self.__key_list:
                 self.__buffer_dict[key].append(step_data[key])
+            self.__current_len += 1
         else:
             replace_index = np.random.randint(0, self.__max_len)
             for key in self.__key_list:
