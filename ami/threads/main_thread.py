@@ -30,6 +30,10 @@ class MainThread(BaseThread):
 
     def worker(self) -> None:
         self.logger.info("Start main thread.")
+        self.thread_controller.activate()
+
         self.logger.info(f"Serving system command at '{self._host}:{self._port}'")
         self.web_api_handler.run()
+
+        self.thread_controller.shutdown()
         self.logger.info("End main thread.")
