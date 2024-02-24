@@ -33,7 +33,7 @@ class MainThread(BaseThread):
         self.thread_controller.activate()
 
         self.logger.info(f"Serving system command at '{self._host}:{self._port}'")
-        self.web_api_handler.run()
+        self.web_api_handler.run()  # Blocks until KeyboardInterrupt.
 
         self.thread_controller.shutdown()
         self.logger.info("End main thread.")
