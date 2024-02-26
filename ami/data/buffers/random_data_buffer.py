@@ -15,8 +15,8 @@ class RandomDataBuffer(BaseDataBuffer):
         """Initializes data buffer.
 
         Args:
-            max_len (int): max length of buffer.
-            key_list (list[DataKeys]): a list of keys to save whose values to buffer.
+            max_len: max length of buffer.
+            key_list: a list of keys to save whose values to buffer.
         """
         self.__max_len = max_len
         self.__current_len = 0
@@ -37,7 +37,7 @@ class RandomDataBuffer(BaseDataBuffer):
         """Add a single step of data.
 
         Args:
-            step_data (StepData): A single step of data.
+            step_data: A single step of data.
         """
         if self.__current_len < self.__max_len:
             for key in self.__key_list:
@@ -56,7 +56,7 @@ class RandomDataBuffer(BaseDataBuffer):
         """Concatenates another buffer to this buffer.
 
         Args:
-            new_data (RandomDataBuffer): A buffer to concatenate.
+            new_data: A buffer to concatenate.
         """
         for i in range(len(new_data)):
             step_data = StepData()
