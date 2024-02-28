@@ -6,8 +6,6 @@ from ami.threads.background_thread import BackgroundThread
 from ami.threads.thread_control import ThreadCommandHandler
 from ami.threads.thread_types import ThreadTypes
 
-from .helpers import setup_threads
-
 WAIT_TIME = 0.001
 
 
