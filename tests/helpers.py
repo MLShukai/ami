@@ -9,6 +9,7 @@ from torch.utils.data import TensorDataset
 
 from ami.data.buffers.base_data_buffer import BaseDataBuffer
 from ami.data.step_data import DataKeys, StepData
+from ami.interactions.agents.base_agent import BaseAgent
 from ami.models.model_wrapper import ModelWrapper
 from ami.trainers.base_trainer import BaseTrainer
 
@@ -71,3 +72,14 @@ class TrainerImpl(BaseTrainer):
         data = dataset[0][0]
         self.model1(data)
         self.model2(data)
+
+
+class AgentImpl(BaseAgent[str, str]):
+    def on_inference_models_attached(self) -> None:
+        self.model1 = self.get_inference_model("model1")
+
+    def on_data_collectors_attached(self) -> None:
+        self.data_collector1 = self.get_data_collector("buffer1")
+
+    def step(self, observation: str) -> str:
+        return "action"
