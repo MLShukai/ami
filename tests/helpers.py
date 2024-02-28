@@ -10,6 +10,7 @@ from torch.utils.data import TensorDataset
 from ami.data.buffers.base_data_buffer import BaseDataBuffer
 from ami.data.step_data import DataKeys, StepData
 from ami.interactions.agents.base_agent import BaseAgent
+from ami.interactions.environments.base_environment import BaseEnvironment
 from ami.models.model_wrapper import ModelWrapper
 from ami.trainers.base_trainer import BaseTrainer
 
@@ -83,3 +84,11 @@ class AgentImpl(BaseAgent[str, str]):
 
     def step(self, observation: str) -> str:
         return "action"
+
+
+class EnvironmentImpl(BaseEnvironment[str, str]):
+    def observe(self) -> str:
+        return "observation"
+
+    def affect(self, action: str) -> None:
+        pass
