@@ -38,8 +38,8 @@ class TestBackgroundThread:
         bt.join()
         assert time.perf_counter() - start_time > WAIT_TIME
 
-    def test_thread_command_handler(self):
-        _, it, tt = setup_threads()
+    def test_thread_command_handler(self, thread_objects):
+        _, it, tt = thread_objects
         assert isinstance(it.thread_command_handler, ThreadCommandHandler)
         assert isinstance(tt.thread_command_handler, ThreadCommandHandler)
         assert it.thread_command_handler is not tt.thread_command_handler, "must be other instance."
