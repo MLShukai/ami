@@ -58,6 +58,11 @@ class ThreadController:
         """
         return self._resume_event.wait(timeout)
 
+    def wait_for_shutdown(self, timeout: float = 1.0) -> bool:
+        """Waits for the shutdown event or times out after `timeout`
+        seconds."""
+        return self._shutdown_event.wait(timeout)
+
 
 class ThreadCommandHandler:
     """Handles commands for thread management, facilitating communication and
