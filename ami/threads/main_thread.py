@@ -1,3 +1,4 @@
+import threading
 from typing import TypeAlias
 
 from .base_thread import BaseThread
@@ -25,6 +26,7 @@ class MainThread(BaseThread):
         self._port = address[1]
         self.thread_controller = ThreadController()
         self.web_api_handler = WebApiHandler(self.thread_controller, self._host, self._port)
+        self._handler_thread = threading.Thread(target=self.web_api_handler.run, daemon=True)
 
         self.share_object(SharedObjectNames.THREAD_COMMAND_HANDLERS, self.thread_controller.handlers)
 
@@ -32,8 +34,13 @@ class MainThread(BaseThread):
         self.logger.info("Start main thread.")
         self.thread_controller.activate()
 
-        self.logger.info(f"Serving system command at '{self._host}:{self._port}'")
-        self.web_api_handler.run()  # Blocks until KeyboardInterrupt.
+        self.logger.info(f"Serving system command at 'http://{self._host}:{self._port}'")
+        self._handler_thread.start()
+        try:
+            while not self.thread_controller.wait_for_shutdown(1.0):
+                pass
+        except KeyboardInterrupt:
+            self.thread_controller.shutdown()
+            self.logger.info("Shutting down by KeyboardInterrupt.")
 
-        self.thread_controller.shutdown()
         self.logger.info("End main thread.")
