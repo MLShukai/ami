@@ -1,7 +1,15 @@
 """This file contains utility classes."""
+from enum import StrEnum
+
 import torch.nn as nn
 
 from .model_wrapper import InferenceWrapper, ModelWrapper
+
+
+class ModelNames(StrEnum):
+    """Enumerates the all model names used in ami system."""
+
+    IMAGE_ENCODER = "image_encoder"
 
 
 class InferenceWrappersDict(dict[str, InferenceWrapper[nn.Module]]):

@@ -57,6 +57,8 @@ class SmallConvNet(nn.Module):
         self.layernorm = nn.LayerNorm(dim_out) if do_layernorm else nn.Identity()
 
     def forward(self, x: Tensor) -> Tensor:
+        if no_batch := (not has_batch_axis(x)):
+            x = x.unsqueeze(0)
         x = self.bn1(self.conv2d1(x))
         x = self.nl(x)
         x = self.bn2(self.conv2d2(x))
@@ -67,4 +69,17 @@ class SmallConvNet(nn.Module):
         x = self.fc(x)
         x = self.last_nl(x)
         x = self.layernorm(x)
+        if no_batch:
+            x = x.squeeze(0)
         return x
+
+
+def has_batch_axis(input: Tensor) -> bool:
+    """Checks whether the input image tensor has batch axis or not."""
+    match input.dim():
+        case 4:  # (Batch, Channels, Height, Width)
+            return True
+        case 3:  # (Channels, Height, Width)
+            return False
+        case _:
+            raise ValueError(f"The dimension of image tensor must be 3 or 4! Input: {input.dim()}")
