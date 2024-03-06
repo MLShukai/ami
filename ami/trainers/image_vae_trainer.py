@@ -27,7 +27,7 @@ class ImageVAETrainer(BaseTrainer):
         self.device = device
 
     def on_data_users_dict_attached(self) -> None:
-        self.data_user = self.get_data_user(BufferNames.IMAGE_BUFFER)
+        self.data_user = self.get_data_user(BufferNames.IMAGE)
 
     def on_model_wrappers_dict_attached(self) -> None:
         self.encoder: Conv2dEncoder = self.get_training_model(ModelNames.IMAGE_ENCODER).model
