@@ -3,6 +3,7 @@ import platform
 from typing import Self
 
 import pytest
+import rootutils
 import torch
 import torch.nn as nn
 from torch.utils.data import TensorDataset
@@ -13,6 +14,8 @@ from ami.interactions.agents.base_agent import BaseAgent
 from ami.interactions.environments.base_environment import BaseEnvironment
 from ami.models.model_wrapper import ModelWrapper
 from ami.trainers.base_trainer import BaseTrainer
+
+PROJECT_ROOT = rootutils.setup_root(__file__, indicator=".project-root", pythonpath=True)
 
 
 def get_gpu_device() -> torch.device | None:
