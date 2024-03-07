@@ -65,7 +65,7 @@ class TestImageVAETrainer:
         d = ModelWrappersDict(
             {
                 ModelNames.IMAGE_ENCODER: EncoderWrapper(image_encoder, device, True),
-                ModelNames.IMAGE_DECODER: ModelWrapper(image_decoder, device, True),
+                ModelNames.IMAGE_DECODER: ModelWrapper(image_decoder, device, False),
             }
         )
         d.send_to_default_device()
