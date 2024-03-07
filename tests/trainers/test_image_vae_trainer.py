@@ -60,13 +60,8 @@ class TestImageVAETrainer:
 
     @pytest.fixture
     def encoder_decoder_wrappers_dict(
-        self, gpu_device: torch.device | None, image_encoder: Encoder, image_decoder: Decoder
+        self, device: torch.device, image_encoder: Encoder, image_decoder: Decoder
     ) -> ModelWrappersDict:
-        if gpu_device is not None:
-            device = gpu_device
-        else:
-            device = "cpu"
-
         d = ModelWrappersDict(
             {
                 ModelNames.IMAGE_ENCODER: EncoderWrapper(image_encoder, device, True),
@@ -83,12 +78,8 @@ class TestImageVAETrainer:
         partial_optimizer,
         encoder_decoder_wrappers_dict: DataCollectorsDict,
         image_buffer_dict: DataCollectorsDict,
-        gpu_device: torch.device | None,
+        device: torch.device,
     ) -> ImageVAETrainer:
-        if gpu_device is not None:
-            device = gpu_device
-        else:
-            device = "cpu"
         trainer = ImageVAETrainer(partial_dataloader, partial_optimizer, device)
         trainer.attach_model_wrappers_dict(encoder_decoder_wrappers_dict)
         trainer.attach_data_users_dict(image_buffer_dict.get_data_users())
