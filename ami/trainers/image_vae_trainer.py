@@ -9,7 +9,8 @@ from torch.utils.data import DataLoader
 
 from ami.data.buffers.buffer_names import BufferNames
 from ami.models.model_names import ModelNames
-from ami.models.vae import VAE, Conv2dDecoder, Conv2dEncoder
+from ami.models.model_wrapper import ModelWrapper
+from ami.models.vae import VAE, Decoder, Encoder
 
 from .base_trainer import BaseTrainer
 
@@ -30,9 +31,9 @@ class ImageVAETrainer(BaseTrainer):
         self.data_user = self.get_data_user(BufferNames.IMAGE)
 
     def on_model_wrappers_dict_attached(self) -> None:
-        self.encoder: Conv2dEncoder = self.get_training_model(ModelNames.IMAGE_ENCODER).model
-        self.decoder: Conv2dDecoder = self.get_training_model(ModelNames.IMAGE_DECODER).model
-        self.vae = VAE(self.encoder, self.decoder)
+        self.encoder: ModelWrapper[Encoder] = self.get_training_model(ModelNames.IMAGE_ENCODER)
+        self.decoder: ModelWrapper[Decoder] = self.get_training_model(ModelNames.IMAGE_DECODER)
+        self.vae = VAE(self.encoder.model, self.decoder.model)
         self.optimizer_state = self.partial_optimizer(self.vae.parameters()).state_dict()
 
     def train(self) -> None:
