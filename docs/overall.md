@@ -60,3 +60,71 @@ classDiagram
     }
     ThreadController <--> ThreadCommandHandler: Cross Ref
 ```
+
+### Inference - Training Relation
+
+```mermaid
+classDiagram
+    direction TB
+
+    namespace threads{
+        class InferenceThread
+        class TrainingThread
+    }
+
+    namespace interactions {
+
+        class Interaction
+        class Environment
+        class Agent
+    }
+
+    namespace models {
+        class ModelWrapper
+        class InferenceWrapper
+        class ModelWrappers["ModelWrappers(Dict)"]
+        class InferenceWrappers["InferenceWrappers(Dict)"]
+    }
+
+    namespace data {
+        class DataBuffer
+        class DataCollector
+        class DataUser
+        class DataCollectors["DataCollectors(Dict)"]
+        class DataUsers["DataUsers(Dict)"]
+    }
+
+    namespace trainers {
+        class Trainers["Trainers(List)"]
+        class Trainer
+    }
+
+   InferenceThread --> InferenceWrappers: Member
+    InferenceThread --> DataCollectors: Member
+
+    InferenceThread --> Interaction: Member
+    Interaction --> Environment: Member
+    Interaction --> Agent: Member
+    Agent --> InferenceWrapper: Member
+    Agent --> DataCollector: Member
+
+    TrainingThread --> ModelWrappers: Member
+    TrainingThread --> DataUsers: Member
+
+    ModelWrappers <--> InferenceWrappers: Cross Ref
+    ModelWrappers --> ModelWrapper: Item
+    InferenceWrappers --> InferenceWrapper: Item
+    ModelWrapper <--> InferenceWrapper: Cross Ref
+
+    DataCollectors <--> DataUsers: Cross Ref
+    DataCollectors --> DataCollector: Item
+    DataUsers --> DataUser: Item
+    DataCollector <--> DataUser: Cross Ref
+    DataCollector --> DataBuffer: Member
+    DataUser --> DataBuffer: Member
+
+    TrainingThread --> Trainers: Member
+    Trainers --> Trainer: Item
+    Trainer --> ModelWrapper: Member
+    Trainer --> DataUser: Member
+```
