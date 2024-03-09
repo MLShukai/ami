@@ -54,4 +54,4 @@ class ImageVAETrainer(BaseTrainer):
             loss = rec_loss + kl_loss.sum()
             loss.backward()
             optimizer.step()
-        self.optimizer_state = self.partial_optimizer(vae.parameters()).state_dict()
+        self.optimizer_state = optimizer.state_dict()
