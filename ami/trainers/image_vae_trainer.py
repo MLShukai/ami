@@ -28,7 +28,7 @@ class ImageVAETrainer(BaseTrainer):
         self.device = device
 
     def on_data_users_dict_attached(self) -> None:
-        self.data_user = self.get_data_user(BufferNames.IMAGE)
+        self.image_data_user = self.get_data_user(BufferNames.IMAGE)
 
     def on_model_wrappers_dict_attached(self) -> None:
         self.encoder: ModelWrapper[Encoder] = self.get_training_model(ModelNames.IMAGE_ENCODER)
@@ -40,7 +40,7 @@ class ImageVAETrainer(BaseTrainer):
         vae = VAE(self.encoder.model, self.decoder.model)
         optimizer = self.partial_optimizer(vae.parameters())
         optimizer.load_state_dict(self.optimizer_state)
-        dataset = self.data_user.get_new_dataset()
+        dataset = self.image_data_user.get_new_dataset()
         dataloader = self.partial_dataloader(dataset=dataset)
         for batch in dataloader:
             (image_batch,) = batch
