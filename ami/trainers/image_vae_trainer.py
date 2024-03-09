@@ -33,11 +33,12 @@ class ImageVAETrainer(BaseTrainer):
     def on_model_wrappers_dict_attached(self) -> None:
         self.encoder: ModelWrapper[Encoder] = self.get_training_model(ModelNames.IMAGE_ENCODER)
         self.decoder: ModelWrapper[Decoder] = self.get_training_model(ModelNames.IMAGE_DECODER)
-        self.vae = VAE(self.encoder.model, self.decoder.model)
-        self.optimizer_state = self.partial_optimizer(self.vae.parameters()).state_dict()
+        vae = VAE(self.encoder.model, self.decoder.model)
+        self.optimizer_state = self.partial_optimizer(vae.parameters()).state_dict()
 
     def train(self) -> None:
-        optimizer = self.partial_optimizer(self.vae.parameters())
+        vae = VAE(self.encoder.model, self.decoder.model)
+        optimizer = self.partial_optimizer(vae.parameters())
         optimizer.load_state_dict(self.optimizer_state)
         dataset = self.data_user.get_new_dataset()
         dataloader = self.partial_dataloader(dataset=dataset)
@@ -45,7 +46,7 @@ class ImageVAETrainer(BaseTrainer):
             (image_batch,) = batch
             image_batch = image_batch.to(self.device)
             optimizer.zero_grad()
-            image_batch_reconstructed, dist_batch = self.vae(image_batch)
+            image_batch_reconstructed, dist_batch = vae(image_batch)
             rec_loss = mse_loss(image_batch, image_batch_reconstructed)
             kl_loss = kl_divergence(
                 dist_batch, Normal(torch.zeros_like(dist_batch.mean), torch.ones_like(dist_batch.stddev))
@@ -53,4 +54,4 @@ class ImageVAETrainer(BaseTrainer):
             loss = rec_loss + kl_loss.sum()
             loss.backward()
             optimizer.step()
-        self.optimizer_state = self.partial_optimizer(self.vae.parameters()).state_dict()
+        self.optimizer_state = self.partial_optimizer(vae.parameters()).state_dict()
