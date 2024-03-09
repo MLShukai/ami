@@ -63,6 +63,10 @@ classDiagram
 
 ### Inference - Training Relation
 
+mermaidによるクラス図が非常に読みにくいため [draw.ioで作成した図](https://drive.google.com/file/d/1Iggc4oiVy6N04svYzsXPzqratjnqwSVc/view?usp=sharing)を最初に記載する。
+
+![inference-training-relations](./InferenceTrainingRelations.drawio.png)
+
 ```mermaid
 classDiagram
     direction TB
