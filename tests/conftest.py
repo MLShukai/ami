@@ -98,3 +98,10 @@ def thread_objects(
     tt = TrainingThread(trainers, model_wrappers_dict)
     attach_shared_objects_pool_to_threads(mt, it, tt)
     return mt, it, tt
+
+
+@pytest.fixture
+def device(gpu_device: torch.device | None) -> torch.device:
+    if gpu_device is None:
+        return torch.device("cpu")
+    return gpu_device

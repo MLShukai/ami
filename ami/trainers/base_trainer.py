@@ -1,6 +1,6 @@
 """This file contains an abstract base class for all trainers."""
 from abc import ABC, abstractmethod
-from typing import TypeAlias
+from typing import Any, TypeAlias
 
 import torch.nn as nn
 
@@ -9,7 +9,7 @@ from ..data.utils import DataUsersDict
 from ..models.model_wrapper import ModelWrapper
 from ..models.utils import InferenceWrappersDict, ModelWrappersDict
 
-ModelWrapperType: TypeAlias = ModelWrapper[nn.Module]
+ModelWrapperType: TypeAlias = ModelWrapper[Any]
 
 
 class BaseTrainer(ABC):
