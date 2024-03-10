@@ -19,11 +19,11 @@ Assumed usage:
 from typing import Self
 
 from .buffers.base_data_buffer import BaseDataBuffer
-from .interfaces import DataUser, ThreadSafeDataCollector
+from .interfaces import ThreadSafeDataCollector, ThreadSafeDataUser
 from .step_data import StepData
 
 
-class DataUsersDict(dict[str, DataUser]):
+class DataUsersDict(dict[str, ThreadSafeDataUser]):
     """A class for aggregating `DataUsers` to share them from the inference
     thread to the training thread."""
 
@@ -48,4 +48,4 @@ class DataCollectorsDict(dict[str, ThreadSafeDataCollector]):
 
     def get_data_users(self) -> DataUsersDict:
         """Creates a `DataUsersDict` from the item's value."""
-        return DataUsersDict({k: DataUser(v) for k, v in self.items()})
+        return DataUsersDict({k: ThreadSafeDataUser(v) for k, v in self.items()})

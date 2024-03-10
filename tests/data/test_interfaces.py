@@ -1,7 +1,7 @@
 import pytest
 import torch
 
-from ami.data.interfaces import DataUser, ThreadSafeDataCollector
+from ami.data.interfaces import ThreadSafeDataCollector, ThreadSafeDataUser
 from ami.data.step_data import DataKeys, StepData
 
 from .buffers.test_base_data_buffer import DataBufferImpl
@@ -13,8 +13,8 @@ class TestDataCollectorAndUser:
         return ThreadSafeDataCollector(DataBufferImpl())
 
     @pytest.fixture
-    def user(self, collector: ThreadSafeDataCollector) -> DataUser:
-        return DataUser(collector)
+    def user(self, collector: ThreadSafeDataCollector) -> ThreadSafeDataUser:
+        return ThreadSafeDataUser(collector)
 
     @pytest.fixture
     def step_data(self) -> StepData:
@@ -33,7 +33,9 @@ class TestDataCollectorAndUser:
         assert buffer is not collector._buffer
 
     # --- Testing User ---
-    def test_get_new_dataset(self, collector: ThreadSafeDataCollector, user: DataUser, step_data: StepData) -> None:
+    def test_get_new_dataset(
+        self, collector: ThreadSafeDataCollector, user: ThreadSafeDataUser, step_data: StepData
+    ) -> None:
         collector.collect(step_data)
 
         dataset = user.get_new_dataset()
@@ -43,7 +45,7 @@ class TestDataCollectorAndUser:
         dataset = user.get_new_dataset()
         assert torch.equal(dataset[:][0], torch.stack([step_data[DataKeys.OBSERVATION]] * 2))
 
-    def test_clear(self, collector: ThreadSafeDataCollector, user: DataUser, step_data: StepData) -> None:
+    def test_clear(self, collector: ThreadSafeDataCollector, user: ThreadSafeDataUser, step_data: StepData) -> None:
         collector.collect(step_data)
 
         collector_buffer = collector._buffer

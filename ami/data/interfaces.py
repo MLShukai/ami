@@ -40,7 +40,7 @@ class ThreadSafeDataCollector:
             return return_data
 
 
-class DataUser:
+class ThreadSafeDataUser:
     """Uses the collected data in training thread."""
 
     def __init__(self, collector: ThreadSafeDataCollector) -> None:
