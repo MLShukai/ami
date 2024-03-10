@@ -3,7 +3,7 @@ from enum import StrEnum
 
 import torch.nn as nn
 
-from .model_wrapper import InferenceWrapper, ModelWrapper
+from .model_wrapper import ModelWrapper, ThreadSafeInferenceWrapper
 
 
 class ModelNames(StrEnum):
@@ -12,7 +12,7 @@ class ModelNames(StrEnum):
     IMAGE_ENCODER = "image_encoder"
 
 
-class InferenceWrappersDict(dict[str, InferenceWrapper[nn.Module]]):
+class InferenceWrappersDict(dict[str, ThreadSafeInferenceWrapper[nn.Module]]):
     """Aggregates inference wrapper classes to share models from the training
     thread to the inference thread."""
 

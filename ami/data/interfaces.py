@@ -9,7 +9,7 @@ from .buffers.base_data_buffer import BaseDataBuffer
 from .step_data import StepData
 
 
-class DataCollector:
+class ThreadSafeDataCollector:
     """Collects the data in inference thread."""
 
     def __init__(self, buffer: BaseDataBuffer) -> None:
@@ -40,10 +40,10 @@ class DataCollector:
             return return_data
 
 
-class DataUser:
+class ThreadSafeDataUser:
     """Uses the collected data in training thread."""
 
-    def __init__(self, collector: DataCollector) -> None:
+    def __init__(self, collector: ThreadSafeDataCollector) -> None:
         """Constructs the data user object."""
         self.collector = collector
         self._lock = threading.RLock()  # For data user is referred from multiple threads.

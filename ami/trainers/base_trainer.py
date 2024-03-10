@@ -4,7 +4,7 @@ from typing import Any, TypeAlias
 
 import torch.nn as nn
 
-from ..data.interfaces import DataUser
+from ..data.interfaces import ThreadSafeDataUser
 from ..data.utils import DataUsersDict
 from ..models.model_wrapper import ModelWrapper
 from ..models.utils import InferenceWrappersDict, ModelWrappersDict
@@ -134,7 +134,7 @@ class BaseTrainer(ABC):
         model.unfreeze_model()
         return model
 
-    def get_data_user(self, name: str) -> DataUser:
+    def get_data_user(self, name: str) -> ThreadSafeDataUser:
         """Retrieves the specified data user."""
         if name not in self._data_users_dict:
             raise KeyError(f"The specified data user name '{name}' does not exist.")
