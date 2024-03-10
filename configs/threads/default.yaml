@@ -1,0 +1,9 @@
+main_thread:
+  _target_: ami.threads.main_thread.MainThread
+  address: ["0.0.0.0", 8391]
+
+inference_thread:
+  _target_: ami.threads.inference_thread.InferenceThread
+
+training_thread:
+  _target_: ami.threads.training.TrainingThread
