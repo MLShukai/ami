@@ -92,7 +92,7 @@ class ModelWrapper(nn.Module, Generic[ModuleType]):
             p.requires_grad = True
         self.train()
 
-    def create_inference(self) -> InferenceWrapper[ModuleType]:
+    def create_inference(self) -> ThreadSafeInferenceWrapper[ModuleType]:
         """Creates the inference wrapper for the inference thread.
 
         Do not call when the model wrapper has no inference model.
@@ -107,12 +107,12 @@ class ModelWrapper(nn.Module, Generic[ModuleType]):
         if self.has_inference:
             copied_self = copy.deepcopy(self)
             copied_self.freeze_model()
-            return InferenceWrapper(copied_self)
+            return ThreadSafeInferenceWrapper(copied_self)
 
         raise RuntimeError("The model has no inference component!")
 
 
-class InferenceWrapper(Generic[ModuleType]):
+class ThreadSafeInferenceWrapper(Generic[ModuleType]):
     """A wrapper class for performing inference with the model in a thread-safe
     manner.
 
