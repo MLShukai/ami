@@ -21,11 +21,13 @@ class ImageVAETrainer(BaseTrainer):
         partial_dataloader: partial[DataLoader[torch.Tensor]],
         partial_optimizer: partial[Optimizer],
         device: torch.device,
+        kl_coef: float = 1.0,
     ):
         super().__init__()
         self.partial_optimizer = partial_optimizer
         self.partial_dataloader = partial_dataloader
         self.device = device
+        self.kl_coef = kl_coef
 
     def on_data_users_dict_attached(self) -> None:
         self.image_data_user = self.get_data_user(BufferNames.IMAGE)
@@ -55,7 +57,7 @@ class ImageVAETrainer(BaseTrainer):
             kl_loss = kl_divergence(
                 dist_batch, Normal(torch.zeros_like(dist_batch.mean), torch.ones_like(dist_batch.stddev))
             )
-            loss = rec_loss + kl_loss.sum()
+            loss = rec_loss + self.kl_coef * kl_loss.mean()
             loss.backward()
             optimizer.step()
 
