@@ -22,7 +22,15 @@ class ImageVAETrainer(BaseTrainer):
         partial_optimizer: partial[Optimizer],
         device: torch.device,
         kl_coef: float = 1.0,
-    ):
+    ) -> None:
+        """Initializes an ImageVAETrainer object.
+
+        Args:
+            partial_dataloader: A partially instantiated dataloader lacking a provided dataset.
+            partial_optimizer: A partially instantiated optimizer lacking provided parameters.
+            device: The accelerator device (e.g., CPU, GPU) utilized for training the model.
+            kl_coef: The coefficient for balancing KL divergence relative to the reconstruction loss.
+        """
         super().__init__()
         self.partial_optimizer = partial_optimizer
         self.partial_dataloader = partial_dataloader
