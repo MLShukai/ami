@@ -33,6 +33,9 @@ class ImageVAETrainer(BaseTrainer):
     def on_model_wrappers_dict_attached(self) -> None:
         self.encoder: ModelWrapper[Encoder] = self.get_training_model(ModelNames.IMAGE_ENCODER)
         self.decoder: ModelWrapper[Decoder] = self.get_training_model(ModelNames.IMAGE_DECODER)
+
+        # モデルは学習する度に推論スレッドと学習スレッドで入れ替えられるため、VAEとオプティマイザは`train()`メソッド内で構築する。
+        # 下記ではオプティマイザの初期状態生成を行う。
         vae = VAE(self.encoder.model, self.decoder.model)
         self.optimizer_state = self.partial_optimizer(vae.parameters()).state_dict()
 
