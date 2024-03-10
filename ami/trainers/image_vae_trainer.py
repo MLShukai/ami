@@ -53,7 +53,7 @@ class ImageVAETrainer(BaseTrainer):
         vae = VAE(self.encoder.model, self.decoder.model)
         optimizer = self.partial_optimizer(vae.parameters())
         optimizer.load_state_dict(self.optimizer_state)
-        dataset = self.image_data_user.get_new_dataset()
+        dataset = self.image_data_user.get_dataset()
         dataloader = self.partial_dataloader(dataset=dataset)
 
         for batch in dataloader:

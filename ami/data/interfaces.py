@@ -50,18 +50,13 @@ class ThreadSafeDataUser:
         self._buffer = collector.new_data_buffer
 
     def get_dataset(self) -> Dataset[Any]:
-        """Retrieves the dataset from the current data buffer."""
-        with self._lock:
-            return self._buffer.make_dataset()
-
-    def get_new_dataset(self) -> Dataset[Any]:
         """Retrieves the dataset, concatenated with the new data buffer, and
         updates the internal data buffer accordingly."""
         with self._lock:
             buffer = self.collector.move_data()
             self._buffer.concatenate(buffer)
 
-            return self.get_dataset()
+            return self._buffer.make_dataset()
 
     def clear(self) -> None:
         """Clears the current data stored in the data collector and from the

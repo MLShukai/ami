@@ -33,16 +33,16 @@ class TestDataCollectorAndUser:
         assert buffer is not collector._buffer
 
     # --- Testing User ---
-    def test_get_new_dataset(
+    def test_get_dataset(
         self, collector: ThreadSafeDataCollector, user: ThreadSafeDataUser, step_data: StepData
     ) -> None:
         collector.collect(step_data)
 
-        dataset = user.get_new_dataset()
+        dataset = user.get_dataset()
         assert torch.equal(dataset[:][0], step_data[DataKeys.OBSERVATION].unsqueeze(0))
 
         collector.collect(step_data)
-        dataset = user.get_new_dataset()
+        dataset = user.get_dataset()
         assert torch.equal(dataset[:][0], torch.stack([step_data[DataKeys.OBSERVATION]] * 2))
 
     def test_clear(self, collector: ThreadSafeDataCollector, user: ThreadSafeDataUser, step_data: StepData) -> None:
