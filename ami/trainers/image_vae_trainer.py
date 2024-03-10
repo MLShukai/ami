@@ -45,6 +45,7 @@ class ImageVAETrainer(BaseTrainer):
         optimizer.load_state_dict(self.optimizer_state)
         dataset = self.image_data_user.get_new_dataset()
         dataloader = self.partial_dataloader(dataset=dataset)
+
         for batch in dataloader:
             (image_batch,) = batch
             image_batch = image_batch.to(self.device)
@@ -57,4 +58,5 @@ class ImageVAETrainer(BaseTrainer):
             loss = rec_loss + kl_loss.sum()
             loss.backward()
             optimizer.step()
+
         self.optimizer_state = optimizer.state_dict()
