@@ -49,7 +49,7 @@ class DataUser:
         self._lock = threading.RLock()  # For data user is referred from multiple threads.
         self._buffer = collector.new_data_buffer
 
-    def get_new_dataset(self) -> Dataset[Any]:
+    def get_dataset(self) -> Dataset[Any]:
         """Retrieves the dataset, concatenated with the new data buffer, and
         updates the internal data buffer accordingly."""
         with self._lock:

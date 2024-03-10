@@ -69,7 +69,7 @@ class TrainerImpl(BaseTrainer):
         self.data_user = self.get_data_user("buffer1")
 
     def train(self) -> None:
-        dataset = self.data_user.get_new_dataset()
+        dataset = self.data_user.get_dataset()
         data = dataset[0][0]
         self.model1(data)
         self.model2(data)
