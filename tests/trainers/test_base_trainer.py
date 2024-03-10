@@ -3,7 +3,7 @@ import torch
 import torch.nn as nn
 
 from ami.data.utils import DataUsersDict
-from ami.models.model_wrapper import InferenceWrapper, ModelWrapper
+from ami.models.model_wrapper import ModelWrapper, ThreadSafeInferenceWrapper
 from ami.models.utils import ModelWrappersDict
 from tests.helpers import ModelMultiplyP, TrainerImpl
 
@@ -66,7 +66,7 @@ class TestTrainer:
 
     def test_sync_a_model(self, trainer: TrainerImpl) -> None:
         wrapper: ModelWrapper[ModelMultiplyP] = trainer._model_wrappers_dict["model1"]
-        inference: InferenceWrapper[ModelMultiplyP] = trainer._inference_wrappers_dict["model1"]
+        inference: ThreadSafeInferenceWrapper[ModelMultiplyP] = trainer._inference_wrappers_dict["model1"]
 
         wrapper.model.p.data += 1
         assert not torch.equal(wrapper.model.p, inference.model.p)

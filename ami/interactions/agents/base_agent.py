@@ -4,8 +4,8 @@ from typing import Generic
 
 import torch.nn as nn
 
-from ...data.utils import DataCollector, DataCollectorsDict
-from ...models.utils import InferenceWrapper, InferenceWrappersDict
+from ...data.utils import DataCollectorsDict, ThreadSafeDataCollector
+from ...models.utils import InferenceWrappersDict, ThreadSafeInferenceWrapper
 from .._types import ActType, ObsType
 
 
@@ -45,12 +45,12 @@ class BaseAgent(ABC, Generic[ObsType, ActType]):
         agent."""
         pass
 
-    def get_inference_model(self, name: str) -> InferenceWrapper[nn.Module]:
+    def get_inference_model(self, name: str) -> ThreadSafeInferenceWrapper[nn.Module]:
         if name not in self._inference_models:
             raise KeyError(f"The specified model name '{name}' does not exist.")
         return self._inference_models[name]
 
-    def get_data_collector(self, name: str) -> DataCollector:
+    def get_data_collector(self, name: str) -> ThreadSafeDataCollector:
         if name not in self.data_collectors:
             raise KeyError(f"The specified data collector name '{name}' does not exist.")
         return self.data_collectors[name]
