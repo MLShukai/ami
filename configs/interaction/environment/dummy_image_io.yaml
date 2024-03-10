@@ -1,0 +1,12 @@
+_target_: ami.interactions.environments.dummy_environment.DummyEnvironment
+observation_generator:
+  _target_: ami.interactions.environments.dummy_environment.SameObservationGenerator
+  observation:
+    _target_: torch.zeros
+    _args_: [3, 84, 84] # channels, height, width.
+
+action_checker:
+  _target_: ami.interactions.environments.dummy_environment.ActionTypeChecker
+  action_type:
+    _target_: hydra.utils.get_class
+    path: torch.Tensor
