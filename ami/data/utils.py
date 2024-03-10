@@ -19,7 +19,7 @@ Assumed usage:
 from typing import Self
 
 from .buffers.base_data_buffer import BaseDataBuffer
-from .interfaces import DataCollector, DataUser
+from .interfaces import DataUser, ThreadSafeDataCollector
 from .step_data import StepData
 
 
@@ -28,7 +28,7 @@ class DataUsersDict(dict[str, DataUser]):
     thread to the training thread."""
 
 
-class DataCollectorsDict(dict[str, DataCollector]):
+class DataCollectorsDict(dict[str, ThreadSafeDataCollector]):
     """A class for aggregating `DataCollectors` to invoke their `collect`
     methods within the agent class."""
 
@@ -44,7 +44,7 @@ class DataCollectorsDict(dict[str, DataCollector]):
         Args:
             **data_buffers: Key-value pairs of names and corresponding implemented DataBuffer objects.
         """
-        return cls({k: DataCollector(v) for k, v in data_buffers.items()})
+        return cls({k: ThreadSafeDataCollector(v) for k, v in data_buffers.items()})
 
     def get_data_users(self) -> DataUsersDict:
         """Creates a `DataUsersDict` from the item's value."""
