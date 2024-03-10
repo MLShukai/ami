@@ -4,10 +4,6 @@ main_thread:
 
 inference_thread:
   _target_: ami.threads.inference_thread.InferenceThread
-  interaction: ..interaction
-  data_collectors: ..data.data_collectors_dict
 
 training_thread:
   _target_: ami.threads.training.TrainingThread
-  trainers: ..trainers.trainers_list
-  models: ..models.model_wrappers_dict
