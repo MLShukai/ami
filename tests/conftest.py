@@ -84,7 +84,7 @@ def interaction() -> Interaction:
 
 @pytest.fixture
 def trainers() -> TrainersList:
-    return TrainersList([TrainerImpl()])
+    return TrainersList(*[TrainerImpl()])
 
 
 @pytest.fixture
