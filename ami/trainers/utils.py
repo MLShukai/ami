@@ -1,9 +1,11 @@
+from collections import UserList
+
 from ..data.utils import DataUsersDict
 from ..models.utils import ModelWrappersDict
 from .base_trainer import BaseTrainer
 
 
-class TrainersList(list[BaseTrainer]):
+class TrainersList(UserList[BaseTrainer]):
     """A custom list class for aggregating trainers, designed for integration
     within the `hydra` configuration framework.
 
@@ -34,7 +36,10 @@ class TrainersList(list[BaseTrainer]):
         ```
     """
 
-    _current_index = 0
+    def __init__(self, *trainers: BaseTrainer) -> None:
+        super().__init__(trainers)
+
+        self._current_index = 0
 
     def get_next_trainer(self) -> BaseTrainer:
         """Retrieves the next trainer instance in a round-robin fashion for
