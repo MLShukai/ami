@@ -1,0 +1,23 @@
+_target_: ami.models.utils.ModelWrappersDict
+
+image_encoder:
+  _target_: ami.models.vae.EncoderWrapper
+  default_device: ${devices.0}
+  has_inference: True
+  model:
+    _target_: ami.models.vae.Conv2dEncoder
+    height: 84
+    width: 84
+    channels: 3
+    latent_dim: 512 # From primitive AMI.
+
+image_decoder:
+  _target_: ami.models.model_wrapper.ModelWrapper
+  default_device: ${devices.0}
+  has_inference: False
+  model:
+    _target_: ami.models.vae.Conv2dDecoder
+    height: ${...image_encoder.model.height}
+    width: ${...image_encoder.model.width}
+    channels: ${...image_encoder.model.channels}
+    latent_dim: ${...image_encoder.model.latent_dim}
