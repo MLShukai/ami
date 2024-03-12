@@ -6,4 +6,4 @@ inference_thread:
   _target_: ami.threads.inference_thread.InferenceThread
 
 training_thread:
-  _target_: ami.threads.training.TrainingThread
+  _target_: ami.threads.training_thread.TrainingThread
