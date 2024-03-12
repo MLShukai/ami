@@ -1,0 +1,6 @@
+# @package _global_
+
+# to execute this experiment run:
+# python launch.py experiment=example
+
+task_name: example_task
