@@ -1,4 +1,5 @@
 """This file contains utility classes."""
+from collections import UserDict
 from enum import StrEnum
 
 import torch.nn as nn
@@ -12,12 +13,12 @@ class ModelNames(StrEnum):
     IMAGE_ENCODER = "image_encoder"
 
 
-class InferenceWrappersDict(dict[str, ThreadSafeInferenceWrapper[nn.Module]]):
+class InferenceWrappersDict(UserDict[str, ThreadSafeInferenceWrapper[nn.Module]]):
     """Aggregates inference wrapper classes to share models from the training
     thread to the inference thread."""
 
 
-class ModelWrappersDict(dict[str, ModelWrapper[nn.Module]]):
+class ModelWrappersDict(UserDict[str, ModelWrapper[nn.Module]]):
     """A dictionary class for aggregating model wrappers to be utilized within
     the `hydra` framework.
 
