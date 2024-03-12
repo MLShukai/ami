@@ -1,4 +1,4 @@
-from typing import Any, Self
+from typing import Self
 
 import numpy as np
 import torch
@@ -21,7 +21,7 @@ class RandomDataBuffer(BaseDataBuffer):
         self.__max_len = max_len
         self.__current_len = 0
         self.__key_list = key_list
-        self.__buffer_dict: dict[DataKeys, list[Any]] = dict()
+        self.__buffer_dict: dict[DataKeys, list[torch.Tensor]] = dict()
         for key in key_list:
             self.__buffer_dict[key] = []
 
@@ -49,7 +49,7 @@ class RandomDataBuffer(BaseDataBuffer):
                 self.__buffer_dict[key][replace_index] = step_data[key]
 
     @property
-    def buffer_dict(self) -> dict[DataKeys, list[Any]]:
+    def buffer_dict(self) -> dict[DataKeys, list[torch.Tensor]]:
         return self.__buffer_dict
 
     def concatenate(self, new_data: Self) -> None:
