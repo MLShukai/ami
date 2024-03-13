@@ -134,7 +134,7 @@ class BaseTrainer(ABC):
         model.unfreeze_model()
         return model
 
-    def get_data_user(self, name: str) -> ThreadSafeDataUser:
+    def get_data_user(self, name: str) -> ThreadSafeDataUser[Any]:
         """Retrieves the specified data user."""
         if name not in self._data_users_dict:
             raise KeyError(f"The specified data user name '{name}' does not exist.")

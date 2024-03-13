@@ -9,11 +9,11 @@ from .buffers.test_base_data_buffer import DataBufferImpl
 
 class TestDataCollectorAndUser:
     @pytest.fixture
-    def collector(self) -> ThreadSafeDataCollector:
+    def collector(self) -> ThreadSafeDataCollector[DataBufferImpl]:
         return ThreadSafeDataCollector(DataBufferImpl())
 
     @pytest.fixture
-    def user(self, collector: ThreadSafeDataCollector) -> ThreadSafeDataUser:
+    def user(self, collector: ThreadSafeDataCollector[DataBufferImpl]) -> ThreadSafeDataUser[DataBufferImpl]:
         return ThreadSafeDataUser(collector)
 
     @pytest.fixture
@@ -21,11 +21,11 @@ class TestDataCollectorAndUser:
         return StepData({DataKeys.OBSERVATION: torch.randn(10)})
 
     # --- Testing Collector ---
-    def test_collect(self, collector: ThreadSafeDataCollector, step_data: StepData) -> None:
+    def test_collect(self, collector: ThreadSafeDataCollector[DataBufferImpl], step_data: StepData) -> None:
 
         collector.collect(step_data)
 
-    def test_move_data(self, collector: ThreadSafeDataCollector) -> None:
+    def test_move_data(self, collector: ThreadSafeDataCollector[DataBufferImpl]) -> None:
 
         buffer = collector._buffer
         moved_buffer = collector.move_data()
@@ -34,7 +34,10 @@ class TestDataCollectorAndUser:
 
     # --- Testing User ---
     def test_get_dataset(
-        self, collector: ThreadSafeDataCollector, user: ThreadSafeDataUser, step_data: StepData
+        self,
+        collector: ThreadSafeDataCollector[DataBufferImpl],
+        user: ThreadSafeDataUser[DataBufferImpl],
+        step_data: StepData,
     ) -> None:
         collector.collect(step_data)
 
@@ -45,7 +48,12 @@ class TestDataCollectorAndUser:
         dataset = user.get_dataset()
         assert torch.equal(dataset[:][0], torch.stack([step_data[DataKeys.OBSERVATION]] * 2))
 
-    def test_clear(self, collector: ThreadSafeDataCollector, user: ThreadSafeDataUser, step_data: StepData) -> None:
+    def test_clear(
+        self,
+        collector: ThreadSafeDataCollector[DataBufferImpl],
+        user: ThreadSafeDataUser[DataBufferImpl],
+        step_data: StepData,
+    ) -> None:
         collector.collect(step_data)
 
         collector_buffer = collector._buffer

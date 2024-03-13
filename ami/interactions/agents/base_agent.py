@@ -1,6 +1,6 @@
 """This file contains the abstract base agent class."""
 from abc import ABC, abstractmethod
-from typing import Generic
+from typing import Any, Generic
 
 import torch.nn as nn
 
@@ -50,7 +50,7 @@ class BaseAgent(ABC, Generic[ObsType, ActType]):
             raise KeyError(f"The specified model name '{name}' does not exist.")
         return self._inference_models[name]
 
-    def get_data_collector(self, name: str) -> ThreadSafeDataCollector:
+    def get_data_collector(self, name: str) -> ThreadSafeDataCollector[Any]:
         if name not in self.data_collectors:
             raise KeyError(f"The specified data collector name '{name}' does not exist.")
         return self.data_collectors[name]
