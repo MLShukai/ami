@@ -1,1 +1,1 @@
-- ${torch.device: cuda:0}
+- "${torch.device: cuda:0}"

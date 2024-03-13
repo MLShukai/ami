@@ -10,7 +10,7 @@ class TestTrainersList:
         trainer1 = TrainerImpl()
         trainer2 = TrainerImpl()
 
-        trainers = TrainersList([trainer1, trainer2])
+        trainers = TrainersList(*[trainer1, trainer2])
 
         assert trainers.get_next_trainer() is trainer1
         assert trainers.get_next_trainer() is trainer2
@@ -25,7 +25,7 @@ class TestTrainersList:
         trainer1 = TrainerImpl()
         trainer2 = TrainerImpl()
 
-        trainers = TrainersList([trainer1, trainer2])
+        trainers = TrainersList(*[trainer1, trainer2])
         trainers.attach_model_wrappers_dict(model_wrappers_dict)
         assert trainer1._model_wrappers_dict is model_wrappers_dict
         assert trainer2._model_wrappers_dict is model_wrappers_dict
@@ -34,7 +34,7 @@ class TestTrainersList:
         trainer1 = TrainerImpl()
         trainer2 = TrainerImpl()
 
-        trainers = TrainersList([trainer1, trainer2])
+        trainers = TrainersList(*[trainer1, trainer2])
         trainers.attach_data_users_dict(data_users_dict)
         assert trainer1._data_users_dict is data_users_dict
         assert trainer2._data_users_dict is data_users_dict

@@ -1,4 +1,4 @@
-_target_: ami.trainers.utils.TrainerList
+_target_: ami.trainers.utils.TrainersList
 _args_:
   - _target_: ami.trainers.image_vae_trainer.ImageVAETrainer
     partial_dataloader:
