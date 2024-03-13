@@ -11,11 +11,11 @@ EXPERIMENT_CONFIG_DIR = CONFIG_DIR / "experiment"
 EXPERIMENT_CONFIG_FILES = EXPERIMENT_CONFIG_DIR.glob("*.*")
 
 EXPERIMENT_CONFIG_OVERRIDES = [[f"experiment={file.name.rsplit('.', 1)[0]}"] for file in EXPERIMENT_CONFIG_FILES]
-HYDRA_OVERRIDES = [None] + EXPERIMENT_CONFIG_OVERRIDES
+HYDRA_OVERRIDES = [[]] + EXPERIMENT_CONFIG_OVERRIDES
 
 
 @pytest.mark.parametrize("overrides", HYDRA_OVERRIDES)
-def test_instantiate(overrides: list[str] | None):
+def test_instantiate(overrides: list[str]):
     with hydra.initialize_config_dir(str(CONFIG_DIR)):
         cfg = hydra.compose(LAUNCH_CONFIG, overrides=overrides)
 
