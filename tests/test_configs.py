@@ -3,7 +3,11 @@ import hydra
 import pytest
 from hydra.utils import instantiate
 
+from ami.omegaconf_resolvers import register_custom_resolvers
+
 from tests.helpers import PROJECT_ROOT
+
+register_custom_resolvers()
 
 CONFIG_DIR = PROJECT_ROOT / "configs"
 LAUNCH_CONFIG = "launch.yaml"
