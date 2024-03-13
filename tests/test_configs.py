@@ -4,7 +4,6 @@ import pytest
 from hydra.utils import instantiate
 
 from ami.omegaconf_resolvers import register_custom_resolvers
-
 from tests.helpers import PROJECT_ROOT
 
 register_custom_resolvers()
