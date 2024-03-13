@@ -66,3 +66,8 @@ class ThreadSafeDataUser(Generic[BufferType]):
         with self._lock:
             self._buffer = self._buffer.new()
             self.collector.renew()
+
+    @property
+    def buffer(self) -> BufferType:
+        """Returns the reference to the internal buffer."""
+        return self._buffer
