@@ -33,6 +33,7 @@ class TrainingThread(BackgroundThread):
 
         while self.thread_command_handler.manage_loop():
             trainer = self.trainers.get_next_trainer()
-            trainer.run()
+            if trainer.is_trainable():
+                trainer.run()
 
         self.logger.info("End the training thread.")
