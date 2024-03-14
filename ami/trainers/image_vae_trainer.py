@@ -8,6 +8,8 @@ from torch.optim import Optimizer
 from torch.utils.data import DataLoader
 
 from ami.data.buffers.buffer_names import BufferNames
+from ami.data.buffers.random_data_buffer import RandomDataBuffer
+from ami.data.interfaces import ThreadSafeDataUser
 from ami.models.model_names import ModelNames
 from ami.models.model_wrapper import ModelWrapper
 from ami.models.vae import VAE, Decoder, Encoder
@@ -38,7 +40,7 @@ class ImageVAETrainer(BaseTrainer):
         self.kl_coef = kl_coef
 
     def on_data_users_dict_attached(self) -> None:
-        self.image_data_user = self.get_data_user(BufferNames.IMAGE)
+        self.image_data_user: ThreadSafeDataUser[RandomDataBuffer] = self.get_data_user(BufferNames.IMAGE)
 
     def on_model_wrappers_dict_attached(self) -> None:
         self.encoder: ModelWrapper[Encoder] = self.get_training_model(ModelNames.IMAGE_ENCODER)

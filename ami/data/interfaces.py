@@ -1,18 +1,20 @@
 """This file contains the interface class for a data buffer designed for multi-
 threading."""
 import threading
-from typing import Any
+from typing import Any, Generic, TypeVar
 
 from torch.utils.data import Dataset
 
 from .buffers.base_data_buffer import BaseDataBuffer
 from .step_data import StepData
 
+BufferType = TypeVar("BufferType", bound=BaseDataBuffer)
 
-class ThreadSafeDataCollector:
+
+class ThreadSafeDataCollector(Generic[BufferType]):
     """Collects the data in inference thread."""
 
-    def __init__(self, buffer: BaseDataBuffer) -> None:
+    def __init__(self, buffer: BufferType) -> None:
         """Constructs data collector class."""
         self._buffer = buffer
         self._lock = threading.RLock()
@@ -23,7 +25,7 @@ class ThreadSafeDataCollector:
             self._buffer.add(step_data)
 
     @property
-    def new_data_buffer(self) -> BaseDataBuffer:
+    def new_data_buffer(self) -> BufferType:
         """Returns renewed data buffer object."""
         return self._buffer.new()
 
@@ -32,7 +34,7 @@ class ThreadSafeDataCollector:
         with self._lock:
             self._buffer = self.new_data_buffer
 
-    def move_data(self) -> BaseDataBuffer:
+    def move_data(self) -> BufferType:
         """Move data's pointer to other object."""
         with self._lock:
             return_data = self._buffer
@@ -40,10 +42,10 @@ class ThreadSafeDataCollector:
             return return_data
 
 
-class ThreadSafeDataUser:
+class ThreadSafeDataUser(Generic[BufferType]):
     """Uses the collected data in training thread."""
 
-    def __init__(self, collector: ThreadSafeDataCollector) -> None:
+    def __init__(self, collector: ThreadSafeDataCollector[BufferType]) -> None:
         """Constructs the data user object."""
         self.collector = collector
         self._lock = threading.RLock()  # For data user is referred from multiple threads.
@@ -64,3 +66,8 @@ class ThreadSafeDataUser:
         with self._lock:
             self._buffer = self._buffer.new()
             self.collector.renew()
+
+    @property
+    def buffer(self) -> BufferType:
+        """Returns the reference to the internal buffer."""
+        return self._buffer
