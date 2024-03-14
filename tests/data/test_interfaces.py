@@ -33,6 +33,17 @@ class TestDataCollectorAndUser:
         assert buffer is not collector._buffer
 
     # --- Testing User ---
+    def test_update(
+        self,
+        collector: ThreadSafeDataCollector[DataBufferImpl],
+        user: ThreadSafeDataUser[DataBufferImpl],
+        step_data: StepData,
+    ) -> None:
+        assert len(user.buffer.obs) == 0
+        collector.collect(step_data)
+        user.update()
+        assert len(user.buffer.obs) == 1
+
     def test_get_dataset(
         self,
         collector: ThreadSafeDataCollector[DataBufferImpl],
