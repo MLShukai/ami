@@ -38,6 +38,7 @@ class ImageVAETrainer(BaseTrainer):
         self.partial_dataloader = partial_dataloader
         self.device = device
         self.kl_coef = kl_coef
+        self.batch_size: int = partial_dataloader.keywords["batch_size"]
 
     def on_data_users_dict_attached(self) -> None:
         self.image_data_user: ThreadSafeDataUser[RandomDataBuffer] = self.get_data_user(BufferNames.IMAGE)
@@ -50,6 +51,10 @@ class ImageVAETrainer(BaseTrainer):
         # 下記ではオプティマイザの初期状態生成を行う。
         vae = VAE(self.encoder.model, self.decoder.model)
         self.optimizer_state = self.partial_optimizer(vae.parameters()).state_dict()
+
+    def is_trainable(self) -> bool:
+        self.image_data_user.update()
+        return len(self.image_data_user.buffer) >= self.batch_size
 
     def train(self) -> None:
         vae = VAE(self.encoder.model, self.decoder.model)

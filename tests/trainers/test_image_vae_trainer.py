@@ -87,3 +87,8 @@ class TestImageVAETrainer:
 
     def test_run(self, trainer: ImageVAETrainer) -> None:
         trainer.run()
+
+    def test_is_trainable(self, trainer: ImageVAETrainer) -> None:
+        assert trainer.is_trainable() is True
+        trainer.image_data_user.clear()
+        assert trainer.is_trainable() is False
