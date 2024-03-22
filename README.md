@@ -1,5 +1,19 @@
 # AMI: Autonomous Machine Intelligence
 
+<!-- ここに良い感じのバナーを貼る -->
+
+<!--
+## ぱみきゅーのご紹介
+- VRChatで観測する方法
+- Discordのpamiq-now
+
+## AMIの位置づけと開発の動機
+- P-AMI<Q>プロジェクト概要・目的
+- AMIの位置づけ
+
+Google Slide・PDFへのリンク等
+-->
+
 ## 開発環境セットアップ
 
 ### プロジェクト単体
@@ -19,11 +33,11 @@ Poetryの基本的な使い方は[Poetryをサクッと使い始めてみる](ht
 
 #### ハードウェア要件
 
-| ハードウェア | 要件                        | 備考                                                     |
-| ------------ | --------------------------- | -------------------------------------------------------- |
-| CPU          | Intel / AMD の64bit CPU     |                                                          |
+| ハードウェア | 要件                        | 備考                                                   |
+| ------------ | --------------------------- | ------------------------------------------------------ |
+| CPU          | Intel / AMD の64bit CPU     |                                                        |
 | GPU          | NVIDIA GPU                  | AMD Radeonでも技術的には対応可能と思われるが、未検証。 |
-| ディスプレイ | FHD以上の画質のディスプレイ | VRChatの起動のため。                                     |
+| ディスプレイ | FHD以上の画質のディスプレイ | VRChatの起動のため。                                   |
 
 #### ソフトウェア要件
 
@@ -70,7 +84,7 @@ Linux OSに事前に次のツールをインストールしておく。
   [Installing with Apt](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html#installing-with-apt)
 
   コンテナラインタイムをDocker用に設定する。
-  
+
   [Configuring Docker](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html#configuring-docker)
 
 - make
@@ -86,3 +100,7 @@ make docker-run
 ```
 
 後は、VSCodeなどのエディタからDockerコンテナにアタッチし、 `/workspace` ディレクトリで作業を行う。このディレクトリはホストOSの永続ボリュームであるため、Dockerのコンテナインスタンスを削除しても作業内容はホストOSに保存される。
+
+## Wiki
+
+追加のドキュメントは[Wiki](https://github.com/MLShukai/ami/wiki)に整備予定。
