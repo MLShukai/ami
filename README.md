@@ -55,11 +55,19 @@ Poetryの基本的な使い方は[Poetryをサクッと使い始めてみる](ht
 
 ### VRChatとの連携
 
+1. Steamをインストール。
+
+   <https://store.steampowered.com/about/> からDEBファイルをダウンロードし、 `sudo dpkg -i steam_latest.deb; sudo apt install --fix` を実行。
+
+   **NOTE**: NVIDIA Driverのバージョン**525以下**ではSteamが正常に動作しないため注意。（提供されている最新の安定版Driverを使うこと。）
+
+   **NOTE**: Snap版のSteamではVRChatをインストールできないため、使わないこと。Steamの公式ページからdebファイルをダウンロードしインストールする。
+2. Steamの設定で「互換性」「他のすべてのタイトルでSteam Playを有効化」をオンにする。
+
+   ![image](https://github.com/MLShukai/ami/assets/574575/c5d3d36f-fc28-44e0-87d6-e6c5113bb1b0)
+3. VRChatをインストール。
+
 [vrchat-ioのドキュメンテーション](https://github.com/Geson-anko/vrchat-io?tab=readme-ov-file#vrchat)を参考に、VRChatやOBSをインストールする。
-
-**NOTE**: NVIDIA Driverのバージョン**525以下**ではSteamが正常に動作しないため注意。（提供されている最新の安定版Driverを使うこと。）
-
-**NOTE**: Snap版のSteamではVRChatをインストールできないため、使わないこと。Steamの公式ページからdebファイルをダウンロードしインストールする。
 
 ### Docker
 
