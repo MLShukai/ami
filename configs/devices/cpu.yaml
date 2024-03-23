@@ -1,0 +1,2 @@
+# Usage: python scripts/launch.py devices=cpu
+- "${torch.device: cpu}"
