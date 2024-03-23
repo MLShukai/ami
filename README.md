@@ -47,7 +47,7 @@ Poetryの基本的な使い方は[Poetryをサクッと使い始めてみる](ht
 
   **NOTE**: 比較的新しいGPUに対応するため、直近のUbuntuリリースを使うことが望ましい。Ubuntu 22.04ではGeforce RTX 3060を認識せず、インストール時に画面表示ができない不具合があった。23.10にバージョンを変更することで解決した。
 
-- 最新の安定版 NVIDIA Driver（2024/02/16 時点では version **535**）
+- 最新の安定版 NVIDIA Driver（2024/03/23 時点では version **550**）
 
   Ubuntuの場合は `sudo ubuntu-drivers install`でハードウェアに最も適したドライバーが自動でインストールされる。
 
