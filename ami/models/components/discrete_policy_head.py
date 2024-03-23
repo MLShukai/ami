@@ -1,4 +1,5 @@
 import torch
+import torch.nn as nn
 from torch.distributions import Categorical, Distribution
 
 
@@ -44,3 +45,29 @@ class MultiCategoricals(Distribution):
     def entropy(self) -> torch.Tensor:
         """Compute entropy for each distribution."""
         return torch.stack([d.entropy() for d in self.dists], dim=-1)
+
+
+class DiscretePolicyHead(nn.Module):
+    """Policy head for discrete action space."""
+
+    def __init__(self, dim_in: int, action_choices_per_category: list[int]) -> None:
+        """Constructs policy.
+
+        Args:
+            dim_in: Input dimension size of tensor.
+            action_choices_per_category: List of action choice count per category.
+        """
+        super().__init__()
+
+        self.heads = nn.ModuleList()
+        for choice in action_choices_per_category:
+            self.heads.append(nn.Linear(dim_in, choice, bias=False))
+
+    def forward(self, input: torch.Tensor) -> MultiCategoricals:
+
+        categoricals = []
+        for head in self.heads:
+            logits = head(input)
+            categoricals.append(Categorical(logits=logits))
+
+        return MultiCategoricals(categoricals)

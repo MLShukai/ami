@@ -1,8 +1,12 @@
 import pytest
 import torch
 from torch.distributions import Categorical
+from torch.distributions.distribution import Distribution
 
-from ami.models.components.discrete_policy_head import MultiCategoricals
+from ami.models.components.discrete_policy_head import (
+    DiscretePolicyHead,
+    MultiCategoricals,
+)
 
 
 class TestMultiCategoricals:
@@ -29,3 +33,25 @@ class TestMultiCategoricals:
 
     def test_entropy(self, multi_categoricals: MultiCategoricals):
         assert multi_categoricals.entropy().shape == (8, 3)
+
+
+class TestDiscretePolicyHead:
+    @pytest.mark.parametrize(
+        """
+        batch,
+        dim_in,
+        action_choices_per_category,
+        """,
+        [
+            (8, 256, [3, 3, 3, 2, 2]),
+            (1, 16, [1, 2, 3, 4, 5]),
+        ],
+    )
+    def test_discrete_policy_head(self, batch, dim_in, action_choices_per_category):
+        policy = DiscretePolicyHead(dim_in, action_choices_per_category)
+        input = torch.randn(batch, dim_in)
+        dist = policy(input)
+        assert isinstance(dist, Distribution)
+        assert dist.sample().shape == (batch, len(action_choices_per_category))
+        assert dist.log_prob(dist.sample()).shape == (batch, len(action_choices_per_category))
+        assert dist.entropy().shape == (batch, len(action_choices_per_category))
