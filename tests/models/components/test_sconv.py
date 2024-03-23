@@ -1,7 +1,7 @@
 import pytest
 import torch
 
-from ami.models.components.forward_dynamics.sconv import SConv
+from ami.models.components.sconv import SConv
 
 BATCH = 4
 DEPTH = 8
