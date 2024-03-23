@@ -5,7 +5,7 @@ import torch
 
 from ami.models.components.small_conv_net import SmallConvNet
 from ami.models.components.small_deconv_net import SmallDeconvNet
-from ami.models.vae import VAE, Decoder, Encoder, EncoderWrapper
+from ami.models.vae import VAE, Conv2dDecoder, Conv2dEncoder, EncoderWrapper
 
 HEIGHT = 256
 WIDTH = 256
@@ -13,18 +13,9 @@ CHANNELS = 3
 DIM_EMBED = 256
 
 
-class TestVAEEncoder:
-    @pytest.fixture
-    def small_conv_net(self):
-        net = SmallConvNet(HEIGHT, WIDTH, CHANNELS, 2 * DIM_EMBED)
-        return net
-
-    def test__init__(self, small_conv_net):
-        mod = Encoder(small_conv_net)
-        assert mod.conv_net is small_conv_net
-
-    def test_forward(self, small_conv_net):
-        mod = Encoder(small_conv_net)
+class TestConv2dEncoder:
+    def test_forward(self):
+        mod = Conv2dEncoder(HEIGHT, WIDTH, CHANNELS, DIM_EMBED)
         x = torch.randn(8, CHANNELS, WIDTH, HEIGHT)
         z_dist = mod(x)
         assert isinstance(z_dist, torch.distributions.Normal)
@@ -32,17 +23,8 @@ class TestVAEEncoder:
 
 
 class TestVAEDecoder:
-    @pytest.fixture
-    def small_deconv_net(self):
-        net = SmallDeconvNet(HEIGHT, WIDTH, CHANNELS, DIM_EMBED)
-        return net
-
-    def test__init__(self, small_deconv_net):
-        mod = Decoder(small_deconv_net)
-        assert mod.deconv_net is small_deconv_net
-
-    def test_forward(self, small_deconv_net):
-        mod = Decoder(small_deconv_net)
+    def test_forward(self):
+        mod = Conv2dDecoder(HEIGHT, WIDTH, CHANNELS, DIM_EMBED)
         z = torch.randn(8, DIM_EMBED)
         rec_x = mod.forward(z)
         assert rec_x.shape == torch.Size((8, CHANNELS, HEIGHT, WIDTH))
@@ -51,12 +33,12 @@ class TestVAEDecoder:
 class TestVAE:
     @pytest.fixture
     def encoder(self):
-        encoder = Encoder(SmallConvNet(HEIGHT, WIDTH, CHANNELS, 2 * DIM_EMBED))
+        encoder = Conv2dEncoder(HEIGHT, WIDTH, CHANNELS, DIM_EMBED)
         return encoder
 
     @pytest.fixture
     def decoder(self):
-        decoder = Decoder(SmallDeconvNet(HEIGHT, WIDTH, CHANNELS, DIM_EMBED))
+        decoder = Conv2dDecoder(HEIGHT, WIDTH, CHANNELS, DIM_EMBED)
         return decoder
 
     def test__init__(self, encoder, decoder):
@@ -74,7 +56,7 @@ class TestVAE:
 class TestEncoderWrapper:
     @pytest.fixture
     def encoder(self):
-        encoder = Encoder(SmallConvNet(HEIGHT, WIDTH, CHANNELS, 2 * DIM_EMBED))
+        encoder = Conv2dEncoder(HEIGHT, WIDTH, CHANNELS, DIM_EMBED)
         return encoder
 
     @pytest.fixture

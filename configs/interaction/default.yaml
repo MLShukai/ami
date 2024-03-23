@@ -1,0 +1,9 @@
+_target_: ami.interactions.fixed_interval_interaction.FixedIntervalInteraction
+
+defaults:
+  - agent: image_encoding
+  - environment: dummy_image_io
+
+interval_adjustor:
+  _target_: ami.interactions.interval_adjustors.SleepIntervalAdjustor
+  interval: 0.1 # 100 ms, 10 Hz.

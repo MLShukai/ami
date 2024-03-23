@@ -1,7 +1,7 @@
 import pytest
 import torch
 
-from ami.models.model_wrapper import InferenceWrapper, ModelWrapper
+from ami.models.model_wrapper import ModelWrapper, ThreadSafeInferenceWrapper
 from tests.helpers import ModelMultiplyP, skip_if_gpu_is_not_available
 
 
@@ -26,7 +26,7 @@ class TestWrappers:
         m = ModelMultiplyP()
         mw = ModelWrapper(m, "cpu", True)
         inference_wrapper = mw.create_inference()
-        assert isinstance(inference_wrapper, InferenceWrapper)
+        assert isinstance(inference_wrapper, ThreadSafeInferenceWrapper)
         assert inference_wrapper.model is not m
         assert inference_wrapper.model.p is not m.p
         assert inference_wrapper.model.p == m.p

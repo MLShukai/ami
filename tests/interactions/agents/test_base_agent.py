@@ -1,15 +1,4 @@
-from ami.interactions.agents.base_agent import BaseAgent
-
-
-class AgentImpl(BaseAgent[str, str]):
-    def on_inference_models_attached(self) -> None:
-        self.model1 = self.get_inference_model("model1")
-
-    def on_data_collectors_attached(self) -> None:
-        self.data_collector1 = self.get_data_collector("buffer1")
-
-    def step(self, observation: str) -> str:
-        return "action"
+from tests.helpers import AgentImpl
 
 
 class TestBaseAgent:

@@ -10,3 +10,6 @@ class ThreadTypes(Enum):
     MAIN = auto()
     INFERENCE = auto()
     TRAINING = auto()
+
+
+BACKGROUND_THREAD_TYPES = {e for e in ThreadTypes if e is not ThreadTypes.MAIN}

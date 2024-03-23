@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import threading
 
+from .thread_types import BACKGROUND_THREAD_TYPES, ThreadTypes
+
 
 class ThreadController:
     """The controller class for sending commands from the main thread to
@@ -11,6 +13,11 @@ class ThreadController:
         """Construct this class."""
         self._shutdown_event = threading.Event()
         self._resume_event = threading.Event()  # For pause and resume.
+
+        # Thread間でHandlerインスタンスを分離。
+        self.handlers: dict[ThreadTypes, ThreadCommandHandler] = dict()
+        for thread_type in BACKGROUND_THREAD_TYPES:
+            self.handlers[thread_type] = ThreadCommandHandler(self)
 
         self.activate()
         self.resume()  # default resume.
@@ -50,6 +57,11 @@ class ThreadController:
             bool: True if the event was set (resumed) before the timeout, False otherwise (timed out).
         """
         return self._resume_event.wait(timeout)
+
+    def wait_for_shutdown(self, timeout: float = 1.0) -> bool:
+        """Waits for the shutdown event or times out after `timeout`
+        seconds."""
+        return self._shutdown_event.wait(timeout)
 
 
 class ThreadCommandHandler:

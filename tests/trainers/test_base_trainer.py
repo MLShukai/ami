@@ -3,29 +3,9 @@ import torch
 import torch.nn as nn
 
 from ami.data.utils import DataUsersDict
-from ami.models.model_wrapper import InferenceWrapper, ModelWrapper
+from ami.models.model_wrapper import ModelWrapper, ThreadSafeInferenceWrapper
 from ami.models.utils import ModelWrappersDict
-from ami.trainers.base_trainer import BaseTrainer
-from tests.helpers import ModelMultiplyP
-
-
-class TrainerImpl(BaseTrainer):
-    def on_model_wrappers_dict_attached(self) -> None:
-        super().on_model_wrappers_dict_attached()
-
-        self.model1: ModelWrapper[ModelMultiplyP] = self.get_training_model("model1")
-        self.model2: ModelWrapper[ModelMultiplyP] = self.get_frozen_model("model2")
-
-    def on_data_users_dict_attached(self) -> None:
-        super().on_data_users_dict_attached()
-
-        self.data_user = self.get_data_user("buffer1")
-
-    def train(self) -> None:
-        dataset = self.data_user.get_new_dataset()
-        data = dataset[0][0]
-        self.model1(data)
-        self.model2(data)
+from tests.helpers import ModelMultiplyP, TrainerImpl
 
 
 def assert_model_training(model: nn.Module) -> None:
@@ -86,7 +66,7 @@ class TestTrainer:
 
     def test_sync_a_model(self, trainer: TrainerImpl) -> None:
         wrapper: ModelWrapper[ModelMultiplyP] = trainer._model_wrappers_dict["model1"]
-        inference: InferenceWrapper[ModelMultiplyP] = trainer._inference_wrappers_dict["model1"]
+        inference: ThreadSafeInferenceWrapper[ModelMultiplyP] = trainer._inference_wrappers_dict["model1"]
 
         wrapper.model.p.data += 1
         assert not torch.equal(wrapper.model.p, inference.model.p)

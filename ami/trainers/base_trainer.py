@@ -1,15 +1,15 @@
 """This file contains an abstract base class for all trainers."""
 from abc import ABC, abstractmethod
-from typing import TypeAlias
+from typing import Any, TypeAlias
 
 import torch.nn as nn
 
-from ..data.interfaces import DataUser
+from ..data.interfaces import ThreadSafeDataUser
 from ..data.utils import DataUsersDict
 from ..models.model_wrapper import ModelWrapper
 from ..models.utils import InferenceWrappersDict, ModelWrappersDict
 
-ModelWrapperType: TypeAlias = ModelWrapper[nn.Module]
+ModelWrapperType: TypeAlias = ModelWrapper[Any]
 
 
 class BaseTrainer(ABC):
@@ -21,6 +21,7 @@ class BaseTrainer(ABC):
         - `on_model_wrappers_dict_attached`: To retrieve the models.
         - `on_data_users_dict_attached`: To retrieve the data users.
         - `train`: To implement the training process.
+        - `is_trainable`: To determine whether or not the training can be executed.
 
     DNN models and data buffers become available after the thread has started.
 
@@ -43,7 +44,11 @@ class BaseTrainer(ABC):
                 self.decoder = self.get_training_model("frame_decoder")
 
             def on_data_users_dict_attached(self) -> None:
-                self.buffer = self.get_data_user("frame_buffer")
+                self.data_user = self.get_data_user("frame_buffer")
+
+            def is_trainable(self) -> bool:
+                self.data_user.update()
+                return len(self.data_user.buffer) >= self.batch_size
 
             def train(self) -> None:
                 # ... getting dataset.
@@ -134,11 +139,21 @@ class BaseTrainer(ABC):
         model.unfreeze_model()
         return model
 
-    def get_data_user(self, name: str) -> DataUser:
+    def get_data_user(self, name: str) -> ThreadSafeDataUser[Any]:
         """Retrieves the specified data user."""
         if name not in self._data_users_dict:
             raise KeyError(f"The specified data user name '{name}' does not exist.")
         return self._data_users_dict[name]
+
+    def is_trainable(self) -> bool:
+        """Determines if the training can be executed.
+
+        This method checks if the training process is currently
+        feasible. If it returns `False`, the training procedure is
+        skipped. Subclasses should override this method to implement
+        custom logic for determining trainability status.
+        """
+        return True
 
     def setup(self) -> None:
         """Setup procedure to be performed before training starts."""

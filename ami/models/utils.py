@@ -1,15 +1,24 @@
 """This file contains utility classes."""
+from collections import UserDict
+from enum import StrEnum
+
 import torch.nn as nn
 
-from .model_wrapper import InferenceWrapper, ModelWrapper
+from .model_wrapper import ModelWrapper, ThreadSafeInferenceWrapper
 
 
-class InferenceWrappersDict(dict[str, InferenceWrapper[nn.Module]]):
+class ModelNames(StrEnum):
+    """Enumerates the all model names used in ami system."""
+
+    IMAGE_ENCODER = "image_encoder"
+
+
+class InferenceWrappersDict(UserDict[str, ThreadSafeInferenceWrapper[nn.Module]]):
     """Aggregates inference wrapper classes to share models from the training
     thread to the inference thread."""
 
 
-class ModelWrappersDict(dict[str, ModelWrapper[nn.Module]]):
+class ModelWrappersDict(UserDict[str, ModelWrapper[nn.Module]]):
     """A dictionary class for aggregating model wrappers to be utilized within
     the `hydra` framework.
 
