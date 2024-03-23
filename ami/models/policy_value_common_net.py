@@ -6,7 +6,7 @@ import torch.nn as nn
 from torch.distributions import Distribution
 
 
-class PolicyValueCommonNet(nn.Module):
+class PolicyValueCommonNet(ABC, nn.Module):
     """Modules with shared models for policy and value functions."""
 
     @abstractmethod
