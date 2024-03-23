@@ -33,11 +33,11 @@ Poetryの基本的な使い方は[Poetryをサクッと使い始めてみる](ht
 
 #### ハードウェア要件
 
-| ハードウェア | 要件                        | 備考                                                   |
-| ------------ | --------------------------- | ------------------------------------------------------ |
-| CPU          | Intel / AMD の64bit CPU     |                                                        |
-| GPU          | NVIDIA GPU                  | AMD Radeonでも技術的には対応可能と思われるが、未検証。 |
-| ディスプレイ | FHD以上の画質のディスプレイ | VRChatの起動のため。                                   |
+| ハードウェア | 要件                     | 備考                               |
+| ------ | ---------------------- | -------------------------------- |
+| CPU    | Intel / AMD の64bit CPU |                                  |
+| GPU    | NVIDIA GPU             | AMD Radeonでも技術的には対応可能と思われるが、未検証。 |
+| ディスプレイ | FHD以上の画質のディスプレイ        | VRChatの起動のため。                    |
 
 #### ソフトウェア要件
 
@@ -62,9 +62,11 @@ Poetryの基本的な使い方は[Poetryをサクッと使い始めてみる](ht
    **NOTE**: NVIDIA Driverのバージョン**525以下**ではSteamが正常に動作しないため注意。（提供されている最新の安定版Driverを使うこと。）
 
    **NOTE**: Snap版のSteamではVRChatをインストールできないため、使わないこと。Steamの公式ページからdebファイルをダウンロードしインストールする。
+
 2. Steamの設定で「互換性」「他のすべてのタイトルでSteam Playを有効化」をオンにする。
 
    ![image](https://github.com/MLShukai/ami/assets/574575/c5d3d36f-fc28-44e0-87d6-e6c5113bb1b0)
+
 3. VRChatをインストール。
 
 [vrchat-ioのドキュメンテーション](https://github.com/Geson-anko/vrchat-io?tab=readme-ov-file#vrchat)を参考に、VRChatやOBSをインストールする。
