@@ -54,11 +54,9 @@ class CausalDataBuffer(BaseDataBuffer):
         Args:
             new_data: A buffer to concatenate.
         """
-        for i in range(len(new_data)):
-            step_data = StepData()
-            for key in self.__key_list:
-                step_data[key] = new_data.buffer_dict[key][i]
-            self.add(step_data)
+        for key in self.__key_list:
+            self.buffer_dict[key] += new_data.buffer_dict[key]
+        self.__current_len = min(len(self) + len(new_data), self.__max_len)
 
     def make_dataset(self) -> TensorDataset:
         """Make a TensorDataset from current buffer.
