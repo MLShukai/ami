@@ -20,7 +20,7 @@ class CausalDataBuffer(BaseDataBuffer):
         """
         self.__max_len = max_len
         self.__current_len = 0
-        self.__key_list = key_list
+        self._key_list = key_list
         self.__buffer_dict: dict[DataKeys, deque[torch.Tensor]] = dict()
         for key in key_list:
             self.__buffer_dict[key] = deque(maxlen=max_len)
@@ -39,7 +39,7 @@ class CausalDataBuffer(BaseDataBuffer):
         Args:
             step_data: A single step of data.
         """
-        for key in self.__key_list:
+        for key in self._key_list:
             self.__buffer_dict[key].append(torch.Tensor(step_data[key]))
         if self.__current_len < self.__max_len:
             self.__current_len += 1
@@ -54,7 +54,7 @@ class CausalDataBuffer(BaseDataBuffer):
         Args:
             new_data: A buffer to concatenate.
         """
-        for key in self.__key_list:
+        for key in self._key_list:
             self.buffer_dict[key] += new_data.buffer_dict[key]
         self.__current_len = min(len(self) + len(new_data), self.__max_len)
 
@@ -65,6 +65,6 @@ class CausalDataBuffer(BaseDataBuffer):
             TensorDataset: a TensorDataset created from current buffer.
         """
         tensor_list = []
-        for key in self.__key_list:
+        for key in self._key_list:
             tensor_list.append(torch.stack(list(self.__buffer_dict[key])))
         return TensorDataset(*tensor_list)
