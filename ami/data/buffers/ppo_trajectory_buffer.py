@@ -11,7 +11,7 @@ from .causal_data_buffer import CausalDataBuffer
 class PPOTrajectoryBuffer(CausalDataBuffer):
     """Buffering the trajectory data for ppo training.
 
-    Advantageの計算で次ステップの価値関数の推定値を用いる都合上、返されるデータセットの最大長は `max_len - 1`となる。
+    Advantageの計算で次ステップの価値関数の推定値を用いるため、返されるデータセットの長さは `len - 1`となる。
 
     Returning objects are;
         - observations
