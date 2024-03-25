@@ -50,9 +50,7 @@ class PPOTrajectoryBuffer(CausalDataBuffer):
         observations = tensor_dict[DataKeys.OBSERVATION][:-1]
         actions = tensor_dict[DataKeys.ACTION][:-1]
         logprobs = tensor_dict[DataKeys.ACTION_LOG_PROBABILITY][:-1]
-
-        raw_rewards = tensor_dict[DataKeys.REWARD]
-        rewards = raw_rewards[:-1]
+        rewards = tensor_dict[DataKeys.REWARD][:-1]
 
         raw_values = tensor_dict[DataKeys.VALUE]
         final_next_value = raw_values[-1]
