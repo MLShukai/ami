@@ -42,7 +42,7 @@ class ModelMultiplyP(nn.Module):
 
 
 class DataBufferImpl(BaseDataBuffer):
-    def init(self) -> None:
+    def __init__(self) -> None:
         self.obs: list[torch.Tensor] = []
 
     def add(self, step_data: StepData) -> None:

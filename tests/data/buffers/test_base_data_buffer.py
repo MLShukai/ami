@@ -12,7 +12,7 @@ from tests.helpers import DataBufferImpl
 class TestDataBuffer:
     @pytest.fixture
     def data_buffer(self) -> DataBufferImpl:
-        return DataBufferImpl()
+        return DataBufferImpl.reconstructable_init()
 
     @pytest.fixture
     def data_buffer_added(self, data_buffer: DataBufferImpl) -> DataBufferImpl:

@@ -22,14 +22,14 @@ class PPOTrajectoryBuffer(CausalDataBuffer):
         - values
     """
 
-    def init(self, max_len: int, gamma: float = 0.99, gae_lambda: float = 0.95) -> None:  # type: ignore
+    def __init__(self, max_len: int, gamma: float = 0.99, gae_lambda: float = 0.95) -> None:
         """
         Args:
             max_size: The max size of internal buffer.
             gamma: Discount factor.
             gae_lambda: The lambda of generalized advantage estimation.
         """
-        super().init(
+        super().__init__(
             max_len,
             key_list=[
                 DataKeys.OBSERVATION,

@@ -50,7 +50,9 @@ class TestImageVAETrainer:
 
     @pytest.fixture
     def image_buffer_dict(self, image_step_data: StepData) -> DataCollectorsDict:
-        d = DataCollectorsDict.from_data_buffers(**{BufferNames.IMAGE: RandomDataBuffer(32, [DataKeys.OBSERVATION])})
+        d = DataCollectorsDict.from_data_buffers(
+            **{BufferNames.IMAGE: RandomDataBuffer.reconstructable_init(32, [DataKeys.OBSERVATION])}
+        )
 
         d.collect(image_step_data)
         d.collect(image_step_data)

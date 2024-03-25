@@ -10,7 +10,7 @@ from .buffers.test_base_data_buffer import DataBufferImpl
 class TestDataCollectorsDict:
     @pytest.fixture
     def buffer(self) -> DataBufferImpl:
-        return DataBufferImpl()
+        return DataBufferImpl.reconstructable_init()
 
     @pytest.fixture
     def collector(self, buffer: DataBufferImpl) -> ThreadSafeDataCollector:

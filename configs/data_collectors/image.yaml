@@ -1,7 +1,7 @@
 _target_: ami.data.utils.DataCollectorsDict.from_data_buffers
 
 image:
-  _target_: ami.data.buffers.random_data_buffer.RandomDataBuffer
+  _target_: ami.data.buffers.random_data_buffer.RandomDataBuffer.reconstructable_init
   max_len: 2048 # From Primitive AMI.
   key_list:
     - "observation"

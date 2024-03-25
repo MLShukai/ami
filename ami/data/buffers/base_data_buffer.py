@@ -11,8 +11,8 @@ from ..step_data import StepData
 class BaseDataBuffer(ABC):
     """Base class for all data buffer objects.
 
-    Please use the `init` method as the constructor instead of `__init__`.
-    To renew this class, `__init__` stores the constructor's `args` and `kwds`, which are then used in the `new` method.
+    Please use the `reconstructable_init` method as the constructor instead of `__init__`.
+    To renew this class, `reconstructable_init` stores the constructor's `args` and `kwds`, which are then used in the `new` method.
 
     Implement the following methods:
     - `add`: To store a single step of data from the agent.
@@ -20,12 +20,30 @@ class BaseDataBuffer(ABC):
     - `make_dataset`: To create a PyTorch dataset class for training.
     """
 
-    def __init__(self, *args: Any, **kwds: Any) -> None:
+    _init_args: tuple[Any, ...]
+    _init_kwds: dict[str, Any]
+
+    @classmethod
+    def reconstructable_init(cls, *args: Any, **kwds: Any) -> Self:
         """Stores constructor arguments for renewing the data buffer, and throw
-        them to :meth:`init`."""
-        self._init_args = copy.deepcopy(args)
-        self._init_kwds = copy.deepcopy(kwds)
-        self.init(*args, **kwds)
+        them to :meth:`__init__`."""
+        instance = cls(*copy.deepcopy(args), **copy.deepcopy(kwds))
+        instance._init_args = args
+        instance._init_kwds = kwds
+        return instance
+
+    @property
+    def is_reconstructable(self) -> bool:
+        return hasattr(self, "_init_args") and hasattr(self, "_init_kwds")
+
+    def new(self) -> Self:
+        if self.is_reconstructable:
+            return self.__class__.reconstructable_init(*self._init_args, **self._init_kwds)
+        else:
+            raise RuntimeError(
+                "Can not create new instance! Did you forget to use `reconstructable_init`"
+                "instead of `__init__` when creating a instance?"
+            )
 
     def init(self, *args: Any, **kwds: Any) -> None:
         """User-defined constructor.
@@ -61,6 +79,3 @@ class BaseDataBuffer(ABC):
             dataset: Dataset object for training.
         """
         raise NotImplementedError
-
-    def new(self) -> Self:
-        return self.__class__(*self._init_args, **self._init_kwds)
