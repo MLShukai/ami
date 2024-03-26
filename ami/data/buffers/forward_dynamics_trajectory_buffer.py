@@ -7,7 +7,8 @@ class ForwardDynamicsTrajectoryBuffer(CausalDataBuffer):
         super().__init__(
             max_len,
             key_list=[
-                DataKeys.OBSERVATION,
+                DataKeys.EMBED_OBSERVATION,
+                DataKeys.NEXT_EMBED_OBSERVATION,
                 DataKeys.ACTION,
                 DataKeys.HIDDEN,
             ],
