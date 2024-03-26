@@ -36,6 +36,7 @@ class PPOPolicyTrainer(BaseTrainer):
         partial_dataloader: partial[DataLoader[Tensor]],
         partial_optimizer: partial[torch.optim.Optimizer],
         device: torch.device,
+        max_epochs: int = 1,
         minimum_dataset_size: int = 1,
         norm_advantage: bool = True,
         clip_coef: float = 0.1,
@@ -49,6 +50,7 @@ class PPOPolicyTrainer(BaseTrainer):
             partial_dataloader: A partially instantiated DataLoader lacking a provided dataset.
             partial_optimizer: A partially instantiated optimizer lacking provided parameters.
             device: The accelerator device (e.g., CPU, GPU) used for training.
+            max_epochs: The number of times to use all of the dataset.
             minimum_dataset_size: Minimum dataset size required to consider the trainer in a trainable state.
             norm_advantage: Toggles normalization of advantages.
             clip_coef: The coefficient for surrogate clipping.
@@ -61,6 +63,7 @@ class PPOPolicyTrainer(BaseTrainer):
         self.partial_optimizer = partial_optimizer
         self.partial_dataloader = partial_dataloader
         self.device = device
+        self.max_epochs = max_epochs
         self.minimum_dataset_size = minimum_dataset_size
         self.norm_advantage = norm_advantage
         self.clip_coef = clip_coef
@@ -148,13 +151,14 @@ class PPOPolicyTrainer(BaseTrainer):
         dataset = self.trajectory_data_user.get_dataset()
         dataloader = self.partial_dataloader(dataset=dataset)
 
-        for batch in dataloader:
-            batch = [d.to(self.device) for d in batch]
-            out = self.training_step(batch)
+        for _ in range(self.max_epochs):
+            for batch in dataloader:
+                batch = [d.to(self.device) for d in batch]
+                out = self.training_step(batch)
 
-            optimizer.zero_grad()
-            out["loss"].backward()
-            optimizer.step()
+                optimizer.zero_grad()
+                out["loss"].backward()
+                optimizer.step()
 
         self.optimizer_state = optimizer.state_dict()
         self.trajectory_data_user.clear()  # Can not use old buffer data because ppo is on-policy method.
