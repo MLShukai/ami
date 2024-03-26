@@ -45,14 +45,6 @@ class BaseDataBuffer(ABC):
                 "instead of `__init__` when creating a instance?"
             )
 
-    def init(self, *args: Any, **kwds: Any) -> None:
-        """User-defined constructor.
-
-        The arguments must be constants as they are reused in the new
-        instance.
-        """
-        pass
-
     @abstractmethod
     def add(self, step_data: StepData) -> None:
         """Stores a single step of data from the agent.
