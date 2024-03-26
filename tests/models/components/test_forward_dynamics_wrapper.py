@@ -15,7 +15,7 @@ LEN = 64
 DROPOUT = 0.1
 
 
-class TestSconv:
+class TestForwardDynamicsWrapper:
     @pytest.fixture
     def sconv(self):
         sconv = SConv(DEPTH, DIM, DIM_FF_HIDDEN, DROPOUT)
