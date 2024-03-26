@@ -33,6 +33,8 @@ class TestPPOTrajectoryBuffer:
         dataset = buffer.make_dataset()
 
         length = min(max_size, num_collect) - 1
+        assert buffer.dataset_size == length
+
         observations, actions, logprobs, advantages, returns, values = dataset[0:length]
         assert observations.size() == (length, *observation_shape)
         assert actions.size() == (length, *action_shape)
