@@ -42,6 +42,10 @@ class PPOTrajectoryBuffer(CausalDataBuffer):
         self.gamma = gamma
         self.gae_lambda = gae_lambda
 
+    @property
+    def dataset_size(self) -> int:
+        return max(len(self) - 1, 0)
+
     def make_dataset(self) -> TensorDataset:
         tensor_dict = OrderedDict()
         for key in self._key_list:

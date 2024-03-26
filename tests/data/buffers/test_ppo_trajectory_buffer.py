@@ -20,6 +20,8 @@ class TestPPOTrajectoryBuffer:
     def test_make_dataset(self, max_size, gamma, gae_lambda, observation_shape, action_shape, num_collect):
         buffer = PPOTrajectoryBuffer.reconstructable_init(max_size, gamma, gae_lambda)
 
+        assert buffer.dataset_size == 0
+
         for _ in range(num_collect):
             step_data = StepData()
             step_data[DataKeys.OBSERVATION] = torch.randn(*observation_shape)
@@ -33,6 +35,8 @@ class TestPPOTrajectoryBuffer:
         dataset = buffer.make_dataset()
 
         length = min(max_size, num_collect) - 1
+        assert buffer.dataset_size == length
+
         observations, actions, logprobs, advantages, returns, values = dataset[0:length]
         assert observations.size() == (length, *observation_shape)
         assert actions.size() == (length, *action_shape)
