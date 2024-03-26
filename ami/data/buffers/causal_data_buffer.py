@@ -11,7 +11,7 @@ from .base_data_buffer import BaseDataBuffer
 class CausalDataBuffer(BaseDataBuffer):
     """A data buffer which preserve data order."""
 
-    def init(self, max_len: int, key_list: list[DataKeys]) -> None:
+    def __init__(self, max_len: int, key_list: list[DataKeys]) -> None:
         """Initializes data buffer.
 
         Args:

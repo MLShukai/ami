@@ -18,7 +18,7 @@ class TestPPOTrajectoryBuffer:
         [(128, 0.99, 0.99, (64, 64), (64, 64), 256), (64, 0.98, 0.999, (3, 84, 84), (5,), 32)],
     )
     def test_make_dataset(self, max_size, gamma, gae_lambda, observation_shape, action_shape, num_collect):
-        buffer = PPOTrajectoryBuffer(max_size, gamma, gae_lambda)
+        buffer = PPOTrajectoryBuffer.reconstructable_init(max_size, gamma, gae_lambda)
 
         for _ in range(num_collect):
             step_data = StepData()
