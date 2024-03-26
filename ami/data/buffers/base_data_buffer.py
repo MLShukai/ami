@@ -41,7 +41,7 @@ class BaseDataBuffer(ABC):
             return self.__class__.reconstructable_init(*self._init_args, **self._init_kwds)
         else:
             raise RuntimeError(
-                "Can not create new instance! Did you forget to use `reconstructable_init`"
+                "Can not create new instance! Did you forget to use `reconstructable_init` "
                 "instead of `__init__` when creating a instance?"
             )
 
