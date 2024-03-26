@@ -33,10 +33,12 @@ class TestSconv:
         hidden_shape = (BATCH, DEPTH, LEN, DIM)
         hidden = torch.randn(*hidden_shape)
 
-        obs_hat_dist, hidden = forward_dynamics(obs, action, hidden[:, :, -1, :])
-        assert obs_hat_dist.sample().shape == obs_shape
+        obs_hat_mean, obs_hat_std, hidden = forward_dynamics(obs, action, hidden[:, :, -1, :])
+        assert obs_hat_mean.shape == obs_shape
+        assert obs_hat_std.shape == obs_shape
         assert hidden.shape == hidden_shape
 
-        obs_hat_dist, hidden = forward_dynamics(obs, action, hidden[:, :, -1, :])
-        assert obs_hat_dist.sample().shape == obs_shape
+        obs_hat_mean, obs_hat_std, hidden = forward_dynamics(obs, action, hidden[:, :, -1, :])
+        assert obs_hat_mean.shape == obs_shape
+        assert obs_hat_std.shape == obs_shape
         assert hidden.shape == hidden_shape
