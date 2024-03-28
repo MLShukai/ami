@@ -11,7 +11,10 @@ SCALE_ONE = 1.0 / math.sqrt(2.0)
 
 class FullyConnectedFixedStdNormal(nn.Module):
     """The layer which returns the normal distribution with fixed standard
-    deviation."""
+    deviation.
+
+    https://github.com/MLShukai/ami/issues/117
+    """
 
     def __init__(self, in_dim: int, out_dim: int, std: float = SHIFT_ZERO, normal_cls: type[Normal] = Normal) -> None:
         super().__init__()
