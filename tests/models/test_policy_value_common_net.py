@@ -5,19 +5,19 @@ from torch.distributions import Distribution
 
 from ami.models.components.discrete_policy_head import DiscretePolicyHead
 from ami.models.components.fully_connected_value_head import FullyConnectedValueHead
-from ami.models.policy_value_common_net import ModularPolicyValueCommonNet
+from ami.models.policy_value_common_net import PolicyValueCommonNet
 
 
-class TestModularPolicyValueCommonNet:
+class TestPolicyValueCommonNet:
     @pytest.fixture
-    def net(self) -> ModularPolicyValueCommonNet:
+    def net(self) -> PolicyValueCommonNet:
         base_model = nn.Linear(128, 16)
         policy = DiscretePolicyHead(16, [8])
         value = FullyConnectedValueHead(16)
 
-        return ModularPolicyValueCommonNet(base_model, policy, value)
+        return PolicyValueCommonNet(base_model, policy, value)
 
-    def test_forward(self, net: ModularPolicyValueCommonNet):
+    def test_forward(self, net: PolicyValueCommonNet):
 
         action_dist, value = net.forward(torch.randn(128))
         assert isinstance(action_dist, Distribution)
