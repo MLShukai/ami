@@ -14,7 +14,7 @@ from ami.models.components.discrete_policy_head import DiscretePolicyHead
 from ami.models.components.fully_connected_value_head import FullyConnectedValueHead
 from ami.models.model_names import ModelNames
 from ami.models.model_wrapper import ModelWrapper
-from ami.models.policy_value_common_net import ModularPolicyValueCommonNet
+from ami.models.policy_value_common_net import PolicyValueCommonNet
 from ami.models.utils import ModelWrappersDict
 from ami.trainers.ppo_policy_trainer import PPOPolicyTrainer
 
@@ -36,7 +36,7 @@ class TestPPOPolicyTrainer:
         policy = DiscretePolicyHead(16, [8])
         value = FullyConnectedValueHead(16)
 
-        return ModularPolicyValueCommonNet(base_model, policy, value)
+        return PolicyValueCommonNet(base_model, policy, value)
 
     @pytest.fixture
     def policy_value_wrappers_dict(
