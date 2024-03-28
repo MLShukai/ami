@@ -2,7 +2,7 @@ import math
 
 import torch
 import torch.nn as nn
-from torch import Tensor
+from torch import Size, Tensor
 from torch.distributions import Normal
 
 SHIFT_ZERO = 1.0 / math.sqrt(2.0 * math.pi)
@@ -23,3 +23,16 @@ class FullyConnectedFixedStdNormal(nn.Module):
         mean = self.fc(x)
         std = torch.full_like(mean, self.std)
         return self.normal_cls(mean, std)
+
+
+class DeterministicNormal(Normal):
+    """Always samples only mean."""
+
+    loc: Tensor
+
+    def sample(self, sample_shape: Size = Size()) -> Tensor:
+        return self.rsample(sample_shape)
+
+    def rsample(self, sample_shape: Size = Size()) -> Tensor:
+        shape = self._extended_shape(sample_shape)
+        return self.loc.expand(shape)
