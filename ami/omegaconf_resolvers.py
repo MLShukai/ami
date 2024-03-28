@@ -13,4 +13,5 @@ def register_custom_resolvers() -> None:
 
     if not _registered:
         OmegaConf.register_new_resolver("torch.device", torch.device)  # Usage: ${torch.device: cuda:0}
+        OmegaConf.register_new_resolver("python.eval", eval)  # Usage: ${python.eval: 'lambda x:x * 2'}
         _registered = True
