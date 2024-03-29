@@ -15,6 +15,7 @@ from ami.threads import (
     attach_shared_objects_pool_to_threads,
 )
 from ami.trainers.utils import TrainersList
+from ami.hydra_instantiators import instantiate_data_collectors, instantiate_models, instantiate_trainers
 
 # Add the project root path to environment vartiable `PROJECT_ROOT`
 # to refer in the config file by `${oc.env:PROJECT_ROOT}`.
@@ -33,15 +34,15 @@ def main(cfg: DictConfig) -> None:
     logger.info(f"Instantiating Interaction <{cfg.interaction._target_}>")
     interaction: Interaction = hydra.utils.instantiate(cfg.interaction)
 
-    logger.info(f"Instantiating DataCollectors <{cfg.data_collectors._target_}>")
-    data_collectors: DataCollectorsDict = hydra.utils.instantiate(cfg.data_collectors)
+    logger.info(f"Instantiating DataCollectors...")
+    data_collectors: DataCollectorsDict = instantiate_data_collectors(cfg.data_collectors)
 
-    logger.info(f"Instantiating Models <{cfg.models._target_}>")
-    models: ModelWrappersDict = hydra.utils.instantiate(cfg.models)
+    logger.info(f"Instantiating Models...")
+    models: ModelWrappersDict = instantiate_models(cfg.models)
     models.send_to_default_device()
 
-    logger.info(f"Instantiating Trainers <{cfg.trainers._target_}>")
-    trainers: TrainersList = hydra.utils.instantiate(cfg.trainers)
+    logger.info(f"Instantiating Trainers...")
+    trainers: TrainersList = instantiate_trainers(cfg.trainers)
 
     logger.info("Instantiating Thread Classes...")
     threads_cfg = cfg.threads
