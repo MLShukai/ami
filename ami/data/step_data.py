@@ -19,6 +19,7 @@ class DataKeys(StrEnum):
     NEXT_EMBED_OBSERVATION = "next_embed_observation"  # z_{t+1}
     REWARD = "reward"  # r_{t+1}
     NEXT_VALUE = "next_value"  # v_{t+1}
+    HIDDEN = "hidden"  # h_t
 
 
 class StepData(dict[DataKeys, Any]):
