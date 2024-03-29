@@ -3,7 +3,11 @@ import hydra
 import pytest
 from hydra.utils import instantiate
 
-from ami.hydra_instantiators import instantiate_data_collectors, instantiate_models
+from ami.hydra_instantiators import (
+    instantiate_data_collectors,
+    instantiate_models,
+    instantiate_trainers,
+)
 from ami.omegaconf_resolvers import register_custom_resolvers
 from tests.helpers import PROJECT_ROOT
 
@@ -26,7 +30,7 @@ def test_instantiate(overrides: list[str]):
         interaction = instantiate(cfg.interaction)
         data_collectors = instantiate_data_collectors(cfg.data_collectors)
         models = instantiate_models(cfg.models)
-        trainers = instantiate(cfg.trainers)
+        trainers = instantiate_trainers(cfg.trainers)
 
         threads = cfg.threads
         instantiate(threads.main_thread)

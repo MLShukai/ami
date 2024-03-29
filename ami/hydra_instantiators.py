@@ -8,7 +8,7 @@ from .data.utils import BaseDataBuffer, DataCollectorsDict, ThreadSafeDataCollec
 from .logger import get_main_thread_logger
 from .models.model_names import ModelNames
 from .models.utils import ModelWrapper, ModelWrappersDict
-from .trainers.utils import TrainersList
+from .trainers.utils import BaseTrainer, TrainersList
 
 logger = get_main_thread_logger(__name__)
 
@@ -42,3 +42,13 @@ def instantiate_models(models_cfg: DictConfig) -> ModelWrappersDict:
 
         d[ModelNames(str(name))] = model_wrapper
     return d
+
+
+def instantiate_trainers(trainers_cfg: ListConfig) -> TrainersList:
+    tl = TrainersList()
+    for i, cfg in enumerate(trainers_cfg):
+        logger.info(f"Instatiating Trainer[{i}]: <{cfg._target_}>")
+        trainer: BaseTrainer = hydra.utils.instantiate(cfg)
+        tl.append(trainer)
+
+    return tl
