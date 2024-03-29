@@ -64,7 +64,3 @@ class TestForwardDynamics:
         obs_hat_dist, hidden = forward_dynamics(obs, hidden[:, -1, :], action)
         assert obs_hat_dist.sample().shape == obs_shape
         assert hidden.shape == hidden_shape
-
-        obs_hat_dist, hidden = forward_dynamics(obs, hidden[:, -1, :], action)
-        assert obs_hat_dist.sample().shape == obs_shape
-        assert hidden.shape == hidden_shape
