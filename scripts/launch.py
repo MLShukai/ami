@@ -4,6 +4,11 @@ import rootutils
 from omegaconf import DictConfig
 
 from ami.data.utils import DataCollectorsDict
+from ami.hydra_instantiators import (
+    instantiate_data_collectors,
+    instantiate_models,
+    instantiate_trainers,
+)
 from ami.interactions.interaction import Interaction
 from ami.logger import get_main_thread_logger
 from ami.models.utils import ModelWrappersDict
@@ -15,7 +20,6 @@ from ami.threads import (
     attach_shared_objects_pool_to_threads,
 )
 from ami.trainers.utils import TrainersList
-from ami.hydra_instantiators import instantiate_data_collectors, instantiate_models, instantiate_trainers
 
 # Add the project root path to environment vartiable `PROJECT_ROOT`
 # to refer in the config file by `${oc.env:PROJECT_ROOT}`.
@@ -34,14 +38,14 @@ def main(cfg: DictConfig) -> None:
     logger.info(f"Instantiating Interaction <{cfg.interaction._target_}>")
     interaction: Interaction = hydra.utils.instantiate(cfg.interaction)
 
-    logger.info(f"Instantiating DataCollectors...")
+    logger.info("Instantiating DataCollectors...")
     data_collectors: DataCollectorsDict = instantiate_data_collectors(cfg.data_collectors)
 
-    logger.info(f"Instantiating Models...")
+    logger.info("Instantiating Models...")
     models: ModelWrappersDict = instantiate_models(cfg.models)
     models.send_to_default_device()
 
-    logger.info(f"Instantiating Trainers...")
+    logger.info("Instantiating Trainers...")
     trainers: TrainersList = instantiate_trainers(cfg.trainers)
 
     logger.info("Instantiating Thread Classes...")
