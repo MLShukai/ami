@@ -17,15 +17,10 @@ def instantiate_data_collectors(data_collectors_cfg: DictConfig) -> DataCollecto
     d = DataCollectorsDict()
     for name, cfg in data_collectors_cfg.items():
         logger.info(f"Instantiating <{cfg._target_}>")
-        buffer_or_collector: BaseDataBuffer | ThreadSafeDataCollector[Any] = hydra.utils.instantiate(cfg)
+        collector: BaseDataBuffer | ThreadSafeDataCollector[Any] = hydra.utils.instantiate(cfg)
 
-        match buffer_or_collector:
-            case BaseDataBuffer():
-                collector = ThreadSafeDataCollector(buffer_or_collector)
-            case ThreadSafeDataCollector():
-                collector = buffer_or_collector
-            case _:
-                raise TypeError(f"Instatiated {cfg._target_} must be a DataBuffer or DataCollector!")
+        if isinstance(collector, BaseDataBuffer):
+            collector = ThreadSafeDataCollector(collector)
 
         logger.info(f"Instatiated <{collector.__class__.__name__}[{collector._buffer.__class__.__name__}]>")
 
@@ -38,9 +33,6 @@ def instantiate_models(models_cfg: DictConfig) -> ModelWrappersDict:
     for name, cfg in models_cfg.items():
         logger.info(f"Instantiating <{cfg._target_}[{cfg.model._target_}]>")
         model_wrapper: ModelWrapper[Any] = hydra.utils.instantiate(cfg)
-
-        if not isinstance(model_wrapper, ModelWrapper):
-            raise TypeError(f"Instantiated {cfg._target_} must be a ModelWrapper! Type: {type(model_wrapper)}")
 
         d[ModelNames(str(name))] = model_wrapper
     return d
