@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 from torch import Tensor
-from torch.distributions import Normal
+from torch.distributions import Distribution
 
 from .stacked_hidden_state import StackedHiddenState
 
@@ -22,7 +22,7 @@ class ForwardDynamics(nn.Module):
         self.core_model = core_model
         self.obs_hat_dist_head = obs_hat_dist_head
 
-    def forward(self, obs: Tensor, hidden: Tensor, action: Tensor) -> tuple[Normal, Tensor]:
+    def forward(self, obs: Tensor, hidden: Tensor, action: Tensor) -> tuple[Distribution, Tensor]:
         obs_flat = self.observation_flatten(obs)
         action_flat = self.action_flatten(action)
         x = self.obs_action_projection(torch.cat((obs_flat, action_flat), dim=-1))
