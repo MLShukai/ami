@@ -1,13 +1,11 @@
-_target_: ami.trainers.utils.TrainersList
-_args_:
-  - _target_: ami.trainers.image_vae_trainer.ImageVAETrainer
-    partial_dataloader:
-      _target_: torch.utils.data.DataLoader
-      _partial_: true
-      batch_size: 16
-      shuffle: true
-    partial_optimizer:
-      _target_: torch.optim.Adam
-      _partial_: true
-      lr: 0.001
-    device: ${devices.0}
+- _target_: ami.trainers.image_vae_trainer.ImageVAETrainer
+  partial_dataloader:
+    _target_: torch.utils.data.DataLoader
+    _partial_: true
+    batch_size: 16
+    shuffle: true
+  partial_optimizer:
+    _target_: torch.optim.Adam
+    _partial_: true
+    lr: 0.001
+  device: ${devices.0}
