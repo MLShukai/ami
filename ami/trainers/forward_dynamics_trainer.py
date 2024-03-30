@@ -27,7 +27,7 @@ class ForwardDynamicsTrainer(BaseTrainer):
         device: torch.device,
         observation_encoder_name: ModelNames | None = None,
         max_epochs: int = 1,
-        minimum_dataset_size: int = 1,
+        minimum_dataset_size: int = 2,
     ) -> None:
         """Initializes an ForwardDynamicsTrainer object.
 
@@ -42,6 +42,7 @@ class ForwardDynamicsTrainer(BaseTrainer):
         self.device = device
         self.observation_encoder_name = observation_encoder_name
         self.max_epochs = max_epochs
+        assert minimum_dataset_size >= 2, "minimum_dataset_size must be at least 2"
         self.minimum_dataset_size = minimum_dataset_size
 
     def on_data_users_dict_attached(self) -> None:
