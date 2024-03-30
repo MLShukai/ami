@@ -32,7 +32,7 @@ class VRChatOSCDiscreteActuator(BaseActuator[torch.Tensor]):
         Run: [0: release | 1: do]
     """
 
-    def __init__(self, osc_address: str="127.0.0.1", osc_sender_port: int=9000) -> None:
+    def __init__(self, osc_address: str = "127.0.0.1", osc_sender_port: int = 9000) -> None:
         """Create VRChatOSCDiscreteActuator object.
 
         Args:
