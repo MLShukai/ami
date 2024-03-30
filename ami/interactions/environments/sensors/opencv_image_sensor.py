@@ -1,5 +1,5 @@
-import torch
 import cv2
+import torch
 from vrchat_io.abc.video_capture import VideoCapture
 from vrchat_io.vision import OpenCVVideoCapture
 from vrchat_io.vision.wrappers import RatioCropWrapper, ResizeWrapper
@@ -17,7 +17,7 @@ class OpenCVImageSensor(BaseSensor[torch.Tensor]):
         height: int = 512,
         base_fps: float = 60.0,
         bgr2rgb: bool = True,
-        aspect_ratio: float | None = None
+        aspect_ratio: float | None = None,
     ):
         """Create OpenCVImageSensor object.
 
@@ -30,11 +30,7 @@ class OpenCVImageSensor(BaseSensor[torch.Tensor]):
             aspect_ratio: Ratio to crop frames to. If None, use `width/height`.
         """
         camera = OpenCVVideoCapture(
-            cv2.VideoCapture(camera_index),
-            width=width,
-            height=height,
-            fps=base_fps,
-            bgr2rgb=bgr2rgb
+            cv2.VideoCapture(camera_index), width=width, height=height, fps=base_fps, bgr2rgb=bgr2rgb
         )
 
         if aspect_ratio is None:
