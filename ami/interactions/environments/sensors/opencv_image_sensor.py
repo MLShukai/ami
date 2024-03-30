@@ -30,7 +30,7 @@ class OpenCVImageSensor(BaseSensor[torch.Tensor]):
             aspect_ratio: Ratio to crop frames to. If None, use `width/height`.
         """
         camera = OpenCVVideoCapture(
-            cv2.VideoCapture(camera_index), width=width, height=height, fps=base_fps, bgr2rgb=bgr2rgb
+            camera_index, width=width, height=height, fps=base_fps, bgr2rgb=bgr2rgb
         )
 
         if aspect_ratio is None:
