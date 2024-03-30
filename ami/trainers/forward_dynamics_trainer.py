@@ -71,11 +71,12 @@ class ForwardDynamicsTrainer(BaseTrainer):
         for _ in range(self.max_epochs):
             for batch in dataloader:
                 observations, hiddens, actions = batch
-                observations = observations.to(self.device)
 
                 if self.observation_encoder is not None:
                     with torch.no_grad():
-                        observations = self.observation_encoder.infer(observations).to(self.device)
+                        observations = self.observation_encoder.infer(observations)
+
+                observations = observations.to(self.device)
 
                 observations, hidden, actions, observations_next = (
                     observations[:-1],
