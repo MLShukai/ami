@@ -29,9 +29,7 @@ class OpenCVImageSensor(BaseSensor[torch.Tensor]):
             bgr2rgb: Convert BGR to RGB.
             aspect_ratio: Ratio to crop frames to. If None, use `width/height`.
         """
-        camera = OpenCVVideoCapture(
-            camera_index, width=width, height=height, fps=base_fps, bgr2rgb=bgr2rgb
-        )
+        camera = OpenCVVideoCapture(camera_index, width=width, height=height, fps=base_fps, bgr2rgb=bgr2rgb)
 
         if aspect_ratio is None:
             aspect_ratio = width / height
