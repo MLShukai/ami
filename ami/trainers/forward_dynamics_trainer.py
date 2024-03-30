@@ -25,6 +25,8 @@ class ForwardDynamicsTrainer(BaseTrainer):
         partial_dataloader: partial[DataLoader[torch.Tensor]],
         partial_optimizer: partial[Optimizer],
         device: torch.device,
+        max_epochs: int = 1,
+        minimum_dataset_size: int = 1,
     ) -> None:
         """Initializes an ForwardDynamicsTrainer object.
 
@@ -37,7 +39,8 @@ class ForwardDynamicsTrainer(BaseTrainer):
         self.partial_optimizer = partial_optimizer
         self.partial_dataloader = partial_dataloader
         self.device = device
-        self.batch_size: int = partial_dataloader.keywords["batch_size"]
+        self.max_epochs = max_epochs
+        self.minimum_dataset_size = minimum_dataset_size
 
     def on_data_users_dict_attached(self) -> None:
         self.trajectory_data_user: ThreadSafeDataUser[CausalDataBuffer] = self.get_data_user(
@@ -50,7 +53,7 @@ class ForwardDynamicsTrainer(BaseTrainer):
 
     def is_trainable(self) -> bool:
         self.trajectory_data_user.update()
-        return len(self.trajectory_data_user.buffer) >= self.batch_size
+        return len(self.trajectory_data_user.buffer) >= self.minimum_dataset_size
 
     def train(self) -> None:
         optimizer = self.partial_optimizer(self.forward_dynamics.parameters())
@@ -58,16 +61,17 @@ class ForwardDynamicsTrainer(BaseTrainer):
         dataset = self.trajectory_data_user.get_dataset()
         dataloader = self.partial_dataloader(dataset=dataset)
 
-        for batch in dataloader:
-            observations, hiddens, actions, observations_next = batch
-            observations = observations.to(self.device)
-            hidden = hiddens[-1].to(self.device)
-            actions = actions.to(self.device)
-            observations_next = observations_next.to(self.device)
-            optimizer.zero_grad()
-            observations_next_hat_dist, _ = self.forward_dynamics(observations, hidden, actions)
-            loss = -observations_next_hat_dist.log_prob(observations_next).mean()
-            loss.backward()
-            optimizer.step()
+        for _ in range(self.max_epochs):
+            for batch in dataloader:
+                observations, hiddens, actions, observations_next = batch
+                observations = observations.to(self.device)
+                hidden = hiddens[-1].to(self.device)
+                actions = actions.to(self.device)
+                observations_next = observations_next.to(self.device)
+                optimizer.zero_grad()
+                observations_next_hat_dist, _ = self.forward_dynamics(observations, hidden, actions)
+                loss = -observations_next_hat_dist.log_prob(observations_next).mean()
+                loss.backward()
+                optimizer.step()
 
         self.optimizer_state = optimizer.state_dict()
