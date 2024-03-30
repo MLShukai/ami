@@ -1,8 +1,6 @@
 import pytest
 
-from ami.interactions.environments.sensors.opencv_image_sensor import (
-    OpenCVImageSensor,
-)
+from ami.interactions.environments.sensors.opencv_image_sensor import OpenCVImageSensor
 
 
 class TestOpenCVImageSensor:
