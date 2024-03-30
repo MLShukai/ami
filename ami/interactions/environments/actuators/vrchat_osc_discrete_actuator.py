@@ -1,7 +1,6 @@
 from typing import Any
 
 import torch
-from pythonosc.udp_client import SimpleUDPClient
 from vrchat_io.controller.osc import RESET_VALUES, Buttons, InputController
 from vrchat_io.controller.wrappers.osc import MultiInputWrapper
 
@@ -39,7 +38,7 @@ class VRChatOSCDiscreteActuator(BaseActuator[torch.Tensor]):
             osc_address: IP address of OSC server.
             osc_sender_port: Port number of OSC server.
         """
-        controller = InputController(SimpleUDPClient(osc_address, osc_sender_port))
+        controller = InputController((osc_address, osc_sender_port))
         self.controller = MultiInputWrapper(controller)
 
     def operate(self, action: torch.Tensor) -> None:
@@ -59,17 +58,14 @@ class VRChatOSCDiscreteActuator(BaseActuator[torch.Tensor]):
         """Teardown the actuator."""
         self.controller.command(RESET_VALUES)
 
-    @staticmethod
-    def convert_action_to_command(action: list[int]) -> dict[str, Any]:
+    def convert_action_to_command(self, action: list[int]) -> dict[str, Any]:
         """Convert raw action list to command dictionary."""
-        cls = VRChatOSCDiscreteActuator
-
         command = {}
-        command.update(cls.move_vertical_to_command(action[0]))
-        command.update(cls.move_horizontal_to_command(action[1]))
-        command.update(cls.look_horizontal_to_command(action[2]))
-        command.update(cls.jump_to_command(action[3]))
-        command.update(cls.run_to_command(action[4]))
+        command.update(self.move_vertical_to_command(action[0]))
+        command.update(self.move_horizontal_to_command(action[1]))
+        command.update(self.look_horizontal_to_command(action[2]))
+        command.update(self.jump_to_command(action[3]))
+        command.update(self.run_to_command(action[4]))
         return command
 
     @staticmethod

@@ -3,7 +3,6 @@ import torch
 from vrchat_io.controller.osc import Buttons
 
 from ami.interactions.environments.actuators.vrchat_osc_discrete_actuator import (
-    ACTION_CHOICES_PER_CATEGORY,
     VRChatOSCDiscreteActuator,
 )
 
@@ -19,7 +18,7 @@ class TestVRChatOSCDiscreteActuator:
         actuator.operate(torch.tensor([1, 1, 1, 1, 1], dtype=torch.long))
 
         with pytest.raises(ValueError):
-            actuator.operate(torch.tensor(ACTION_CHOICES_PER_CATEGORY))
+            actuator.operate(torch.tensor([3, 0, 0, 0, 0], dtype=torch.long))
 
         actuator.teardown()
 
