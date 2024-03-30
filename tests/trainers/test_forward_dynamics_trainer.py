@@ -18,6 +18,7 @@ from ami.models.components.sconv import SConv
 from ami.models.model_names import ModelNames
 from ami.models.model_wrapper import ModelWrapper
 from ami.models.utils import ModelWrappersDict
+from ami.models.vae import Conv2dEncoder, EncoderWrapper
 from ami.trainers.forward_dynamics_trainer import ForwardDynamicsTrainer
 
 BATCH = 4
@@ -28,6 +29,9 @@ LEN = 64
 DROPOUT = 0.1
 DIM_OBS = 32
 DIM_ACTION = 8
+HEIGHT = 256
+WIDTH = 256
+CHANNELS = 3
 
 
 class TestSconv:
@@ -66,12 +70,21 @@ class TestSconv:
         )
 
     @pytest.fixture
+    def encoder(self):
+        encoder = Conv2dEncoder(HEIGHT, WIDTH, CHANNELS, DIM_OBS)
+        return encoder
+
+    @pytest.fixture
+    def encoder_wrapper(self, encoder, device):
+        encoder_wrapper = EncoderWrapper(encoder, default_device=device)
+        return encoder_wrapper
+
+    @pytest.fixture
     def trajectory_step_data(self) -> StepData:
         d = StepData()
-        d[DataKeys.EMBED_OBSERVATION] = torch.randn(DIM_OBS)
+        d[DataKeys.OBSERVATION] = torch.randn(CHANNELS, HEIGHT, WIDTH)
         d[DataKeys.HIDDEN] = torch.randn(DEPTH, DIM)
         d[DataKeys.ACTION] = torch.randn(DIM_ACTION)
-        d[DataKeys.NEXT_EMBED_OBSERVATION] = torch.randn(DIM_OBS)
         return d
 
     @pytest.fixture
@@ -81,10 +94,9 @@ class TestSconv:
                 BufferNames.FORWARD_DYNAMICS_TRAJECTORY: CausalDataBuffer.reconstructable_init(
                     32,
                     [
-                        DataKeys.EMBED_OBSERVATION,
+                        DataKeys.OBSERVATION,
                         DataKeys.HIDDEN,
                         DataKeys.ACTION,
-                        DataKeys.NEXT_EMBED_OBSERVATION,
                     ],
                 )
             }
@@ -107,10 +119,11 @@ class TestSconv:
         return partial_optimizer
 
     @pytest.fixture
-    def forward_dynamics_wrappers_dict(self, forward_dynamics, device):
+    def forward_dynamics_wrappers_dict(self, forward_dynamics, encoder_wrapper, device):
         d = ModelWrappersDict(
             {
                 ModelNames.FORWARD_DYNAMICS: ModelWrapper(forward_dynamics, device, True),
+                ModelNames.IMAGE_ENCODER: encoder_wrapper,
             }
         )
         d.send_to_default_device()
@@ -120,7 +133,9 @@ class TestSconv:
     def trainer(
         self, partial_dataloader, partial_optimizer, device, forward_dynamics_wrappers_dict, trajectory_buffer_dict
     ):
-        trainer = ForwardDynamicsTrainer(partial_dataloader, partial_optimizer, device)
+        trainer = ForwardDynamicsTrainer(
+            partial_dataloader, partial_optimizer, device, observation_encoder_name=ModelNames.IMAGE_ENCODER
+        )
         trainer.attach_model_wrappers_dict(forward_dynamics_wrappers_dict)
         trainer.attach_data_users_dict(trajectory_buffer_dict.get_data_users())
         return trainer

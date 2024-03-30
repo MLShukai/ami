@@ -25,6 +25,7 @@ class ForwardDynamicsTrainer(BaseTrainer):
         partial_dataloader: partial[DataLoader[torch.Tensor]],
         partial_optimizer: partial[Optimizer],
         device: torch.device,
+        observation_encoder_name: ModelNames | None = None,
         max_epochs: int = 1,
         minimum_dataset_size: int = 1,
     ) -> None:
@@ -39,6 +40,7 @@ class ForwardDynamicsTrainer(BaseTrainer):
         self.partial_optimizer = partial_optimizer
         self.partial_dataloader = partial_dataloader
         self.device = device
+        self.observation_encoder_name = observation_encoder_name
         self.max_epochs = max_epochs
         self.minimum_dataset_size = minimum_dataset_size
 
@@ -50,6 +52,10 @@ class ForwardDynamicsTrainer(BaseTrainer):
     def on_model_wrappers_dict_attached(self) -> None:
         self.forward_dynamics: ModelWrapper[ForwardDynamics] = self.get_training_model(ModelNames.FORWARD_DYNAMICS)
         self.optimizer_state = self.partial_optimizer(self.forward_dynamics.parameters()).state_dict()
+        if self.observation_encoder_name is None:
+            self.observation_encoder = None
+        else:
+            self.observation_encoder = self.get_frozen_model(self.observation_encoder_name)
 
     def is_trainable(self) -> bool:
         self.trajectory_data_user.update()
@@ -63,11 +69,23 @@ class ForwardDynamicsTrainer(BaseTrainer):
 
         for _ in range(self.max_epochs):
             for batch in dataloader:
-                observations, hiddens, actions, observations_next = batch
+                observations, hiddens, actions = batch
                 observations = observations.to(self.device)
-                hidden = hiddens[-1].to(self.device)
+
+                if self.observation_encoder is not None:
+                    with torch.no_grad():
+                        observations = self.observation_encoder.infer(observations)
+
+                observations, hidden, actions, observations_next = (
+                    observations[:-1],
+                    hiddens[0],
+                    actions[:-1],
+                    observations[1:],
+                )
+
+                hidden = hidden.to(self.device)
                 actions = actions.to(self.device)
-                observations_next = observations_next.to(self.device)
+
                 optimizer.zero_grad()
                 observations_next_hat_dist, _ = self.forward_dynamics(observations, hidden, actions)
                 loss = -observations_next_hat_dist.log_prob(observations_next).mean()
