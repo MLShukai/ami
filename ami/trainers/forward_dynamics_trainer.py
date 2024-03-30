@@ -66,9 +66,7 @@ class ForwardDynamicsTrainer(BaseTrainer):
             observations_next = observations_next.to(self.device)
             optimizer.zero_grad()
             observations_next_hat_dist, _ = self.forward_dynamics(observations, hidden, actions)
-            observations_next_hat = observations_next_hat_dist.rsample()
-
-            loss = mse_loss(observations_next_hat, observations_next)
+            loss = -observations_next_hat_dist.log_prob(observations_next).mean()
             loss.backward()
             optimizer.step()
 
