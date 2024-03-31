@@ -1,5 +1,6 @@
 import pytest
 import torch
+from pytest_mock import MockerFixture
 from vrchat_io.controller.osc import Buttons
 
 from ami.interactions.environments.actuators.vrchat_osc_discrete_actuator import (
@@ -9,7 +10,9 @@ from ami.interactions.environments.actuators.vrchat_osc_discrete_actuator import
 
 class TestVRChatOSCDiscreteActuator:
     @pytest.fixture
-    def actuator(self) -> VRChatOSCDiscreteActuator:
+    def actuator(self, mocker: MockerFixture) -> VRChatOSCDiscreteActuator:
+        mocker.patch("pythonosc.udp_client.SimpleUDPClient")
+
         return VRChatOSCDiscreteActuator()
 
     def test_operate(self, actuator: VRChatOSCDiscreteActuator) -> None:
