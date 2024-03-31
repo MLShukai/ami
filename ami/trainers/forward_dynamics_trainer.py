@@ -11,7 +11,7 @@ from ami.data.buffers.buffer_names import BufferNames
 from ami.data.buffers.causal_data_buffer import CausalDataBuffer
 from ami.data.buffers.random_data_buffer import RandomDataBuffer
 from ami.data.interfaces import ThreadSafeDataUser
-from ami.models.components.forward_dynamics import ForwardDynamics
+from ami.models.forward_dynamics import ForwardDynamics
 from ami.models.model_names import ModelNames
 from ami.models.model_wrapper import ModelWrapper
 from ami.models.vae import VAE, Decoder, Encoder

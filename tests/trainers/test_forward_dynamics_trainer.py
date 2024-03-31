@@ -10,11 +10,11 @@ from ami.data.buffers.buffer_names import BufferNames
 from ami.data.buffers.causal_data_buffer import CausalDataBuffer
 from ami.data.step_data import DataKeys, StepData
 from ami.data.utils import DataCollectorsDict, DataUsersDict
-from ami.models.components.forward_dynamics import ForwardDynamics
 from ami.models.components.fully_connected_fixed_std_normal import (
     FullyConnectedFixedStdNormal,
 )
 from ami.models.components.sconv import SConv
+from ami.models.forward_dynamics import ForwardDynamics
 from ami.models.model_names import ModelNames
 from ami.models.model_wrapper import ModelWrapper
 from ami.models.utils import ModelWrappersDict

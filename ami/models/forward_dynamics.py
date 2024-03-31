@@ -3,7 +3,7 @@ import torch.nn as nn
 from torch import Tensor
 from torch.distributions import Distribution
 
-from .stacked_hidden_state import StackedHiddenState
+from .components.stacked_hidden_state import StackedHiddenState
 
 
 class ForwardDynamics(nn.Module):
