@@ -63,6 +63,8 @@ class ForwardDynamicsTrainer(BaseTrainer):
         return len(self.trajectory_data_user.buffer) >= self.minimum_dataset_size
 
     def train(self) -> None:
+        self.forward_dynamics.to(self.device)
+
         optimizer = self.partial_optimizer(self.forward_dynamics.parameters())
         optimizer.load_state_dict(self.optimizer_state)
         dataset = self.trajectory_data_user.get_dataset()

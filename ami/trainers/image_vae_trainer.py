@@ -58,6 +58,8 @@ class ImageVAETrainer(BaseTrainer):
 
     def train(self) -> None:
         vae = VAE(self.encoder.model, self.decoder.model)
+        vae.to(self.device)
+
         optimizer = self.partial_optimizer(vae.parameters())
         optimizer.load_state_dict(self.optimizer_state)
         dataset = self.image_data_user.get_dataset()
