@@ -1,4 +1,3 @@
-import cv2
 import torch
 from vrchat_io.abc.video_capture import VideoCapture
 from vrchat_io.vision import OpenCVVideoCapture
@@ -18,6 +17,7 @@ class OpenCVImageSensor(BaseSensor[torch.Tensor]):
         base_fps: float = 60.0,
         bgr2rgb: bool = True,
         aspect_ratio: float | None = None,
+        dtype: torch.dtype = torch.float32,
     ):
         """Create OpenCVImageSensor object.
 
@@ -36,6 +36,7 @@ class OpenCVImageSensor(BaseSensor[torch.Tensor]):
 
         camera = RatioCropWrapper(camera, aspect_ratio)
         self.camera = ResizeWrapper(camera, (width, height))
+        self.dtype = dtype
 
     def read(self) -> torch.Tensor:
         """Receive observed data and convert dtype and shape of array.
@@ -43,4 +44,4 @@ class OpenCVImageSensor(BaseSensor[torch.Tensor]):
         Returns:
             observation: Tensor formatted for torch DL models.
         """
-        return torch.from_numpy(self.camera.read()).clone().permute(2, 0, 1).float() / 255.0
+        return torch.from_numpy(self.camera.read()).permute(2, 0, 1).type(self.dtype) / 255.0
