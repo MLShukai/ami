@@ -2,11 +2,11 @@ import pytest
 import torch
 import torch.nn as nn
 
-from ami.models.components.forward_dynamics import ForwardDynamics
 from ami.models.components.fully_connected_fixed_std_normal import (
     FullyConnectedFixedStdNormal,
 )
 from ami.models.components.sconv import SConv
+from ami.models.forward_dynamics import ForwardDynamics
 
 BATCH = 4
 DEPTH = 8
