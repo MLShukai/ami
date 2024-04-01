@@ -9,3 +9,5 @@
     _partial_: true
     lr: 0.001
   device: ${devices.0}
+  max_epochs: 3
+  minimum_dataset_size: ${.partial_dataloader.batch_size}
