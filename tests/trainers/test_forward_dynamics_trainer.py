@@ -20,7 +20,6 @@ from ami.models.model_wrapper import ModelWrapper
 from ami.models.utils import ModelWrappersDict
 from ami.models.vae import Conv2dEncoder, EncoderWrapper
 from ami.trainers.forward_dynamics_trainer import ForwardDynamicsTrainer
-from tests.helpers import get_gpu_device
 
 BATCH = 4
 DEPTH = 8
@@ -141,10 +140,6 @@ class TestSconv:
         trainer.attach_data_users_dict(trajectory_buffer_dict.get_data_users())
         return trainer
 
-    @pytest.mark.skipif(
-        get_gpu_device() == torch.device("mps:0"),
-        reason="The operator 'aten::angle' is not currently implemented for the MPS device.",
-    )
     def test_run(self, trainer) -> None:
         trainer.run()
 
