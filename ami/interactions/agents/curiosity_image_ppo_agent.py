@@ -27,7 +27,7 @@ class CuriosityImagePPOAgent(BaseAgent[Tensor, Tensor]):
     def on_inference_models_attached(self) -> None:
         super().on_inference_models_attached()
         self.image_encoder: ThreadSafeInferenceWrapper[nn.Module] = self.get_inference_model(ModelNames.IMAGE_ENCODER)
-        self.foward_dynamics: ThreadSafeInferenceWrapper[ForwardDynamics] = self.get_inference_model(
+        self.forward_dynamics: ThreadSafeInferenceWrapper[ForwardDynamics] = self.get_inference_model(
             ModelNames.FORWARD_DYNAMICS
         )
         self.policy_value: ThreadSafeInferenceWrapper[PolicyValueCommonNet] = self.get_inference_model(
@@ -65,7 +65,7 @@ class CuriosityImagePPOAgent(BaseAgent[Tensor, Tensor]):
         self.step_data[DataKeys.HIDDEN] = self.forward_dynamics_hidden_state
 
         self.forward_dynamics_trajectory_collector.collect(self.step_data)
-        pred, hidden = self.foward_dynamics(embed_obs, self.forward_dynamics_hidden_state, action)
+        pred, hidden = self.forward_dynamics(embed_obs, self.forward_dynamics_hidden_state, action)
         self.predicted_next_embed_observation_dist = pred
         self.forward_dynamics_hidden_state = hidden
 
@@ -98,7 +98,7 @@ class CuriosityImagePPOAgent(BaseAgent[Tensor, Tensor]):
 
         self.forward_dynamics_trajectory_collector.collect(self.step_data)
 
-        pred, hidden = self.foward_dynamics(embed_obs, self.forward_dynamics_hidden_state, action)
+        pred, hidden = self.forward_dynamics(embed_obs, self.forward_dynamics_hidden_state, action)
         self.predicted_next_embed_observation_dist = pred
         self.forward_dynamics_hidden_state = hidden
 
