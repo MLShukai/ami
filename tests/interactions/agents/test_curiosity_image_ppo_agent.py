@@ -65,6 +65,7 @@ class TestCuriosityImagePPOAgent:
                 ),
             }
         )
+        mwd.send_to_default_device()
 
         return mwd.inference_wrappers_dict
 
