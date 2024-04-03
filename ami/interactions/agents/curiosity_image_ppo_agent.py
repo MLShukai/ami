@@ -45,7 +45,7 @@ class CuriosityImagePPOAgent(BaseAgent[Tensor, Tensor]):
     forward_dynamics_hidden_state: Tensor
     step_data: StepData
 
-    def setup(self, observation: Tensor) -> Tensor | None:
+    def setup(self, observation: Tensor) -> Tensor:
         super().setup(observation)
 
         self.step_data = StepData()
