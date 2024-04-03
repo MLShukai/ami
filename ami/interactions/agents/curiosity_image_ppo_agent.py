@@ -34,12 +34,6 @@ class CuriosityImagePPOAgent(BaseAgent[Tensor, Tensor]):
             ModelNames.POLICY_VALUE
         )
 
-    def on_data_collectors_attached(self) -> None:
-        super().on_data_collectors_attached()
-        self.image_collector = self.get_data_collector(BufferNames.IMAGE)
-        self.forward_dynamics_trajectory_collector = self.get_data_collector(BufferNames.FORWARD_DYNAMICS_TRAJECTORY)
-        self.ppo_trajectory_collector = self.get_data_collector(BufferNames.PPO_TRAJECTORY)
-
     # ------ Interaction Process ------
     predicted_next_embed_observation_dist: Distribution
     forward_dynamics_hidden_state: Tensor
@@ -60,9 +54,7 @@ class CuriosityImagePPOAgent(BaseAgent[Tensor, Tensor]):
             self.step_data[DataKeys.REWARD] = reward  # r_{t+1}
 
             # ステップの冒頭でデータコレクトすることで前ステップのデータを収集する。
-            self.ppo_trajectory_collector.collect(self.step_data)  # o_t, a_t, log p(a_t), v_t, r_{t+1}
-            self.image_collector.collect(self.step_data)
-            self.forward_dynamics_trajectory_collector.collect(self.step_data)
+            self.data_collectors.collect(self.step_data)
 
         action_dist, value = self.policy_value(observation)
 
