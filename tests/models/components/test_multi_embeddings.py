@@ -1,7 +1,7 @@
 import pytest
 import torch
 
-from ami.models.multi_embeddings import MultiEmbeddings
+from ami.models.components.multi_embeddings import MultiEmbeddings
 
 
 class TestMultiEmbedding:
