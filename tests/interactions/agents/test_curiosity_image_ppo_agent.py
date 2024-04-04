@@ -97,3 +97,8 @@ class TestCuriosityImagePPOAgent:
         for _ in range(10):
             action = agent.step(observation)
             assert action.shape == (len(ACTION_CHOICES_PER_CATEGORY),)
+
+    def test_save_state(self, agent: CuriosityImagePPOAgent, tmp_path):
+        agent_path = tmp_path / "agent"
+        agent.save_state(agent_path)
+        assert agent_path.exists()
