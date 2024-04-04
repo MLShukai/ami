@@ -1,3 +1,4 @@
+from pathlib import Path
 from typing import Any, Generic
 
 from .._types import ActType, ObsType
@@ -26,3 +27,9 @@ class SensorActuatorEnv(BaseEnvironment[ObsType, ActType], Generic[ObsType, ActT
     def teardown(self) -> None:
         self.sensor.teardown()
         self.actuator.teardown()
+
+    def save_state(self, path: Path) -> None:
+        """Saves the internal state to the `path`."""
+        path.mkdir()
+        self.sensor.save_state(path / "sensor")
+        self.actuator.save_state(path / "actuator")

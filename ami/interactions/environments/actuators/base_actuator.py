@@ -1,6 +1,7 @@
 """This file contains the abstract base actuator and actuator wrappers
 class."""
 from abc import ABC, abstractmethod
+from pathlib import Path
 from typing import Any, Generic
 
 from ..._types import ActType, WrapperActType
@@ -26,6 +27,9 @@ class BaseActuator(ABC, Generic[ActType]):
     def teardown(self) -> None:
         """Called at the end of interaction with the agent."""
         pass
+
+    def save_state(self, path: Path) -> None:
+        """Saves the internal state to the `path`."""
 
 
 class BaseActuatorWrapper(BaseActuator[WrapperActType], Generic[WrapperActType, ActType]):
