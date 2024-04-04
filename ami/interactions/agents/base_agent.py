@@ -45,7 +45,7 @@ class BaseAgent(ABC, Generic[ObsType, ActType]):
         agent."""
         pass
 
-    def get_inference_model(self, name: str) -> ThreadSafeInferenceWrapper[nn.Module]:
+    def get_inference_model(self, name: str) -> ThreadSafeInferenceWrapper[Any]:
         if name not in self._inference_models:
             raise KeyError(f"The specified model name '{name}' does not exist.")
         return self._inference_models[name]
