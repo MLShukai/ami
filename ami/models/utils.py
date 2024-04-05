@@ -56,6 +56,6 @@ class ModelWrappersDict(UserDict[str, ModelWrapper[nn.Module]]):
     def save_state(self, path: Path) -> None:
         """Saves the model parameters to `path`."""
         path.mkdir()
-        for name, model in self.items():
+        for name, wrapper in self.items():
             model_path = path / (name + ".pt")
-            torch.save(model.state_dict(), model_path)
+            torch.save(wrapper.model.state_dict(), model_path)
