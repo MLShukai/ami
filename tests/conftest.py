@@ -63,8 +63,8 @@ def step_data() -> StepData:
 def data_collectors_dict(step_data: StepData) -> DataCollectorsDict:
     d = DataCollectorsDict.from_data_buffers(
         **{
-            "buffer1": DataBufferImpl(),
-            "buffer2": DataBufferImpl(),
+            "buffer1": DataBufferImpl.reconstructable_init(),
+            "buffer2": DataBufferImpl.reconstructable_init(),
         }
     )
 

@@ -4,6 +4,11 @@ import rootutils
 from omegaconf import DictConfig
 
 from ami.data.utils import DataCollectorsDict
+from ami.hydra_instantiators import (
+    instantiate_data_collectors,
+    instantiate_models,
+    instantiate_trainers,
+)
 from ami.interactions.interaction import Interaction
 from ami.logger import get_main_thread_logger
 from ami.models.utils import ModelWrappersDict
@@ -33,15 +38,15 @@ def main(cfg: DictConfig) -> None:
     logger.info(f"Instantiating Interaction <{cfg.interaction._target_}>")
     interaction: Interaction = hydra.utils.instantiate(cfg.interaction)
 
-    logger.info(f"Instantiating DataCollectors <{cfg.data_collectors._target_}>")
-    data_collectors: DataCollectorsDict = hydra.utils.instantiate(cfg.data_collectors)
+    logger.info("Instantiating DataCollectors...")
+    data_collectors: DataCollectorsDict = instantiate_data_collectors(cfg.data_collectors)
 
-    logger.info(f"Instantiating Models <{cfg.models._target_}>")
-    models: ModelWrappersDict = hydra.utils.instantiate(cfg.models)
+    logger.info("Instantiating Models...")
+    models: ModelWrappersDict = instantiate_models(cfg.models)
     models.send_to_default_device()
 
-    logger.info(f"Instantiating Trainers <{cfg.trainers._target_}>")
-    trainers: TrainersList = hydra.utils.instantiate(cfg.trainers)
+    logger.info("Instantiating Trainers...")
+    trainers: TrainersList = instantiate_trainers(cfg.trainers)
 
     logger.info("Instantiating Thread Classes...")
     threads_cfg = cfg.threads

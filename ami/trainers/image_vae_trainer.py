@@ -24,6 +24,8 @@ class ImageVAETrainer(BaseTrainer):
         partial_optimizer: partial[Optimizer],
         device: torch.device,
         kl_coef: float = 1.0,
+        max_epochs: int = 1,
+        minimum_dataset_size: int = 1,
     ) -> None:
         """Initializes an ImageVAETrainer object.
 
@@ -38,7 +40,8 @@ class ImageVAETrainer(BaseTrainer):
         self.partial_dataloader = partial_dataloader
         self.device = device
         self.kl_coef = kl_coef
-        self.batch_size: int = partial_dataloader.keywords["batch_size"]
+        self.max_epochs = max_epochs
+        self.minimum_dataset_size = minimum_dataset_size
 
     def on_data_users_dict_attached(self) -> None:
         self.image_data_user: ThreadSafeDataUser[RandomDataBuffer] = self.get_data_user(BufferNames.IMAGE)
@@ -54,26 +57,29 @@ class ImageVAETrainer(BaseTrainer):
 
     def is_trainable(self) -> bool:
         self.image_data_user.update()
-        return len(self.image_data_user.buffer) >= self.batch_size
+        return len(self.image_data_user.buffer) >= self.minimum_dataset_size
 
     def train(self) -> None:
         vae = VAE(self.encoder.model, self.decoder.model)
+        vae.to(self.device)
+
         optimizer = self.partial_optimizer(vae.parameters())
         optimizer.load_state_dict(self.optimizer_state)
         dataset = self.image_data_user.get_dataset()
         dataloader = self.partial_dataloader(dataset=dataset)
 
-        for batch in dataloader:
-            (image_batch,) = batch
-            image_batch = image_batch.to(self.device)
-            optimizer.zero_grad()
-            image_batch_reconstructed, dist_batch = vae(image_batch)
-            rec_loss = mse_loss(image_batch, image_batch_reconstructed)
-            kl_loss = kl_divergence(
-                dist_batch, Normal(torch.zeros_like(dist_batch.mean), torch.ones_like(dist_batch.stddev))
-            )
-            loss = rec_loss + self.kl_coef * kl_loss.mean()
-            loss.backward()
-            optimizer.step()
+        for _ in range(self.max_epochs):
+            for batch in dataloader:
+                (image_batch,) = batch
+                image_batch = image_batch.to(self.device)
+                optimizer.zero_grad()
+                image_batch_reconstructed, dist_batch = vae(image_batch)
+                rec_loss = mse_loss(image_batch, image_batch_reconstructed)
+                kl_loss = kl_divergence(
+                    dist_batch, Normal(torch.zeros_like(dist_batch.mean), torch.ones_like(dist_batch.stddev))
+                )
+                loss = rec_loss + self.kl_coef * kl_loss.mean()
+                loss.backward()
+                optimizer.step()
 
         self.optimizer_state = optimizer.state_dict()

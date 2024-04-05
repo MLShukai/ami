@@ -22,8 +22,9 @@ def get_gpu_device() -> torch.device | None:
     """Return the available gpu device."""
     if torch.cuda.is_available():
         return torch.device("cuda:0")
-    elif torch.backends.mps.is_available():
-        return torch.device("mps:0")
+    # MPS support has been dropped because `Tensor.angle` is not implemented for metal devices.
+    # elif torch.backends.mps.is_available():
+    #     return torch.device("mps:0")
     else:
         return None
 
@@ -42,7 +43,7 @@ class ModelMultiplyP(nn.Module):
 
 
 class DataBufferImpl(BaseDataBuffer):
-    def init(self) -> None:
+    def __init__(self) -> None:
         self.obs: list[torch.Tensor] = []
 
     def add(self, step_data: StepData) -> None:

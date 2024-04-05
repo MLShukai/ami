@@ -1,5 +1,3 @@
-_target_: ami.models.utils.ModelWrappersDict
-
 image_encoder:
   _target_: ami.models.vae.EncoderWrapper
   default_device: ${devices.0}

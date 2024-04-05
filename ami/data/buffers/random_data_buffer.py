@@ -11,7 +11,7 @@ from .base_data_buffer import BaseDataBuffer
 class RandomDataBuffer(BaseDataBuffer):
     """A data buffer which does not preserve data order."""
 
-    def init(self, max_len: int, key_list: list[DataKeys]) -> None:
+    def __init__(self, max_len: int, key_list: list[DataKeys]) -> None:
         """Initializes data buffer.
 
         Args:
@@ -41,7 +41,7 @@ class RandomDataBuffer(BaseDataBuffer):
         """
         if self.__current_len < self.__max_len:
             for key in self.__key_list:
-                self.__buffer_dict[key].append(torch.tensor(step_data[key]))
+                self.__buffer_dict[key].append(torch.Tensor(step_data[key]))
             self.__current_len += 1
         else:
             replace_index = np.random.randint(0, self.__max_len)

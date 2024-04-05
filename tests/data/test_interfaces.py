@@ -10,7 +10,7 @@ from .buffers.test_base_data_buffer import DataBufferImpl
 class TestDataCollectorAndUser:
     @pytest.fixture
     def collector(self) -> ThreadSafeDataCollector[DataBufferImpl]:
-        return ThreadSafeDataCollector(DataBufferImpl())
+        return ThreadSafeDataCollector(DataBufferImpl.reconstructable_init())
 
     @pytest.fixture
     def user(self, collector: ThreadSafeDataCollector[DataBufferImpl]) -> ThreadSafeDataUser[DataBufferImpl]:
