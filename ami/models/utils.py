@@ -1,7 +1,9 @@
 """This file contains utility classes."""
 from collections import UserDict
 from enum import StrEnum
+from pathlib import Path
 
+import torch
 import torch.nn as nn
 
 from .model_wrapper import ModelWrapper, ThreadSafeInferenceWrapper
@@ -50,3 +52,10 @@ class ModelWrappersDict(UserDict[str, ModelWrapper[nn.Module]]):
             return self._inference_wrappers_dict
         else:
             return self._inference_wrappers_dict
+
+    def save_state(self, path: Path) -> None:
+        """Saves the model parameters to `path`."""
+        path.mkdir()
+        for name, wrapper in self.items():
+            model_path = path / (name + ".pt")
+            torch.save(wrapper.model.state_dict(), model_path)
