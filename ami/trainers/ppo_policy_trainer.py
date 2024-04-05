@@ -1,10 +1,12 @@
 from functools import partial
+from pathlib import Path
 from typing import TypedDict
 
 import torch
 from torch import Tensor
 from torch.distributions import Distribution
 from torch.utils.data import DataLoader
+from typing_extensions import override
 
 from ..data.buffers.buffer_names import BufferNames
 from ..data.buffers.ppo_trajectory_buffer import PPOTrajectoryBuffer
@@ -165,3 +167,8 @@ class PPOPolicyTrainer(BaseTrainer):
     def teardown(self) -> None:
         super().teardown()
         self.trajectory_data_user.clear()  # Can not use old buffer data because ppo is on-policy method.
+
+    @override
+    def save_state(self, path: Path) -> None:
+        path.mkdir()
+        torch.save(self.optimizer_state, path / "optimizer.pt")

@@ -94,3 +94,9 @@ class TestImageVAETrainer:
         assert trainer.is_trainable() is True
         trainer.image_data_user.clear()
         assert trainer.is_trainable() is False
+
+    def test_save_state(self, trainer: ImageVAETrainer, tmp_path) -> None:
+        trainer_path = tmp_path / "image_vae"
+        trainer.save_state(trainer_path)
+        assert trainer_path.exists()
+        assert (trainer_path / "optimizer.pt").exists()

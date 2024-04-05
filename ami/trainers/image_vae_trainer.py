@@ -1,4 +1,5 @@
 from functools import partial
+from pathlib import Path
 
 import torch
 from torch.distributions import kl_divergence
@@ -6,6 +7,7 @@ from torch.distributions.normal import Normal
 from torch.nn.functional import mse_loss
 from torch.optim import Optimizer
 from torch.utils.data import DataLoader
+from typing_extensions import override
 
 from ami.data.buffers.buffer_names import BufferNames
 from ami.data.buffers.random_data_buffer import RandomDataBuffer
@@ -83,3 +85,8 @@ class ImageVAETrainer(BaseTrainer):
                 optimizer.step()
 
         self.optimizer_state = optimizer.state_dict()
+
+    @override
+    def save_state(self, path: Path) -> None:
+        path.mkdir()
+        torch.save(self.optimizer_state, path / "optimizer.pt")
