@@ -38,3 +38,14 @@ class TestTrainersList:
         trainers.attach_data_users_dict(data_users_dict)
         assert trainer1._data_users_dict is data_users_dict
         assert trainer2._data_users_dict is data_users_dict
+
+    def test_save_state(self, tmp_path):
+        trainer1 = TrainerImpl()
+        trainer2 = TrainerImpl()
+
+        trainers = TrainersList(*[trainer1, trainer2])
+        trainers_path = tmp_path / "trainers"
+        trainers.save_state(trainers_path)
+        assert trainers_path.exists()
+        assert (trainers_path / "0" / "state.pt").exists()
+        assert (trainers_path / "1" / "state.pt").exists()

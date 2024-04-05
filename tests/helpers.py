@@ -1,5 +1,6 @@
 """This file contains helper objects for testing some features."""
 import platform
+from pathlib import Path
 from typing import Self
 
 import pytest
@@ -76,6 +77,10 @@ class TrainerImpl(BaseTrainer):
         data = dataset[0][0]
         self.model1(data)
         self.model2(data)
+
+    def save_state(self, path: Path) -> None:
+        path.mkdir()
+        torch.save(torch.randn(1), path / "state.pt")
 
 
 class AgentImpl(BaseAgent[str, str]):
