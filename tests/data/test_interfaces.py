@@ -1,3 +1,6 @@
+import pickle
+from pathlib import Path
+
 import pytest
 import torch
 
@@ -73,3 +76,19 @@ class TestDataCollectorAndUser:
 
         assert collector_buffer is not collector._buffer
         assert user_buffer is not user._buffer
+
+    def test_save_state(
+        self,
+        collector: ThreadSafeDataCollector[DataBufferImpl],
+        user: ThreadSafeDataUser[DataBufferImpl],
+        step_data: StepData,
+        tmp_path: Path,
+    ) -> None:
+        collector.collect(step_data)
+
+        data_path = tmp_path / "data"
+        user.save_state(data_path)
+
+        with open(data_path / "obs.pkl", "rb") as f:
+            for i, obs in enumerate(user.buffer.obs):
+                assert torch.equal(pickle.load(f)[i], obs)

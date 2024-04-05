@@ -1,5 +1,7 @@
 """This file contains helper objects for testing some features."""
+import pickle
 import platform
+from pathlib import Path
 from typing import Self
 
 import pytest
@@ -54,6 +56,11 @@ class DataBufferImpl(BaseDataBuffer):
 
     def make_dataset(self) -> TensorDataset:
         return TensorDataset(torch.stack(self.obs))
+
+    def save_state(self, path: Path) -> None:
+        path.mkdir()
+        with open(path / "obs.pkl", "wb") as f:
+            pickle.dump(self.obs, f)
 
 
 def skip_if_platform_is_not_linux():

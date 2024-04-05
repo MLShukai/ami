@@ -17,6 +17,7 @@ Assumed usage:
     >>> collector = hydra.utils.instantiate(cfg)
 """
 from collections import UserDict
+from pathlib import Path
 from typing import Any, Self
 
 from .buffers.base_data_buffer import BaseDataBuffer
@@ -27,6 +28,12 @@ from .step_data import StepData
 class DataUsersDict(UserDict[str, ThreadSafeDataUser[Any]]):
     """A class for aggregating `DataUsers` to share them from the inference
     thread to the training thread."""
+
+    def save_state(self, path: Path) -> None:
+        """Saves the internal data buffer."""
+        path.mkdir()
+        for name, user in self.items():
+            user.save_state(path / name)
 
 
 class DataCollectorsDict(UserDict[str, ThreadSafeDataCollector[Any]]):
