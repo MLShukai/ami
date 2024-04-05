@@ -28,3 +28,13 @@ class TestWrappersDict:
 
         iwd2 = mwd.inference_wrappers_dict
         assert iwd is iwd2
+
+    def test_save_state(self, tmp_path):
+        models_path = tmp_path / "models"
+        mwd = ModelWrappersDict(
+            a=ModelWrapper(ModelMultiplyP(), "cpu", True), b=ModelWrapper(ModelMultiplyP(), "cpu", False)
+        )
+
+        mwd.save_state(models_path)
+        assert (models_path / "a.pt").exists()
+        assert (models_path / "b.pt").exists()
