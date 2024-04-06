@@ -14,6 +14,6 @@ forward_dynamics_trajectory:
 
 ppo_trajectory:
   _target_: ami.data.buffers.ppo_trajectory_buffer.PPOTrajectoryBuffer.reconstructable_init
-  max_len: ${python.eval:128+1} # From PrimitiveAMI, 
+  max_len: ${python.eval:128+1} # From PrimitiveAMI,
   gamma: 0.99
   gae_lambda: 0.95
