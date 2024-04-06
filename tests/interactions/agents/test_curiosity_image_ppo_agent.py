@@ -97,3 +97,11 @@ class TestCuriosityImagePPOAgent:
         for _ in range(10):
             action = agent.step(observation)
             assert action.shape == (len(ACTION_CHOICES_PER_CATEGORY),)
+
+        assert agent.step_data[DataKeys.OBSERVATION].shape == observation.shape
+        assert agent.step_data[DataKeys.EMBED_OBSERVATION].shape == (EMBED_OBS_DIM, )
+        assert agent.step_data[DataKeys.ACTION].shape == (len(ACTION_CHOICES_PER_CATEGORY), )
+        assert agent.step_data[DataKeys.ACTION_LOG_PROBABILITY].shape == (len(ACTION_CHOICES_PER_CATEGORY), )
+        assert agent.step_data[DataKeys.VALUE].shape == (1, )
+        assert agent.step_data[DataKeys.HIDDEN].shape == (DEPTH, SCONV_DIM)
+        assert agent.step_data[DataKeys.REWARD].shape == ()
