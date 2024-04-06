@@ -50,7 +50,7 @@ class CuriosityImagePPOAgent(BaseAgent[Tensor, Tensor]):
 
         if not initial_step:
             # 報酬計算は初期ステップではできないためスキップ。
-            reward = -self.predicted_next_embed_observation_dist.log_prob(embed_obs)
+            reward = -self.predicted_next_embed_observation_dist.log_prob(embed_obs).mean()
             self.step_data[DataKeys.REWARD] = reward  # r_{t+1}
 
             # ステップの冒頭でデータコレクトすることで前ステップのデータを収集する。
