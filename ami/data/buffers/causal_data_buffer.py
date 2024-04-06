@@ -40,7 +40,7 @@ class CausalDataBuffer(BaseDataBuffer):
             step_data: A single step of data.
         """
         for key in self._key_list:
-            self.__buffer_dict[key].append(torch.Tensor(step_data[key]))
+            self.__buffer_dict[key].append(torch.Tensor(step_data[key]).cpu())
         if self.__current_len < self.__max_len:
             self.__current_len += 1
 

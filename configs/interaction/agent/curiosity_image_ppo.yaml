@@ -5,4 +5,4 @@ initial_hidden:
   _args_:
     - ${models.forward_dynamics.model.core_model.depth}
     - ${models.forward_dynamics.model.core_model.dim}
-  dtype: ${torch.dtype:float32}
+  dtype: ${torch.dtype:cfloat}
