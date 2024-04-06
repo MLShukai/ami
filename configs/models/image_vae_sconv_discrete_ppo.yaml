@@ -37,7 +37,7 @@ forward_dynamics:
       do_flatten: True
     obs_action_projection:
       _target_: torch.nn.Linear
-      in_features: ${python.eval:'${..action_flatten.embedding_dim}' * len('${..action_flatten.choices_per_category}' + '${models.image_encoder.model.latent_dim}')}
+      in_features: ${python.eval:8 * 5 + 512}
       out_features: ${..core_model.dim}
     core_model:
       _target_: ami.models.components.sconv.SConv
