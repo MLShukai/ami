@@ -4,8 +4,8 @@ image_encoder:
   has_inference: True
   model:
     _target_: ami.models.vae.Conv2dEncoder
-    height: ${environment.sensor.height}
-    width: ${environment.sensor.width}
+    height: ${interaction.environment.sensor.height}
+    width: ${interaction.environment.sensor.width}
     channels: 3
     latent_dim: 512 # From primitive AMI.
 
@@ -37,7 +37,8 @@ forward_dynamics:
       do_flatten: True
     obs_action_projection:
       _target_: torch.nn.Linear
-      in_features: ${python.eval:8 * 5 + 512}
+      # action_embedding_dim * num_action_choices + obs_embedding_dim
+      in_features: ${python.eval:"int('${..action_flatten.embedding_dim}') * 5 + int('${models.image_encoder.model.latent_dim}')"}
       out_features: ${..core_model.dim}
     core_model:
       _target_: ami.models.components.sconv.SConv
@@ -63,8 +64,8 @@ policy_value:
       _target_: torch.nn.Sequential
       _args_:
         - _target_: ami.models.components.small_conv_net.SmallConvNet
-          height: ${environment.sensor.height}
-          width: ${environment.sensor.width}
+          height: ${interaction.environment.sensor.height}
+          width: ${interaction.environment.sensor.width}
           channels: 3
           dim_out: 512
         - _target_: torch.nn.Linear
