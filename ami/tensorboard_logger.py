@@ -40,23 +40,22 @@ class TensorBoardLogger:
 
     def _expand_dict(self, d: Mapping[str, Any] | MutableSequence[Any]) -> dict[str, Any]:
         if isinstance(d, Mapping):
-            return self._union_dicts(
-                [
-                    {k: v}
-                    if not isinstance(v, Mapping | MutableSequence)
-                    else {f"{k}.{k_}": v_ for k_, v_ in self._expand_dict(v).items()}
-                    for k, v in d.items()
-                ]
-            )
+            dict_list = []
+            for k, v in d.items():
+                if not isinstance(v, Mapping | MutableSequence):
+                    dict_list.append({k: v})
+                else:
+                    dict_list.append({f"{k}.{k_}": v_ for k_, v_ in self._expand_dict(v).items()})
+
+            return self._union_dicts(dict_list)
         elif isinstance(d, MutableSequence):
-            return self._union_dicts(
-                [
-                    {f"{i}": v}
-                    if not isinstance(v, Mapping | MutableSequence)
-                    else {f"{i}.{k_}": v_ for k_, v_ in self._expand_dict(v).items()}
-                    for i, v in enumerate(d)
-                ]
-            )
+            dict_list = []
+            for i, v in enumerate(d):
+                if not isinstance(v, Mapping | MutableSequence):
+                    dict_list.append({f"{i}": v})
+                else:
+                    dict_list.append({f"{i}.{k_}": v_ for k_, v_ in self._expand_dict(v).items()})
+            return self._union_dicts(dict_list)
 
     def log_hyperparameters(self, hparams: DictConfig | ListConfig, metrics: dict[str, Any] | None = None) -> None:
         self.tensorboard.add_hparams(
