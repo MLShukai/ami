@@ -33,7 +33,6 @@ class TensorBoardLogger:
     def log(self, tag: str, scalar: Tensor | float | int) -> None:
         if self.log_available:
             self.tensorboard.add_scalar(tag, scalar, self.global_step)
-            self.update()
 
     def _union_dicts(self, ld: list[dict[str, Any]]) -> dict[str, Any]:
         return {k: v for d in ld for k, v in d.items()}
