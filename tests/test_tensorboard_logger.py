@@ -17,7 +17,5 @@ class TestTensorBoardLogger:
             tensorboard_logger.update()
 
     def test_log_hyperparameter(self, tensorboard_logger: TensorBoardLogger):
-        d = DictConfig({"a": 1, "b": 2})
-        tensorboard_logger.log_hyperparameters(d)
-        d = ListConfig([1, 2, 3])
+        d = DictConfig({"a": 1, "b": [2, 3, {"c": 4, "d": [5, 6]}]})
         tensorboard_logger.log_hyperparameters(d)
