@@ -1,9 +1,9 @@
 import math
 import time
-from collections.abc import Mapping
+from collections.abc import Mapping, MutableSequence
 from typing import Any
 
-from omegaconf import DictConfig
+from omegaconf import DictConfig, ListConfig
 from torch import Tensor
 from torch.utils.tensorboard import SummaryWriter
 
@@ -35,21 +35,31 @@ class TensorBoardLogger:
             self.tensorboard.add_scalar(tag, scalar, self.global_step)
             self.update()
 
-    def log_hyperparameters(
-        self, hparams: DictConfig | Mapping[str, Any], metrics: dict[str, Any] | None = None
-    ) -> None:
-        def union_dicts(ld: list[dict[str, Any]]) -> dict[str, Any]:
-            return {k: v for d in ld for k, v in d.items()}
+    def _union_dicts(self, ld: list[dict[str, Any]]) -> dict[str, Any]:
+        return {k: v for d in ld for k, v in d.items()}
 
-        def expand_dict(d: Mapping[str, Any]) -> Mapping[str, Any]:
-            return union_dicts(
+    def _expand_dict(self, d: Mapping[str, Any] | MutableSequence[Any]) -> dict[str, Any]:
+        if isinstance(d, Mapping):
+            return self._union_dicts(
                 [
-                    {k: v} if not isinstance(v, dict) else {f"{k}.{k_}": v_ for k_, v_ in expand_dict(v).items()}
+                    {k: v}
+                    if not isinstance(v, Mapping | MutableSequence)
+                    else {f"{k}.{k_}": v_ for k_, v_ in self._expand_dict(v).items()}
                     for k, v in d.items()
                 ]
             )
+        elif isinstance(d, MutableSequence):
+            return self._union_dicts(
+                [
+                    {f"{i}": v}
+                    if not isinstance(v, Mapping | MutableSequence)
+                    else {f"{i}.{k_}": v_ for k_, v_ in self._expand_dict(v).items()}
+                    for i, v in enumerate(d)
+                ]
+            )
 
+    def log_hyperparameters(self, hparams: DictConfig | ListConfig, metrics: dict[str, Any] | None = None) -> None:
         self.tensorboard.add_hparams(
-            expand_dict(hparams),
-            {"hp_params": -1} if metrics is None else expand_dict(metrics),
+            self._expand_dict(hparams),
+            {"hp_params": -1} if metrics is None else self._expand_dict(metrics),
         )
