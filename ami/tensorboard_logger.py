@@ -1,3 +1,4 @@
+import math
 import time
 from collections.abc import Mapping
 from typing import Any
@@ -19,15 +20,11 @@ class TensorBoardLogger:
         self.log_every_n_steps = log_every_n_steps
         self.log_every_n_seconds = log_every_n_seconds
         self.global_step = 0
-        self.previous_log_time: float | None = None
+        self.previous_log_time: float = -math.inf
 
     @property
     def log_available(self) -> bool:
-        return (
-            self.global_step % self.log_every_n_steps == 0
-            or self.previous_log_time is None
-            or time.perf_counter() - self.previous_log_time > self.log_every_n_seconds
-        )
+        return time.perf_counter() - self.previous_log_time > self.log_every_n_seconds
 
     def update(self) -> None:
         self.global_step += 1
