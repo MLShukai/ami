@@ -147,3 +147,9 @@ class TestSconv:
         assert trainer.is_trainable() is True
         trainer.trajectory_data_user.clear()
         assert trainer.is_trainable() is False
+
+    def test_save_state(self, trainer: ForwardDynamicsTrainer, tmp_path) -> None:
+        trainer_path = tmp_path / "forward_dynamics"
+        trainer.save_state(trainer_path)
+        assert trainer_path.exists()
+        assert (trainer_path / "optimizer.pt").exists()
