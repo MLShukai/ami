@@ -1,4 +1,5 @@
 import torch
+import torch.utils
 
 from ami.models.model_wrapper import ModelWrapper
 from ami.models.utils import InferenceWrappersDict, ModelWrappersDict
@@ -29,7 +30,7 @@ class TestWrappersDict:
         iwd2 = mwd.inference_wrappers_dict
         assert iwd is iwd2
 
-    def test_save_state(self, tmp_path):
+    def test_save_and_load_state(self, tmp_path):
         models_path = tmp_path / "models"
         mwd = ModelWrappersDict(
             a=ModelWrapper(ModelMultiplyP(), "cpu", True), b=ModelWrapper(ModelMultiplyP(), "cpu", False)
@@ -38,3 +39,15 @@ class TestWrappersDict:
         mwd.save_state(models_path)
         assert (models_path / "a.pt").exists()
         assert (models_path / "b.pt").exists()
+
+        new_mwd = ModelWrappersDict(
+            a=ModelWrapper(ModelMultiplyP(), "cpu", True), b=ModelWrapper(ModelMultiplyP(), "cpu", False)
+        )
+
+        for (wrapper, new_wrapper) in zip(mwd.values(), new_mwd.values()):
+            assert not torch.equal(wrapper.model.p, new_wrapper.model.p)
+
+        new_mwd.load_state(models_path)
+
+        for (wrapper, new_wrapper) in zip(mwd.values(), new_mwd.values()):
+            assert torch.equal(wrapper.model.p, new_wrapper.model.p)
