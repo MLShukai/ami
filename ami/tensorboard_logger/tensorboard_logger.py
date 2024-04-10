@@ -1,5 +1,4 @@
-import math
-import time
+from abc import ABC, abstractmethod
 from collections.abc import Mapping, MutableSequence
 from typing import Any
 
@@ -8,31 +7,33 @@ from torch import Tensor
 from torch.utils.tensorboard import SummaryWriter
 
 
-class TensorBoardLogger:
-    def __init__(
-        self,
-        log_dir: str,
-        log_every_n_steps: int = 1,
-        log_every_n_seconds: float = 0.0,
-        **tensorboard_kwds: Any,
-    ):
+class TensorBoardLogger(ABC):
+    def __init__(self, log_dir: str, **tensorboard_kwds: Any):
         self.tensorboard = SummaryWriter(log_dir=log_dir, **tensorboard_kwds)
-        self.log_every_n_steps = log_every_n_steps
-        self.log_every_n_seconds = log_every_n_seconds
-        self.global_step = 0
-        self.previous_log_time: float = -math.inf
 
     @property
+    @abstractmethod
     def log_available(self) -> bool:
-        return time.perf_counter() - self.previous_log_time > self.log_every_n_seconds
+        """Determines whether a data can be logged.
 
+        Returns:
+            bool: whether a data can be logged.
+        """
+
+    @abstractmethod
     def update(self) -> None:
-        self.global_step += 1
-        self.previous_log_time = time.perf_counter()
+        """Updates current step."""
+        raise NotImplementedError
 
+    @abstractmethod
     def log(self, tag: str, scalar: Tensor | float | int) -> None:
-        if self.log_available:
-            self.tensorboard.add_scalar(tag, scalar, self.global_step)
+        """logs a single scalar.
+
+        Args:
+            tag: tag of data.
+            scalar: data to log.
+        """
+        raise NotImplementedError
 
     def _union_dicts(self, ld: list[dict[str, Any]]) -> dict[str, Any]:
         return {k: v for d in ld for k, v in d.items()}
