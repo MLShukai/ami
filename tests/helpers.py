@@ -62,6 +62,10 @@ class DataBufferImpl(BaseDataBuffer):
         with open(path / "obs.pkl", "wb") as f:
             pickle.dump(self.obs, f)
 
+    def load_state(self, path: Path) -> None:
+        with open(path / "obs.pkl", "rb") as f:
+            self.obs = pickle.load(f)
+
 
 def skip_if_platform_is_not_linux():
     return pytest.mark.skipif(platform.system() != "Linux", reason="Platform is not linux.")
