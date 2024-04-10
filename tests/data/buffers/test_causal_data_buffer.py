@@ -49,10 +49,20 @@ class TestCausalDataBuffer:
         mod.add(self.step_data)
         assert isinstance(mod.make_dataset(), TensorDataset)
 
-    def test_save_state(self, tmp_path):
+    def test_save_and_load_state(self, tmp_path):
         mod = CausalDataBuffer.reconstructable_init(self.max_len, self.key_list)
         mod.add(self.step_data)
 
         data_dir = tmp_path / "data"
         mod.save_state(data_dir)
         assert (data_dir / "observation.pkl").exists()
+
+        saved_buffer_dataset = mod.make_dataset()
+
+        mod = mod.new()
+        mod.load_state(data_dir)
+
+        loaded_buffer_dataset = mod.make_dataset()
+
+        assert len(loaded_buffer_dataset) == len(saved_buffer_dataset) == 1
+        assert torch.equal(loaded_buffer_dataset[:][0], saved_buffer_dataset[:][0])
