@@ -10,7 +10,7 @@ class Console(cmd.Cmd):
     intro = "Welcome to the AMI system console. Type help or ? to list commands.\n"
     prompt: str
 
-    def __init__(self, host, port):
+    def __init__(self, host: str, port: int) -> None:
         super().__init__()
         self._host = host
         self._port = port
@@ -25,52 +25,52 @@ class Console(cmd.Cmd):
 
         self.fetch_status()
 
-    def do_pause(self, line):
+    def do_pause(self, line: str) -> None:
         """Pause the AMI system."""
         response = requests.post(f"http://{self._host}:{self._port}/api/pause")
         print(json.loads(response.text)["result"])
 
-    def do_p(self, line):
+    def do_p(self, line: str) -> None:
         """Pause the AMI system."""
         return self.do_pause(line)
 
-    def do_resume(self, line):
+    def do_resume(self, line: str) -> None:
         """Resume the AMI system."""
         response = requests.post(f"http://{self._host}:{self._port}/api/resume")
         print(json.loads(response.text)["result"])
 
-    def do_r(self, line):
+    def do_r(self, line: str) -> None:
         """Resume the AMI system."""
         return self.do_resume(line)
 
-    def do_shutdown(self, line):
+    def do_shutdown(self, line: str) -> bool:
         """Shutdown the AMI system."""
         response = requests.post(f"http://{self._host}:{self._port}/api/shutdown")
         print(json.loads(response.text)["result"])
         return True
 
-    def do_s(self, line):
+    def do_s(self, line: str) -> bool:
         """Shutdown the AMI system."""
         return self.do_shutdown(line)
 
-    def do_quit(self, line):
+    def do_quit(self, line: str) -> bool:
         """Exit the console."""
         return True
 
-    def do_q(self, line):
+    def do_q(self, line: str) -> bool:
         """Exit the console."""
         return self.do_quit(line)
 
-    def completedefault(self, text, line, begidx, endidx):
+    def completedefault(self, text: str, line: str, begidx: int, endidx: int) -> list[str]:
         # FIXME: Not working as expected
         commands = ["pause", "resume", "shutdown", "quit"]
         return [command for command in commands if command.startswith(text)]
 
-    def postcmd(self, stop, line):
+    def postcmd(self, stop: bool, line: str) -> bool:
         self.fetch_status()
         return stop
 
-    def fetch_status(self):
+    def fetch_status(self) -> None:
         try:
             response = requests.get(f"http://{self._host}:{self._port}/api/status")
         except requests.exceptions.ConnectionError:
