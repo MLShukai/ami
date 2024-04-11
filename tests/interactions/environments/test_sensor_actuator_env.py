@@ -44,5 +44,5 @@ class TestSensorActuatorEnv:
 
         environment.sensor.save_state.assert_called_once_with(sensor_path)
         environment.actuator.save_state.assert_called_once_with(actuator_path)
-        assert sensor_path.exists() is False
-        assert actuator_path.exists() is False
+        assert not sensor_path.exists()
+        assert not actuator_path.exists()

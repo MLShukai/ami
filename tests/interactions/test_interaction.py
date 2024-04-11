@@ -41,8 +41,8 @@ class TestInteraction:
         environment_path = interaction_path / "environment"
 
         interaction.save_state(interaction_path)
-        assert interaction_path.exists() is True
-        assert agent_path.exists() is False
-        assert environment_path.exists() is False
+        assert interaction_path.exists()
+        assert not agent_path.exists()
+        assert not environment_path.exists()
         mock_env.save_state.assert_called_once_with(environment_path)
         mock_agent.save_state.assert_called_once_with(agent_path)

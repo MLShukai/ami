@@ -101,4 +101,4 @@ class TestCuriosityImagePPOAgent:
     def test_save_state(self, agent: CuriosityImagePPOAgent, tmp_path):
         agent_path = tmp_path / "agent"
         agent.save_state(agent_path)
-        assert agent_path.exists()
+        assert (agent_path / "forward_dynamics_hidden_state.pt").exists()
