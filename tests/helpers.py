@@ -89,6 +89,9 @@ class TrainerImpl(BaseTrainer):
         path.mkdir()
         torch.save(torch.randn(1), path / "state.pt")
 
+    def load_state(self, path: Path) -> None:
+        torch.load(path / "state.pt")
+
 
 class AgentImpl(BaseAgent[str, str]):
     def on_inference_models_attached(self) -> None:

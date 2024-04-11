@@ -83,3 +83,9 @@ class TrainersList(UserList[BaseTrainer]):
         for i, trainer in enumerate(self):
             trainer_path = path / str(i)
             trainer.save_state(trainer_path)
+
+    def load_state(self, path: Path) -> None:
+        """Loads the internal state from the `path`"""
+        for i, trainer in enumerate(self):
+            trainer_path = path / str(i)
+            trainer.load_state(trainer_path)
