@@ -90,3 +90,7 @@ class ImageVAETrainer(BaseTrainer):
     def save_state(self, path: Path) -> None:
         path.mkdir()
         torch.save(self.optimizer_state, path / "optimizer.pt")
+
+    @override
+    def load_state(self, path: Path) -> None:
+        self.optimizer_state = torch.load(path / "optimizer.pt")
