@@ -36,3 +36,4 @@ class BaseEnvironment(ABC, Generic[ObsType, ActType]):
 
     def save_state(self, path: Path) -> None:
         """Saves the internal state to the `path`."""
+        pass

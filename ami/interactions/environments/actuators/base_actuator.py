@@ -30,6 +30,7 @@ class BaseActuator(ABC, Generic[ActType]):
 
     def save_state(self, path: Path) -> None:
         """Saves the internal state to the `path`."""
+        pass
 
 
 class BaseActuatorWrapper(BaseActuator[WrapperActType], Generic[WrapperActType, ActType]):
