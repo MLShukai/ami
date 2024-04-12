@@ -13,6 +13,7 @@ from typing_extensions import override
 class TensorBoardLogger(ABC):
     def __init__(self, log_dir: str, **tensorboard_kwds: Any):
         self.tensorboard = SummaryWriter(log_dir=log_dir, **tensorboard_kwds)
+        self.global_step = 0
 
     @property
     @abstractmethod
@@ -29,15 +30,9 @@ class TensorBoardLogger(ABC):
         """Updates current step."""
         raise NotImplementedError
 
-    @abstractmethod
     def log(self, tag: str, scalar: Tensor | float | int) -> None:
-        """logs a single scalar.
-
-        Args:
-            tag: tag of data.
-            scalar: data to log.
-        """
-        raise NotImplementedError
+        if self.log_available:
+            self.tensorboard.add_scalar(tag, scalar, self.global_step)
 
     def _union_dicts(self, ld: list[dict[str, Any]]) -> dict[str, Any]:
         return {k: v for d in ld for k, v in d.items()}
@@ -77,7 +72,6 @@ class TimeIntervalLogger(TensorBoardLogger):
     ):
         super().__init__(log_dir, **tensorboard_kwds)
         self.log_every_n_seconds = log_every_n_seconds
-        self.global_step = 0
         self.previous_log_time: float = -math.inf
         self.logged = False
 
@@ -95,8 +89,8 @@ class TimeIntervalLogger(TensorBoardLogger):
 
     @override
     def log(self, tag: str, scalar: Tensor | float | int) -> None:
+        super().log(tag, scalar)
         if self.log_available:
-            self.tensorboard.add_scalar(tag, scalar, self.global_step)
             self.logged = True
 
 
@@ -109,7 +103,6 @@ class StepIntervalLogger(TensorBoardLogger):
     ):
         super().__init__(log_dir, **tensorboard_kwds)
         self.log_every_n_steps = log_every_n_steps
-        self.global_step = 0
 
     @override
     @property
@@ -119,8 +112,3 @@ class StepIntervalLogger(TensorBoardLogger):
     @override
     def update(self) -> None:
         self.global_step += 1
-
-    @override
-    def log(self, tag: str, scalar: Tensor | float | int) -> None:
-        if self.log_available:
-            self.tensorboard.add_scalar(tag, scalar, self.global_step)
