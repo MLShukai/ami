@@ -59,3 +59,9 @@ class ModelWrappersDict(UserDict[str, ModelWrapper[nn.Module]]):
         for name, wrapper in self.items():
             model_path = path / (name + ".pt")
             torch.save(wrapper.model.state_dict(), model_path)
+
+    def load_state(self, path: Path) -> None:
+        """Loads the model parameters from `path`."""
+        for name, wrapper in self.items():
+            model_path = path / (name + ".pt")
+            wrapper.model.load_state_dict(torch.load(model_path, map_location=wrapper.device))
