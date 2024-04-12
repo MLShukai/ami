@@ -7,6 +7,7 @@ from typing import Any
 from omegaconf import DictConfig, ListConfig
 from torch import Tensor
 from torch.utils.tensorboard import SummaryWriter
+from typing_extensions import override
 
 
 class TensorBoardLogger(ABC):
@@ -80,16 +81,19 @@ class TimeIntervalLogger(TensorBoardLogger):
         self.previous_log_time: float = -math.inf
         self.logged = False
 
+    @override
     @property
     def log_available(self) -> bool:
         return time.perf_counter() - self.previous_log_time > self.log_every_n_seconds
 
+    @override
     def update(self) -> None:
         self.global_step += 1
         if self.logged:
             self.previous_log_time = time.perf_counter()
             self.logged = False
 
+    @override
     def log(self, tag: str, scalar: Tensor | float | int) -> None:
         if self.log_available:
             self.tensorboard.add_scalar(tag, scalar, self.global_step)
@@ -107,13 +111,16 @@ class StepIntervalLogger(TensorBoardLogger):
         self.log_every_n_steps = log_every_n_steps
         self.global_step = 0
 
+    @override
     @property
     def log_available(self) -> bool:
         return self.global_step % self.log_every_n_steps == 0
 
+    @override
     def update(self) -> None:
         self.global_step += 1
 
+    @override
     def log(self, tag: str, scalar: Tensor | float | int) -> None:
         if self.log_available:
             self.tensorboard.add_scalar(tag, scalar, self.global_step)
