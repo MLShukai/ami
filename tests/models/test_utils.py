@@ -1,5 +1,4 @@
 import torch
-import torch.utils
 
 from ami.models.model_wrapper import ModelWrapper
 from ami.models.utils import InferenceWrappersDict, ModelWrappersDict
