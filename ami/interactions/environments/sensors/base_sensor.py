@@ -31,6 +31,10 @@ class BaseSensor(ABC, Generic[ObsType]):
         """Saves the internal state to the `path`."""
         pass
 
+    def load_state(self, path: Path) -> None:
+        """Loads the internal state from the `path`."""
+        pass
+
 
 class BaseSensorWrapper(BaseSensor[WrapperObsType], Generic[WrapperObsType, ObsType]):
     """Wraps the sensor class for modifying the observation.

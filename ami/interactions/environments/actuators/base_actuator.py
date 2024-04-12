@@ -32,6 +32,10 @@ class BaseActuator(ABC, Generic[ActType]):
         """Saves the internal state to the `path`."""
         pass
 
+    def load_state(self, path: Path) -> None:
+        """Loads the internal state from the `path`."""
+        pass
+
 
 class BaseActuatorWrapper(BaseActuator[WrapperActType], Generic[WrapperActType, ActType]):
     """Wraps the actuator class for modifying the action.

@@ -35,7 +35,7 @@ class TestSensorActuatorEnv:
         environment.sensor.teardown.assert_called_once()
         environment.actuator.teardown.assert_called_once()
 
-    def test_save_state(self, environment: SensorActuatorEnv, tmp_path: Path) -> None:
+    def test_save_and_load_state(self, environment: SensorActuatorEnv, tmp_path: Path) -> None:
         env_path = tmp_path / "environment"
         environment.save_state(env_path)
         sensor_path = env_path / "sensor"
@@ -46,3 +46,7 @@ class TestSensorActuatorEnv:
         environment.actuator.save_state.assert_called_once_with(actuator_path)
         assert not sensor_path.exists()
         assert not actuator_path.exists()
+
+        environment.load_state(env_path)
+        environment.sensor.load_state.assert_called_once_with(sensor_path)
+        environment.actuator.load_state.assert_called_once_with(actuator_path)
