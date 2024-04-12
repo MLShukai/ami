@@ -21,6 +21,7 @@ class TensorBoardLogger(ABC):
         Returns:
             bool: whether a data can be logged.
         """
+        raise NotImplementedError
 
     @abstractmethod
     def update(self) -> None:
