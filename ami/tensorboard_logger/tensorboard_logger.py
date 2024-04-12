@@ -77,6 +77,7 @@ class TimeIntervalLogger(TensorBoardLogger):
         self.log_every_n_seconds = log_every_n_seconds
         self.global_step = 0
         self.previous_log_time: float = -math.inf
+        self.logged = False
 
     @property
     def log_available(self) -> bool:
@@ -84,11 +85,14 @@ class TimeIntervalLogger(TensorBoardLogger):
 
     def update(self) -> None:
         self.global_step += 1
-        self.previous_log_time = time.perf_counter()
+        if self.logged:
+            self.previous_log_time = time.perf_counter()
+            self.logged = False
 
     def log(self, tag: str, scalar: Tensor | float | int) -> None:
         if self.log_available:
             self.tensorboard.add_scalar(tag, scalar, self.global_step)
+            self.logged = True
 
 
 class StepIntervalLogger(TensorBoardLogger):
