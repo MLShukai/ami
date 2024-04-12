@@ -33,3 +33,16 @@ class TestInteraction:
         mock_agent.teardown.assert_called_once_with("observation")
         mock_env.affect.assert_called_once_with("teardown_action")
         mock_env.teardown.assert_called_once()
+
+    def test_save_state(self, mock_env: Mock, mock_agent: Mock, tmp_path) -> None:
+        interaction = Interaction(mock_env, mock_agent)
+        interaction_path = tmp_path / "interaction"
+        agent_path = interaction_path / "agent"
+        environment_path = interaction_path / "environment"
+
+        interaction.save_state(interaction_path)
+        assert interaction_path.exists()
+        assert not agent_path.exists()
+        assert not environment_path.exists()
+        mock_env.save_state.assert_called_once_with(environment_path)
+        mock_agent.save_state.assert_called_once_with(agent_path)

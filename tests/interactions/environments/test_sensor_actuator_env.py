@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import pytest
 from pytest_mock import MockerFixture
 
@@ -32,3 +34,15 @@ class TestSensorActuatorEnv:
         environment.teardown()
         environment.sensor.teardown.assert_called_once()
         environment.actuator.teardown.assert_called_once()
+
+    def test_save_state(self, environment: SensorActuatorEnv, tmp_path: Path) -> None:
+        env_path = tmp_path / "environment"
+        environment.save_state(env_path)
+        sensor_path = env_path / "sensor"
+        actuator_path = env_path / "actuator"
+        assert env_path.exists()
+
+        environment.sensor.save_state.assert_called_once_with(sensor_path)
+        environment.actuator.save_state.assert_called_once_with(actuator_path)
+        assert not sensor_path.exists()
+        assert not actuator_path.exists()

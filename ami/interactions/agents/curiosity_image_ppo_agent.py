@@ -1,6 +1,10 @@
+from pathlib import Path
+
+import torch
 import torch.nn as nn
 from torch import Tensor
 from torch.distributions import Distribution
+from typing_extensions import override
 
 from ...data.buffers.buffer_names import BufferNames
 from ...data.step_data import DataKeys, StepData
@@ -85,3 +89,8 @@ class CuriosityImagePPOAgent(BaseAgent[Tensor, Tensor]):
 
     def step(self, observation: Tensor) -> Tensor:
         return self._common_step(observation, initial_step=False)
+
+    @override
+    def save_state(self, path: Path) -> None:
+        path.mkdir()
+        torch.save(self.forward_dynamics_hidden_state, path / "forward_dynamics_hidden_state.pt")
