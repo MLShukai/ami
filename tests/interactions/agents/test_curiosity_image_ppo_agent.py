@@ -98,7 +98,14 @@ class TestCuriosityImagePPOAgent:
             action = agent.step(observation)
             assert action.shape == (len(ACTION_CHOICES_PER_CATEGORY),)
 
-    def test_save_state(self, agent: CuriosityImagePPOAgent, tmp_path):
+    def test_save_and_load_state(self, agent: CuriosityImagePPOAgent, tmp_path):
         agent_path = tmp_path / "agent"
         agent.save_state(agent_path)
         assert (agent_path / "forward_dynamics_hidden_state.pt").exists()
+
+        hidden = agent.forward_dynamics_hidden_state.clone()
+        agent.forward_dynamics_hidden_state = torch.randn_like(hidden)
+        assert not torch.equal(agent.forward_dynamics_hidden_state, hidden)
+
+        agent.load_state(agent_path)
+        assert torch.equal(agent.forward_dynamics_hidden_state, hidden)

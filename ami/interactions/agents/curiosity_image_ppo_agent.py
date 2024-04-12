@@ -94,3 +94,7 @@ class CuriosityImagePPOAgent(BaseAgent[Tensor, Tensor]):
     def save_state(self, path: Path) -> None:
         path.mkdir()
         torch.save(self.forward_dynamics_hidden_state, path / "forward_dynamics_hidden_state.pt")
+
+    @override
+    def load_state(self, path: Path) -> None:
+        self.forward_dynamics_hidden_state = torch.load(path / "forward_dynamics_hidden_state.pt", map_location="cpu")
