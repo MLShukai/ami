@@ -1,6 +1,7 @@
 import math
 import time
 from abc import ABC, abstractmethod
+from collections import ChainMap
 from collections.abc import Mapping, MutableSequence
 from typing import Any
 
@@ -34,8 +35,8 @@ class TensorBoardLogger(ABC):
         if self.log_available:
             self.tensorboard.add_scalar(tag, scalar, self.global_step)
 
-    def _union_dicts(self, ld: list[dict[str, Any]]) -> dict[str, Any]:
-        return {k: v for d in ld for k, v in d.items()}
+    def _union_dicts(self, list_of_dict: list[dict[str, Any]]) -> dict[str, Any]:
+        return dict(ChainMap(*list_of_dict))
 
     def _expand_dict(self, d: Mapping[str, Any] | MutableSequence[Any]) -> dict[str, Any]:
         if isinstance(d, Mapping):
