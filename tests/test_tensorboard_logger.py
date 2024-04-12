@@ -2,7 +2,7 @@ import pytest
 import torch
 from omegaconf import DictConfig, ListConfig
 
-from ami.tensorboard_logger.tensorboard_logger import (
+from ami.tensorboard_logger import (
     StepIntervalLogger,
     TimeIntervalLogger,
 )
