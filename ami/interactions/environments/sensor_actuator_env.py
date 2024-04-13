@@ -36,3 +36,8 @@ class SensorActuatorEnv(BaseEnvironment[ObsType, ActType], Generic[ObsType, ActT
         path.mkdir()
         self.sensor.save_state(path / "sensor")
         self.actuator.save_state(path / "actuator")
+
+    @override
+    def load_state(self, path: Path) -> None:
+        self.sensor.load_state(path / "sensor")
+        self.actuator.load_state(path / "actuator")

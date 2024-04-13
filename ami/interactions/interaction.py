@@ -43,3 +43,8 @@ class Interaction:
         path.mkdir()
         self.agent.save_state(path / "agent")
         self.environment.save_state(path / "environment")
+
+    def load_state(self, path: Path) -> None:
+        """Loads the internal state from the `path`."""
+        self.agent.load_state(path / "agent")
+        self.environment.load_state(path / "environment")
