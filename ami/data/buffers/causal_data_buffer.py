@@ -85,4 +85,4 @@ class CausalDataBuffer(BaseDataBuffer):
         for key in self.__buffer_dict.keys():
             file_name = path / (key.value + ".pkl")
             with open(file_name, "rb") as f:
-                self.buffer_dict[key] = deque(pickle.load(f), maxlen=self.__max_len)
+                self.__buffer_dict[key] = deque(pickle.load(f), maxlen=self.__max_len)
