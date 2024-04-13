@@ -82,3 +82,7 @@ class ThreadSafeDataUser(Generic[BufferType]):
         """Saves the buffer state."""
         self.update()
         self._buffer.save_state(path)
+
+    def load_state(self, path: Path) -> None:
+        """Loads the buffer state."""
+        self._buffer.load_state(path)

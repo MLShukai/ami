@@ -79,3 +79,10 @@ class CausalDataBuffer(BaseDataBuffer):
             file_name = path / (key.value + ".pkl")
             with open(file_name, "wb") as f:
                 pickle.dump(value, f)
+
+    @override
+    def load_state(self, path: Path) -> None:
+        for key in self.__buffer_dict.keys():
+            file_name = path / (key.value + ".pkl")
+            with open(file_name, "rb") as f:
+                self.__buffer_dict[key] = deque(pickle.load(f), maxlen=self.__max_len)

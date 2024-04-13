@@ -35,6 +35,11 @@ class DataUsersDict(UserDict[str, ThreadSafeDataUser[Any]]):
         for name, user in self.items():
             user.save_state(path / name)
 
+    def load_state(self, path: Path) -> None:
+        """Loads the internal buffer state from `path`."""
+        for name, user in self.items():
+            user.load_state(path / name)
+
 
 class DataCollectorsDict(UserDict[str, ThreadSafeDataCollector[Any]]):
     """A class for aggregating `DataCollectors` to invoke their `collect`
