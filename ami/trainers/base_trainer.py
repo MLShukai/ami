@@ -223,3 +223,4 @@ class BaseTrainer(ABC):
 
     def load_state(self, path: Path) -> None:
         """Loads the internal state from the `path`."""
+        pass
