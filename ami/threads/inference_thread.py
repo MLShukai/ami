@@ -1,3 +1,7 @@
+from pathlib import Path
+
+from typing_extensions import override
+
 from ..data.utils import DataCollectorsDict
 from ..interactions.interaction import Interaction
 from ..models.utils import InferenceWrappersDict
@@ -44,3 +48,12 @@ class InferenceThread(BackgroundThread):
         self.interaction.teardown()
 
         self.logger.info("End the trainig thread.")
+
+    @override
+    def save_state(self, path: Path) -> None:
+        path.mkdir()
+        self.interaction.save_state(path / "interaction")
+
+    @override
+    def load_state(self, path: Path) -> None:
+        self.interaction.load_state(path / "interaction")
