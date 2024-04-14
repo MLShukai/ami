@@ -1,8 +1,12 @@
 from __future__ import annotations
 
 import threading
+from typing import Callable, TypeAlias
 
 from .thread_types import BACKGROUND_THREAD_TYPES, ThreadTypes
+
+OnPausedCallbackType: TypeAlias = Callable[[], None]
+OnResumedCallbackType: TypeAlias = Callable[[], None]
 
 
 class ThreadController:
@@ -47,6 +51,10 @@ class ThreadController:
         """Returns the resume flag."""
         return self._resume_event.is_set()
 
+    def is_paused(self) -> bool:
+        """Returns the flipped resume flag."""
+        return not self.is_resumed()
+
     def wait_for_resume(self, timeout: float = 1.0) -> bool:
         """Waits for the resume event or times out after `timeout` seconds.
 
@@ -77,6 +85,8 @@ class ThreadCommandHandler:
         """
         self._controller = controller
         self.check_resume_interval = check_resume_interval
+        self._on_paused_callbacks: list[OnPausedCallbackType] = []
+        self._on_resumed_callbacks: list[OnResumedCallbackType] = []
 
     def is_active(self) -> bool:
         """Checks if the managed thread should continue running."""
@@ -109,5 +119,26 @@ class ThreadCommandHandler:
         Returns:
             bool: True if the thread should continue executing, False if the thread is shutting down.
         """
+        paused = False
+        if self._controller.is_paused():
+            for fn in self._on_paused_callbacks:
+                fn()
+            paused = True
+
         self.stop_if_paused()
+
+        if paused:
+            paused = False
+            for fn in self._on_resumed_callbacks:
+                fn()
+
         return self.is_active()
+
+    def register_on_paused_callback(self, callback: OnPausedCallbackType) -> None:
+        """Registers a callback function to be called when system is paused."""
+        self._on_paused_callbacks.append(callback)
+
+    def register_on_resumed_callback(self, callback: OnResumedCallbackType) -> None:
+        """Registers a callback function to be called when system is
+        resumed."""
+        self._on_resumed_callbacks.append(callback)
