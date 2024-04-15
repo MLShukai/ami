@@ -9,6 +9,14 @@ OnPausedCallbackType: TypeAlias = Callable[[], None]
 OnResumedCallbackType: TypeAlias = Callable[[], None]
 
 
+def dummy_on_paused() -> None:
+    pass
+
+
+def dummy_on_resumed() -> None:
+    pass
+
+
 class ThreadController:
     """The controller class for sending commands from the main thread to
     background threads."""
@@ -76,6 +84,10 @@ class ThreadCommandHandler:
     """Handles commands for thread management, facilitating communication and
     control between the main thread and background threads."""
 
+    # 外部から定義されるコールバック関数
+    on_paused: OnPausedCallbackType = dummy_on_paused
+    on_resumed: OnResumedCallbackType = dummy_on_resumed
+
     def __init__(self, controller: ThreadController, check_resume_interval: float = 1.0) -> None:
         """Constructs the ThreadCommandHandler class.
 
@@ -85,8 +97,6 @@ class ThreadCommandHandler:
         """
         self._controller = controller
         self.check_resume_interval = check_resume_interval
-        self._on_paused_callbacks: list[OnPausedCallbackType] = []
-        self._on_resumed_callbacks: list[OnResumedCallbackType] = []
 
     def is_active(self) -> bool:
         """Checks if the managed thread should continue running."""
@@ -121,24 +131,13 @@ class ThreadCommandHandler:
         """
         paused = False
         if self._controller.is_paused():
-            for fn in self._on_paused_callbacks:
-                fn()
+            self.on_paused()
             paused = True
 
         self.stop_if_paused()
 
         if paused:
             paused = False
-            for fn in self._on_resumed_callbacks:
-                fn()
+            self.on_resumed()
 
         return self.is_active()
-
-    def register_on_paused_callback(self, callback: OnPausedCallbackType) -> None:
-        """Registers a callback function to be called when system is paused."""
-        self._on_paused_callbacks.append(callback)
-
-    def register_on_resumed_callback(self, callback: OnResumedCallbackType) -> None:
-        """Registers a callback function to be called when system is
-        resumed."""
-        self._on_resumed_callbacks.append(callback)

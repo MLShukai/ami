@@ -73,8 +73,8 @@ def test_manage_loop() -> None:
     handler = ThreadCommandHandler(controller, check_resume_interval=10)
     counter = Counter()
     pause_resume_event_log = PauseResumeEventLog()  # pause/resumeのイベント呼び出し記録用
-    handler.register_on_paused_callback(pause_resume_event_log.on_paused)
-    handler.register_on_resumed_callback(pause_resume_event_log.on_resumed)
+    handler.on_paused = pause_resume_event_log.on_paused
+    handler.on_resumed = pause_resume_event_log.on_resumed
 
     thread = threading.Thread(target=infinity_increment_thread, args=(counter, handler))
     thread.start()

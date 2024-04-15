@@ -28,8 +28,8 @@ class BackgroundThread(BaseThread):
             ThreadTypes.MAIN,
             SharedObjectNames.THREAD_COMMAND_HANDLERS,
         )[self.THREAD_TYPE]
-        self.thread_command_handler.register_on_paused_callback(self.on_paused)
-        self.thread_command_handler.register_on_resumed_callback(self.on_resumed)
+        self.thread_command_handler.on_paused = self.on_paused
+        self.thread_command_handler.on_resumed = self.on_resumed
 
     def start(self) -> None:
         self.logger.info("Starts background thread.")

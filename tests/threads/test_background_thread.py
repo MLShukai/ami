@@ -44,12 +44,7 @@ class TestBackgroundThread:
         assert isinstance(tt.thread_command_handler, ThreadCommandHandler)
         assert it.thread_command_handler is not tt.thread_command_handler, "must be other instance."
 
-        assert it.on_paused in it.thread_command_handler._on_paused_callbacks
-        assert it.on_paused not in tt.thread_command_handler._on_paused_callbacks
-        assert it.on_resumed in it.thread_command_handler._on_resumed_callbacks
-        assert it.on_resumed not in tt.thread_command_handler._on_paused_callbacks
-
-        assert tt.on_paused in tt.thread_command_handler._on_paused_callbacks
-        assert tt.on_paused not in it.thread_command_handler._on_paused_callbacks
-        assert tt.on_resumed in tt.thread_command_handler._on_resumed_callbacks
-        assert tt.on_resumed not in it.thread_command_handler._on_paused_callbacks
+        assert it.on_paused == it.thread_command_handler.on_paused
+        assert tt.on_paused == tt.thread_command_handler.on_paused
+        assert it.on_resumed == it.thread_command_handler.on_resumed
+        assert tt.on_resumed == tt.thread_command_handler.on_resumed
