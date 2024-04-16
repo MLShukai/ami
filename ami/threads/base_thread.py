@@ -4,7 +4,7 @@ from pathlib import Path
 from typing import Any, TypeAlias
 
 from ..logger import get_thread_logger
-from .thread_types import ThreadTypes
+from .thread_types import ThreadTypes, get_thread_name_from_type
 
 SharedObjectsDictType: TypeAlias = OrderedDict[str, Any]
 SharedObjectsPoolType: TypeAlias = OrderedDict[ThreadTypes, SharedObjectsDictType]
@@ -24,6 +24,11 @@ class BaseThread(ABC):
 
     THREAD_TYPE: ThreadTypes
     _shared_objects_pool: SharedObjectsPoolType
+
+    @property
+    def thread_name(self) -> str:
+        """Retrieves thread name from `THREAD_TYPE`."""
+        return get_thread_name_from_type(self.THREAD_TYPE)
 
     def __init__(self) -> None:
         """Initializes the thread and sets up logging.

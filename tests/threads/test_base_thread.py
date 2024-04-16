@@ -33,6 +33,9 @@ class ThreadImplWithError(BaseThread):
 
 
 class TestBaseThread:
+    def test_thread_name(self) -> None:
+        assert MainThreadImpl().thread_name == "main"
+
     def test_not_implemented_thread_type(self) -> None:
         with pytest.raises(NotImplementedError):
 
