@@ -38,4 +38,5 @@ def get_thread_name_from_type(thread_type: ThreadTypes) -> str:
         case _:
             if thread_type in ThreadTypes:
                 raise NotImplementedError(f"The name for specified thread type '{thread_type}' is not implemented yet.")
-            raise ValueError(f"Invalid thread type object: {thread_type}")
+            else:
+                raise ValueError(f"Invalid thread type object: {thread_type}")
