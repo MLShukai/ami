@@ -15,6 +15,7 @@ from ami.data.interfaces import ThreadSafeDataUser
 from ami.models.model_names import ModelNames
 from ami.models.model_wrapper import ModelWrapper
 from ami.models.vae import VAE, Decoder, Encoder
+from ami.tensorboard_loggers import StepIntervalLogger
 
 from .base_trainer import BaseTrainer
 
@@ -25,6 +26,7 @@ class ImageVAETrainer(BaseTrainer):
         partial_dataloader: partial[DataLoader[torch.Tensor]],
         partial_optimizer: partial[Optimizer],
         device: torch.device,
+        logger: StepIntervalLogger,
         kl_coef: float = 1.0,
         max_epochs: int = 1,
         minimum_dataset_size: int = 1,
@@ -41,6 +43,7 @@ class ImageVAETrainer(BaseTrainer):
         self.partial_optimizer = partial_optimizer
         self.partial_dataloader = partial_dataloader
         self.device = device
+        self.logger = logger
         self.kl_coef = kl_coef
         self.max_epochs = max_epochs
         self.minimum_dataset_size = minimum_dataset_size
@@ -81,9 +84,11 @@ class ImageVAETrainer(BaseTrainer):
                     dist_batch, Normal(torch.zeros_like(dist_batch.mean), torch.ones_like(dist_batch.stddev))
                 )
                 loss = rec_loss + self.kl_coef * kl_loss.mean()
+                self.logger.log("image_vae_loss", loss)
                 loss.backward()
                 optimizer.step()
 
+        self.logger.update()
         self.optimizer_state = optimizer.state_dict()
 
     @override
