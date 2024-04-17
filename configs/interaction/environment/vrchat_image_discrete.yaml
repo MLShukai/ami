@@ -1,0 +1,13 @@
+_target_: ami.interactions.environments.sensor_actuator_env.SensorActuatorEnv
+
+sensor:
+  _target_: ami.interactions.environments.sensors.opencv_image_sensor.OpenCVImageSensor
+  camera_index: 0
+  width: 84
+  height: 84
+  base_fps: 60
+
+actuator:
+  _target_: ami.interactions.environments.actuators.vrchat_osc_discrete_actuator.VRChatOSCDiscreteActuator
+  osc_address: "127.0.0.1"
+  osc_sender_port: 9000

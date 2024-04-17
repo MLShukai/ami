@@ -38,6 +38,7 @@ class TrainingThread(BackgroundThread):
         while self.thread_command_handler.manage_loop():
             trainer = self.trainers.get_next_trainer()
             if trainer.is_trainable():
+                self.logger.info(f"Running: {type(trainer).__name__} ...")
                 trainer.run()
 
         self.logger.info("End the training thread.")
