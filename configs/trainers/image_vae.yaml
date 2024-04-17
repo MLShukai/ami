@@ -11,7 +11,7 @@
   device: ${devices.0}
   logger:
     _target_: ami.tensorboard_loggers.StepIntervalLogger
-    log_dir: ${paths.log_dir}/tensorboard
+    log_dir: ${paths.tensorboard_dir}/image_vae
     log_every_n_steps: 1
   max_epochs: 3
   minimum_dataset_size: ${.partial_dataloader.batch_size}
