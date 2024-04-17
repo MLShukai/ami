@@ -7,7 +7,7 @@ root_dir: ${oc.env:PROJECT_ROOT}
 log_dir: ${.root_dir}/logs/
 
 # path to tensorboard logging directory
-tensorboard_dir: ${.log_dir}/tensorboard
+tensorboard_dir: ${.log_dir}/tensorboard/
 
 # path to output directory, created dynamically by hydra
 # path generation pattern is specified in `configs/hydra/default.yaml`
