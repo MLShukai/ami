@@ -87,8 +87,8 @@ class ImageVAETrainer(BaseTrainer):
                 self.logger.log("image_vae_loss", loss)
                 loss.backward()
                 optimizer.step()
+                self.logger.update()
 
-        self.logger.update()
         self.optimizer_state = optimizer.state_dict()
 
     @override
