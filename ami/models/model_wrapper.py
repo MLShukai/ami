@@ -2,12 +2,20 @@ from __future__ import annotations
 
 import copy
 import threading
-from typing import Any, Generic, TypeVar
+from typing import Any, Generic, Protocol, Self, TypeVar, runtime_checkable
 
 import torch
 import torch.nn as nn
 
 ModuleType = TypeVar("ModuleType", bound=nn.Module)
+
+
+@runtime_checkable
+class SupportsToDevice(Protocol):
+    """To check supporting `to(device)` method."""
+
+    def to(self, device: torch.device) -> Self:
+        ...
 
 
 class ModelWrapper(nn.Module, Generic[ModuleType]):
@@ -63,12 +71,12 @@ class ModelWrapper(nn.Module, Generic[ModuleType]):
         device = self.device
         new_args, new_kwds = [], {}
         for i in args:
-            if isinstance(i, torch.Tensor):
+            if isinstance(i, SupportsToDevice):
                 i = i.to(device)
             new_args.append(i)
 
         for k, v in kwds.items():
-            if isinstance(v, torch.Tensor):
+            if isinstance(v, SupportsToDevice):
                 v = v.to(device)
             new_kwds[k] = v
 
