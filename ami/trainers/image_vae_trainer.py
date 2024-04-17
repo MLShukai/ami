@@ -84,7 +84,7 @@ class ImageVAETrainer(BaseTrainer):
                     dist_batch, Normal(torch.zeros_like(dist_batch.mean), torch.ones_like(dist_batch.stddev))
                 )
                 loss = rec_loss + self.kl_coef * kl_loss.mean()
-                self.logger.log("image_vae_loss", loss)
+                self.logger.log("image_vae/loss", loss)
                 loss.backward()
                 optimizer.step()
                 self.logger.update()
