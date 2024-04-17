@@ -1,6 +1,7 @@
 """This file contains test cases for ensuring the implemented sensor
 behaviors."""
 import pytest
+from pytest_mock import MockerFixture
 
 from ami.interactions.environments.sensors.base_sensor import (
     BaseSensor,
@@ -25,3 +26,14 @@ class TestSensorWrapper:
 
     def test_read(self, sensor_wrapper: BaseSensorWrapper) -> None:
         assert sensor_wrapper.read() == 1
+
+    def test_save_and_load_state(self, sensor_wrapper: IncrementSensorWrapper, mocker: MockerFixture, tmp_path):
+
+        spied_save_state = mocker.spy(sensor_wrapper._sensor, "save_state")
+        spied_load_state = mocker.spy(sensor_wrapper._sensor, "load_state")
+
+        sensor_path = tmp_path / "sensor"
+        sensor_wrapper.save_state(sensor_path)
+        spied_save_state.assert_called_once_with(sensor_path)
+        sensor_wrapper.load_state(sensor_path)
+        spied_load_state.assert_called_once_with(sensor_path)

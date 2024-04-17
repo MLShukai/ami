@@ -3,6 +3,8 @@ from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import Any, Generic
 
+from typing_extensions import override
+
 from ..._types import ObsType, WrapperObsType
 
 
@@ -70,3 +72,11 @@ class BaseSensorWrapper(BaseSensor[WrapperObsType], Generic[WrapperObsType, ObsT
 
     def teardown(self) -> None:
         return self._sensor.teardown()
+
+    @override
+    def save_state(self, path: Path) -> None:
+        return self._sensor.save_state(path)
+
+    @override
+    def load_state(self, path: Path) -> None:
+        return self._sensor.load_state(path)
