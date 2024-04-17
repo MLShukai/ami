@@ -5,6 +5,9 @@ from pathlib import Path
 from typing import Any, Generic, TypeVar
 
 from torch.utils.data import Dataset
+from typing_extensions import override
+
+from ami.checkpointing import SaveAndLoadStateMixin
 
 from .buffers.base_data_buffer import BaseDataBuffer
 from .step_data import StepData
@@ -43,7 +46,7 @@ class ThreadSafeDataCollector(Generic[BufferType]):
             return return_data
 
 
-class ThreadSafeDataUser(Generic[BufferType]):
+class ThreadSafeDataUser(Generic[BufferType], SaveAndLoadStateMixin):
     """Uses the collected data in training thread."""
 
     def __init__(self, collector: ThreadSafeDataCollector[BufferType]) -> None:
@@ -78,11 +81,13 @@ class ThreadSafeDataUser(Generic[BufferType]):
         """Returns the reference to the internal buffer."""
         return self._buffer
 
+    @override
     def save_state(self, path: Path) -> None:
         """Saves the buffer state."""
         self.update()
         self._buffer.save_state(path)
 
+    @override
     def load_state(self, path: Path) -> None:
         """Loads the buffer state."""
         self._buffer.load_state(path)

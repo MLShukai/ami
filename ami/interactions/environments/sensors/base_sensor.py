@@ -5,10 +5,12 @@ from typing import Any, Generic
 
 from typing_extensions import override
 
+from ami.checkpointing import SaveAndLoadStateMixin
+
 from ..._types import ObsType, WrapperObsType
 
 
-class BaseSensor(ABC, Generic[ObsType]):
+class BaseSensor(ABC, Generic[ObsType], SaveAndLoadStateMixin):
     """Abstract base sensor class for observing data from the real
     environment."""
 

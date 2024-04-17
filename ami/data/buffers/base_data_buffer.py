@@ -1,15 +1,15 @@
 """This file contains all base data buffer class."""
 import copy
 from abc import ABC, abstractmethod
-from pathlib import Path
 from typing import Any, Self
 
 from torch.utils.data import Dataset
 
+from ...checkpointing import SaveAndLoadStateMixin
 from ..step_data import StepData
 
 
-class BaseDataBuffer(ABC):
+class BaseDataBuffer(ABC, SaveAndLoadStateMixin):
     """Base class for all data buffer objects.
 
     Please use the `reconstructable_init` method as the constructor instead of `__init__`.
@@ -72,11 +72,3 @@ class BaseDataBuffer(ABC):
             dataset: Dataset object for training.
         """
         raise NotImplementedError
-
-    def save_state(self, path: Path) -> None:
-        """Saves the internal state to the `path`."""
-        pass
-
-    def load_state(self, path: Path) -> None:
-        """Loads the internal state from the `path`."""
-        pass
