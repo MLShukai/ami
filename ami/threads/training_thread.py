@@ -1,3 +1,7 @@
+from pathlib import Path
+
+from typing_extensions import override
+
 from ..data.utils import DataUsersDict
 from ..models.utils import ModelWrappersDict
 from ..trainers.utils import TrainersList
@@ -38,3 +42,16 @@ class TrainingThread(BackgroundThread):
                 trainer.run()
 
         self.logger.info("End the training thread.")
+
+    @override
+    def save_state(self, path: Path) -> None:
+        path.mkdir()
+        self.models.save_state(path / "models")
+        self.trainers.save_state(path / "trainers")
+        self.data_users.save_state(path / "data")
+
+    @override
+    def load_state(self, path: Path) -> None:
+        self.models.load_state(path / "models")
+        self.trainers.load_state(path / "trainers")
+        self.data_users.load_state(path / "data")

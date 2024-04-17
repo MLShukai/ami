@@ -1,5 +1,6 @@
 """This file contains the abstract base agent class."""
 from abc import ABC, abstractmethod
+from pathlib import Path
 from typing import Any, Generic
 
 import torch.nn as nn
@@ -88,3 +89,11 @@ class BaseAgent(ABC, Generic[ObsType, ActType]):
             action: Final action to be taken in the interaction. Returning no action is also an option.
         """
         return None
+
+    def save_state(self, path: Path) -> None:
+        """Saves the internal state to `path`."""
+        pass
+
+    def load_state(self, path: Path) -> None:
+        """Loads the internal state to `path`."""
+        pass

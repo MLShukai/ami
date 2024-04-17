@@ -1,6 +1,7 @@
 """This file contains all base data buffer class."""
 import copy
 from abc import ABC, abstractmethod
+from pathlib import Path
 from typing import Any, Self
 
 from torch.utils.data import Dataset
@@ -71,3 +72,11 @@ class BaseDataBuffer(ABC):
             dataset: Dataset object for training.
         """
         raise NotImplementedError
+
+    def save_state(self, path: Path) -> None:
+        """Saves the internal state to the `path`."""
+        pass
+
+    def load_state(self, path: Path) -> None:
+        """Loads the internal state from the `path`."""
+        pass

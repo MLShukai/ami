@@ -1,5 +1,6 @@
 from abc import ABC
 from collections import OrderedDict
+from pathlib import Path
 from typing import Any, TypeAlias
 
 from ..logger import get_thread_logger
@@ -87,6 +88,14 @@ class BaseThread(ABC):
             name: The object's name.
         """
         return self._shared_objects_pool[shared_from][name]
+
+    def save_state(self, path: Path) -> None:
+        """Saves the internal state to the `path`."""
+        pass
+
+    def load_state(self, path: Path) -> None:
+        """Loads the internal state from the `path`."""
+        pass
 
 
 def attach_shared_objects_pool_to_threads(*threads: BaseThread) -> None:

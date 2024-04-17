@@ -1,4 +1,5 @@
 from collections import UserList
+from pathlib import Path
 
 from ..data.utils import DataUsersDict
 from ..models.utils import ModelWrappersDict
@@ -75,3 +76,16 @@ class TrainersList(UserList[BaseTrainer]):
         """
         for trainer in self:
             trainer.attach_data_users_dict(data_users_dict)
+
+    def save_state(self, path: Path) -> None:
+        """Saves the internal state to the `path`."""
+        path.mkdir()
+        for i, trainer in enumerate(self):
+            trainer_path = path / str(i)
+            trainer.save_state(trainer_path)
+
+    def load_state(self, path: Path) -> None:
+        """Loads the internal state from the `path`"""
+        for i, trainer in enumerate(self):
+            trainer_path = path / str(i)
+            trainer.load_state(trainer_path)

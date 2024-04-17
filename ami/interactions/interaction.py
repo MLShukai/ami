@@ -1,3 +1,5 @@
+from pathlib import Path
+
 from ._types import ActType, ObsType
 from .agents.base_agent import BaseAgent
 from .environments.base_environment import BaseEnvironment
@@ -35,3 +37,14 @@ class Interaction:
         if final_action is not None:
             self.environment.affect(final_action)
         self.environment.teardown()
+
+    def save_state(self, path: Path) -> None:
+        """Saves the internal state to `path`."""
+        path.mkdir()
+        self.agent.save_state(path / "agent")
+        self.environment.save_state(path / "environment")
+
+    def load_state(self, path: Path) -> None:
+        """Loads the internal state from the `path`."""
+        self.agent.load_state(path / "agent")
+        self.environment.load_state(path / "environment")

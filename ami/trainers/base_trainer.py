@@ -1,5 +1,6 @@
 """This file contains an abstract base class for all trainers."""
 from abc import ABC, abstractmethod
+from pathlib import Path
 from typing import Any, TypeAlias
 
 import torch.nn as nn
@@ -215,3 +216,11 @@ class BaseTrainer(ABC):
         self.train()
         self.synchronize()
         self.teardown()
+
+    def save_state(self, path: Path) -> None:
+        """Saves the internal state to the `path`."""
+        pass
+
+    def load_state(self, path: Path) -> None:
+        """Loads the internal state from the `path`."""
+        pass

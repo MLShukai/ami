@@ -16,6 +16,7 @@ webtest = "^3.0.0"
 hydra-core = "^1.3.2"
 hydra-colorlog = "^1.2.0"
 vrchat-io = {git = "https://github.com/Geson-anko/vrchat-io.git", rev = "main"}
+tensorboard = "^2.16.2"
 
 
 [tool.poetry.group.dev.dependencies]
@@ -26,6 +27,7 @@ pytest-mock = "^3.12.0"
 mypy = "^1.8.0"
 types-pyyaml = "^6.0.12.12"
 requests = "^2.31.0"
+types-requests = "^2.31.0.20240406"
 
 [build-system]
 requires = ["poetry-core"]

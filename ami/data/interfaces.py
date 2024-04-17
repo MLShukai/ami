@@ -1,6 +1,7 @@
 """This file contains the interface class for a data buffer designed for multi-
 threading."""
 import threading
+from pathlib import Path
 from typing import Any, Generic, TypeVar
 
 from torch.utils.data import Dataset
@@ -76,3 +77,12 @@ class ThreadSafeDataUser(Generic[BufferType]):
     def buffer(self) -> BufferType:
         """Returns the reference to the internal buffer."""
         return self._buffer
+
+    def save_state(self, path: Path) -> None:
+        """Saves the buffer state."""
+        self.update()
+        self._buffer.save_state(path)
+
+    def load_state(self, path: Path) -> None:
+        """Loads the buffer state."""
+        self._buffer.load_state(path)

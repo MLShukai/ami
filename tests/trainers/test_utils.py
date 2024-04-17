@@ -1,6 +1,7 @@
 import pytest
+from pytest_mock import MockerFixture
 
-from ami.trainers.utils import TrainersList
+from ami.trainers.utils import BaseTrainer, TrainersList
 
 from .test_base_trainer import TrainerImpl
 
@@ -38,3 +39,19 @@ class TestTrainersList:
         trainers.attach_data_users_dict(data_users_dict)
         assert trainer1._data_users_dict is data_users_dict
         assert trainer2._data_users_dict is data_users_dict
+
+    def test_save_and_load_state(self, tmp_path, mocker: MockerFixture):
+        trainer1 = TrainerImpl()
+        trainer2 = TrainerImpl()
+        mock_trainer = mocker.Mock(BaseTrainer)
+
+        trainers = TrainersList(*[trainer1, trainer2, mock_trainer])
+        trainers_path = tmp_path / "trainers"
+        trainers.save_state(trainers_path)
+        assert trainers_path.exists()
+        assert (trainers_path / "0" / "state.pt").exists()
+        assert (trainers_path / "1" / "state.pt").exists()
+        mock_trainer.save_state.assert_called_once_with(trainers_path / "2")
+
+        trainers.load_state(trainers_path)
+        mock_trainer.load_state.assert_called_once_with(trainers_path / "2")

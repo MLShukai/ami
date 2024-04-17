@@ -7,7 +7,7 @@ from ami.data.utils import DataCollectorsDict, DataUsersDict, ThreadSafeDataColl
 from .buffers.test_base_data_buffer import DataBufferImpl
 
 
-class TestDataCollectorsDict:
+class TestDataCollectorsAndUsersDict:
     @pytest.fixture
     def buffer(self) -> DataBufferImpl:
         return DataBufferImpl.reconstructable_init()
@@ -24,6 +24,10 @@ class TestDataCollectorsDict:
     def collectors_dict(self, collector: ThreadSafeDataCollector) -> DataCollectorsDict:
         return DataCollectorsDict(a=collector)
 
+    @pytest.fixture
+    def users_dict(self, collectors_dict: DataCollectorsDict):
+        return collectors_dict.get_data_users()
+
     def test_collect(self, collectors_dict: DataCollectorsDict, step_data: StepData) -> None:
         collectors_dict.collect(step_data)
 
@@ -33,3 +37,20 @@ class TestDataCollectorsDict:
 
     def test_get_data_users(self, collectors_dict: DataCollectorsDict) -> None:
         assert isinstance(collectors_dict.get_data_users(), DataUsersDict)
+
+    def test_save_and_load_state(self, users_dict: DataUsersDict, tmp_path, collector, step_data):
+        data_path = tmp_path / "data"
+
+        collector.collect(step_data)
+
+        users_dict.save_state(data_path)
+        assert (data_path / "a").exists()
+
+        for user in users_dict.values():
+            user.clear()
+            assert len(user.buffer.obs) == 0
+
+        users_dict.load_state(data_path)
+
+        for user in users_dict.values():
+            assert len(user.buffer.obs) == 1

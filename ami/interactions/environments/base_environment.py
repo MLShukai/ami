@@ -1,5 +1,6 @@
 """This file contains the abstract base environment class."""
 from abc import ABC, abstractmethod
+from pathlib import Path
 from typing import Any, Generic
 
 from .._types import ActType, ObsType
@@ -31,4 +32,12 @@ class BaseEnvironment(ABC, Generic[ObsType, ActType]):
 
     def teardown(self) -> None:
         """Called at the end of interaction with the agent."""
+        pass
+
+    def save_state(self, path: Path) -> None:
+        """Saves the internal state to the `path`."""
+        pass
+
+    def load_state(self, path: Path) -> None:
+        """Loads the internal state from the `path`."""
         pass

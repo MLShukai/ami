@@ -1,8 +1,11 @@
+import pickle
+from pathlib import Path
 from typing import Self
 
 import numpy as np
 import torch
 from torch.utils.data import TensorDataset
+from typing_extensions import override
 
 from ..step_data import DataKeys, StepData
 from .base_data_buffer import BaseDataBuffer
@@ -74,3 +77,18 @@ class RandomDataBuffer(BaseDataBuffer):
         for key in self.__key_list:
             tensor_list.append(torch.stack(self.__buffer_dict[key]))
         return TensorDataset(*tensor_list)
+
+    @override
+    def save_state(self, path: Path) -> None:
+        path.mkdir()
+        for key, value in self.__buffer_dict.items():
+            file_name = path / (key.value + ".pkl")
+            with open(file_name, "wb") as f:
+                pickle.dump(value, f)
+
+    @override
+    def load_state(self, path: Path) -> None:
+        for key in self.__buffer_dict.keys():
+            file_name = path / (key.value + ".pkl")
+            with open(file_name, "rb") as f:
+                self.__buffer_dict[key] = pickle.load(f)[: self.__max_len]

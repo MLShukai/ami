@@ -1,5 +1,7 @@
 """This file contains helper objects for testing some features."""
+import pickle
 import platform
+from pathlib import Path
 from typing import Self
 
 import pytest
@@ -55,6 +57,15 @@ class DataBufferImpl(BaseDataBuffer):
     def make_dataset(self) -> TensorDataset:
         return TensorDataset(torch.stack(self.obs))
 
+    def save_state(self, path: Path) -> None:
+        path.mkdir()
+        with open(path / "obs.pkl", "wb") as f:
+            pickle.dump(self.obs, f)
+
+    def load_state(self, path: Path) -> None:
+        with open(path / "obs.pkl", "rb") as f:
+            self.obs = pickle.load(f)
+
 
 def skip_if_platform_is_not_linux():
     return pytest.mark.skipif(platform.system() != "Linux", reason="Platform is not linux.")
@@ -77,6 +88,13 @@ class TrainerImpl(BaseTrainer):
         data = dataset[0][0]
         self.model1(data)
         self.model2(data)
+
+    def save_state(self, path: Path) -> None:
+        path.mkdir()
+        torch.save(torch.randn(1), path / "state.pt")
+
+    def load_state(self, path: Path) -> None:
+        torch.load(path / "state.pt")
 
 
 class AgentImpl(BaseAgent[str, str]):
