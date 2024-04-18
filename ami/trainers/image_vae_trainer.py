@@ -59,6 +59,7 @@ class ImageVAETrainer(BaseTrainer):
         # 下記ではオプティマイザの初期状態生成を行う。
         vae = VAE(self.encoder.model, self.decoder.model)
         self.optimizer_state = self.partial_optimizer(vae.parameters()).state_dict()
+        self.logger_state = self.logger.state_dict()
 
     def is_trainable(self) -> bool:
         self.image_data_user.update()
@@ -70,6 +71,7 @@ class ImageVAETrainer(BaseTrainer):
 
         optimizer = self.partial_optimizer(vae.parameters())
         optimizer.load_state_dict(self.optimizer_state)
+        self.logger.load_state_dict(self.logger_state)
         dataset = self.image_data_user.get_dataset()
         dataloader = self.partial_dataloader(dataset=dataset)
 
@@ -90,12 +92,15 @@ class ImageVAETrainer(BaseTrainer):
                 self.logger.update()
 
         self.optimizer_state = optimizer.state_dict()
+        self.logger_state = self.logger.state_dict()
 
     @override
     def save_state(self, path: Path) -> None:
         path.mkdir()
         torch.save(self.optimizer_state, path / "optimizer.pt")
+        torch.save(self.logger_state, path / "logger.pt")
 
     @override
     def load_state(self, path: Path) -> None:
         self.optimizer_state = torch.load(path / "optimizer.pt")
+        self.logger_state = torch.load(path / "logger.pt")

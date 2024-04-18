@@ -106,8 +106,12 @@ class TestImageVAETrainer:
         trainer.save_state(trainer_path)
         assert trainer_path.exists()
         assert (trainer_path / "optimizer.pt").exists()
+        assert (trainer_path / "logger.pt").exists()
 
         trainer.optimizer_state.clear()
         assert trainer.optimizer_state == {}
+        trainer.logger_state.clear()
+        assert trainer.logger_state == {}
         trainer.load_state(trainer_path)
         assert trainer.optimizer_state != {}
+        assert trainer.logger_state != {}

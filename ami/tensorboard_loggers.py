@@ -63,6 +63,12 @@ class TensorBoardLogger(ABC):
             {"hp_params": -1} if metrics is None else self._expand_dict(metrics),
         )
 
+    def state_dict(self) -> dict[str, Any]:
+        return {"global_step": self.global_step}
+
+    def load_state_dict(self, state_dict: dict[str, Any]) -> None:
+        self.global_step = state_dict["global_step"]
+
 
 class TimeIntervalLogger(TensorBoardLogger):
     def __init__(
