@@ -34,3 +34,11 @@ docker-run: ## Run built docker image.
 	docker run -it --gpus all \
 	--mount type=volume,source=ami,target=/workspace \
 	ami
+
+docker-run-host: ## Run the built Docker image along with network, camera, and other host OS device access
+	docker run -it --gpus all \
+	--mount type=volume,source=ami,target=/workspace \
+	--mount type=bind,source=`pwd`/logs,target=/workspace/logs \
+	--device `v4l2-ctl --list-devices | grep -A 1 'OBS Virtual Camera' | grep -oP '\t\K/dev.*'`:/dev/video0:mwr \
+	--net host \
+	ami

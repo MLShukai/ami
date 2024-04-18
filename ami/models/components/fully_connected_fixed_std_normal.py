@@ -16,9 +16,9 @@ class FullyConnectedFixedStdNormal(nn.Module):
     https://github.com/MLShukai/ami/issues/117
     """
 
-    def __init__(self, in_dim: int, out_dim: int, std: float = SHIFT_ZERO, normal_cls: type[Normal] = Normal) -> None:
+    def __init__(self, dim_in: int, dim_out: int, std: float = SHIFT_ZERO, normal_cls: type[Normal] = Normal) -> None:
         super().__init__()
-        self.fc = nn.Linear(in_dim, out_dim)
+        self.fc = nn.Linear(dim_in, dim_out)
         self.std = std
         self.normal_cls = normal_cls
 

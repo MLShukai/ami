@@ -2,6 +2,7 @@
 import hydra
 import pytest
 from hydra.utils import instantiate
+from pytest_mock import MockerFixture
 
 from ami.hydra_instantiators import (
     instantiate_data_collectors,
@@ -23,7 +24,9 @@ HYDRA_OVERRIDES = [[]] + EXPERIMENT_CONFIG_OVERRIDES
 
 
 @pytest.mark.parametrize("overrides", HYDRA_OVERRIDES)
-def test_instantiate(overrides: list[str]):
+def test_instantiate(overrides: list[str], mocker: MockerFixture):
+    mocker.patch("cv2.VideoCapture")
+    mocker.patch("pythonosc.udp_client.SimpleUDPClient")
     with hydra.initialize_config_dir(str(CONFIG_DIR)):
         cfg = hydra.compose(LAUNCH_CONFIG, overrides=overrides)
 

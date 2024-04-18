@@ -4,6 +4,8 @@ from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import Any, Generic
 
+from typing_extensions import override
+
 from ..._types import ActType, WrapperActType
 
 
@@ -71,3 +73,11 @@ class BaseActuatorWrapper(BaseActuator[WrapperActType], Generic[WrapperActType, 
 
     def teardown(self) -> None:
         return self._actuator.teardown()
+
+    @override
+    def save_state(self, path: Path) -> None:
+        return self._actuator.save_state(path)
+
+    @override
+    def load_state(self, path: Path) -> None:
+        return self._actuator.load_state(path)

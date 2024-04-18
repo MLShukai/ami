@@ -1,0 +1,87 @@
+image_encoder:
+  _target_: ami.models.vae.EncoderWrapper
+  default_device: ${devices.0}
+  has_inference: True
+  model:
+    _target_: ami.models.vae.Conv2dEncoder
+    height: ${interaction.environment.sensor.height}
+    width: ${interaction.environment.sensor.width}
+    channels: 3
+    latent_dim: 512 # From primitive AMI.
+
+image_decoder:
+  _target_: ami.models.model_wrapper.ModelWrapper
+  default_device: ${devices.0}
+  has_inference: False
+  model:
+    _target_: ami.models.vae.Conv2dDecoder
+    height: ${models.image_encoder.model.height}
+    width: ${models.image_encoder.model.width}
+    channels: ${models.image_encoder.model.channels}
+    latent_dim: ${models.image_encoder.model.latent_dim}
+
+forward_dynamics:
+  _target_: ami.models.model_wrapper.ModelWrapper
+  default_device: ${devices.0}
+  has_inference: True
+  model:
+    _target_: ami.models.forward_dynamics.ForwardDynamics
+    observation_flatten:
+      _target_: torch.nn.Identity
+    action_flatten:
+      _target_: ami.models.components.multi_embeddings.MultiEmbeddings
+      choices_per_category:
+        _target_: hydra.utils.get_object
+        path: ami.interactions.environments.actuators.vrchat_osc_discrete_actuator.ACTION_CHOICES_PER_CATEGORY
+      embedding_dim: 8
+      do_flatten: True
+    obs_action_projection:
+      _target_: torch.nn.Linear
+      # action_embedding_dim * num_action_choices + obs_embedding_dim
+      in_features: ${python.eval:"int('${..action_flatten.embedding_dim}') * 5 + int('${models.image_encoder.model.latent_dim}')"}
+      out_features: ${..core_model.dim}
+    core_model:
+      _target_: ami.models.components.sconv.SConv
+      depth: 4
+      dim: 512
+      dim_ff_hidden: 512
+      dropout: 0.1
+    obs_hat_dist_head:
+      _target_: ami.models.components.fully_connected_fixed_std_normal.FullyConnectedFixedStdNormal
+      dim_in: ${..core_model.dim}
+      dim_out: ${models.image_encoder.model.latent_dim}
+      normal_cls:
+        _target_: hydra.utils.get_class
+        path: ami.models.components.fully_connected_fixed_std_normal.DeterministicNormal
+
+policy_value:
+  _target_: ami.models.model_wrapper.ModelWrapper
+  default_device: ${devices.0}
+  has_inference: True
+  model:
+    _target_: ami.models.policy_value_common_net.PolicyValueCommonNet
+    base_model:
+      _target_: torch.nn.Sequential
+      _args_:
+        - _target_: ami.models.components.small_conv_net.SmallConvNet
+          height: ${interaction.environment.sensor.height}
+          width: ${interaction.environment.sensor.width}
+          channels: 3
+          dim_out: 512
+        - _target_: torch.nn.Linear
+          in_features: ${..0.dim_out}
+          out_features: ${..0.dim_out}
+        - _target_: torch.nn.ReLU
+        - _target_: torch.nn.Linear
+          in_features: ${..0.dim_out}
+          out_features: ${..0.dim_out}
+        - _target_: torch.nn.ReLU
+    policy_head:
+      _target_: ami.models.components.discrete_policy_head.DiscretePolicyHead
+      dim_in: ${..base_model._args_.0.dim_out}
+      action_choices_per_category:
+        _target_: hydra.utils.get_object
+        path: ami.interactions.environments.actuators.vrchat_osc_discrete_actuator.ACTION_CHOICES_PER_CATEGORY
+    value_head:
+      _target_: ami.models.components.fully_connected_value_head.FullyConnectedValueHead
+      dim_in: ${..base_model._args_.0.dim_out}
