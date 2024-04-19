@@ -38,10 +38,10 @@ def instantiate_models(models_cfg: DictConfig) -> ModelWrappersDict:
     return d
 
 
-def instantiate_trainers(trainers_cfg: ListConfig) -> TrainersList:
+def instantiate_trainers(trainers_cfg: DictConfig) -> TrainersList:
     tl = TrainersList()
-    for i, cfg in enumerate(trainers_cfg):
-        logger.info(f"Instatiating Trainer {i}: <{cfg._target_}>")
+    for i, (name, cfg) in enumerate(trainers_cfg.items()):
+        logger.info(f"Instatiating Trainer[{i}] {name!r}: <{cfg._target_}>")
         trainer: BaseTrainer = hydra.utils.instantiate(cfg)
         tl.append(trainer)
 
