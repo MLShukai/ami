@@ -130,13 +130,13 @@ class ThreadCommandHandler:
             bool: True if the thread should continue executing, False if the thread is shutting down.
         """
         paused = False
-        if self._controller.is_paused():
+        if self._controller.is_paused():  # Entering system state: `pause`
             self.on_paused()
             paused = True
 
-        self.stop_if_paused()
+        self.stop_if_paused()  # Blocking if system is `paused`
 
-        if paused:
+        if paused:  # Exiting system state: `pause`, entering `resume`.
             paused = False
             self.on_resumed()
 
