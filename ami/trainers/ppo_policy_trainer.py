@@ -8,6 +8,8 @@ from torch.distributions import Distribution
 from torch.utils.data import DataLoader
 from typing_extensions import override
 
+from ami.tensorboard_loggers import StepIntervalLogger
+
 from ..data.buffers.buffer_names import BufferNames
 from ..data.buffers.ppo_trajectory_buffer import PPOTrajectoryBuffer
 from ..data.interfaces import ThreadSafeDataUser
@@ -38,6 +40,7 @@ class PPOPolicyTrainer(BaseTrainer):
         partial_dataloader: partial[DataLoader[Tensor]],
         partial_optimizer: partial[torch.optim.Optimizer],
         device: torch.device,
+        logger: StepIntervalLogger,
         max_epochs: int = 1,
         minimum_dataset_size: int = 1,
         norm_advantage: bool = True,
@@ -65,6 +68,8 @@ class PPOPolicyTrainer(BaseTrainer):
         self.partial_optimizer = partial_optimizer
         self.partial_dataloader = partial_dataloader
         self.device = device
+        self.logger = logger
+        self.logger_state = self.logger.state_dict()
         self.max_epochs = max_epochs
         self.minimum_dataset_size = minimum_dataset_size
         self.norm_advantage = norm_advantage
@@ -150,6 +155,7 @@ class PPOPolicyTrainer(BaseTrainer):
 
         optimizer = self.partial_optimizer(self.policy_value.parameters())
         optimizer.load_state_dict(self.optimizer_state)
+        self.logger.load_state_dict(self.logger_state)
         dataset = self.trajectory_data_user.get_dataset()
         dataloader = self.partial_dataloader(dataset=dataset)
 
@@ -157,10 +163,17 @@ class PPOPolicyTrainer(BaseTrainer):
             for batch in dataloader:
                 batch = [d.to(self.device) for d in batch]
                 out = self.training_step(batch)
+                self.logger.log("ppo_policy/loss", out["loss"])
+                self.logger.log("ppo_policy/policy_loss", out["policy_loss"])
+                self.logger.log("ppo_policy/value_loss", out["value_loss"])
+                # self.logger.log("ppo_policy/entropy", out["entropy"])
+                self.logger.log("ppo_policy/approx_kl", out["approx_kl"])
+                self.logger.log("ppo_policy/clipfrac", out["clipfrac"])
 
                 optimizer.zero_grad()
                 out["loss"].backward()
                 optimizer.step()
+                self.logger.update()
 
         self.optimizer_state = optimizer.state_dict()
 
@@ -172,7 +185,9 @@ class PPOPolicyTrainer(BaseTrainer):
     def save_state(self, path: Path) -> None:
         path.mkdir()
         torch.save(self.optimizer_state, path / "optimizer.pt")
+        torch.save(self.logger_state, path / "logger.pt")
 
     @override
     def load_state(self, path: Path) -> None:
         self.optimizer_state = torch.load(path / "optimizer.pt")
+        self.logger_state = torch.load(path / "logger.pt")

@@ -16,6 +16,7 @@ from ami.models.model_names import ModelNames
 from ami.models.model_wrapper import ModelWrapper
 from ami.models.policy_value_common_net import PolicyValueCommonNet
 from ami.models.utils import ModelWrappersDict
+from ami.tensorboard_loggers import StepIntervalLogger
 from ami.trainers.ppo_policy_trainer import PPOPolicyTrainer
 
 
@@ -70,6 +71,10 @@ class TestPPOPolicyTrainer:
         return d
 
     @pytest.fixture
+    def logger(self, tmp_path):
+        return StepIntervalLogger(f"{tmp_path}/tensorboard", 1)
+
+    @pytest.fixture
     def trainer(
         self,
         partial_dataloader,
@@ -77,8 +82,9 @@ class TestPPOPolicyTrainer:
         policy_value_wrappers_dict,
         trajectory_buffer_dict: DataCollectorsDict,
         device,
+        logger,
     ) -> PPOPolicyTrainer:
-        trainer = PPOPolicyTrainer(partial_dataloader, partial_optimizer, device, max_epochs=1)
+        trainer = PPOPolicyTrainer(partial_dataloader, partial_optimizer, device, logger, max_epochs=1)
         trainer.attach_model_wrappers_dict(policy_value_wrappers_dict)
         trainer.attach_data_users_dict(trajectory_buffer_dict.get_data_users())
         return trainer
@@ -93,8 +99,12 @@ class TestPPOPolicyTrainer:
         trainer.save_state(trainer_path)
         assert trainer_path.exists()
         assert (trainer_path / "optimizer.pt").exists()
+        assert (trainer_path / "logger.pt").exists()
 
         trainer.optimizer_state.clear()
         assert trainer.optimizer_state == {}
+        trainer.logger_state.clear()
+        assert trainer.logger_state == {}
         trainer.load_state(trainer_path)
         assert trainer.optimizer_state != {}
+        assert trainer.logger_state != {}
