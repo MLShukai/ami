@@ -10,6 +10,7 @@ defaults:
   - trainers: image_vae
   - threads: default
 
+  - checkpointing: default
   - devices: cuda
   - paths: default
   - hydra: default
@@ -18,3 +19,6 @@ defaults:
   - experiment: null
 
 task_name: image_encoding
+
+# You can specify saved checkpoint path when system is begun.
+saved_checkpoint_path: null
