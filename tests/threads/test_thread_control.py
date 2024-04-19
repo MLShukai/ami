@@ -29,6 +29,18 @@ class Counter:
             self._v += 1
 
 
+class PauseResumeEventLog:
+    def __init__(self) -> None:
+        self.num_paused = 0
+        self.num_resumed = 0
+
+    def on_paused(self) -> None:
+        self.num_paused += 1
+
+    def on_resumed(self) -> None:
+        self.num_resumed += 1
+
+
 def infinity_increment_thread(counter: Counter, handler: ThreadCommandHandler) -> None:
     """テスト用のバックグラウンドスレッド。カウンタを無限に増加。"""
     while handler.manage_loop():
@@ -60,12 +72,16 @@ def test_manage_loop() -> None:
     controller = ThreadController()
     handler = ThreadCommandHandler(controller, check_resume_interval=10)
     counter = Counter()
+    pause_resume_event_log = PauseResumeEventLog()  # pause/resumeのイベント呼び出し記録用
+    handler.on_paused = pause_resume_event_log.on_paused
+    handler.on_resumed = pause_resume_event_log.on_resumed
 
     thread = threading.Thread(target=infinity_increment_thread, args=(counter, handler))
     thread.start()
 
     # Backgroundスレッドの一時停止が期待通り行われているか
     # 一時停止した -> カウンタが停止している。
+    # また、`pause`イベントコールバックが呼び出された。
     controller.pause()
     time.sleep(0.01)
     value = counter.value
@@ -73,9 +89,11 @@ def test_manage_loop() -> None:
     not_changed_value = counter.value
 
     assert value == not_changed_value
+    assert pause_resume_event_log.num_paused == 1
 
     # Backgroundスレッドの再開処理が期待通り行われているか
     # 再開した -> カウンタが増加している
+    # また、`resume`イベントコールバックが呼び出された
     controller.resume()
     time.sleep(0.01)
     value = counter.value
@@ -83,6 +101,7 @@ def test_manage_loop() -> None:
     changed_value = counter.value
 
     assert value < changed_value
+    assert pause_resume_event_log.num_resumed == 1
 
     # 一時停止中でも終了命令を処理できるか。
     controller.pause()
@@ -90,6 +109,10 @@ def test_manage_loop() -> None:
     controller.shutdown()
 
     thread.join()
+
+    # Shutdownの際に`resume`(復帰）が呼ばれているか
+    assert pause_resume_event_log.num_paused == 2
+    assert pause_resume_event_log.num_resumed == 2
 
 
 def test_create_handlers():

@@ -1,8 +1,20 @@
 from __future__ import annotations
 
 import threading
+from typing import Callable, TypeAlias
 
 from .thread_types import BACKGROUND_THREAD_TYPES, ThreadTypes
+
+OnPausedCallbackType: TypeAlias = Callable[[], None]
+OnResumedCallbackType: TypeAlias = Callable[[], None]
+
+
+def dummy_on_paused() -> None:
+    pass
+
+
+def dummy_on_resumed() -> None:
+    pass
 
 
 class ThreadController:
@@ -47,6 +59,10 @@ class ThreadController:
         """Returns the resume flag."""
         return self._resume_event.is_set()
 
+    def is_paused(self) -> bool:
+        """Returns the flipped resume flag."""
+        return not self.is_resumed()
+
     def wait_for_resume(self, timeout: float = 1.0) -> bool:
         """Waits for the resume event or times out after `timeout` seconds.
 
@@ -67,6 +83,10 @@ class ThreadController:
 class ThreadCommandHandler:
     """Handles commands for thread management, facilitating communication and
     control between the main thread and background threads."""
+
+    # 外部から定義されるコールバック関数
+    on_paused: OnPausedCallbackType = dummy_on_paused
+    on_resumed: OnResumedCallbackType = dummy_on_resumed
 
     def __init__(self, controller: ThreadController, check_resume_interval: float = 1.0) -> None:
         """Constructs the ThreadCommandHandler class.
@@ -109,5 +129,15 @@ class ThreadCommandHandler:
         Returns:
             bool: True if the thread should continue executing, False if the thread is shutting down.
         """
-        self.stop_if_paused()
+        paused = False
+        if self._controller.is_paused():  # Entering system state: `pause`
+            self.on_paused()
+            paused = True
+
+        self.stop_if_paused()  # Blocking if system is `paused`
+
+        if paused:  # Exiting system state: `pause`, entering `resume`.
+            paused = False
+            self.on_resumed()
+
         return self.is_active()

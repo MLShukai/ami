@@ -38,6 +38,13 @@ class TestBackgroundThread:
 
     def test_thread_command_handler(self, thread_objects):
         _, it, tt = thread_objects
+        it: BackgroundThread
+        tt: BackgroundThread
         assert isinstance(it.thread_command_handler, ThreadCommandHandler)
         assert isinstance(tt.thread_command_handler, ThreadCommandHandler)
         assert it.thread_command_handler is not tt.thread_command_handler, "must be other instance."
+
+        assert it.on_paused == it.thread_command_handler.on_paused
+        assert tt.on_paused == tt.thread_command_handler.on_paused
+        assert it.on_resumed == it.thread_command_handler.on_resumed
+        assert tt.on_resumed == tt.thread_command_handler.on_resumed
