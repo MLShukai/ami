@@ -11,12 +11,11 @@ from typing_extensions import override
 
 from ami.data.buffers.buffer_names import BufferNames
 from ami.data.buffers.causal_data_buffer import CausalDataBuffer
-from ami.data.buffers.random_data_buffer import RandomDataBuffer
 from ami.data.interfaces import ThreadSafeDataUser
 from ami.models.forward_dynamics import ForwardDynamics
 from ami.models.model_names import ModelNames
 from ami.models.model_wrapper import ModelWrapper
-from ami.models.vae import VAE, Decoder, Encoder
+from ami.tensorboard_loggers import StepIntervalLogger
 
 from .base_trainer import BaseTrainer
 
@@ -27,6 +26,7 @@ class ForwardDynamicsTrainer(BaseTrainer):
         partial_dataloader: partial[DataLoader[torch.Tensor]],
         partial_optimizer: partial[Optimizer],
         device: torch.device,
+        logger: StepIntervalLogger,
         observation_encoder_name: ModelNames | None = None,
         max_epochs: int = 1,
         minimum_dataset_size: int = 2,
@@ -42,6 +42,8 @@ class ForwardDynamicsTrainer(BaseTrainer):
         self.partial_optimizer = partial_optimizer
         self.partial_dataloader = partial_dataloader
         self.device = device
+        self.logger = logger
+        self.logger_state = self.logger.state_dict()
         self.observation_encoder_name = observation_encoder_name
         self.max_epochs = max_epochs
         assert minimum_dataset_size >= 2, "minimum_dataset_size must be at least 2"
@@ -95,8 +97,10 @@ class ForwardDynamicsTrainer(BaseTrainer):
                 optimizer.zero_grad()
                 observations_next_hat_dist, _ = self.forward_dynamics(observations, hidden, actions)
                 loss = -observations_next_hat_dist.log_prob(observations_next).mean()
+                self.logger.log("forward_dynamics/loss", loss)
                 loss.backward()
                 optimizer.step()
+                self.logger.update()
 
         self.optimizer_state = optimizer.state_dict()
 
@@ -104,7 +108,9 @@ class ForwardDynamicsTrainer(BaseTrainer):
     def save_state(self, path: Path) -> None:
         path.mkdir()
         torch.save(self.optimizer_state, path / "optimizer.pt")
+        torch.save(self.logger_state, path / "logger.pt")
 
     @override
     def load_state(self, path: Path) -> None:
         self.optimizer_state = torch.load(path / "optimizer.pt")
+        self.logger_state = torch.load(path / "logger.pt")
