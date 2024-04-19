@@ -71,7 +71,7 @@ class TestCuriosityImagePPOAgent:
 
     @pytest.fixture
     def data_collectors(self) -> DataCollectorsDict:
-        empty_buffer = RandomDataBuffer(10, [])
+        empty_buffer = RandomDataBuffer(10, [DataKeys.OBSERVATION])
         return DataCollectorsDict.from_data_buffers(
             **{
                 BufferNames.IMAGE: empty_buffer,

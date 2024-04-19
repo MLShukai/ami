@@ -14,18 +14,19 @@ from .base_data_buffer import BaseDataBuffer
 class CausalDataBuffer(BaseDataBuffer):
     """A data buffer which preserve data order."""
 
-    def __init__(self, max_len: int, key_list: list[DataKeys]) -> None:
+    def __init__(self, max_len: int, key_list: list[DataKeys | str]) -> None:
         """Initializes data buffer.
 
         Args:
             max_len: max length of buffer.
             key_list: a list of keys to save whose values to buffer.
         """
+        assert len(key_list) > 0, "`key_list` must have at least one element!"
+
         self.__max_len = max_len
-        self.__current_len = 0
-        self._key_list = key_list
+        self._key_list = [DataKeys(key) for key in key_list]
         self.__buffer_dict: dict[DataKeys, deque[torch.Tensor]] = dict()
-        for key in key_list:
+        for key in self._key_list:
             self.__buffer_dict[key] = deque(maxlen=max_len)
 
     def __len__(self) -> int:
@@ -34,7 +35,7 @@ class CausalDataBuffer(BaseDataBuffer):
         Returns:
             int: current data length.
         """
-        return self.__current_len
+        return len(self.__buffer_dict[self._key_list[0]])
 
     def add(self, step_data: StepData) -> None:
         """Add a single step of data.
@@ -44,8 +45,6 @@ class CausalDataBuffer(BaseDataBuffer):
         """
         for key in self._key_list:
             self.__buffer_dict[key].append(torch.Tensor(step_data[key]).cpu())
-        if self.__current_len < self.__max_len:
-            self.__current_len += 1
 
     @property
     def buffer_dict(self) -> dict[DataKeys, deque[torch.Tensor]]:
@@ -59,7 +58,6 @@ class CausalDataBuffer(BaseDataBuffer):
         """
         for key in self._key_list:
             self.buffer_dict[key] += new_data.buffer_dict[key]
-        self.__current_len = min(len(self) + len(new_data), self.__max_len)
 
     def make_dataset(self) -> TensorDataset:
         """Make a TensorDataset from current buffer.
@@ -76,13 +74,13 @@ class CausalDataBuffer(BaseDataBuffer):
     def save_state(self, path: Path) -> None:
         path.mkdir()
         for key, value in self.__buffer_dict.items():
-            file_name = path / (key.value + ".pkl")
+            file_name = path / (key + ".pkl")
             with open(file_name, "wb") as f:
                 pickle.dump(value, f)
 
     @override
     def load_state(self, path: Path) -> None:
         for key in self.__buffer_dict.keys():
-            file_name = path / (key.value + ".pkl")
+            file_name = path / (key + ".pkl")
             with open(file_name, "rb") as f:
                 self.__buffer_dict[key] = deque(pickle.load(f), maxlen=self.__max_len)
