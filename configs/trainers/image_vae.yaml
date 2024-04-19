@@ -1,17 +1,2 @@
-- _target_: ami.trainers.image_vae_trainer.ImageVAETrainer
-  partial_dataloader:
-    _target_: torch.utils.data.DataLoader
-    _partial_: true
-    batch_size: 16
-    shuffle: true
-  partial_optimizer:
-    _target_: torch.optim.Adam
-    _partial_: true
-    lr: 0.001
-  device: ${devices.0}
-  logger:
-    _target_: ami.tensorboard_loggers.StepIntervalLogger
-    log_dir: ${paths.tensorboard_dir}/image_vae
-    log_every_n_steps: 1
-  max_epochs: 3
-  minimum_dataset_size: ${.partial_dataloader.batch_size}
+defaults:
+  - image_vae: default
