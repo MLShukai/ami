@@ -24,11 +24,12 @@ HYDRA_OVERRIDES = [[]] + EXPERIMENT_CONFIG_OVERRIDES
 
 
 @pytest.mark.parametrize("overrides", HYDRA_OVERRIDES)
-def test_instantiate(overrides: list[str], mocker: MockerFixture):
+def test_instantiate(overrides: list[str], mocker: MockerFixture, tmp_path):
     mocker.patch("cv2.VideoCapture")
     mocker.patch("pythonosc.udp_client.SimpleUDPClient")
     with hydra.initialize_config_dir(str(CONFIG_DIR)):
-        cfg = hydra.compose(LAUNCH_CONFIG, overrides=overrides)
+        cfg = hydra.compose(LAUNCH_CONFIG, overrides=overrides, return_hydra_config=True)
+        cfg.paths.output_dir = tmp_path
 
         interaction = instantiate(cfg.interaction)
         data_collectors = instantiate_data_collectors(cfg.data_collectors)

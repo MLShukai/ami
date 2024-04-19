@@ -20,6 +20,7 @@ from ami.models.vae import (
     Encoder,
     EncoderWrapper,
 )
+from ami.tensorboard_loggers import StepIntervalLogger
 from ami.trainers.image_vae_trainer import ImageVAETrainer
 
 
@@ -74,6 +75,10 @@ class TestImageVAETrainer:
         return d
 
     @pytest.fixture
+    def logger(self, tmp_path):
+        return StepIntervalLogger(f"{tmp_path}/tensorboard", 1)
+
+    @pytest.fixture
     def trainer(
         self,
         partial_dataloader,
@@ -81,8 +86,9 @@ class TestImageVAETrainer:
         encoder_decoder_wrappers_dict: DataCollectorsDict,
         image_buffer_dict: DataCollectorsDict,
         device: torch.device,
+        logger: StepIntervalLogger,
     ) -> ImageVAETrainer:
-        trainer = ImageVAETrainer(partial_dataloader, partial_optimizer, device)
+        trainer = ImageVAETrainer(partial_dataloader, partial_optimizer, device, logger)
         trainer.attach_model_wrappers_dict(encoder_decoder_wrappers_dict)
         trainer.attach_data_users_dict(image_buffer_dict.get_data_users())
         return trainer
@@ -100,8 +106,12 @@ class TestImageVAETrainer:
         trainer.save_state(trainer_path)
         assert trainer_path.exists()
         assert (trainer_path / "optimizer.pt").exists()
+        assert (trainer_path / "logger.pt").exists()
 
         trainer.optimizer_state.clear()
         assert trainer.optimizer_state == {}
+        trainer.logger_state.clear()
+        assert trainer.logger_state == {}
         trainer.load_state(trainer_path)
         assert trainer.optimizer_state != {}
+        assert trainer.logger_state != {}
