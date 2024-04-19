@@ -21,8 +21,8 @@ class TestCheckpointing:
         mock_save_state = mocker.spy(main_thread, "save_state")
         mock_load_state = mocker.spy(main_thread, "load_state")
         ckpt.add_threads(main_thread)
-        ckpt.save_checkpoint()
-        ckpt_path = ckpts_dir / "2000-01-01_00-00-00.ckpt"
+        ckpt_path = ckpt.save_checkpoint()
+        assert ckpt_path == ckpts_dir / "2000-01-01_00-00-00.ckpt"
         ckpt.load_checkpoint(ckpt_path)
 
         main_thread_path = ckpt_path / "main"

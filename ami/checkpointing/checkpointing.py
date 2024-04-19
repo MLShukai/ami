@@ -31,13 +31,19 @@ class Checkpointing:
         """Adds thread objects whose state will be saved and loaded."""
         self._threads.extend(threads)
 
-    def save_checkpoint(self) -> None:
+    def save_checkpoint(self) -> Path:
         """Saves the current state of all threads in a new checkpoint named
-        with the current time."""
+        with the current time.
+
+        Returns:
+            Path: The path to the saved checkpoint directory.
+        """
         checkpoint_path = self.checkpoints_dir / datetime.now().strftime(self.checkpoint_name_format)
         checkpoint_path.mkdir()
         for thread in self._threads:
             thread.save_state(checkpoint_path / thread.thread_name)
+
+        return checkpoint_path
 
     def load_checkpoint(self, checkpoint_path: StrPath) -> None:
         """Loads a checkpoint from the specified path.

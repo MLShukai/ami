@@ -3,6 +3,7 @@ import hydra
 import rootutils
 from omegaconf import DictConfig
 
+from ami.checkpointing.checkpointing import Checkpointing
 from ami.data.utils import DataCollectorsDict
 from ami.hydra_instantiators import (
     instantiate_data_collectors,
@@ -48,6 +49,9 @@ def main(cfg: DictConfig) -> None:
     logger.info("Instantiating Trainers...")
     trainers: TrainersList = instantiate_trainers(cfg.trainers)
 
+    logger.info("Instantiating Checkpointing...")
+    checkpointing: Checkpointing = hydra.utils.instantiate(cfg.checkpointing)
+
     logger.info("Instantiating Thread Classes...")
     threads_cfg = cfg.threads
     logger.info(f"Instantiating MainThread: <{threads_cfg.main_thread._target_}>")
@@ -66,6 +70,12 @@ def main(cfg: DictConfig) -> None:
     logger.info("Sharing objects...")
     attach_shared_objects_pool_to_threads(main_thread, inference_thread, training_thread)
 
+    checkpointing.add_threads(main_thread, inference_thread, training_thread)
+
+    if (ckpt_path := cfg.get("saved_checkpoint_path", None)) is not None:
+        logger.info(f"Loading the checkpoint from '{ckpt_path}'")
+        checkpointing.load_checkpoint(ckpt_path)
+
     logger.info("Starting threads.")
 
     inference_thread.start()
@@ -75,6 +85,10 @@ def main(cfg: DictConfig) -> None:
 
     inference_thread.join()
     training_thread.join()
+
+    ckpt_path = checkpointing.save_checkpoint()
+
+    logger.info(f"Saved the final checkpoint to '{ckpt_path}'")
 
     logger.info("Terminated AMI.")
 

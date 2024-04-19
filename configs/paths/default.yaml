@@ -13,3 +13,6 @@ output_dir: ${hydra:runtime.output_dir}
 
 # path to working directory
 work_dir: ${hydra:runtime.cwd}
+
+# path to the checkpoints directory.
+checkpoints_dir: ${.output_dir}/checkpoints
