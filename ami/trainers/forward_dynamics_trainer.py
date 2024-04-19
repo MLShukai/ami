@@ -71,6 +71,7 @@ class ForwardDynamicsTrainer(BaseTrainer):
 
         optimizer = self.partial_optimizer(self.forward_dynamics.parameters())
         optimizer.load_state_dict(self.optimizer_state)
+        self.logger.load_state_dict(self.logger_state)
         dataset = self.trajectory_data_user.get_dataset()
         dataloader = self.partial_dataloader(dataset=dataset)
 

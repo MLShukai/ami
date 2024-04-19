@@ -44,6 +44,7 @@ class ImageVAETrainer(BaseTrainer):
         self.partial_dataloader = partial_dataloader
         self.device = device
         self.logger = logger
+        self.logger_state = self.logger.state_dict()
         self.kl_coef = kl_coef
         self.max_epochs = max_epochs
         self.minimum_dataset_size = minimum_dataset_size
@@ -59,7 +60,6 @@ class ImageVAETrainer(BaseTrainer):
         # 下記ではオプティマイザの初期状態生成を行う。
         vae = VAE(self.encoder.model, self.decoder.model)
         self.optimizer_state = self.partial_optimizer(vae.parameters()).state_dict()
-        self.logger_state = self.logger.state_dict()
 
     def is_trainable(self) -> bool:
         self.image_data_user.update()

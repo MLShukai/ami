@@ -166,7 +166,7 @@ class PPOPolicyTrainer(BaseTrainer):
                 self.logger.log("ppo_policy/loss", out["loss"])
                 self.logger.log("ppo_policy/policy_loss", out["policy_loss"])
                 self.logger.log("ppo_policy/value_loss", out["value_loss"])
-                # self.logger.log("ppo_policy/entropy", out["entropy"])
+                self.logger.log("ppo_policy/entropy", out["entropy"].mean())
                 self.logger.log("ppo_policy/approx_kl", out["approx_kl"])
                 self.logger.log("ppo_policy/clipfrac", out["clipfrac"])
 
