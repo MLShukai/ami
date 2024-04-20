@@ -1,12 +1,14 @@
 from functools import partial
 from pathlib import Path
-from typing import TypedDict
+from typing import Mapping, TypedDict
 
 import torch
 from torch import Tensor
 from torch.distributions import Distribution
 from torch.utils.data import DataLoader
 from typing_extensions import override
+
+from ami.tensorboard_loggers import StepIntervalLogger
 
 from ..data.buffers.buffer_names import BufferNames
 from ..data.buffers.ppo_trajectory_buffer import PPOTrajectoryBuffer
@@ -15,15 +17,6 @@ from ..models.model_names import ModelNames
 from ..models.model_wrapper import ModelWrapper
 from ..models.policy_value_common_net import PolicyValueCommonNet
 from .base_trainer import BaseTrainer
-
-
-class StepOutput(TypedDict):
-    loss: Tensor
-    policy_loss: Tensor
-    value_loss: Tensor
-    entropy: Tensor
-    approx_kl: Tensor
-    clipfrac: Tensor
 
 
 class PPOPolicyTrainer(BaseTrainer):
@@ -38,6 +31,7 @@ class PPOPolicyTrainer(BaseTrainer):
         partial_dataloader: partial[DataLoader[Tensor]],
         partial_optimizer: partial[torch.optim.Optimizer],
         device: torch.device,
+        logger: StepIntervalLogger,
         max_epochs: int = 1,
         minimum_dataset_size: int = 1,
         norm_advantage: bool = True,
@@ -65,6 +59,7 @@ class PPOPolicyTrainer(BaseTrainer):
         self.partial_optimizer = partial_optimizer
         self.partial_dataloader = partial_dataloader
         self.device = device
+        self.logger = logger
         self.max_epochs = max_epochs
         self.minimum_dataset_size = minimum_dataset_size
         self.norm_advantage = norm_advantage
@@ -93,7 +88,7 @@ class PPOPolicyTrainer(BaseTrainer):
         """Written for type annotation."""
         return self.policy_value(obs)
 
-    def training_step(self, batch: tuple[Tensor, ...]) -> StepOutput:
+    def training_step(self, batch: tuple[Tensor, ...]) -> dict[str, Tensor]:
         """Perform a single training step on a batch of data."""
         obses, actions, logprobs, advantanges, returns, values = batch
 
@@ -135,14 +130,14 @@ class PPOPolicyTrainer(BaseTrainer):
         loss = pg_loss - self.entropy_coef * entropy_loss + v_loss * self.vfunc_coef
 
         # Output
-        output = StepOutput(
-            loss=loss,
-            policy_loss=pg_loss,
-            value_loss=v_loss,
-            entropy=entropy,
-            approx_kl=approx_kl,
-            clipfrac=clipfracs,
-        )
+        output = {
+            "loss": loss,
+            "policy_loss": pg_loss,
+            "value_loss": v_loss,
+            "entropy": entropy_loss,
+            "approx_kl": approx_kl,
+            "clipfrac": clipfracs,
+        }
         return output
 
     def train(self) -> None:
@@ -157,10 +152,13 @@ class PPOPolicyTrainer(BaseTrainer):
             for batch in dataloader:
                 batch = [d.to(self.device) for d in batch]
                 out = self.training_step(batch)
+                for name, value in out.items():
+                    self.logger.log(f"ppo_policy/{name}", value)
 
                 optimizer.zero_grad()
                 out["loss"].backward()
                 optimizer.step()
+                self.logger.update()
 
         self.optimizer_state = optimizer.state_dict()
 
@@ -172,7 +170,9 @@ class PPOPolicyTrainer(BaseTrainer):
     def save_state(self, path: Path) -> None:
         path.mkdir()
         torch.save(self.optimizer_state, path / "optimizer.pt")
+        torch.save(self.logger.state_dict(), path / "logger.pt")
 
     @override
     def load_state(self, path: Path) -> None:
         self.optimizer_state = torch.load(path / "optimizer.pt")
+        self.logger.load_state_dict(torch.load(path / "logger.pt"))

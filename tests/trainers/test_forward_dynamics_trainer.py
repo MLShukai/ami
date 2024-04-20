@@ -19,6 +19,7 @@ from ami.models.model_names import ModelNames
 from ami.models.model_wrapper import ModelWrapper
 from ami.models.utils import ModelWrappersDict
 from ami.models.vae import Conv2dEncoder, EncoderWrapper
+from ami.tensorboard_loggers import StepIntervalLogger
 from ami.trainers.forward_dynamics_trainer import ForwardDynamicsTrainer
 
 BATCH = 4
@@ -130,11 +131,21 @@ class TestSconv:
         return d
 
     @pytest.fixture
+    def logger(self, tmp_path):
+        return StepIntervalLogger(f"{tmp_path}/tensorboard", 1)
+
+    @pytest.fixture
     def trainer(
-        self, partial_dataloader, partial_optimizer, device, forward_dynamics_wrappers_dict, trajectory_buffer_dict
+        self,
+        partial_dataloader,
+        partial_optimizer,
+        device,
+        forward_dynamics_wrappers_dict,
+        trajectory_buffer_dict,
+        logger,
     ):
         trainer = ForwardDynamicsTrainer(
-            partial_dataloader, partial_optimizer, device, observation_encoder_name=ModelNames.IMAGE_ENCODER
+            partial_dataloader, partial_optimizer, device, logger, observation_encoder_name=ModelNames.IMAGE_ENCODER
         )
         trainer.attach_model_wrappers_dict(forward_dynamics_wrappers_dict)
         trainer.attach_data_users_dict(trajectory_buffer_dict.get_data_users())
@@ -148,13 +159,17 @@ class TestSconv:
         trainer.trajectory_data_user.clear()
         assert trainer.is_trainable() is False
 
-    def test_save_and_load_state(self, trainer: ForwardDynamicsTrainer, tmp_path) -> None:
+    def test_save_and_load_state(self, trainer: ForwardDynamicsTrainer, tmp_path, mocker) -> None:
         trainer_path = tmp_path / "forward_dynamics"
         trainer.save_state(trainer_path)
         assert trainer_path.exists()
         assert (trainer_path / "optimizer.pt").exists()
+        assert (trainer_path / "logger.pt").exists()
+        logger_state = trainer.logger.state_dict()
 
+        mocked_logger_load_state_dict = mocker.spy(trainer.logger, "load_state_dict")
         trainer.optimizer_state.clear()
         assert trainer.optimizer_state == {}
         trainer.load_state(trainer_path)
         assert trainer.optimizer_state != {}
+        mocked_logger_load_state_dict.assert_called_once_with(logger_state)
