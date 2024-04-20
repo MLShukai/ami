@@ -168,8 +168,5 @@ class TestSconv:
 
         trainer.optimizer_state.clear()
         assert trainer.optimizer_state == {}
-        trainer.logger_state.clear()
-        assert trainer.logger_state == {}
         trainer.load_state(trainer_path)
         assert trainer.optimizer_state != {}
-        assert trainer.logger_state != {}

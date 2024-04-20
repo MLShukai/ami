@@ -69,7 +69,6 @@ class PPOPolicyTrainer(BaseTrainer):
         self.partial_dataloader = partial_dataloader
         self.device = device
         self.logger = logger
-        self.logger_state = self.logger.state_dict()
         self.max_epochs = max_epochs
         self.minimum_dataset_size = minimum_dataset_size
         self.norm_advantage = norm_advantage
@@ -155,7 +154,6 @@ class PPOPolicyTrainer(BaseTrainer):
 
         optimizer = self.partial_optimizer(self.policy_value.parameters())
         optimizer.load_state_dict(self.optimizer_state)
-        self.logger.load_state_dict(self.logger_state)
         dataset = self.trajectory_data_user.get_dataset()
         dataloader = self.partial_dataloader(dataset=dataset)
 
@@ -185,9 +183,9 @@ class PPOPolicyTrainer(BaseTrainer):
     def save_state(self, path: Path) -> None:
         path.mkdir()
         torch.save(self.optimizer_state, path / "optimizer.pt")
-        torch.save(self.logger_state, path / "logger.pt")
+        torch.save(self.logger.state_dict(), path / "logger.pt")
 
     @override
     def load_state(self, path: Path) -> None:
         self.optimizer_state = torch.load(path / "optimizer.pt")
-        self.logger_state = torch.load(path / "logger.pt")
+        self.logger.load_state_dict(torch.load(path / "logger.pt"))
