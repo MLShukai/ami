@@ -97,6 +97,8 @@ class ThreadCommandHandler:
         """
         self._controller = controller
         self.check_resume_interval = check_resume_interval
+        self._loop_pause_event = threading.Event()
+        self._loop_pause_event.clear()
 
     def is_active(self) -> bool:
         """Checks if the managed thread should continue running."""
@@ -129,15 +131,30 @@ class ThreadCommandHandler:
         Returns:
             bool: True if the thread should continue executing, False if the thread is shutting down.
         """
-        paused = False
+        self._loop_pause_event.clear()
         if self._controller.is_paused():  # Entering system state: `pause`
             self.on_paused()
-            paused = True
+            self._loop_pause_event.set()
 
         self.stop_if_paused()  # Blocking if system is `paused`
 
-        if paused:  # Exiting system state: `pause`, entering `resume`.
-            paused = False
+        if self._loop_pause_event.is_set():  # Exiting system state: `pause`, entering `resume`.
+            self._loop_pause_event.clear()
             self.on_resumed()
 
         return self.is_active()
+
+    def is_loop_paused(self) -> bool:
+        """Returns whether the background thread loop is paused or not."""
+        return self._loop_pause_event.is_set()
+
+    def wait_for_loop_pause(self, timeout: float | None = None) -> bool:
+        """Waits for loop pause.
+
+        Args:
+            timeout: Time to wait for pause event.
+
+        Returns:
+            bool: Whethers the loop is paused or not.
+        """
+        return self._loop_pause_event.wait(timeout)
