@@ -101,14 +101,17 @@ class TestImageVAETrainer:
         trainer.image_data_user.clear()
         assert trainer.is_trainable() is False
 
-    def test_save_and_load_state(self, trainer: ImageVAETrainer, tmp_path) -> None:
+    def test_save_and_load_state(self, trainer: ImageVAETrainer, tmp_path, mocker) -> None:
         trainer_path = tmp_path / "image_vae"
         trainer.save_state(trainer_path)
         assert trainer_path.exists()
         assert (trainer_path / "optimizer.pt").exists()
         assert (trainer_path / "logger.pt").exists()
+        logger_state = trainer.logger.state_dict()
 
+        mocked_logger_load_state_dict = mocker.spy(trainer.logger, "load_state_dict")
         trainer.optimizer_state.clear()
         assert trainer.optimizer_state == {}
         trainer.load_state(trainer_path)
         assert trainer.optimizer_state != {}
+        mocked_logger_load_state_dict.assert_called_once_with(logger_state)
