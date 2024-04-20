@@ -6,6 +6,8 @@ from torch import Tensor
 from torch.distributions import Distribution
 from typing_extensions import override
 
+from ami.tensorboard_loggers import TimeIntervalLogger
+
 from ...data.buffers.buffer_names import BufferNames
 from ...data.step_data import DataKeys, StepData
 from ...models.forward_dynamics import ForwardDynamics
@@ -18,7 +20,7 @@ from .base_agent import BaseAgent
 class CuriosityImagePPOAgent(BaseAgent[Tensor, Tensor]):
     """Image input curiosity agent with ppo policy."""
 
-    def __init__(self, initial_hidden: Tensor) -> None:
+    def __init__(self, initial_hidden: Tensor, logger: TimeIntervalLogger) -> None:
         """Constructs Agent.
 
         Args:
@@ -27,6 +29,7 @@ class CuriosityImagePPOAgent(BaseAgent[Tensor, Tensor]):
         super().__init__()
 
         self.forward_dynamics_hidden_state = initial_hidden
+        self.logger = logger
 
     def on_inference_models_attached(self) -> None:
         super().on_inference_models_attached()
@@ -56,6 +59,7 @@ class CuriosityImagePPOAgent(BaseAgent[Tensor, Tensor]):
             # 報酬計算は初期ステップではできないためスキップ。
             reward = -self.predicted_next_embed_observation_dist.log_prob(embed_obs).mean()
             self.step_data[DataKeys.REWARD] = reward  # r_{t+1}
+            self.logger.log("curiosity_ppo_agent/reward", reward)
 
             # ステップの冒頭でデータコレクトすることで前ステップのデータを収集する。
             self.data_collectors.collect(self.step_data)
@@ -73,10 +77,13 @@ class CuriosityImagePPOAgent(BaseAgent[Tensor, Tensor]):
         self.step_data[DataKeys.ACTION_LOG_PROBABILITY] = action_log_prob  # log \pi(a_t | o_t)
         self.step_data[DataKeys.VALUE] = value  # v_t
         self.step_data[DataKeys.HIDDEN] = self.forward_dynamics_hidden_state  # h_t
+        self.logger.log("agent/value", value)
 
         pred, hidden = self.forward_dynamics(embed_obs, self.forward_dynamics_hidden_state, action)
         self.predicted_next_embed_observation_dist = pred  # p(\hat{z}_{t+1} | z_t, h_t, a_t)
         self.forward_dynamics_hidden_state = hidden  # h_{t+1}
+
+        self.logger.update()
 
         return action
 

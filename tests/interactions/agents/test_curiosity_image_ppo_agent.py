@@ -21,6 +21,7 @@ from ami.models.components.multi_embeddings import MultiEmbeddings
 from ami.models.components.sconv import SConv
 from ami.models.components.small_conv_net import SmallConvNet
 from ami.models.utils import InferenceWrappersDict, ModelWrapper, ModelWrappersDict
+from ami.tensorboard_loggers import TimeIntervalLogger
 
 CHANNELS, WIDTH, HEIGHT = (3, 128, 128)
 EMBED_OBS_DIM = 64
@@ -81,8 +82,12 @@ class TestCuriosityImagePPOAgent:
         )
 
     @pytest.fixture
-    def agent(self, inference_models, data_collectors) -> CuriosityImagePPOAgent:
-        curiosity_agent = CuriosityImagePPOAgent(torch.zeros(DEPTH, SCONV_DIM))
+    def logger(self, tmp_path):
+        return TimeIntervalLogger(f"{tmp_path}/tensorboard", 0)
+
+    @pytest.fixture
+    def agent(self, inference_models, data_collectors, logger) -> CuriosityImagePPOAgent:
+        curiosity_agent = CuriosityImagePPOAgent(torch.zeros(DEPTH, SCONV_DIM), logger)
         curiosity_agent.attach_data_collectors(data_collectors)
         curiosity_agent.attach_inference_models(inference_models)
         return curiosity_agent
