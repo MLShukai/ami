@@ -1,6 +1,6 @@
 from functools import partial
 from pathlib import Path
-from typing import TypedDict
+from typing import Mapping, TypedDict
 
 import torch
 from torch import Tensor
@@ -17,15 +17,6 @@ from ..models.model_names import ModelNames
 from ..models.model_wrapper import ModelWrapper
 from ..models.policy_value_common_net import PolicyValueCommonNet
 from .base_trainer import BaseTrainer
-
-
-class StepOutput(TypedDict):
-    loss: Tensor
-    policy_loss: Tensor
-    value_loss: Tensor
-    entropy: Tensor
-    approx_kl: Tensor
-    clipfrac: Tensor
 
 
 class PPOPolicyTrainer(BaseTrainer):
@@ -97,7 +88,7 @@ class PPOPolicyTrainer(BaseTrainer):
         """Written for type annotation."""
         return self.policy_value(obs)
 
-    def training_step(self, batch: tuple[Tensor, ...]) -> StepOutput:
+    def training_step(self, batch: tuple[Tensor, ...]) -> dict[str, Tensor]:
         """Perform a single training step on a batch of data."""
         obses, actions, logprobs, advantanges, returns, values = batch
 
@@ -139,14 +130,14 @@ class PPOPolicyTrainer(BaseTrainer):
         loss = pg_loss - self.entropy_coef * entropy_loss + v_loss * self.vfunc_coef
 
         # Output
-        output = StepOutput(
-            loss=loss,
-            policy_loss=pg_loss,
-            value_loss=v_loss,
-            entropy=entropy,
-            approx_kl=approx_kl,
-            clipfrac=clipfracs,
-        )
+        output = {
+            "loss": loss,
+            "policy_loss": pg_loss,
+            "value_loss": v_loss,
+            "entropy": entropy_loss,
+            "approx_kl": approx_kl,
+            "clipfrac": clipfracs,
+        }
         return output
 
     def train(self) -> None:
@@ -161,12 +152,8 @@ class PPOPolicyTrainer(BaseTrainer):
             for batch in dataloader:
                 batch = [d.to(self.device) for d in batch]
                 out = self.training_step(batch)
-                self.logger.log("ppo_policy/loss", out["loss"])
-                self.logger.log("ppo_policy/policy_loss", out["policy_loss"])
-                self.logger.log("ppo_policy/value_loss", out["value_loss"])
-                self.logger.log("ppo_policy/entropy", out["entropy"].mean())
-                self.logger.log("ppo_policy/approx_kl", out["approx_kl"])
-                self.logger.log("ppo_policy/clipfrac", out["clipfrac"])
+                for name, value in out.items():
+                    self.logger.log(f"ppo_policy/{name}", value)
 
                 optimizer.zero_grad()
                 out["loss"].backward()
