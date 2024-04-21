@@ -62,8 +62,7 @@ class PPOTrajectoryBuffer(CausalDataBuffer):
 
         advantages = compute_advantage(rewards, values, final_next_value, self.gamma, self.gae_lambda)
 
-        next_values = raw_values[1:]
-        value_targets = rewards + self.gamma * next_values
+        value_targets = advantages
 
         return TensorDataset(observations, actions, logprobs, advantages, value_targets, values)
 
