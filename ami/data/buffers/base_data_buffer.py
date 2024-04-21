@@ -5,7 +5,8 @@ from typing import Any, Self
 
 from torch.utils.data import Dataset
 
-from ...checkpointing import SaveAndLoadStateMixin
+from ami.checkpointing import SaveAndLoadStateMixin
+
 from ..step_data import StepData
 
 
