@@ -90,7 +90,7 @@ class PPOPolicyTrainer(BaseTrainer):
 
     def training_step(self, batch: tuple[Tensor, ...]) -> dict[str, Tensor]:
         """Perform a single training step on a batch of data."""
-        obses, actions, logprobs, advantanges, returns, values = batch
+        obses, actions, logprobs, advantanges, value_targets, values = batch
 
         new_action_dist, new_values = self.model_forward(obses)
         new_logprobs = new_action_dist.log_prob(actions)
@@ -115,15 +115,14 @@ class PPOPolicyTrainer(BaseTrainer):
         pg_loss = torch.max(pg_loss1, pg_loss2).mean()
 
         # Value loss
-        new_values = new_values.flatten()
         if self.clip_vloss:
-            v_loss_unclipped = (new_values - returns) ** 2
+            v_loss_unclipped = (new_values - value_targets) ** 2
             v_clipped = values + torch.clamp(new_values - values, -self.clip_coef, self.clip_coef)
-            v_loss_clipped = (v_clipped - returns) ** 2
+            v_loss_clipped = (v_clipped - value_targets) ** 2
             v_loss_max = torch.max(v_loss_unclipped, v_loss_clipped)
             v_loss = 0.5 * v_loss_max.mean()
         else:
-            v_loss = 0.5 * ((new_values - returns) ** 2).mean()
+            v_loss = 0.5 * ((new_values - value_targets) ** 2).mean()
 
         entropy_loss = entropy.mean()
 
