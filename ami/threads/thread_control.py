@@ -1,8 +1,12 @@
 from __future__ import annotations
 
 import threading
+from concurrent.futures import Future, ThreadPoolExecutor
+from pathlib import Path
 from typing import Callable, TypeAlias
 
+from ..checkpointing.checkpointing import Checkpointing
+from ..logger import get_main_thread_logger
 from .thread_types import BACKGROUND_THREAD_TYPES, ThreadTypes
 
 OnPausedCallbackType: TypeAlias = Callable[[], None]
@@ -21,10 +25,15 @@ class ThreadController:
     """The controller class for sending commands from the main thread to
     background threads."""
 
-    def __init__(self) -> None:
+    checkpointing: Checkpointing  # 外部から付与される
+
+    def __init__(self, timeout_for_all_thread_pause: float = 180.0) -> None:
         """Construct this class."""
         self._shutdown_event = threading.Event()
         self._resume_event = threading.Event()  # For pause and resume.
+        self._save_checkpoint_event = threading.Event()  # For avoiding `resume` event when saving a checkpoint.
+        self._timeout_for_all_thread_pause = timeout_for_all_thread_pause
+        self._logger = get_main_thread_logger(self.__class__.__name__)
 
         # Thread間でHandlerインスタンスを分離。
         self.handlers: dict[ThreadTypes, ThreadCommandHandler] = dict()
@@ -49,6 +58,8 @@ class ThreadController:
 
     def resume(self) -> None:
         """Sets the resume flag."""
+        if self._save_checkpoint_event.is_set():
+            self._logger.info("Ignored 'resume' call because the checkpoint saving is beging executed.")
         self._resume_event.set()
 
     def pause(self) -> None:
@@ -78,6 +89,48 @@ class ThreadController:
         """Waits for the shutdown event or times out after `timeout`
         seconds."""
         return self._shutdown_event.wait(timeout)
+
+    def wait_for_all_thread_pause(self) -> bool:
+
+        tasks: dict[ThreadTypes, Future] = {}
+        with ThreadPoolExecutor(max_workers=len(self.handlers)) as executor:
+            for thread_type, hdlr in self.handlers.items():
+                tasks[thread_type] = executor.submit(hdlr.wait_for_loop_pause, self._timeout_for_all_thread_pause)
+
+        success = False
+        for thread_type, tsk in tasks.items():
+            if not (result := tsk.result()):
+                self._logger.error(
+                    f"Timeout for waiting pause '{thread_type}' in {self._timeout_for_all_thread_pause} seconds."
+                )
+            success |= result
+        return success
+
+    def save_checkpoint(self) -> Path:
+        """Saves a checkpoint after pausing the all background thread.
+
+        Returns:
+            Path: The path to the saved checkpoint directory.
+        """
+        self._save_checkpoint_event.set()
+        self.pause()
+
+        if self.wait_for_all_thread_pause():
+            self._logger.info("Success to pause the all background threads.")
+        else:
+            self._logger.error("Failed to pause the background threads. Raises the RuntimeError after resuming...")
+            self._save_checkpoint_event.clear()
+            self.resume()
+            raise RuntimeError(
+                f"Failed to pause the background threads in timeout {self._timeout_for_all_thread_pause} seconds."
+            )
+
+        ckpt_path = self.checkpointing.save_checkpoint()
+
+        self._save_checkpoint_event.clear()
+        self.resume()
+
+        return ckpt_path
 
 
 class ThreadCommandHandler:
