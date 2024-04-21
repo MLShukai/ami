@@ -5,12 +5,14 @@ from typing import Any, Generic
 
 import torch.nn as nn
 
+from ami.checkpointing import SaveAndLoadStateMixin
+
 from ...data.utils import DataCollectorsDict, ThreadSafeDataCollector
 from ...models.utils import InferenceWrappersDict, ThreadSafeInferenceWrapper
 from .._types import ActType, ObsType
 
 
-class BaseAgent(ABC, Generic[ObsType, ActType]):
+class BaseAgent(ABC, Generic[ObsType, ActType], SaveAndLoadStateMixin):
     """Abstract base agent class for interacting with the environment.
 
     Methods to override:
@@ -89,11 +91,3 @@ class BaseAgent(ABC, Generic[ObsType, ActType]):
             action: Final action to be taken in the interaction. Returning no action is also an option.
         """
         return None
-
-    def save_state(self, path: Path) -> None:
-        """Saves the internal state to `path`."""
-        pass
-
-    def load_state(self, path: Path) -> None:
-        """Loads the internal state to `path`."""
-        pass

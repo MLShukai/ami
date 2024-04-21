@@ -20,21 +20,27 @@ from collections import UserDict
 from pathlib import Path
 from typing import Any, Self
 
+from typing_extensions import override
+
+from ami.checkpointing import SaveAndLoadStateMixin
+
 from .buffers.base_data_buffer import BaseDataBuffer
 from .interfaces import ThreadSafeDataCollector, ThreadSafeDataUser
 from .step_data import StepData
 
 
-class DataUsersDict(UserDict[str, ThreadSafeDataUser[Any]]):
+class DataUsersDict(UserDict[str, ThreadSafeDataUser[Any]], SaveAndLoadStateMixin):
     """A class for aggregating `DataUsers` to share them from the inference
     thread to the training thread."""
 
+    @override
     def save_state(self, path: Path) -> None:
         """Saves the internal data buffer."""
         path.mkdir()
         for name, user in self.items():
             user.save_state(path / name)
 
+    @override
     def load_state(self, path: Path) -> None:
         """Loads the internal buffer state from `path`."""
         for name, user in self.items():

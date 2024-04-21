@@ -5,6 +5,8 @@ from typing import Any, TypeAlias
 
 import torch.nn as nn
 
+from ami.checkpointing import SaveAndLoadStateMixin
+
 from ..data.interfaces import ThreadSafeDataUser
 from ..data.utils import DataUsersDict
 from ..models.model_wrapper import ModelWrapper
@@ -13,7 +15,7 @@ from ..models.utils import InferenceWrappersDict, ModelWrappersDict
 ModelWrapperType: TypeAlias = ModelWrapper[Any]
 
 
-class BaseTrainer(ABC):
+class BaseTrainer(ABC, SaveAndLoadStateMixin):
     """Abstract base class for all trainers.
 
     The `run` method is called repeatedly in the training thread.
@@ -216,11 +218,3 @@ class BaseTrainer(ABC):
         self.train()
         self.synchronize()
         self.teardown()
-
-    def save_state(self, path: Path) -> None:
-        """Saves the internal state to the `path`."""
-        pass
-
-    def load_state(self, path: Path) -> None:
-        """Loads the internal state from the `path`."""
-        pass

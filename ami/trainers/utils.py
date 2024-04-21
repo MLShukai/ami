@@ -1,12 +1,16 @@
 from collections import UserList
 from pathlib import Path
 
+from typing_extensions import override
+
+from ami.checkpointing import SaveAndLoadStateMixin
+
 from ..data.utils import DataUsersDict
 from ..models.utils import ModelWrappersDict
 from .base_trainer import BaseTrainer
 
 
-class TrainersList(UserList[BaseTrainer]):
+class TrainersList(UserList[BaseTrainer], SaveAndLoadStateMixin):
     """A custom list class for aggregating trainers, designed for integration
     within the `hydra` configuration framework.
 
@@ -77,6 +81,7 @@ class TrainersList(UserList[BaseTrainer]):
         for trainer in self:
             trainer.attach_data_users_dict(data_users_dict)
 
+    @override
     def save_state(self, path: Path) -> None:
         """Saves the internal state to the `path`."""
         path.mkdir()
@@ -84,6 +89,7 @@ class TrainersList(UserList[BaseTrainer]):
             trainer_path = path / str(i)
             trainer.save_state(trainer_path)
 
+    @override
     def load_state(self, path: Path) -> None:
         """Loads the internal state from the `path`"""
         for i, trainer in enumerate(self):

@@ -5,6 +5,9 @@ from pathlib import Path
 
 import torch
 import torch.nn as nn
+from typing_extensions import override
+
+from ami.checkpointing import SaveAndLoadStateMixin
 
 from .model_wrapper import ModelWrapper, ThreadSafeInferenceWrapper
 
@@ -20,7 +23,7 @@ class InferenceWrappersDict(UserDict[str, ThreadSafeInferenceWrapper[nn.Module]]
     thread to the inference thread."""
 
 
-class ModelWrappersDict(UserDict[str, ModelWrapper[nn.Module]]):
+class ModelWrappersDict(UserDict[str, ModelWrapper[nn.Module]], SaveAndLoadStateMixin):
     """A dictionary class for aggregating model wrappers to be utilized within
     the `hydra` framework.
 
@@ -53,6 +56,7 @@ class ModelWrappersDict(UserDict[str, ModelWrapper[nn.Module]]):
         else:
             return self._inference_wrappers_dict
 
+    @override
     def save_state(self, path: Path) -> None:
         """Saves the model parameters to `path`."""
         path.mkdir()
@@ -60,6 +64,7 @@ class ModelWrappersDict(UserDict[str, ModelWrapper[nn.Module]]):
             model_path = path / (name + ".pt")
             torch.save(wrapper.model.state_dict(), model_path)
 
+    @override
     def load_state(self, path: Path) -> None:
         """Loads the model parameters from `path`."""
         for name, wrapper in self.items():
