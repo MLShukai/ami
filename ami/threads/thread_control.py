@@ -5,12 +5,12 @@ from concurrent.futures import Future, ThreadPoolExecutor
 from pathlib import Path
 from typing import Callable, TypeAlias
 
-from ..checkpointing.checkpointing import Checkpointing
 from ..logger import get_main_thread_logger
 from .thread_types import BACKGROUND_THREAD_TYPES, ThreadTypes
 
 OnPausedCallbackType: TypeAlias = Callable[[], None]
 OnResumedCallbackType: TypeAlias = Callable[[], None]
+SaveCheckpointCallbackType: TypeAlias = Callable[[], Path]
 
 
 def dummy_on_paused() -> None:
@@ -25,7 +25,7 @@ class ThreadController:
     """The controller class for sending commands from the main thread to
     background threads."""
 
-    checkpointing: Checkpointing  # 外部から付与される
+    save_checkpoint_callback: SaveCheckpointCallbackType | None = None  # 外部から付与される
 
     def __init__(self, timeout_for_all_threads_pause: float = 180.0) -> None:
         """Construct this class.
@@ -134,7 +134,15 @@ class ThreadController:
                 f"Failed to pause the background threads in timeout {self._timeout_for_all_threads_pause} seconds."
             )
 
-        ckpt_path = self.checkpointing.save_checkpoint()
+        try:
+            if self.save_checkpoint_callback is not None:
+                ckpt_path = self.save_checkpoint_callback()
+            else:
+                raise RuntimeError("`save_checkpoint_callback` is not set to the ThreadController!")
+        except Exception:
+            self._save_checkpoint_event.clear()
+            self.resume()
+            raise
 
         self._save_checkpoint_event.clear()
         self.resume()

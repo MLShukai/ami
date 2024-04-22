@@ -11,7 +11,6 @@ import pytest
 from pytest_mock import MockerFixture
 
 from ami.threads.thread_control import (
-    Checkpointing,
     ThreadCommandHandler,
     ThreadController,
     ThreadTypes,
@@ -150,12 +149,10 @@ def test_wait_for_loop_pause():
 
 def test_save_checkpoint(tmp_path, mocker: MockerFixture) -> None:
     controller = ThreadController()
-    checkpointing = Checkpointing(tmp_path)
-    controller.checkpointing = checkpointing
     mock_save_checkpoint = mocker.Mock()
     ckpt_path = tmp_path / "test.ckpt"
     mock_save_checkpoint.return_value = ckpt_path
-    controller.checkpointing.save_checkpoint = mock_save_checkpoint
+    controller.save_checkpoint_callback = mock_save_checkpoint
 
     for hdlr in controller.handlers.values():
         threading.Timer(0.1, hdlr._loop_pause_event.set).start()
