@@ -169,7 +169,6 @@ class ThreadCommandHandler:
         self._controller = controller
         self.check_resume_interval = check_resume_interval
         self._loop_pause_event = threading.Event()
-        self._loop_pause_event.clear()
 
     def is_active(self) -> bool:
         """Checks if the managed thread should continue running."""
