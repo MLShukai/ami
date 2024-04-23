@@ -64,6 +64,7 @@ class ThreadController:
         """Sets the resume flag."""
         if self._save_checkpoint_event.is_set():
             self._logger.info("Ignored 'resume' call because the checkpoint saving is beging executed.")
+            return
         self._resume_event.set()
 
     def pause(self) -> None:
