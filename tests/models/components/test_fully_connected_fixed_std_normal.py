@@ -2,9 +2,42 @@ import torch
 from torch.distributions import Normal
 
 from ami.models.components.fully_connected_fixed_std_normal import (
+    SCALE_ONE,
+    SHIFT_ZERO,
     DeterministicNormal,
     FullyConnectedFixedStdNormal,
 )
+
+
+def test_logprob_shiftzero():
+    # 負の対数尤度の計算時のシフト(最小値)が二乗誤差と等しい場合のテスト。
+    # スケールは `math.pi`だけズレる。
+
+    mean = torch.zeros(10)
+    std = torch.full_like(mean, SHIFT_ZERO)
+    normal = Normal(mean, std)
+    expected = torch.zeros_like(mean)
+
+    torch.testing.assert_close(normal.log_prob(mean), expected)
+
+
+def test_logprob_scaleone():
+    # 負の対数尤度の計算時のスケールが二乗誤差と等しい場合のテスト。
+    # 誤差のシフトが `0.5 * math.log(math.pi)` だけ異なる。
+    mean = torch.zeros(3)
+    std = torch.full_like(mean, SCALE_ONE)
+    normal = Normal(mean, std)
+
+    t1 = torch.full_like(mean, 1)
+    t2 = torch.full_like(mean, 3)
+
+    nlp1 = -normal.log_prob(t1)
+    nlp2 = -normal.log_prob(t2)
+
+    expected = (t1 - mean) ** 2 - (t2 - mean) ** 2
+    actual = nlp1 - nlp2
+
+    torch.testing.assert_close(actual, expected)
 
 
 class TestFullyConnectedFixedStdNormal:
