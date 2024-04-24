@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import threading
 from concurrent.futures import Future, ThreadPoolExecutor
-from pathlib import Path
 from typing import Callable, TypeAlias
 
 from ..logger import get_main_thread_logger
@@ -10,7 +9,6 @@ from .thread_types import BACKGROUND_THREAD_TYPES, ThreadTypes
 
 OnPausedCallbackType: TypeAlias = Callable[[], None]
 OnResumedCallbackType: TypeAlias = Callable[[], None]
-SaveCheckpointCallbackType: TypeAlias = Callable[[], Path]
 
 
 def dummy_on_paused() -> None:
@@ -24,8 +22,6 @@ def dummy_on_resumed() -> None:
 class ThreadController:
     """The controller class for sending commands from the main thread to
     background threads."""
-
-    save_checkpoint_callback: SaveCheckpointCallbackType | None = None  # 外部から付与される
 
     def __init__(self, timeout_for_all_threads_pause: float = 180.0) -> None:
         """Construct this class.
@@ -116,7 +112,28 @@ class ThreadController:
             success &= result
         return success
 
-    def save_checkpoint(self) -> Path:
+    def pause_for_saving_checkpoint(self) -> None:
+        """Pauses the all threads for saving the checkpoint.
+
+        Blocks until the all threads are paused.
+        """
+        self._save_checkpoint_event.set()
+        self.pause()
+
+        if self.wait_for_all_threads_pause():
+            self._logger.info("Success to pause the all background threads.")
+        else:
+            self._logger.error("Failed to pause the background threads. Raises the RuntimeError after resuming...")
+            self.resume_after_saving_checkpoint()
+            raise RuntimeError(
+                f"Failed to pause the background threads in timeout {self._timeout_for_all_threads_pause} seconds."
+            )
+
+    def resume_after_saving_checkpoint(self) -> None:
+        self._save_checkpoint_event.clear()
+        self.resume()
+
+    def save_checkpoint(self):
         """Saves a checkpoint after pausing the all background thread.
 
         Returns:
