@@ -93,7 +93,7 @@ def thread_objects(
 ) -> tuple[MainThread, InferenceThread, TrainingThread]:
     """Instantiates main, inference, training threads and attach shared object
     pool to them."""
-    mt = MainThread()
+    mt = MainThread(("127.0.0.255", 12345))
     it = InferenceThread(interaction, data_collectors_dict)
     tt = TrainingThread(trainers, model_wrappers_dict)
     attach_shared_objects_pool_to_threads(mt, it, tt)
