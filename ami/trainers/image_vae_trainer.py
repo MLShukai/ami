@@ -82,9 +82,11 @@ class ImageVAETrainer(BaseTrainer):
                 rec_loss = mse_loss(image_batch, image_batch_reconstructed)
                 kl_loss = kl_divergence(
                     dist_batch, Normal(torch.zeros_like(dist_batch.mean), torch.ones_like(dist_batch.stddev))
-                )
-                loss = rec_loss + self.kl_coef * kl_loss.mean()
+                ).mean()
+                loss = rec_loss + self.kl_coef * kl_loss
                 self.logger.log("image_vae/loss", loss)
+                self.logger.log("image_vae/reconstruction_loss", rec_loss)
+                self.logger.log("image_vae/kl_loss", kl_loss)
                 loss.backward()
                 optimizer.step()
                 self.logger.update()
