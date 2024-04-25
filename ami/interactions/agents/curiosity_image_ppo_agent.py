@@ -17,10 +17,37 @@ from ...models.policy_value_common_net import PolicyValueCommonNet
 from .base_agent import BaseAgent
 
 
+class PredictionErrorReward:
+    """Computes the prediction error based reward."""
+
+    def __init__(self, scale: float = 1.0, shift: float = 0.0) -> None:
+        """Constructs the class.
+
+        Args:
+            scale: Multiplies this number to reward.
+            shift: Adds this number to reward.
+        """
+        self.scale = scale
+        self.shift = shift
+
+    def compute(self, prediction: Distribution, actual: Tensor) -> Tensor:
+        """Computes the reward.
+
+        Args:
+            predicition: The prediction as the probablity distribution.
+            actual: Actual value for the prediction.
+
+        Returns:
+            Tensor: The reward.
+        """
+        raw_reward = -prediction.log_prob(actual).mean()
+        return raw_reward * self.scale + self.shift
+
+
 class CuriosityImagePPOAgent(BaseAgent[Tensor, Tensor]):
     """Image input curiosity agent with ppo policy."""
 
-    def __init__(self, initial_hidden: Tensor, logger: TimeIntervalLogger) -> None:
+    def __init__(self, initial_hidden: Tensor, logger: TimeIntervalLogger, reward: PredictionErrorReward) -> None:
         """Constructs Agent.
 
         Args:
@@ -30,6 +57,7 @@ class CuriosityImagePPOAgent(BaseAgent[Tensor, Tensor]):
 
         self.forward_dynamics_hidden_state = initial_hidden
         self.logger = logger
+        self.reward_computer = reward
 
     def on_inference_models_attached(self) -> None:
         super().on_inference_models_attached()
@@ -57,9 +85,9 @@ class CuriosityImagePPOAgent(BaseAgent[Tensor, Tensor]):
 
         if not initial_step:
             # 報酬計算は初期ステップではできないためスキップ。
-            reward = -self.predicted_next_embed_observation_dist.log_prob(embed_obs).mean()
+            reward = self.reward_computer.compute(self.predicted_next_embed_observation_dist, embed_obs)
             self.step_data[DataKeys.REWARD] = reward  # r_{t+1}
-            self.logger.log("curiosity_ppo_agent/reward", reward)
+            self.logger.log("agent/reward", reward)
 
             # ステップの冒頭でデータコレクトすることで前ステップのデータを収集する。
             self.data_collectors.collect(self.step_data)

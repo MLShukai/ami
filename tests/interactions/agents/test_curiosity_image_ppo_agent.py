@@ -1,6 +1,7 @@
 import pytest
 import torch
 import torch.nn as nn
+from torch.distributions import Normal
 
 from ami.data.buffers.random_data_buffer import RandomDataBuffer
 from ami.data.utils import DataCollectorsDict
@@ -11,6 +12,7 @@ from ami.interactions.agents.curiosity_image_ppo_agent import (
     ForwardDynamics,
     ModelNames,
     PolicyValueCommonNet,
+    PredictionErrorReward,
 )
 from ami.models.components.discrete_policy_head import DiscretePolicyHead
 from ami.models.components.fully_connected_fixed_std_normal import (
@@ -31,6 +33,20 @@ FLATTEN_ACTION_DIM = ACTION_DIM * len(ACTION_CHOICES_PER_CATEGORY)
 
 SCONV_DIM = 64
 DEPTH = 2
+
+
+class TestPredictionErrorReward:
+    def test_compute(self):
+        reward_computer = PredictionErrorReward()
+        mean = torch.zeros(10)
+        std = torch.ones(10)
+
+        normal = Normal(mean, std)
+        actual = normal.sample()
+
+        out = reward_computer.compute(normal, actual)
+        assert isinstance(out, torch.Tensor)
+        assert out.shape == ()
 
 
 class TestCuriosityImagePPOAgent:
@@ -86,8 +102,12 @@ class TestCuriosityImagePPOAgent:
         return TimeIntervalLogger(f"{tmp_path}/tensorboard", 0)
 
     @pytest.fixture
-    def agent(self, inference_models, data_collectors, logger) -> CuriosityImagePPOAgent:
-        curiosity_agent = CuriosityImagePPOAgent(torch.zeros(DEPTH, SCONV_DIM), logger)
+    def reward(self):
+        return PredictionErrorReward()
+
+    @pytest.fixture
+    def agent(self, inference_models, data_collectors, logger, reward) -> CuriosityImagePPOAgent:
+        curiosity_agent = CuriosityImagePPOAgent(torch.zeros(DEPTH, SCONV_DIM), logger, reward)
         curiosity_agent.attach_data_collectors(data_collectors)
         curiosity_agent.attach_inference_models(inference_models)
         return curiosity_agent
