@@ -14,5 +14,5 @@ logger:
 
 reward:
   _target_: ami.interactions.agents.curiosity_image_ppo_agent.PredictionErrorReward
-  scale: 0.001
+  scale: 1.0
   shift: 0.0
