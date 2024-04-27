@@ -1,3 +1,4 @@
+import time
 from pathlib import Path
 
 from typing_extensions import override
@@ -14,13 +15,19 @@ class TrainingThread(BackgroundThread):
 
     THREAD_TYPE = ThreadTypes.TRAINING
 
-    def __init__(self, trainers: TrainersList, models: ModelWrappersDict) -> None:
-        """Constructs the training thread class with the trainers and
-        models."""
+    def __init__(
+        self, trainers: TrainersList, models: ModelWrappersDict, fix_pytorch_infer_performance_time: float = 1.0
+    ) -> None:
+        """Constructs the training thread class with the trainers and models.
+
+        Args:
+            fix_pytorch_infer_performance_time: See `fix_pytorch_infer_performance` method.
+        """
         super().__init__()
 
         self.trainers = trainers
         self.models = models
+        self.fix_pytorch_infer_performance_time = fix_pytorch_infer_performance_time
 
         self.share_object(SharedObjectNames.INFERENCE_MODELS, models.inference_wrappers_dict)
 
@@ -34,6 +41,8 @@ class TrainingThread(BackgroundThread):
 
     def worker(self) -> None:
         self.logger.info("Starts the training thread.")
+
+        self.fix_pytorch_infer_performance()
 
         while self.thread_command_handler.manage_loop():
             trainer = self.trainers.get_next_trainer()
@@ -55,3 +64,12 @@ class TrainingThread(BackgroundThread):
         self.models.load_state(path / "models")
         self.trainers.load_state(path / "trainers")
         self.data_users.load_state(path / "data")
+
+    def fix_pytorch_infer_performance(self) -> None:
+        """See Issue: https://github.com/MLShukai/ami/issues/175."""
+        self.logger.info(
+            f"Fixing pytorch inference performance in {self.fix_pytorch_infer_performance_time} seconds..."
+        )
+        start = time.perf_counter()
+        while time.perf_counter() - start < self.fix_pytorch_infer_performance_time:
+            self.models.send_to_default_device()
