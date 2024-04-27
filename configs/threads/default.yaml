@@ -7,3 +7,4 @@ inference_thread:
 
 training_thread:
   _target_: ami.threads.training_thread.TrainingThread
+  fix_pytorch_infer_performance_time: 1.0
