@@ -15,19 +15,17 @@ class TrainingThread(BackgroundThread):
 
     THREAD_TYPE = ThreadTypes.TRAINING
 
-    def __init__(
-        self, trainers: TrainersList, models: ModelWrappersDict, fix_pytorch_infer_performance_time: float = 1.0
-    ) -> None:
+    def __init__(self, trainers: TrainersList, models: ModelWrappersDict, training_interval: float = 1e-10) -> None:
         """Constructs the training thread class with the trainers and models.
 
         Args:
-            fix_pytorch_infer_performance_time: See `fix_pytorch_infer_performance` method.
+            training_interval: The interval to run a trainer.
         """
         super().__init__()
 
         self.trainers = trainers
         self.models = models
-        self.fix_pytorch_infer_performance_time = fix_pytorch_infer_performance_time
+        self.training_interval = training_interval
 
         self.share_object(SharedObjectNames.INFERENCE_MODELS, models.inference_wrappers_dict)
 
@@ -42,13 +40,13 @@ class TrainingThread(BackgroundThread):
     def worker(self) -> None:
         self.logger.info("Starts the training thread.")
 
-        self.fix_pytorch_infer_performance()
-
         while self.thread_command_handler.manage_loop():
             trainer = self.trainers.get_next_trainer()
             if trainer.is_trainable():
                 self.logger.info(f"Running: {type(trainer).__name__} ...")
                 trainer.run()
+
+            time.sleep(self.training_interval)  # See Issue: https://github.com/MLShukai/ami/issues/175
 
         self.logger.info("End the training thread.")
 
@@ -64,12 +62,3 @@ class TrainingThread(BackgroundThread):
         self.models.load_state(path / "models")
         self.trainers.load_state(path / "trainers")
         self.data_users.load_state(path / "data")
-
-    def fix_pytorch_infer_performance(self) -> None:
-        """See Issue: https://github.com/MLShukai/ami/issues/175."""
-        self.logger.info(
-            f"Fixing pytorch inference performance in {self.fix_pytorch_infer_performance_time} seconds..."
-        )
-        start = time.perf_counter()
-        while time.perf_counter() - start < self.fix_pytorch_infer_performance_time:
-            self.models.send_to_default_device()
