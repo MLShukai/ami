@@ -24,7 +24,7 @@ def test_run_threads(thread_objects: tuple[MainThread, InferenceThread, Training
     mt, it, tt = thread_objects
 
     def send_shutdown():
-        requests.post("http://127.0.0.255:12345/api/shutdown")
+        requests.post("http://127.0.0.1:44154/api/shutdown")
 
     it.start()
     tt.start()
