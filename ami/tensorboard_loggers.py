@@ -1,6 +1,5 @@
 import math
 import time
-from abc import ABC, abstractmethod
 from collections import ChainMap
 from collections.abc import Mapping, MutableSequence
 from typing import Any
@@ -11,25 +10,23 @@ from torch.utils.tensorboard import SummaryWriter
 from typing_extensions import override
 
 
-class TensorBoardLogger(ABC):
+class TensorBoardLogger:
     def __init__(self, log_dir: str, **tensorboard_kwds: Any):
         self.tensorboard = SummaryWriter(log_dir=log_dir, **tensorboard_kwds)
         self.global_step = 0
 
     @property
-    @abstractmethod
     def log_available(self) -> bool:
         """Determines whether a data can be logged.
 
         Returns:
             bool: whether a data can be logged.
         """
-        raise NotImplementedError
+        return True
 
-    @abstractmethod
     def update(self) -> None:
         """Updates current step."""
-        raise NotImplementedError
+        self.global_step += 1
 
     def log(self, tag: str, scalar: Tensor | float | int) -> None:
         if self.log_available:
@@ -89,7 +86,7 @@ class TimeIntervalLogger(TensorBoardLogger):
 
     @override
     def update(self) -> None:
-        self.global_step += 1
+        super().update()
         if self.logged:
             self.previous_log_time = time.perf_counter()
             self.logged = False
@@ -115,7 +112,3 @@ class StepIntervalLogger(TensorBoardLogger):
     @property
     def log_available(self) -> bool:
         return self.global_step % self.log_every_n_steps == 0
-
-    @override
-    def update(self) -> None:
-        self.global_step += 1
