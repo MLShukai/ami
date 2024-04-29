@@ -1,8 +1,11 @@
+import threading
+import time
 from pathlib import Path
 
 from pytest_mock import MockerFixture
 
-from ami.threads.inference_thread import InferenceThread, Interaction
+from ami.interactions.interaction import Interaction
+from ami.threads import MainThread, InferenceThread, TrainingThread
 
 
 class TestInferenceThread:
@@ -17,3 +20,30 @@ class TestInferenceThread:
 
         inference_thread.load_state(inference_path)
         inference_thread.interaction.load_state.assert_called_once_with(inference_path / "interaction")
+
+    def test_system_event_callbacks(
+        self,
+        thread_objects: tuple[MainThread, InferenceThread, TrainingThread],
+        mocker: MockerFixture
+    ):
+        main_thread, inference_thread, _ = thread_objects
+        mock_on_paused = mocker.spy(inference_thread, "on_paused")
+        mock_on_resumed = mocker.spy(inference_thread, "on_resumed")
+
+        inference_thread.start()
+
+        thread = threading.Thread(target=main_thread.run)
+        thread.start()
+
+        main_thread.thread_controller.pause()
+        time.sleep(1)
+        mock_on_paused.assert_called_once()
+
+        main_thread.thread_controller.resume()
+        time.sleep(1)
+        mock_on_resumed.assert_called_once()
+
+        mock_on_resumed.reset_mock()
+
+        main_thread.thread_controller.shutdown()
+        thread.join()
