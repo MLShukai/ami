@@ -70,5 +70,5 @@ class VAE(nn.Module):
 
 class EncoderWrapper(ModelWrapper[Encoder]):
     def infer(self, x: torch.Tensor) -> torch.Tensor:
-        z: torch.Tensor = self.model.forward(x.to(self.device)).rsample()
+        z: torch.Tensor = self.model.forward(x.to(self.device)).loc
         return z
