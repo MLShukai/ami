@@ -1,9 +1,9 @@
-import threading
+import time
 from typing import TypeAlias
 
 from .base_thread import BaseThread
 from .shared_object_names import SharedObjectNames
-from .thread_control import ThreadController
+from .thread_control import ThreadController, ThreadControllerStatus
 from .thread_types import ThreadTypes
 from .web_api_handler import WebApiHandler
 
@@ -25,7 +25,7 @@ class MainThread(BaseThread):
         self._host = address[0]
         self._port = address[1]
         self.thread_controller = ThreadController()
-        self.web_api_handler = WebApiHandler(self.thread_controller, self._host, self._port)
+        self.web_api_handler = WebApiHandler(ThreadControllerStatus(self.thread_controller), self._host, self._port)
 
         self.share_object(SharedObjectNames.THREAD_COMMAND_HANDLERS, self.thread_controller.handlers)
 
@@ -35,11 +35,25 @@ class MainThread(BaseThread):
 
         self.logger.info(f"Serving system command at 'http://{self._host}:{self._port}'")
         self.web_api_handler.run_in_background()
+
         try:
-            while not self.thread_controller.wait_for_shutdown(1.0):
-                pass
+            while not self.web_api_handler.receive_shutdown():
+
+                if self.web_api_handler.receive_pause():
+                    self.logger.info("Pausing...")
+                    self.thread_controller.pause()
+
+                if self.web_api_handler.receive_resume():
+                    self.logger.info("Resuming...")
+                    self.thread_controller.resume()
+
+                time.sleep(0.001)
+
         except KeyboardInterrupt:
-            self.thread_controller.shutdown()
             self.logger.info("Shutting down by KeyboardInterrupt.")
+
+        finally:
+            self.logger.info("Shutting down...")
+            self.thread_controller.shutdown()
 
         self.logger.info("End main thread.")
