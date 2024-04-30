@@ -24,7 +24,7 @@ class ThreadSafeFlag:
         with self._lock:
             self._flag = True
 
-    def get(self) -> bool:
+    def take(self) -> bool:
         """Return the current value of the flag and clear it, thread-safely."""
         with self._lock:
             value = self._flag

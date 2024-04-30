@@ -20,8 +20,8 @@ class TestThreadSafeFlag:
         flag.clear()
         assert flag.is_set() is False, "Flag should be cleared to False"
 
-    def test_get(self, flag):
-        assert flag.get() is False
+    def test_take(self, flag):
+        assert flag.take() is False
         flag.set()
-        assert flag.get() is True, "Get should return True"
+        assert flag.take() is True, "Get should return True"
         assert flag.is_set() is False, "Flag should be cleared after get"
