@@ -71,7 +71,7 @@ class TensorBoardLogger:
     def log_hyperparameters(self, hparams: Mapping[str, Any], metrics: dict[str, Any] | None = None) -> None:
         hparams = self._convert_hparams_dict_values_to_loggable(self._expand_dict(hparams))
         if metrics is None:
-            metrics = {"hp_params": -1}
+            metrics = {"hp_metrics": -1}
         else:
             metrics = self._convert_hparams_dict_values_to_loggable(self._expand_dict(metrics))
 
