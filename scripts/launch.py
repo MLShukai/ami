@@ -1,4 +1,6 @@
 """Launch script file for the ami system."""
+import os
+
 import hydra
 import rootutils
 from omegaconf import DictConfig
@@ -14,6 +16,7 @@ from ami.interactions.interaction import Interaction
 from ami.logger import get_main_thread_logger
 from ami.models.utils import ModelWrappersDict
 from ami.omegaconf_resolvers import register_custom_resolvers
+from ami.tensorboard_loggers import TensorBoardLogger
 from ami.threads import (
     InferenceThread,
     MainThread,
@@ -66,6 +69,21 @@ def main(cfg: DictConfig) -> None:
     training_thread: TrainingThread = hydra.utils.instantiate(
         threads_cfg.training_thread, trainers=trainers, models=models
     )
+
+    # Logging to tensorboard.
+    tensorboard_logger = TensorBoardLogger(
+        os.path.join(
+            cfg.paths.tensorboard_dir,
+            "__main__",
+        )
+    )
+    hparams_dict = {
+        "interaction": cfg.interaction,
+        "data": cfg.data_collectors,
+        "models": cfg.models,
+        "trainers": cfg.trainers,
+    }
+    tensorboard_logger.log_hyperparameters(hparams_dict)
 
     logger.info("Sharing objects...")
     attach_shared_objects_pool_to_threads(main_thread, inference_thread, training_thread)
