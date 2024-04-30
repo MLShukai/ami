@@ -23,7 +23,10 @@ def dummy_on_resumed() -> None:
 
 class ThreadController:
     """The controller class for sending commands from the main thread to
-    background threads."""
+    background threads.
+
+    NOTE: **Only one thread can control this object.**
+    """
 
     save_checkpoint_callback: SaveCheckpointCallbackType | None = None  # 外部から付与される
 
@@ -228,3 +231,13 @@ class ThreadCommandHandler:
             bool: Whethers the loop is paused or not.
         """
         return self._loop_pause_event.wait(timeout)
+
+
+class ThreadControllerStatus:
+    """Only reads the thread controller status."""
+
+    def __init__(self, controller: ThreadController) -> None:
+
+        self.is_shutdown = controller.is_shutdown
+        self.is_paused = controller.is_paused
+        self.is_resumed = controller.is_resumed

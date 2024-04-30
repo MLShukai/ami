@@ -13,6 +13,7 @@ from pytest_mock import MockerFixture
 from ami.threads.thread_control import (
     ThreadCommandHandler,
     ThreadController,
+    ThreadControllerStatus,
     ThreadTypes,
 )
 
@@ -163,3 +164,15 @@ def test_save_checkpoint(tmp_path, mocker: MockerFixture) -> None:
     with pytest.raises(RuntimeError):
         controller = ThreadController(0.001)
         controller.save_checkpoint()
+
+
+class TestThreadControllerStatus:
+    @pytest.fixture
+    def controller(self) -> ThreadController:
+        return ThreadController()
+
+    def test_status(self, controller: ThreadController):
+        Status = ThreadControllerStatus(controller)
+        assert Status.is_shutdown == controller.is_shutdown
+        assert Status.is_paused == controller.is_paused
+        assert Status.is_resumed == controller.is_resumed
