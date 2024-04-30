@@ -1,4 +1,5 @@
 import json
+import threading
 from typing import TypeAlias
 
 import bottle
@@ -46,10 +47,15 @@ class WebApiHandler:
         self._port = port
 
         self._register_handlers()
+        self._handler_thread = threading.Thread(target=self.run, daemon=True)
 
     def run(self) -> None:
         """Run the API server."""
         bottle.run(host=self._host, port=self._port)
+
+    def run_in_background(self) -> None:
+        """Run the API server in background thread."""
+        self._handler_thread.start()
 
     def _register_handlers(self) -> None:
         """Register API handlers."""

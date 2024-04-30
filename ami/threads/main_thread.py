@@ -26,7 +26,6 @@ class MainThread(BaseThread):
         self._port = address[1]
         self.thread_controller = ThreadController()
         self.web_api_handler = WebApiHandler(self.thread_controller, self._host, self._port)
-        self._handler_thread = threading.Thread(target=self.web_api_handler.run, daemon=True)
 
         self.share_object(SharedObjectNames.THREAD_COMMAND_HANDLERS, self.thread_controller.handlers)
 
@@ -35,7 +34,7 @@ class MainThread(BaseThread):
         self.thread_controller.activate()
 
         self.logger.info(f"Serving system command at 'http://{self._host}:{self._port}'")
-        self._handler_thread.start()
+        self.web_api_handler.run_in_background()
         try:
             while not self.thread_controller.wait_for_shutdown(1.0):
                 pass
