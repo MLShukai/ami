@@ -1,6 +1,5 @@
 import pytest
 import torch
-from omegaconf import DictConfig, ListConfig
 
 from ami.tensorboard_loggers import (
     StepIntervalLogger,
@@ -21,8 +20,15 @@ class TestTensorBoardLogger:
             logger.log("test2", torch.randn(1))
             logger.update()
 
+    def test_convert_hparams_dict_values_to_loggable(self, logger: TensorBoardLogger):
+        class A:
+            def __str__(self) -> str:
+                return "hello"
+
+        assert logger._convert_hparams_dict_values_to_loggable({"a": A(), "b": 0}) == {"a": "hello", "b": 0}
+
     def test_log_hyperparameter(self, logger: TensorBoardLogger):
-        d = DictConfig({"a": 1, "b": [2, 3, {"c": 4, "d": [5, 6]}]})
+        d = {"a": 1, "b": [2, 3, {"c": 4, "d": [5, 6]}], "e": torch.device("cpu")}
         logger.log_hyperparameters(d)
 
     def test_state_dict(self, logger: TensorBoardLogger):

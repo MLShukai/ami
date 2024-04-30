@@ -2,12 +2,13 @@ import math
 import time
 from collections import ChainMap
 from collections.abc import Mapping, MutableSequence
-from typing import Any
+from typing import Any, TypeAlias, Union
 
-from omegaconf import DictConfig, ListConfig
 from torch import Tensor
 from torch.utils.tensorboard import SummaryWriter
 from typing_extensions import override
+
+LoggableTypes: TypeAlias = Tensor | float | int | bool | str
 
 
 class TensorBoardLogger:
@@ -28,7 +29,7 @@ class TensorBoardLogger:
         """Updates current step."""
         self.global_step += 1
 
-    def log(self, tag: str, scalar: Tensor | float | int) -> None:
+    def log(self, tag: str, scalar: LoggableTypes) -> None:
         if self.log_available:
             self.tensorboard.add_scalar(tag, scalar, self.global_step)
 
@@ -54,11 +55,27 @@ class TensorBoardLogger:
                     dict_list.append({f"{i}.{k_}": v_ for k_, v_ in self._expand_dict(v).items()})
             return self._union_dicts(dict_list)
 
-    def log_hyperparameters(self, hparams: DictConfig | ListConfig, metrics: dict[str, Any] | None = None) -> None:
-        self.tensorboard.add_hparams(
-            self._expand_dict(hparams),
-            {"hp_params": -1} if metrics is None else self._expand_dict(metrics),
-        )
+    @staticmethod
+    def _convert_hparams_dict_values_to_loggable(hparams: dict[str, Any]) -> dict[str, LoggableTypes]:
+        """Converts the values of hparams dict to tensorboard loggable type.
+
+        Currently, the unloggable type object is converted to `str`.
+        """
+        loggables: dict[str, LoggableTypes] = {}
+        for key, value in hparams.items():
+            if not isinstance(value, LoggableTypes):  # type: ignore
+                value = str(value)
+            loggables[key] = value
+        return loggables
+
+    def log_hyperparameters(self, hparams: Mapping[str, Any], metrics: dict[str, Any] | None = None) -> None:
+        hparams = self._convert_hparams_dict_values_to_loggable(self._expand_dict(hparams))
+        if metrics is None:
+            metrics = {"hp_params": -1}
+        else:
+            metrics = self._convert_hparams_dict_values_to_loggable(self._expand_dict(metrics))
+
+        self.tensorboard.add_hparams(hparams, metrics)
 
     def state_dict(self) -> dict[str, Any]:
         return {"global_step": self.global_step}
@@ -92,7 +109,7 @@ class TimeIntervalLogger(TensorBoardLogger):
             self.logged = False
 
     @override
-    def log(self, tag: str, scalar: Tensor | float | int) -> None:
+    def log(self, tag: str, scalar: LoggableTypes) -> None:
         super().log(tag, scalar)
         if self.log_available:
             self.logged = True
