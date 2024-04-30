@@ -5,7 +5,8 @@ from typing import TypeAlias
 import bottle
 
 from ..logger import get_main_thread_logger
-from .thread_control import ThreadController
+from .thread_control import ThreadControllerStatus
+from .utils import ThreadSafeFlag
 
 PayloadType: TypeAlias = dict[str, str]
 
@@ -22,32 +23,36 @@ class WebApiHandler:
 
         POST /api/pause: Pause the system. (status: active -> paused)
         > curl -X POST http://localhost:8080/api/pause
-        {"result": "ok", "status": "paused"}
+        {"result": "ok"}
 
         POST /api/resume: Resume the system. (status: paused -> active)
         > curl -X POST http://localhost:8080/api/resume
-        {"result": "ok", "status": "active"}
+        {"result": "ok"}
 
         POST /api/shutdown: Shutdown the system. (status: active or paused -> stopped)
         > curl -X POST http://localhost:8080/api/shutdown
-        {"result": "ok", "status": "stopped"}
+        {"result": "ok"}
     """
 
-    def __init__(self, controller: ThreadController, host: str = "localhost", port: int = 8080) -> None:
+    def __init__(self, controller_status: ThreadControllerStatus, host: str = "localhost", port: int = 8080) -> None:
         """Initialize the WebApiHandler.
 
         Args:
-            controller: ThreadController object to control.
+            controller_status: To watch the thread controller status.
             host: Hostname to run the API server on.
             port: Port to run the API server on.
         """
         self._logger = get_main_thread_logger(self.__class__.__name__)
-        self._controller = controller
+        self._controller_status = controller_status
         self._host = host
         self._port = port
 
         self._register_handlers()
         self._handler_thread = threading.Thread(target=self.run, daemon=True)
+
+        self._shutdown_flag = ThreadSafeFlag()
+        self._pause_flag = ThreadSafeFlag()
+        self._resume_flag = ThreadSafeFlag()
 
     def run(self) -> None:
         """Run the API server."""
@@ -56,6 +61,18 @@ class WebApiHandler:
     def run_in_background(self) -> None:
         """Run the API server in background thread."""
         self._handler_thread.start()
+
+    def receive_shutdown(self) -> bool:
+        """Receives the shutdown command."""
+        return self._shutdown_flag.take()
+
+    def receive_pause(self) -> bool:
+        """Receives the pause command."""
+        return self._pause_flag.take()
+
+    def receive_resume(self) -> bool:
+        """Receives the resume command."""
+        return self._resume_flag.take()
 
     def _register_handlers(self) -> None:
         """Register API handlers."""
@@ -73,9 +90,9 @@ class WebApiHandler:
 
     def _get_status(self) -> PayloadType:
         status: str
-        if self._controller.is_shutdown():
+        if self._controller_status.is_shutdown():
             status = "stopped"
-        elif not self._controller.is_resumed():
+        elif self._controller_status.is_paused():
             status = "paused"
         else:
             status = "active"
@@ -85,18 +102,18 @@ class WebApiHandler:
 
     def _post_pause(self) -> PayloadType:
         self._logger.info("Pausing threads")
-        self._controller.pause()
-        return {"result": "ok", "status": "paused"}
+        self._pause_flag.set()
+        return {"result": "ok"}
 
     def _post_resume(self) -> PayloadType:
         self._logger.info("Resuming threads")
-        self._controller.resume()
-        return {"result": "ok", "status": "active"}
+        self._resume_flag.set()
+        return {"result": "ok"}
 
     def _post_shutdown(self) -> PayloadType:
         self._logger.info("Shutting down threads")
-        self._controller.shutdown()
-        return {"result": "ok", "status": "stopped"}
+        self._shutdown_flag.set()
+        return {"result": "ok"}
 
     def _error_404(self, error: bottle.HTTPError) -> str:
         request = bottle.request
