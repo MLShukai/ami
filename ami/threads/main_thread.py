@@ -5,7 +5,7 @@ from .base_thread import BaseThread
 from .shared_object_names import SharedObjectNames
 from .thread_control import ThreadController, ThreadControllerStatus
 from .thread_types import ThreadTypes
-from .web_api_handler import WebApiHandler
+from .web_api_handler import ControlCommands, WebApiHandler
 
 AddressType: TypeAlias = tuple[str, int]  # host, port
 
@@ -37,15 +37,9 @@ class MainThread(BaseThread):
         self.web_api_handler.run_in_background()
 
         try:
-            while not self.web_api_handler.receive_shutdown():
+            while not self.thread_controller.is_shutdown():
 
-                if self.web_api_handler.receive_pause():
-                    self.logger.info("Pausing...")
-                    self.thread_controller.pause()
-
-                if self.web_api_handler.receive_resume():
-                    self.logger.info("Resuming...")
-                    self.thread_controller.resume()
+                self.process_received_commands()
 
                 time.sleep(0.001)
 
@@ -57,3 +51,17 @@ class MainThread(BaseThread):
             self.thread_controller.shutdown()
 
         self.logger.info("End main thread.")
+
+    def process_received_commands(self) -> None:
+        """Processes the received commands from web api handler."""
+        while self.web_api_handler.has_commands():
+            match self.web_api_handler.receive_command():
+                case ControlCommands.PAUSE:
+                    self.logger.info("Pausing...")
+                    self.thread_controller.pause()
+                case ControlCommands.RESUME:
+                    self.logger.info("Resuming...")
+                    self.thread_controller.resume()
+                case ControlCommands.SHUTDOWN:
+                    self.logger.info("Shutting down...")
+                    self.thread_controller.shutdown()

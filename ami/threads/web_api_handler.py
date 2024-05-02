@@ -1,14 +1,23 @@
 import json
 import threading
+from enum import Enum, auto
+from queue import Queue
 from typing import TypeAlias
 
 import bottle
 
 from ..logger import get_main_thread_logger
 from .thread_control import ThreadControllerStatus
-from .utils import ThreadSafeFlag
 
 PayloadType: TypeAlias = dict[str, str]
+
+
+class ControlCommands(Enum):
+    """Enumerates the commands for the system control."""
+
+    SHUTDOWN = auto()
+    PAUSE = auto()
+    RESUME = auto()
 
 
 class WebApiHandler:
@@ -50,9 +59,7 @@ class WebApiHandler:
         self._register_handlers()
         self._handler_thread = threading.Thread(target=self.run, daemon=True)
 
-        self._shutdown_flag = ThreadSafeFlag()
-        self._pause_flag = ThreadSafeFlag()
-        self._resume_flag = ThreadSafeFlag()
+        self._received_commands_queue: Queue[ControlCommands] = Queue()
 
     def run(self) -> None:
         """Run the API server."""
@@ -62,17 +69,20 @@ class WebApiHandler:
         """Run the API server in background thread."""
         self._handler_thread.start()
 
-    def receive_shutdown(self) -> bool:
-        """Receives the shutdown command."""
-        return self._shutdown_flag.take()
+    def has_commands(self) -> bool:
+        """Checks if the handler is receiving the system control commands."""
+        return not self._received_commands_queue.empty()
 
-    def receive_pause(self) -> bool:
-        """Receives the pause command."""
-        return self._pause_flag.take()
+    def receive_command(self) -> ControlCommands:
+        """Receives a system control commands from queue.
 
-    def receive_resume(self) -> bool:
-        """Receives the resume command."""
-        return self._resume_flag.take()
+        Returns:
+            ControlCommands: Received commands from network.
+
+        Raises:
+            Empty: If no commands are receiving.
+        """
+        return self._received_commands_queue.get_nowait()
 
     def _register_handlers(self) -> None:
         """Register API handlers."""
@@ -102,17 +112,17 @@ class WebApiHandler:
 
     def _post_pause(self) -> PayloadType:
         self._logger.info("Pausing threads")
-        self._pause_flag.set()
+        self._received_commands_queue.put(ControlCommands.PAUSE)
         return {"result": "ok"}
 
     def _post_resume(self) -> PayloadType:
         self._logger.info("Resuming threads")
-        self._resume_flag.set()
+        self._received_commands_queue.put(ControlCommands.RESUME)
         return {"result": "ok"}
 
     def _post_shutdown(self) -> PayloadType:
         self._logger.info("Shutting down threads")
-        self._shutdown_flag.set()
+        self._received_commands_queue.put(ControlCommands.SHUTDOWN)
         return {"result": "ok"}
 
     def _error_404(self, error: bottle.HTTPError) -> str:

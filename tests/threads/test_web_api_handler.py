@@ -1,3 +1,4 @@
+import queue
 from collections.abc import Generator
 
 import bottle
@@ -5,7 +6,7 @@ import pytest
 from webtest import TestApp
 
 from ami.threads.thread_control import ThreadController, ThreadControllerStatus
-from ami.threads.web_api_handler import WebApiHandler
+from ami.threads.web_api_handler import ControlCommands, WebApiHandler
 
 
 class TestWebApiHandler:
@@ -43,29 +44,32 @@ class TestWebApiHandler:
         assert response.status_code == 200
         assert response.json == {"status": "stopped"}
 
-    def test_post_pause(self, app: TestApp, handler: WebApiHandler):
-        assert handler.receive_pause() is False
+    def test_has_and_receive_commands(self, app: TestApp, handler: WebApiHandler) -> bool:
+        assert handler.has_commands() is False
+
         response = app.post("http://localhost:8080/api/pause")
         assert response.status_code == 200
         assert response.json == {"result": "ok"}
-        assert handler.receive_pause() is True
-        assert handler.receive_pause() is False
+        assert handler.has_commands() is True
 
-    def test_post_resume(self, app: TestApp, handler: WebApiHandler):
-        assert handler.receive_resume() is False
+        assert handler.receive_command() is ControlCommands.PAUSE
+        assert handler.has_commands() is False
+
         response = app.post("http://localhost:8080/api/resume")
         assert response.status_code == 200
         assert response.json == {"result": "ok"}
-        assert handler.receive_resume() is True
-        assert handler.receive_resume() is False
+        assert handler.has_commands() is True
 
-    def test_post_shutdown(self, app: TestApp, handler: WebApiHandler):
-        assert handler.receive_shutdown() is False
         response = app.post("http://localhost:8080/api/shutdown")
         assert response.status_code == 200
         assert response.json == {"result": "ok"}
-        assert handler.receive_shutdown() is True
-        assert handler.receive_shutdown() is False
+
+        assert handler.receive_command() is ControlCommands.RESUME
+        assert handler.receive_command() is ControlCommands.SHUTDOWN
+
+        assert handler.has_commands() is False
+        with pytest.raises(queue.Empty):
+            handler.receive_command()
 
     def test_error_404(self, app) -> None:
         response = app.get("http://localhost:8080/api/invalid", status=404)
