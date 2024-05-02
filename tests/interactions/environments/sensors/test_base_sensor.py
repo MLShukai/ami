@@ -37,3 +37,13 @@ class TestSensorWrapper:
         spied_save_state.assert_called_once_with(sensor_path)
         sensor_wrapper.load_state(sensor_path)
         spied_load_state.assert_called_once_with(sensor_path)
+
+    def test_system_event_callbacks(self, sensor_wrapper: IncrementSensorWrapper, mocker: MockerFixture) -> None:
+        mock_on_paused = mocker.spy(sensor_wrapper._sensor, "on_paused")
+        mock_on_resumed = mocker.spy(sensor_wrapper._sensor, "on_resumed")
+
+        sensor_wrapper.on_paused()
+        mock_on_paused.assert_called_once()
+
+        sensor_wrapper.on_resumed()
+        mock_on_resumed.assert_called_once()

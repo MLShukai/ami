@@ -26,24 +26,11 @@ class TestInferenceThread:
         thread_objects: tuple[MainThread, InferenceThread, TrainingThread],
         mocker: MockerFixture
     ):
-        main_thread, inference_thread, _ = thread_objects
-        mock_on_paused = mocker.spy(inference_thread, "on_paused")
-        mock_on_resumed = mocker.spy(inference_thread, "on_resumed")
+        _, inference_thread, _ = thread_objects
+        inference_thread.interaction = mocker.Mock(Interaction)
 
-        inference_thread.start()
+        inference_thread.on_paused()
+        inference_thread.interaction.on_paused.assert_called_once()
 
-        thread = threading.Thread(target=main_thread.run)
-        thread.start()
-
-        main_thread.thread_controller.pause()
-        time.sleep(1)
-        mock_on_paused.assert_called_once()
-
-        main_thread.thread_controller.resume()
-        time.sleep(1)
-        mock_on_resumed.assert_called_once()
-
-        mock_on_resumed.reset_mock()
-
-        main_thread.thread_controller.shutdown()
-        thread.join()
+        inference_thread.on_resumed()
+        inference_thread.interaction.on_resumed.assert_called_once()

@@ -55,3 +55,14 @@ class TestTrainersList:
 
         trainers.load_state(trainers_path)
         mock_trainer.load_state.assert_called_once_with(trainers_path / "2")
+
+    def test_system_event_callbacks(self, mocker: MockerFixture):
+        mock_trainer = mocker.Mock(BaseTrainer)
+
+        trainers = TrainersList(mock_trainer)
+
+        trainers.on_paused()
+        mock_trainer.on_paused.assert_called_once()
+
+        trainers.on_resumed()
+        mock_trainer.on_resumed.assert_called_once()
