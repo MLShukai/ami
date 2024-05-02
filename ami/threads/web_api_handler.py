@@ -80,7 +80,7 @@ class WebApiHandler:
             ControlCommands: Received commands from network.
 
         Raises:
-            Empty: If no commands are receiving.
+            Empty: If the handler is receiving no commands.
         """
         return self._received_commands_queue.get_nowait()
 
