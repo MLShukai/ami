@@ -136,12 +136,28 @@ class ThreadCommandHandler:
         """Pauses the execution of the current thread until a resume command is
         received or the thread is stopped.
 
+        Executes the pause and resume event callbacks if system is paused.
+
         This method periodically checks for a resume signal at intervals
         defined by `check_resume_interval` and stops executing if the
         thread is no longer active.
+
+        NOTE: 2024/05/04現在、スレッド処理の都合上、ごく稀に `controller.is_paused`が
+            `False`を返した直後に`True`になり、一時停止イベントが呼び出されない場合がある。
+            これは大きなバグの要因につながるため、将来的に直さなければならない。
+            その可能性を最小限に抑えるために、pauseイベントの呼び出し処理をこのメソッドの外に書いてはならない。
         """
+        self._loop_pause_event.clear()
+        if self._controller.is_paused():  # Entering system state: `pause`
+            self.on_paused()
+            self._loop_pause_event.set()
+
         while self.is_active() and not self._controller.wait_for_resume(self.check_resume_interval):
             pass
+
+        if self._loop_pause_event.is_set():  # Exiting system state: `pause`, entering `resume`.
+            self._loop_pause_event.clear()
+            self.on_resumed()
 
     def manage_loop(self) -> bool:
         """Manages the infinite loop, blocking during pause states and
@@ -159,16 +175,8 @@ class ThreadCommandHandler:
         Returns:
             bool: True if the thread should continue executing, False if the thread is shutting down.
         """
-        self._loop_pause_event.clear()
-        if self._controller.is_paused():  # Entering system state: `pause`
-            self.on_paused()
-            self._loop_pause_event.set()
 
         self.stop_if_paused()  # Blocking if system is `paused`
-
-        if self._loop_pause_event.is_set():  # Exiting system state: `pause`, entering `resume`.
-            self._loop_pause_event.clear()
-            self.on_resumed()
 
         return self.is_active()
 
