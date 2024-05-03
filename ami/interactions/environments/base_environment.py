@@ -3,8 +3,8 @@ from abc import ABC, abstractmethod
 from typing import Any, Generic
 
 from ami.checkpointing import SaveAndLoadStateMixin
-from ami.threads import PauseResumeEventMixin
 
+from ...threads.thread_control import PauseResumeEventMixin
 from .._types import ActType, ObsType
 
 

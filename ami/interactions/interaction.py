@@ -3,8 +3,8 @@ from pathlib import Path
 from typing_extensions import override
 
 from ami.checkpointing import SaveAndLoadStateMixin
-from ami.threads import PauseResumeEventMixin
 
+from ..threads.thread_control import PauseResumeEventMixin
 from ._types import ActType, ObsType
 from .agents.base_agent import BaseAgent
 from .environments.base_environment import BaseEnvironment
