@@ -35,8 +35,9 @@ def test_instantiate(overrides: list[str], mocker: MockerFixture, tmp_path):
         data_collectors = instantiate_data_collectors(cfg.data_collectors)
         models = instantiate_models(cfg.models)
         trainers = instantiate_trainers(cfg.trainers)
+        checkpoint_scheduler = instantiate(cfg.checkpointing)
 
         threads = cfg.threads
-        instantiate(threads.main_thread)
+        instantiate(threads.main_thread, checkpoint_scheduler=checkpoint_scheduler)
         instantiate(threads.inference_thread, interaction=interaction, data_collectors=data_collectors)
         instantiate(threads.training_thread, models=models, trainers=trainers)

@@ -1,6 +1,7 @@
 import time
 from typing import TypeAlias
 
+from ..checkpointing.checkpoint_schedulers import BaseCheckpointScheduler
 from .base_thread import BaseThread
 from .shared_object_names import SharedObjectNames
 from .thread_control import ThreadController, ThreadControllerStatus
@@ -19,13 +20,22 @@ class MainThread(BaseThread):
 
     THREAD_TYPE = ThreadTypes.MAIN
 
-    def __init__(self, address: AddressType = ("0.0.0.0", 8391)) -> None:
+    def __init__(
+        self,
+        checkpoint_scheduler: BaseCheckpointScheduler,
+        address: AddressType = ("0.0.0.0", 8391),
+        timeout_for_all_threads_pause: float = 60.0,
+        max_save_checkpoint_retry_attempts: int = 3,
+    ) -> None:
         super().__init__()
 
+        self.checkpoint_scheduler = checkpoint_scheduler
         self._host = address[0]
         self._port = address[1]
         self.thread_controller = ThreadController()
         self.web_api_handler = WebApiHandler(ThreadControllerStatus(self.thread_controller), self._host, self._port)
+        self._timeout_for_all_threads_pause = timeout_for_all_threads_pause
+        self.max_save_checkpoint_retry_attempts = max_save_checkpoint_retry_attempts
 
         self.share_object(SharedObjectNames.THREAD_COMMAND_HANDLERS, self.thread_controller.handlers)
 
@@ -37,9 +47,17 @@ class MainThread(BaseThread):
         self.web_api_handler.run_in_background()
 
         try:
-            while not self.thread_controller.is_shutdown():
+            while not self.process_received_commands():
 
-                self.process_received_commands()
+                if self.checkpoint_scheduler.is_available():
+                    for i in range(self.max_save_checkpoint_retry_attempts + 1):
+                        if self.save_checkpoint():
+                            self.logger.info("Success to save checkpoint.")
+                            break
+                        else:
+                            self.logger.warning(
+                                f"Failed to save checkpoint. Attempts retry for {i+1} / {self.max_save_checkpoint_retry_attempts} times."
+                            )
 
                 time.sleep(0.001)
 
@@ -52,8 +70,11 @@ class MainThread(BaseThread):
 
         self.logger.info("End main thread.")
 
-    def process_received_commands(self) -> None:
-        """Processes the received commands from web api handler."""
+    def process_received_commands(self) -> bool:
+        """Processes the received commands from web api handler.
+
+        Returns `True` if the shutdown command is received.
+        """
         while self.web_api_handler.has_commands():
             match self.web_api_handler.receive_command():
                 case ControlCommands.PAUSE:
@@ -65,3 +86,30 @@ class MainThread(BaseThread):
                 case ControlCommands.SHUTDOWN:
                     self.logger.info("Shutting down...")
                     self.thread_controller.shutdown()
+
+        return self.thread_controller.is_shutdown()
+
+    def save_checkpoint(self) -> bool:
+        """Saves a checkpoint after pausing the all background thread.
+
+        Returns:
+            bool: Whether or not to save checkpoint is failed by timeout.
+        """
+
+        self.logger.info("Saving checkpoint...")
+        self.thread_controller.pause()
+
+        if self.thread_controller.wait_for_all_threads_pause(self._timeout_for_all_threads_pause):
+            self.logger.info("Success to pause the all background threads.")
+        else:
+            self.logger.error(
+                f"Failed to pause the background threads in timeout {self._timeout_for_all_threads_pause} seconds."
+            )
+            self.thread_controller.resume()
+            return False
+
+        ckpt_path = self.checkpoint_scheduler.checkpointing.save_checkpoint()
+        self.logger.info(f"Saved a checkpoint to '{ckpt_path}'")
+
+        self.thread_controller.resume()
+        return True
