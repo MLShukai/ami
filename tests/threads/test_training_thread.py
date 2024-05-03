@@ -2,12 +2,8 @@ from pathlib import Path
 
 from pytest_mock import MockerFixture
 
-from ami.threads import MainThread, InferenceThread, TrainingThread
-from ami.threads.training_thread import (
-    DataUsersDict,
-    ModelWrappersDict,
-    TrainersList,
-)
+from ami.threads import InferenceThread, MainThread, TrainingThread
+from ami.threads.training_thread import DataUsersDict, ModelWrappersDict, TrainersList
 
 
 class TestTrainingThread:
@@ -32,9 +28,7 @@ class TestTrainingThread:
         training_thread.trainers.load_state.assert_called_once_with(training_path / "trainers")
 
     def test_system_event_callbacks(
-        self,
-        thread_objects: tuple[MainThread, InferenceThread, TrainingThread],
-        mocker: MockerFixture
+        self, thread_objects: tuple[MainThread, InferenceThread, TrainingThread], mocker: MockerFixture
     ):
         _, _, training_thread = thread_objects
         training_thread.trainers = mocker.Mock(TrainersList)

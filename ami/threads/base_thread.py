@@ -6,8 +6,8 @@ from typing import Any, TypeAlias
 from ami.checkpointing import SaveAndLoadStateMixin
 
 from ..logger import get_thread_logger
-from .thread_types import ThreadTypes, get_thread_name_from_type
 from .thread_control import PauseResumeEventMixin
+from .thread_types import ThreadTypes, get_thread_name_from_type
 
 SharedObjectsDictType: TypeAlias = OrderedDict[str, Any]
 SharedObjectsPoolType: TypeAlias = OrderedDict[ThreadTypes, SharedObjectsDictType]

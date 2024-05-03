@@ -22,7 +22,8 @@ def dummy_on_resumed() -> None:
 
 
 class PauseResumeEventMixin:
-    """Mixin class for implementing the class which has system event callbacks."""
+    """Mixin class for implementing the class which has system event
+    callbacks."""
 
     def on_paused(self) -> None:
         """Callback function called when the system is paused."""
