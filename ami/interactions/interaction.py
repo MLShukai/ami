@@ -3,13 +3,14 @@ from pathlib import Path
 from typing_extensions import override
 
 from ami.checkpointing import SaveAndLoadStateMixin
+from ami.threads import PauseResumeEventMixin
 
 from ._types import ActType, ObsType
 from .agents.base_agent import BaseAgent
 from .environments.base_environment import BaseEnvironment
 
 
-class Interaction(SaveAndLoadStateMixin):
+class Interaction(SaveAndLoadStateMixin, PauseResumeEventMixin):
     """The interaction protocol between an environment and an agent."""
 
     def __init__(self, environment: BaseEnvironment[ObsType, ActType], agent: BaseAgent[ObsType, ActType]) -> None:
@@ -54,3 +55,13 @@ class Interaction(SaveAndLoadStateMixin):
         """Loads the internal state from the `path`."""
         self.agent.load_state(path / "agent")
         self.environment.load_state(path / "environment")
+
+    @override
+    def on_paused(self) -> None:
+        self.environment.on_paused()
+        self.agent.on_paused()
+
+    @override
+    def on_resumed(self) -> None:
+        self.environment.on_resumed()
+        self.agent.on_resumed()

@@ -4,3 +4,4 @@ from .inference_thread import InferenceThread
 from .main_thread import MainThread
 from .thread_types import ThreadTypes
 from .training_thread import TrainingThread
+from .thread_control import PauseResumeEventMixin

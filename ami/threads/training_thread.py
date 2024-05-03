@@ -62,3 +62,11 @@ class TrainingThread(BackgroundThread):
         self.models.load_state(path / "models")
         self.trainers.load_state(path / "trainers")
         self.data_users.load_state(path / "data")
+
+    @override
+    def on_paused(self) -> None:
+        self.trainers.on_paused()
+
+    @override
+    def on_resumed(self) -> None:
+        self.trainers.on_resumed()

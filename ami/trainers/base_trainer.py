@@ -6,6 +6,7 @@ from typing import Any, TypeAlias
 import torch.nn as nn
 
 from ami.checkpointing import SaveAndLoadStateMixin
+from ami.threads import PauseResumeEventMixin
 
 from ..data.interfaces import ThreadSafeDataUser
 from ..data.utils import DataUsersDict
@@ -15,7 +16,7 @@ from ..models.utils import InferenceWrappersDict, ModelWrappersDict
 ModelWrapperType: TypeAlias = ModelWrapper[Any]
 
 
-class BaseTrainer(ABC, SaveAndLoadStateMixin):
+class BaseTrainer(ABC, SaveAndLoadStateMixin, PauseResumeEventMixin):
     """Abstract base class for all trainers.
 
     The `run` method is called repeatedly in the training thread.

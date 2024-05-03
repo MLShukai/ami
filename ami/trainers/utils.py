@@ -4,13 +4,14 @@ from pathlib import Path
 from typing_extensions import override
 
 from ami.checkpointing import SaveAndLoadStateMixin
+from ami.threads import PauseResumeEventMixin
 
 from ..data.utils import DataUsersDict
 from ..models.utils import ModelWrappersDict
 from .base_trainer import BaseTrainer
 
 
-class TrainersList(UserList[BaseTrainer], SaveAndLoadStateMixin):
+class TrainersList(UserList[BaseTrainer], SaveAndLoadStateMixin, PauseResumeEventMixin):
     """A custom list class for aggregating trainers, designed for integration
     within the `hydra` configuration framework.
 
@@ -95,3 +96,13 @@ class TrainersList(UserList[BaseTrainer], SaveAndLoadStateMixin):
         for i, trainer in enumerate(self):
             trainer_path = path / str(i)
             trainer.load_state(trainer_path)
+
+    @override
+    def on_paused(self) -> None:
+        for trainer in self:
+            trainer.on_paused()
+
+    @override
+    def on_resumed(self) -> None:
+        for trainer in self:
+            trainer.on_resumed()

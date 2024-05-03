@@ -6,11 +6,12 @@ from typing import Any, Generic
 from typing_extensions import override
 
 from ami.checkpointing import SaveAndLoadStateMixin
+from ami.threads import PauseResumeEventMixin
 
 from ..._types import ObsType, WrapperObsType
 
 
-class BaseSensor(ABC, Generic[ObsType], SaveAndLoadStateMixin):
+class BaseSensor(ABC, Generic[ObsType], SaveAndLoadStateMixin, PauseResumeEventMixin):
     """Abstract base sensor class for observing data from the real
     environment."""
 
@@ -82,3 +83,11 @@ class BaseSensorWrapper(BaseSensor[WrapperObsType], Generic[WrapperObsType, ObsT
     @override
     def load_state(self, path: Path) -> None:
         return self._sensor.load_state(path)
+
+    @override
+    def on_paused(self) -> None:
+        return self._sensor.on_paused()
+
+    @override
+    def on_resumed(self) -> None:
+        return self._sensor.on_resumed()

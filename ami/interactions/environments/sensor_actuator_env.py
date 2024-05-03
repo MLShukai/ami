@@ -41,3 +41,13 @@ class SensorActuatorEnv(BaseEnvironment[ObsType, ActType], Generic[ObsType, ActT
     def load_state(self, path: Path) -> None:
         self.sensor.load_state(path / "sensor")
         self.actuator.load_state(path / "actuator")
+
+    @override
+    def on_paused(self) -> None:
+        self.sensor.on_paused()
+        self.actuator.on_paused()
+
+    @override
+    def on_resumed(self) -> None:
+        self.sensor.on_resumed()
+        self.actuator.on_resumed()

@@ -6,13 +6,14 @@ from typing import Any, Generic
 import torch.nn as nn
 
 from ami.checkpointing import SaveAndLoadStateMixin
+from ami.threads import PauseResumeEventMixin
 
 from ...data.utils import DataCollectorsDict, ThreadSafeDataCollector
 from ...models.utils import InferenceWrappersDict, ThreadSafeInferenceWrapper
 from .._types import ActType, ObsType
 
 
-class BaseAgent(ABC, Generic[ObsType, ActType], SaveAndLoadStateMixin):
+class BaseAgent(ABC, Generic[ObsType, ActType], SaveAndLoadStateMixin, PauseResumeEventMixin):
     """Abstract base agent class for interacting with the environment.
 
     Methods to override:
