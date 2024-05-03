@@ -20,7 +20,10 @@ class BaseCheckpointScheduler(ABC):
         ```
     """
 
-    checkpointing: Checkpointing  # インスタンス生成後に任意でセットする。`save_checkpoint`を呼び出すための暫定的な参照位置。
+    def __init__(self, checkpointing: Checkpointing) -> None:
+        """Constructs with checkpointing class."""
+        super().__init__()
+        self.checkpointing = checkpointing
 
     @abstractmethod
     def is_available(self) -> bool:
@@ -31,8 +34,9 @@ class BaseCheckpointScheduler(ABC):
 class FixedTimeIntervalCheckpointScheduler(BaseCheckpointScheduler):
     """Saving the checkpoints with fixed time interval (seconds)."""
 
-    def __init__(self, interval: float) -> None:
-        super().__init__()
+    @override
+    def __init__(self, checkpointing: Checkpointing, interval: float) -> None:
+        super().__init__(checkpointing)
         self.interval = interval
 
         self._last_available_time = float("-inf")
