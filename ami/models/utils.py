@@ -2,6 +2,7 @@
 from collections import UserDict
 from enum import StrEnum
 from pathlib import Path
+from typing import TypeAlias
 
 import torch
 import torch.nn as nn
@@ -70,3 +71,58 @@ class ModelWrappersDict(UserDict[str, ModelWrapper[nn.Module]], SaveAndLoadState
         for name, wrapper in self.items():
             model_path = path / (name + ".pt")
             wrapper.model.load_state_dict(torch.load(model_path, map_location=wrapper.device))
+
+
+def count_model_parameters(model: nn.Module) -> tuple[int, int, int]:
+    """Counts the number of model parameters.
+
+    Args:
+        model: The model that has parameters to count.
+
+    Returns:
+        tuple[int, int, int]: total, trainable, frozen parameter counts.
+    """
+    num_trainable, num_frozen = 0, 0
+    for param in model.parameters():
+        if param.requires_grad:
+            num_trainable += param.numel()
+        else:
+            num_frozen += param.numel()
+    return num_trainable + num_frozen, num_trainable, num_frozen
+
+
+ModelParameterCountDictType: TypeAlias = dict[str, dict[str, int]]
+
+
+def create_model_parameter_count_dict(models: ModelWrappersDict) -> ModelParameterCountDictType:
+    """Creates the dict object that holds the model parameter count
+    infomations.
+
+    Returning dictionary structure is:
+
+        ```
+        {
+            _all_: {
+                total: ...
+                trainable: ...
+                frozen:
+            },
+            <model_name>: {
+                ...
+            }
+        }
+        ```
+    """
+
+    out: ModelParameterCountDictType = {}
+    all_total, all_trainable, all_frozen = 0, 0, 0
+    for name, wrapper in models.items():
+        total, trainable, frozen = count_model_parameters(wrapper.model)
+        out[name] = {"total": total, "trainable": trainable, "frozen": frozen}
+        all_total += total
+        all_trainable += trainable
+        all_frozen += frozen
+
+    out["_all_"] = {"total": all_total, "trainable": all_trainable, "frozen": all_frozen}
+
+    return out
