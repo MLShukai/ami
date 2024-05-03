@@ -1,7 +1,12 @@
 import torch
 
 from ami.models.model_wrapper import ModelWrapper
-from ami.models.utils import InferenceWrappersDict, ModelWrappersDict
+from ami.models.utils import (
+    InferenceWrappersDict,
+    ModelWrappersDict,
+    count_model_parameters,
+    create_model_parameter_count_dict,
+)
 from tests.helpers import ModelMultiplyP, skip_if_gpu_is_not_available
 
 
@@ -50,3 +55,33 @@ class TestWrappersDict:
 
         for (wrapper, new_wrapper) in zip(mwd.values(), new_mwd.values()):
             assert torch.equal(wrapper.model.p, new_wrapper.model.p)
+
+
+class DummyModel(torch.nn.Module):
+    def __init__(self, *args, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
+        self.p1 = torch.nn.Parameter(torch.randn(10))
+        self.p2 = torch.nn.Parameter(torch.randn(5), requires_grad=False)
+
+
+def test_count_model_parameters():
+    model = DummyModel()
+    assert count_model_parameters(model) == (15, 10, 5)
+
+
+def test_create_model_parameter_count_dict():
+    models = ModelWrappersDict(
+        {
+            "model1": ModelWrapper(DummyModel()),
+            "model2": ModelWrapper(DummyModel()),
+        }
+    )
+
+    out = create_model_parameter_count_dict(models)
+    assert out["_all_"] == {
+        "total": 30,
+        "trainable": 20,
+        "frozen": 10,
+    }
+
+    assert out["model1"] == out["model2"] == {"total": 15, "trainable": 10, "frozen": 5}

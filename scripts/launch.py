@@ -14,7 +14,7 @@ from ami.hydra_instantiators import (
 )
 from ami.interactions.interaction import Interaction
 from ami.logger import get_main_thread_logger
-from ami.models.utils import ModelWrappersDict
+from ami.models.utils import ModelWrappersDict, create_model_parameter_count_dict
 from ami.omegaconf_resolvers import register_custom_resolvers
 from ami.tensorboard_loggers import TensorBoardLogger
 from ami.threads import (
@@ -82,6 +82,7 @@ def main(cfg: DictConfig) -> None:
         "data": cfg.data_collectors,
         "models": cfg.models,
         "trainers": cfg.trainers,
+        "param_count": create_model_parameter_count_dict(models),
     }
     tensorboard_logger.log_hyperparameters(hparams_dict)
 
