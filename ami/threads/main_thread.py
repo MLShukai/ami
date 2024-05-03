@@ -27,6 +27,14 @@ class MainThread(BaseThread):
         timeout_for_all_threads_pause: float = 60.0,
         max_save_checkpoint_retry_attempts: int = 3,
     ) -> None:
+        """Constructs the main thread object.
+
+        Args:
+            checkpoint_scheduler: Scheduling checkpoint event.
+            address: The tuple of host and port number for web api handler.
+            timeout_for_all_threads_pause: Timeout seconds to wait for all threads pause. (for saving checkpoint.)
+            max_save_checkpoint_retry_attempts: Number of trials for failed attempts to save checkpoints.
+        """
         super().__init__()
 
         self.checkpoint_scheduler = checkpoint_scheduler
