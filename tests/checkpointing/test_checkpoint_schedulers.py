@@ -2,13 +2,13 @@ import time
 
 import pytest
 
-from ami.checkpointing.checkpoint_schedulers import FixedTimeIntervalScheduler
+from ami.checkpointing.checkpoint_schedulers import FixedTimeIntervalCheckpointScheduler
 
 
-class TestFixedTimeIntervalScheduler:
+class TestFixedTimeIntervalCheckpointScheduler:
     @pytest.mark.parametrize("interval", [0.001, 0.01])
     def test_is_available(self, interval: float):
-        scheduler = FixedTimeIntervalScheduler(interval)
+        scheduler = FixedTimeIntervalCheckpointScheduler(interval)
 
         assert scheduler.is_available()
         assert not scheduler.is_available()

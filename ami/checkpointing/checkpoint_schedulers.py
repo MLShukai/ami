@@ -6,7 +6,7 @@ from typing_extensions import override
 from .checkpointing import Checkpointing
 
 
-class BaseScheduler(ABC):
+class BaseCheckpointScheduler(ABC):
     """Schedules the checkpointing process with the specified condition.
 
     Expected usage:
@@ -28,7 +28,7 @@ class BaseScheduler(ABC):
         ...
 
 
-class FixedTimeIntervalScheduler(BaseScheduler):
+class FixedTimeIntervalCheckpointScheduler(BaseCheckpointScheduler):
     """Saving the checkpoints with fixed time interval (seconds)."""
 
     def __init__(self, interval: float) -> None:
