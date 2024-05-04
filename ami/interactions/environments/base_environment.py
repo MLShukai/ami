@@ -3,11 +3,12 @@ from abc import ABC, abstractmethod
 from typing import Any, Generic
 
 from ami.checkpointing import SaveAndLoadStateMixin
+from ami.threads.thread_control import PauseResumeEventMixin
 
 from .._types import ActType, ObsType
 
 
-class BaseEnvironment(ABC, Generic[ObsType, ActType], SaveAndLoadStateMixin):
+class BaseEnvironment(ABC, Generic[ObsType, ActType], SaveAndLoadStateMixin, PauseResumeEventMixin):
     """Abstract base environment class for interacting with real
     environment."""
 

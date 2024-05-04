@@ -50,3 +50,14 @@ class TestInteraction:
         interaction.load_state(interaction_path)
         mock_env.load_state.assert_called_once_with(environment_path)
         mock_agent.load_state.assert_called_once_with(agent_path)
+
+    def test_pause_resume_event_callbacks(self, mock_env: Mock, mock_agent: Mock) -> None:
+        interaction = Interaction(mock_env, mock_agent)
+
+        interaction.on_paused()
+        mock_env.on_paused.assert_called_once()
+        mock_agent.on_paused.assert_called_once()
+
+        interaction.on_resumed()
+        mock_env.on_resumed.assert_called_once()
+        mock_agent.on_resumed.assert_called_once()

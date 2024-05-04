@@ -21,6 +21,19 @@ def dummy_on_resumed() -> None:
     pass
 
 
+class PauseResumeEventMixin:
+    """Mixin class for implementing the class which has pause and resume event
+    callbacks."""
+
+    def on_paused(self) -> None:
+        """Callback function called when the system is paused."""
+        pass
+
+    def on_resumed(self) -> None:
+        """Callback function called when the system is resumed."""
+        pass
+
+
 class ThreadController:
     """The controller class for sending commands from the main thread to
     background threads.

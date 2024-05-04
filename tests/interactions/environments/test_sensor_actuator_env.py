@@ -50,3 +50,12 @@ class TestSensorActuatorEnv:
         environment.load_state(env_path)
         environment.sensor.load_state.assert_called_once_with(sensor_path)
         environment.actuator.load_state.assert_called_once_with(actuator_path)
+
+    def test_pause_resume_event_callbacks(self, environment: SensorActuatorEnv, mocker: MockerFixture) -> None:
+        environment.on_paused()
+        environment.sensor.on_paused.assert_called_once()
+        environment.actuator.on_paused.assert_called_once()
+
+        environment.on_resumed()
+        environment.sensor.on_resumed.assert_called_once()
+        environment.actuator.on_resumed.assert_called_once()

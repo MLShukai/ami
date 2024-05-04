@@ -57,3 +57,11 @@ class InferenceThread(BackgroundThread):
     @override
     def load_state(self, path: Path) -> None:
         self.interaction.load_state(path / "interaction")
+
+    @override
+    def on_paused(self) -> None:
+        self.interaction.on_paused()
+
+    @override
+    def on_resumed(self) -> None:
+        self.interaction.on_resumed()

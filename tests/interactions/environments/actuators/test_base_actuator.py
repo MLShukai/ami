@@ -24,3 +24,10 @@ class TestActuatorWrapper:
         mocked_actuator_wrapper._actuator.save_state.assert_called_once_with(actuator_path)
         mocked_actuator_wrapper.load_state(actuator_path)
         mocked_actuator_wrapper._actuator.load_state.assert_called_once_with(actuator_path)
+
+    def test_pause_resume_event_callbacks(self, mocked_actuator_wrapper: ActuatorWrapperImpl) -> None:
+        mocked_actuator_wrapper.on_paused()
+        mocked_actuator_wrapper._actuator.on_paused.assert_called_once()
+
+        mocked_actuator_wrapper.on_resumed()
+        mocked_actuator_wrapper._actuator.on_resumed.assert_called_once()

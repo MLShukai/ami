@@ -7,11 +7,12 @@ from typing import Any, Generic
 from typing_extensions import override
 
 from ami.checkpointing import SaveAndLoadStateMixin
+from ami.threads.thread_control import PauseResumeEventMixin
 
 from ..._types import ActType, WrapperActType
 
 
-class BaseActuator(ABC, Generic[ActType], SaveAndLoadStateMixin):
+class BaseActuator(ABC, Generic[ActType], SaveAndLoadStateMixin, PauseResumeEventMixin):
     """Abstract base actuator class for affecting actiion to the real
     environment."""
 
@@ -75,3 +76,11 @@ class BaseActuatorWrapper(BaseActuator[WrapperActType], Generic[WrapperActType, 
     @override
     def load_state(self, path: Path) -> None:
         return self._actuator.load_state(path)
+
+    @override
+    def on_paused(self) -> None:
+        return self._actuator.on_paused()
+
+    @override
+    def on_resumed(self) -> None:
+        return self._actuator.on_resumed()
