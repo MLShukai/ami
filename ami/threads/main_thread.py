@@ -55,7 +55,12 @@ class MainThread(BaseThread):
         self.web_api_handler.run_in_background()
 
         try:
-            while not self.process_received_commands():
+            while True:
+
+                self.process_received_commands()
+
+                if self.thread_controller.is_shutdown():
+                    break
 
                 if self.checkpoint_scheduler.is_available():
                     self.save_checkpoint()
@@ -71,11 +76,8 @@ class MainThread(BaseThread):
 
         self.logger.info("End main thread.")
 
-    def process_received_commands(self) -> bool:
-        """Processes the received commands from web api handler.
-
-        Returns `True` if the shutdown command is received.
-        """
+    def process_received_commands(self) -> None:
+        """Processes the received commands from web api handler."""
         while self.web_api_handler.has_commands():
             match self.web_api_handler.receive_command():
                 case ControlCommands.PAUSE:
@@ -87,8 +89,6 @@ class MainThread(BaseThread):
                 case ControlCommands.SHUTDOWN:
                     self.logger.info("Shutting down...")
                     self.thread_controller.shutdown()
-
-        return self.thread_controller.is_shutdown()
 
     def save_checkpoint(self) -> None:
         """Saves a checkpoint after pausing the all background thread."""
