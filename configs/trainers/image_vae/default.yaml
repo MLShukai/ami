@@ -16,6 +16,7 @@ logger:
   log_dir: ${paths.tensorboard_dir}/image_vae
   log_every_n_steps: 1
 
+kl_coef: 0.01
 device: ${devices.0}
 max_epochs: 3
 minimum_dataset_size: ${.partial_dataloader.batch_size}
