@@ -5,6 +5,7 @@ import hydra
 import rootutils
 from omegaconf import DictConfig
 
+from ami.checkpointing.checkpoint_schedulers import BaseCheckpointScheduler
 from ami.checkpointing.checkpointing import Checkpointing
 from ami.data.utils import DataCollectorsDict
 from ami.hydra_instantiators import (
@@ -53,12 +54,15 @@ def main(cfg: DictConfig) -> None:
     trainers: TrainersList = instantiate_trainers(cfg.trainers)
 
     logger.info("Instantiating Checkpointing...")
-    checkpointing: Checkpointing = hydra.utils.instantiate(cfg.checkpointing)
+    checkpoint_scheduler: BaseCheckpointScheduler = hydra.utils.instantiate(cfg.checkpointing)
+    checkpointing = checkpoint_scheduler.checkpointing
 
     logger.info("Instantiating Thread Classes...")
     threads_cfg = cfg.threads
     logger.info(f"Instantiating MainThread: <{threads_cfg.main_thread._target_}>")
-    main_thread: MainThread = hydra.utils.instantiate(threads_cfg.main_thread)
+    main_thread: MainThread = hydra.utils.instantiate(
+        threads_cfg.main_thread, checkpoint_scheduler=checkpoint_scheduler
+    )
 
     logger.info(f"Instantiating InferenceThread: <{threads_cfg.inference_thread._target_}>")
     inference_thread: InferenceThread = hydra.utils.instantiate(

@@ -148,22 +148,15 @@ def test_wait_for_loop_pause():
     assert not handler.is_loop_paused()
 
 
-def test_save_checkpoint(tmp_path, mocker: MockerFixture) -> None:
+def test_wait_for_all_threads_pause():
     controller = ThreadController()
-    mock_save_checkpoint = mocker.Mock()
-    ckpt_path = tmp_path / "test.ckpt"
-    mock_save_checkpoint.return_value = ckpt_path
-    controller.save_checkpoint_callback = mock_save_checkpoint
-
     for hdlr in controller.handlers.values():
         threading.Timer(0.1, hdlr._loop_pause_event.set).start()
 
-    assert controller.save_checkpoint() == ckpt_path
-    mock_save_checkpoint.assert_called_once()
+    assert controller.wait_for_all_threads_pause() is True
 
-    with pytest.raises(RuntimeError):
-        controller = ThreadController(0.001)
-        controller.save_checkpoint()
+    controller = ThreadController()
+    assert controller.wait_for_all_threads_pause(0.0001) is False
 
 
 class TestThreadControllerStatus:

@@ -1,3 +1,4 @@
+import time
 from pathlib import Path
 
 from typing_extensions import override
@@ -42,6 +43,7 @@ class InferenceThread(BackgroundThread):
         self.logger.debug("Start the interaction loop.")
         while self.thread_command_handler.manage_loop():
             self.interaction.step()
+            time.sleep(1e-9)  # GILのコンテキストスイッチングを意図的に呼び出す。
 
         self.logger.debug("End the interaction loop.")
 

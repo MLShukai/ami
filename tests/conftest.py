@@ -2,6 +2,10 @@
 import pytest
 import torch
 
+from ami.checkpointing.checkpoint_schedulers import (
+    Checkpointing,
+    FixedTimeIntervalCheckpointScheduler,
+)
 from ami.data.step_data import DataKeys, StepData
 from ami.data.utils import DataCollectorsDict, DataUsersDict
 from ami.interactions.interaction import Interaction
@@ -88,14 +92,24 @@ def trainers() -> TrainersList:
 
 
 @pytest.fixture
+def checkpoint_scheduler(tmp_path) -> FixedTimeIntervalCheckpointScheduler:
+    return FixedTimeIntervalCheckpointScheduler(Checkpointing(tmp_path / "checkpointing"), 1.0)
+
+
+@pytest.fixture
 def thread_objects(
-    interaction, data_collectors_dict, trainers, model_wrappers_dict
+    interaction,
+    data_collectors_dict,
+    trainers,
+    model_wrappers_dict,
+    checkpoint_scheduler: FixedTimeIntervalCheckpointScheduler,
 ) -> tuple[MainThread, InferenceThread, TrainingThread]:
     """Instantiates main, inference, training threads and attach shared object
     pool to them."""
-    mt = MainThread(("127.0.0.1", 44154))
+    mt = MainThread(checkpoint_scheduler, ("127.0.0.1", 44154), 3)
     it = InferenceThread(interaction, data_collectors_dict)
     tt = TrainingThread(trainers, model_wrappers_dict)
+    checkpoint_scheduler.checkpointing.add_threads(mt, it, tt)
     attach_shared_objects_pool_to_threads(mt, it, tt)
     return mt, it, tt
 
