@@ -58,7 +58,7 @@ class MainThread(BaseThread):
             while not self.process_received_commands():
 
                 if self.checkpoint_scheduler.is_available():
-                        self.save_checkpoint()
+                    self.save_checkpoint()
 
                 time.sleep(0.001)
 
