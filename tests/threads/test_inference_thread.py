@@ -21,7 +21,7 @@ class TestInferenceThread:
         inference_thread.load_state(inference_path)
         inference_thread.interaction.load_state.assert_called_once_with(inference_path / "interaction")
 
-    def test_system_event_callbacks(
+    def test_pause_resume_event_callbacks(
         self, thread_objects: tuple[MainThread, InferenceThread, TrainingThread], mocker: MockerFixture
     ):
         _, inference_thread, _ = thread_objects

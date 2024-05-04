@@ -27,7 +27,7 @@ class TestTrainingThread:
         training_thread.models.load_state.assert_called_once_with(training_path / "models")
         training_thread.trainers.load_state.assert_called_once_with(training_path / "trainers")
 
-    def test_system_event_callbacks(
+    def test_pause_resume_event_callbacks(
         self, thread_objects: tuple[MainThread, InferenceThread, TrainingThread], mocker: MockerFixture
     ):
         _, _, training_thread = thread_objects
