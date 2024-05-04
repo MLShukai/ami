@@ -9,7 +9,7 @@ from ami.checkpointing import SaveAndLoadStateMixin
 
 from ...data.utils import DataCollectorsDict, ThreadSafeDataCollector
 from ...models.utils import InferenceWrappersDict, ThreadSafeInferenceWrapper
-from ...threads.thread_control import PauseResumeEventMixin
+from ami.threads.thread_control import PauseResumeEventMixin
 from .._types import ActType, ObsType
 
 
