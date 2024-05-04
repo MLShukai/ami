@@ -94,9 +94,10 @@ class MainThread(BaseThread):
         """Saves a checkpoint after pausing the all background thread."""
 
         self.logger.info("Saving checkpoint...")
-        self.thread_controller.pause()
 
         for i in range(self._max_attempts_to_pause_all_threads):
+            self.thread_controller.pause()
+
             if self.thread_controller.wait_for_all_threads_pause(self._timeout_for_all_threads_pause):
                 self.logger.info("Success to pause the all background threads.")
                 break
