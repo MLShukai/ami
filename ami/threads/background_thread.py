@@ -41,17 +41,3 @@ class BackgroundThread(BaseThread):
     def join(self) -> None:
         self._thread.join()
         self.logger.info("Joined background thread.")
-
-    def on_paused(self) -> None:
-        """Callback function to be called when the system is paused.
-
-        This callback is called before `on_resumed` callback.
-        """
-        pass
-
-    def on_resumed(self) -> None:
-        """Callback function to be called when the system is resumed.
-
-        This callback is called after `on_paused` callback.
-        """
-        pass
