@@ -22,7 +22,7 @@ def dummy_on_resumed() -> None:
 
 
 class PauseResumeEventMixin:
-    """Mixin class for implementing the class which has system event
+    """Mixin class for implementing the class which has pause and resume event
     callbacks."""
 
     def on_paused(self) -> None:
