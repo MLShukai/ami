@@ -152,7 +152,8 @@ class ThreadCommandHandler:
             self.on_paused()
             self._loop_pause_event.set()
 
-        while self.is_active() and not self._controller.wait_for_resume(self.check_resume_interval):
+        while not self._controller.wait_for_resume(self.check_resume_interval) and self.is_active():
+            # `is_paused`と`wait_for_resume`の実行間隔を最小化。 whileの比較順序は変更しないこと
             pass
 
         if self._loop_pause_event.is_set():  # Exiting system state: `pause`, entering `resume`.
