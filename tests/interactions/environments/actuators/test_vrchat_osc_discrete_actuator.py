@@ -4,6 +4,7 @@ from pytest_mock import MockerFixture
 from vrchat_io.controller.osc import Buttons
 
 from ami.interactions.environments.actuators.vrchat_osc_discrete_actuator import (
+    STOP_ACTION,
     VRChatOSCDiscreteActuator,
 )
 
@@ -71,3 +72,14 @@ class TestVRChatOSCDiscreteActuator:
     )
     def test_convert_action_to_command(self, actuator, action, expected_command):
         assert actuator.convert_action_to_command(action) == expected_command
+
+    def test_on_paused_and_resumed(self, actuator: VRChatOSCDiscreteActuator, mocker: MockerFixture):
+        mock_operate = mocker.spy(actuator, "operate")
+
+        action = torch.tensor([1, 1, 1, 1, 1])
+        actuator.operate(action)
+        assert torch.equal(mock_operate.call_args.args[0], action)
+        actuator.on_paused()
+        assert torch.equal(mock_operate.call_args.args[0], STOP_ACTION)
+        actuator.on_resumed()
+        assert torch.equal(mock_operate.call_args.args[0], action)

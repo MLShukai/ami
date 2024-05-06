@@ -1,6 +1,7 @@
 from typing import Any
 
 import torch
+from typing_extensions import override
 from vrchat_io.controller.osc import RESET_VALUES, Buttons, InputController
 from vrchat_io.controller.wrappers.osc import MultiInputWrapper
 
@@ -40,6 +41,7 @@ class VRChatOSCDiscreteActuator(BaseActuator[torch.Tensor]):
         """
         controller = InputController((osc_address, osc_sender_port))
         self.controller = MultiInputWrapper(controller)
+        self._previous_action = STOP_ACTION
 
     def operate(self, action: torch.Tensor) -> None:
         """Operate the actuator with the given action.
@@ -49,6 +51,7 @@ class VRChatOSCDiscreteActuator(BaseActuator[torch.Tensor]):
         """
         command = self.convert_action_to_command(action.long().tolist())
         self.controller.command(command)
+        self._previous_action = action
 
     def setup(self) -> None:
         """Setup the actuator."""
@@ -57,6 +60,17 @@ class VRChatOSCDiscreteActuator(BaseActuator[torch.Tensor]):
     def teardown(self) -> None:
         """Teardown the actuator."""
         self.controller.command(RESET_VALUES)
+
+    _action_before_on_paused: torch.Tensor  # set in `on_paused`
+
+    @override
+    def on_paused(self) -> None:
+        self._action_before_on_paused = self._previous_action.clone()
+        self.operate(STOP_ACTION)
+
+    @override
+    def on_resumed(self) -> None:
+        self.operate(self._action_before_on_paused)
 
     def convert_action_to_command(self, action: list[int]) -> dict[str, Any]:
         """Convert raw action list to command dictionary."""
