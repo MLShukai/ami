@@ -1,6 +1,7 @@
 import time
 from pathlib import Path
 
+import numpy as np
 from typing_extensions import override
 
 from ..data.utils import DataCollectorsDict
@@ -15,12 +16,19 @@ class InferenceThread(BackgroundThread):
 
     THREAD_TYPE = ThreadTypes.INFERENCE
 
-    def __init__(self, interaction: Interaction, data_collectors: DataCollectorsDict) -> None:
-        """Constructs the inference thread class."""
+    def __init__(
+        self, interaction: Interaction, data_collectors: DataCollectorsDict, log_step_time_interval: float = 60.0
+    ) -> None:
+        """Constructs the inference thread class.
+
+        Args:
+            log_step_time_interval: The interval for logging the elapsed time of `interacition.step`.
+        """
         super().__init__()
 
         self.interaction = interaction
         self.data_collectors = data_collectors
+        self.log_step_time_interval = log_step_time_interval
 
         self.share_object(SharedObjectNames.DATA_USERS, data_collectors.get_data_users())
 
@@ -41,15 +49,32 @@ class InferenceThread(BackgroundThread):
         self.interaction.setup()
 
         self.logger.debug("Start the interaction loop.")
+
+        elapsed_times: list[float] = []
+        previous_logged_time = time.perf_counter()
+
         while self.thread_command_handler.manage_loop():
+            start = time.perf_counter()
+
             self.interaction.step()
             time.sleep(1e-9)  # GILのコンテキストスイッチングを意図的に呼び出す。
+
+            elapsed_times.append(time.perf_counter() - start)
+
+            if time.perf_counter() - previous_logged_time > self.log_step_time_interval:
+                mean_elapsed_time = np.mean(elapsed_times)
+                std_elapsed_time = np.std(elapsed_times)
+                self.logger.debug(
+                    f"Step time: {mean_elapsed_time:.3e} ± {std_elapsed_time:.3e} [s] in {len(elapsed_times)} steps."
+                )
+                elapsed_times.clear()
+                previous_logged_time = time.perf_counter()
 
         self.logger.debug("End the interaction loop.")
 
         self.interaction.teardown()
 
-        self.logger.info("End the trainig thread.")
+        self.logger.info("End the inference thread.")
 
     @override
     def save_state(self, path: Path) -> None:
