@@ -30,6 +30,7 @@ class ForwardDynamicsTrainer(BaseTrainer):
         observation_encoder_name: ModelNames | None = None,
         max_epochs: int = 1,
         minimum_dataset_size: int = 2,
+        minimum_new_data_count: int = 0,
     ) -> None:
         """Initializes an ForwardDynamicsTrainer object.
 
@@ -37,6 +38,7 @@ class ForwardDynamicsTrainer(BaseTrainer):
             partial_dataloader: A partially instantiated dataloader lacking a provided dataset.
             partial_optimizer: A partially instantiated optimizer lacking provided parameters.
             device: The accelerator device (e.g., CPU, GPU) utilized for training the model.
+            minimum_new_data_count: Minimum number of new data count required to run the training.
         """
         super().__init__()
         self.partial_optimizer = partial_optimizer
@@ -47,6 +49,7 @@ class ForwardDynamicsTrainer(BaseTrainer):
         self.max_epochs = max_epochs
         assert minimum_dataset_size >= 2, "minimum_dataset_size must be at least 2"
         self.minimum_dataset_size = minimum_dataset_size
+        self.minimum_new_data_count = minimum_new_data_count
 
     def on_data_users_dict_attached(self) -> None:
         self.trajectory_data_user: ThreadSafeDataUser[CausalDataBuffer] = self.get_data_user(
@@ -63,7 +66,10 @@ class ForwardDynamicsTrainer(BaseTrainer):
 
     def is_trainable(self) -> bool:
         self.trajectory_data_user.update()
-        return len(self.trajectory_data_user.buffer) >= self.minimum_dataset_size
+        return len(self.trajectory_data_user.buffer) >= self.minimum_dataset_size and self._is_new_data_available()
+
+    def _is_new_data_available(self) -> bool:
+        return self.trajectory_data_user.buffer.new_data_count >= self.minimum_new_data_count
 
     def train(self) -> None:
         self.forward_dynamics.to(self.device)

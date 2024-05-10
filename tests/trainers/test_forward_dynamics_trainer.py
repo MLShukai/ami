@@ -145,7 +145,12 @@ class TestSconv:
         logger,
     ):
         trainer = ForwardDynamicsTrainer(
-            partial_dataloader, partial_optimizer, device, logger, observation_encoder_name=ModelNames.IMAGE_ENCODER
+            partial_dataloader,
+            partial_optimizer,
+            device,
+            logger,
+            observation_encoder_name=ModelNames.IMAGE_ENCODER,
+            minimum_new_data_count=2,
         )
         trainer.attach_model_wrappers_dict(forward_dynamics_wrappers_dict)
         trainer.attach_data_users_dict(trajectory_buffer_dict.get_data_users())
@@ -158,6 +163,12 @@ class TestSconv:
         assert trainer.is_trainable() is True
         trainer.trajectory_data_user.clear()
         assert trainer.is_trainable() is False
+
+    def test_is_new_data_available(self, trainer: ForwardDynamicsTrainer):
+        trainer.trajectory_data_user.update()
+        assert trainer._is_new_data_available() is True
+        trainer.run()
+        assert trainer._is_new_data_available() is False
 
     def test_save_and_load_state(self, trainer: ForwardDynamicsTrainer, tmp_path, mocker) -> None:
         trainer_path = tmp_path / "forward_dynamics"
