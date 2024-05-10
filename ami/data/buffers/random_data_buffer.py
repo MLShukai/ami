@@ -30,6 +30,8 @@ class RandomDataBuffer(BaseDataBuffer):
         for key in self.__key_list:
             self.__buffer_dict[key] = []
 
+        self.new_data_count = 0
+
     def __len__(self) -> int:
         """Returns current data length.
 
@@ -44,6 +46,7 @@ class RandomDataBuffer(BaseDataBuffer):
         Args:
             step_data: A single step of data.
         """
+        self.new_data_count = min(self.new_data_count + 1, self.__max_len)
         if len(self) < self.__max_len:
             for key in self.__key_list:
                 self.__buffer_dict[key].append(torch.Tensor(step_data[key]).cpu())
@@ -74,6 +77,7 @@ class RandomDataBuffer(BaseDataBuffer):
         Returns:
             TensorDataset: a TensorDataset created from current buffer.
         """
+        self.new_data_count = 0
         tensor_list = []
         for key in self.__key_list:
             tensor_list.append(torch.stack(self.__buffer_dict[key]))
@@ -87,9 +91,16 @@ class RandomDataBuffer(BaseDataBuffer):
             with open(file_name, "wb") as f:
                 pickle.dump(value, f)
 
+        with open(path / "state.json", "w", encoding="utf-8") as f:
+            json.dump({"new_data_count": self.new_data_count}, f, indent=2)
+
     @override
     def load_state(self, path: Path) -> None:
         for key in self.__buffer_dict.keys():
             file_name = path / (key + ".pkl")
             with open(file_name, "rb") as f:
                 self.__buffer_dict[key] = pickle.load(f)[: self.__max_len]
+
+        with open(path / "state.json", encoding="utf-8") as f:
+            state = json.load(f)
+            self.new_data_count = min(self.__max_len, state["new_data_count"])
