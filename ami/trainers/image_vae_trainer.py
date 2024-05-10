@@ -30,6 +30,7 @@ class ImageVAETrainer(BaseTrainer):
         kl_coef: float = 1.0,
         max_epochs: int = 1,
         minimum_dataset_size: int = 1,
+        minimum_new_data_count: int = 0,
     ) -> None:
         """Initializes an ImageVAETrainer object.
 
@@ -38,6 +39,7 @@ class ImageVAETrainer(BaseTrainer):
             partial_optimizer: A partially instantiated optimizer lacking provided parameters.
             device: The accelerator device (e.g., CPU, GPU) utilized for training the model.
             kl_coef: The coefficient for balancing KL divergence relative to the reconstruction loss.
+            minimum_new_data_count: Minimum number of new data count required to run the training.
         """
         super().__init__()
         self.partial_optimizer = partial_optimizer
@@ -47,6 +49,7 @@ class ImageVAETrainer(BaseTrainer):
         self.kl_coef = kl_coef
         self.max_epochs = max_epochs
         self.minimum_dataset_size = minimum_dataset_size
+        self.minimum_new_data_count = minimum_new_data_count
 
     def on_data_users_dict_attached(self) -> None:
         self.image_data_user: ThreadSafeDataUser[RandomDataBuffer] = self.get_data_user(BufferNames.IMAGE)
@@ -62,7 +65,10 @@ class ImageVAETrainer(BaseTrainer):
 
     def is_trainable(self) -> bool:
         self.image_data_user.update()
-        return len(self.image_data_user.buffer) >= self.minimum_dataset_size
+        return len(self.image_data_user.buffer) >= self.minimum_dataset_size and self._is_new_data_available()
+
+    def _is_new_data_available(self) -> bool:
+        return self.image_data_user.buffer.new_data_count >= self.minimum_new_data_count
 
     def train(self) -> None:
         vae = VAE(self.encoder.model, self.decoder.model)

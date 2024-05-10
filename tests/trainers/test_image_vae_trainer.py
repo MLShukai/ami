@@ -88,7 +88,7 @@ class TestImageVAETrainer:
         device: torch.device,
         logger: StepIntervalLogger,
     ) -> ImageVAETrainer:
-        trainer = ImageVAETrainer(partial_dataloader, partial_optimizer, device, logger)
+        trainer = ImageVAETrainer(partial_dataloader, partial_optimizer, device, logger, minimum_new_data_count=1)
         trainer.attach_model_wrappers_dict(encoder_decoder_wrappers_dict)
         trainer.attach_data_users_dict(image_buffer_dict.get_data_users())
         return trainer
@@ -100,6 +100,12 @@ class TestImageVAETrainer:
         assert trainer.is_trainable() is True
         trainer.image_data_user.clear()
         assert trainer.is_trainable() is False
+
+    def test_is_new_data_available(self, trainer: ImageVAETrainer):
+        trainer.image_data_user.update()
+        assert trainer._is_new_data_available() is True
+        trainer.run()
+        assert trainer._is_new_data_available() is False
 
     def test_save_and_load_state(self, trainer: ImageVAETrainer, tmp_path, mocker) -> None:
         trainer_path = tmp_path / "image_vae"
