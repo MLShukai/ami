@@ -15,6 +15,8 @@ from .base_data_buffer import BaseDataBuffer
 class CausalDataBuffer(BaseDataBuffer):
     """A data buffer which preserve data order."""
 
+    new_data_count: int  # Count of new data added since the last `make_dataset`.
+
     def __init__(self, max_len: int, key_list: list[DataKeys | str]) -> None:
         """Initializes data buffer.
 
