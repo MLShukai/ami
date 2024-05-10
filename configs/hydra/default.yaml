@@ -17,7 +17,7 @@ sweep:
 job_logging:
   root:
     handlers: [root_console, root_file]
-    level: INFO
+    level: ${log_level}
 
   loggers:
     main:
