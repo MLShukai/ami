@@ -1,3 +1,4 @@
+import json
 import pickle
 from collections import deque
 from pathlib import Path
@@ -29,6 +30,8 @@ class CausalDataBuffer(BaseDataBuffer):
         for key in self._key_list:
             self.__buffer_dict[key] = deque(maxlen=max_len)
 
+        self.new_data_count = 0
+
     def __len__(self) -> int:
         """Returns current data length.
 
@@ -43,6 +46,7 @@ class CausalDataBuffer(BaseDataBuffer):
         Args:
             step_data: A single step of data.
         """
+        self.new_data_count = min(self.new_data_count + 1, self.__max_len)
         for key in self._key_list:
             self.__buffer_dict[key].append(torch.Tensor(step_data[key]).cpu())
 
@@ -56,6 +60,7 @@ class CausalDataBuffer(BaseDataBuffer):
         Args:
             new_data: A buffer to concatenate.
         """
+        self.new_data_count = min(self.__max_len, new_data.new_data_count + self.new_data_count)
         for key in self._key_list:
             self.buffer_dict[key] += new_data.buffer_dict[key]
 
@@ -65,6 +70,7 @@ class CausalDataBuffer(BaseDataBuffer):
         Returns:
             TensorDataset: a TensorDataset created from current buffer.
         """
+        self.new_data_count = 0
         tensor_list = []
         for key in self._key_list:
             tensor_list.append(torch.stack(list(self.__buffer_dict[key])))
@@ -78,9 +84,16 @@ class CausalDataBuffer(BaseDataBuffer):
             with open(file_name, "wb") as f:
                 pickle.dump(value, f)
 
+        with open(path / "state.json", "w", encoding="utf-8") as f:
+            json.dump({"new_data_count": self.new_data_count}, f, indent=2)
+
     @override
     def load_state(self, path: Path) -> None:
         for key in self.__buffer_dict.keys():
             file_name = path / (key + ".pkl")
             with open(file_name, "rb") as f:
                 self.__buffer_dict[key] = deque(pickle.load(f), maxlen=self.__max_len)
+
+        with open(path / "state.json", encoding="utf-8") as f:
+            state = json.load(f)
+            self.new_data_count = min(self.__max_len, state["new_data_count"])
