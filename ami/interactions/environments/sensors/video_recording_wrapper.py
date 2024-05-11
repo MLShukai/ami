@@ -1,3 +1,4 @@
+import os
 from datetime import datetime
 from pathlib import Path
 
@@ -25,8 +26,7 @@ class VideoRecordingWrapper(BaseSensorWrapper[Tensor, Tensor]):
         do_rgb_to_bgr: bool = True,
         do_scale_255: bool = True,
     ) -> None:
-        """
-        Constructs the sensor wrapper.
+        """Constructs the sensor wrapper.
 
         Args:
             sensor: An instance of the image sensor.
@@ -43,7 +43,7 @@ class VideoRecordingWrapper(BaseSensorWrapper[Tensor, Tensor]):
         super().__init__(sensor)
 
         self.output_dir = Path(output_dir)
-        self.output_dir.mkdir(exist_ok=True)
+        os.makedirs(self.output_dir)
         self.frame_size = (width, height)
         self.frame_rate = frame_rate
         self.file_name_format = file_name_format
