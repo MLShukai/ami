@@ -4,9 +4,9 @@ image_encoder:
   has_inference: True
   model:
     _target_: ami.models.vae.Conv2dEncoder
-    height: ${interaction.environment.sensor.height}
-    width: ${interaction.environment.sensor.width}
-    channels: 3
+    height: ${shared.image_height}
+    width: ${shared.image_width}
+    channels: ${shared.image_channels}
     latent_dim: 512 # From primitive AMI.
 
 image_decoder:
