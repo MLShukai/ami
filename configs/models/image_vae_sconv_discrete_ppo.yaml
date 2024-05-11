@@ -38,7 +38,7 @@ forward_dynamics:
     obs_action_projection:
       _target_: torch.nn.Linear
       # action_embedding_dim * num_action_choices + obs_embedding_dim
-      in_features: ${python.eval:"int('${..action_flatten.embedding_dim}') * 5 + int('${models.image_encoder.model.latent_dim}')"}
+      in_features: ${python.eval:"${..action_flatten.embedding_dim} * 5 + ${models.image_encoder.model.latent_dim}"}
       out_features: ${..core_model.dim}
     core_model:
       _target_: ami.models.components.sconv.SConv
