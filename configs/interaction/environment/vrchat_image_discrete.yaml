@@ -3,8 +3,8 @@ _target_: ami.interactions.environments.sensor_actuator_env.SensorActuatorEnv
 sensor:
   _target_: ami.interactions.environments.sensors.opencv_image_sensor.OpenCVImageSensor
   camera_index: 0
-  width: 84
-  height: 84
+  width: ${shared.image_width}
+  height: ${shared.image_height}
   base_fps: 60
 
 actuator:
