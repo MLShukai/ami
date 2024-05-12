@@ -1,11 +1,18 @@
 _target_: ami.interactions.environments.sensor_actuator_env.SensorActuatorEnv
 
 sensor:
-  _target_: ami.interactions.environments.sensors.opencv_image_sensor.OpenCVImageSensor
-  camera_index: 0
-  width: ${shared.image_width}
-  height: ${shared.image_height}
-  base_fps: 60
+  _target_: ami.interactions.environments.sensors.video_recording_wrapper.VideoRecordingWrapper
+  sensor:
+    _target_: ami.interactions.environments.sensors.opencv_image_sensor.OpenCVImageSensor
+    camera_index: 0
+    width: ${shared.image_width}
+    height: ${shared.image_height}
+    base_fps: 60
+
+  output_dir: ${paths.io_log_dir}/image_sensor
+  width: ${.sensor.width}
+  height: ${.sensor.height}
+  frame_rate: ${python.eval:"1 / ${interaction.interval_adjustor.interval}"}
 
 actuator:
   _target_: ami.interactions.environments.actuators.vrchat_osc_discrete_actuator.VRChatOSCDiscreteActuator
