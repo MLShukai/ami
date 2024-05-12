@@ -16,6 +16,7 @@ class SmallDeconvNet(nn.Module):
         dim_in: int,
         positional_bias: bool = True,
         nl: Callable[[Tensor], Tensor] = nn.LeakyReLU(negative_slope=0.2),
+        do_batchnorm: bool = False,
     ):
         """Reconstruct images from latent variables. `strides` differs from
         original implementation. For the original implementation, see
@@ -29,14 +30,18 @@ class SmallDeconvNet(nn.Module):
             dim_in (int): The size of latent variable.
             positional_bias (bool): Whether to add positional bias or not in last layer.
             nl (Callable): NonLinear function for activation.
+            do_batchnorm(bool, optional): Whether to do batchnorm. Defaults to False.
         """
         super().__init__()
+        batch_norm_cls = nn.BatchNorm2d if do_batchnorm else nn.Identity
+
         self.height = height
         self.width = width
         self.channels = channels
         self.kernel_sizes = ((4, 4), (8, 8), (8, 8))
         self.strides = ((2, 2), (2, 2), (4, 4))
         self.paddings = ((1, 1), (3, 3), (2, 2))
+        self.do_batchnorm = do_batchnorm
 
         init_output_size = self.init_output_size
         dim_output_init_fc = init_output_size[0] * init_output_size[1]
@@ -45,6 +50,7 @@ class SmallDeconvNet(nn.Module):
         self.deconv1 = nn.ConvTranspose2d(
             1, 128, kernel_size=self.kernel_sizes[0], stride=self.strides[0], padding=self.paddings[0]
         )
+        self.bn1 = batch_norm_cls(128)
         self.deconv2 = nn.ConvTranspose2d(
             128,
             64,
@@ -52,6 +58,7 @@ class SmallDeconvNet(nn.Module):
             stride=self.strides[1],
             padding=self.paddings[1],
         )
+        self.bn2 = batch_norm_cls(64)
         self.deconv3 = nn.ConvTranspose2d(
             64, 3, kernel_size=self.kernel_sizes[2], stride=self.strides[2], padding=self.paddings[2]
         )
@@ -108,8 +115,8 @@ class SmallDeconvNet(nn.Module):
     def forward(self, x: Tensor) -> Tensor:
         x = self.fc_init(x)
         x = x.view(-1, 1, self.init_output_size[0], self.init_output_size[1])
-        x = self.nl(self.deconv1(x))
-        x = self.nl(self.deconv2(x))
+        x = self.nl(self.bn1(self.deconv1(x)))
+        x = self.nl(self.bn2(self.deconv2(x)))
         x = self.deconv3(x)
         x = self.center_crop(x)
         if self.bias is not None:

@@ -24,9 +24,9 @@ class Decoder(ABC, nn.Module):
 
 
 class Conv2dEncoder(Encoder):
-    def __init__(self, height: int, width: int, channels: int, latent_dim: int) -> None:
+    def __init__(self, height: int, width: int, channels: int, latent_dim: int, do_batchnorm: bool = False) -> None:
         super().__init__()
-        self.conv_net = SmallConvNet(height, width, channels, latent_dim)
+        self.conv_net = SmallConvNet(height, width, channels, latent_dim, do_batchnorm=do_batchnorm)
         self.linear_mu = nn.Linear(latent_dim, latent_dim)
         self.linear_sigma = nn.Linear(latent_dim, latent_dim)
 
@@ -40,9 +40,9 @@ class Conv2dEncoder(Encoder):
 
 
 class Conv2dDecoder(Decoder):
-    def __init__(self, height: int, width: int, channels: int, latent_dim: int) -> None:
+    def __init__(self, height: int, width: int, channels: int, latent_dim: int, do_batchnorm: bool = False) -> None:
         super().__init__()
-        self.deconv_net = SmallDeconvNet(height, width, channels, latent_dim)
+        self.deconv_net = SmallDeconvNet(height, width, channels, latent_dim, do_batchnorm=do_batchnorm)
 
     def forward(self, z: Tensor) -> Tensor:
         rec_img: Tensor = self.deconv_net(z)
