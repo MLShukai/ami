@@ -28,8 +28,10 @@ class TestVideoRecordingWrapper:
     def wrapper(self, mock_image_sensor, tmp_path):
         sensor = VideoRecordingWrapper(mock_image_sensor, tmp_path / "video", WIDTH, HEIGHT, 30.0)
         sensor.setup()
+        assert sensor.video_writer.isOpened()
         yield sensor
         sensor.teardown()
+        assert not sensor.video_writer.isOpened()
 
     def test_setup_video_writer(self, wrapper: VideoRecordingWrapper):
         assert wrapper.video_path.exists()
@@ -54,6 +56,8 @@ class TestVideoRecordingWrapper:
     def test_on_paused_and_resumed(self, wrapper: VideoRecordingWrapper):
         wrapper.read()
         wrapper.on_paused()
+        assert not wrapper.video_writer.isOpened()
         previus_file = wrapper.video_path
         wrapper.on_resumed()
         assert previus_file != wrapper.video_path
+        assert wrapper.video_writer.isOpened()
