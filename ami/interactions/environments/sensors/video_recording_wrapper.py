@@ -54,7 +54,7 @@ class VideoRecordingWrapper(BaseSensorWrapper[Tensor, Tensor]):
         self.logger = get_inference_thread_logger(self.__class__.__name__)
 
     def setup_video_writer(self) -> None:
-        codec = cv2.VideoWriter_fourcc(*self.fourcc)  # type: ignore
+        codec = cv2.VideoWriter.fourcc(*self.fourcc)
         self.video_path = self.output_dir / datetime.now().strftime(self.file_name_format)
         self.video_writer = cv2.VideoWriter(str(self.video_path), codec, self.frame_rate, self.frame_size)
         self.logger.info(f"Recording video to '{self.video_path}'")
