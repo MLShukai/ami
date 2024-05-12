@@ -46,7 +46,7 @@ class TrainingThread(BackgroundThread):
                 self.logger.info(f"Running: {type(trainer).__name__} ...")
                 start = time.perf_counter()
                 trainer.run()
-                self.logger.debug(f"Training time: {time.perf_counter() - start:.2f} [s].")
+                self.logger.info(f"Training time: {time.perf_counter() - start:.2f} [s].")
 
             time.sleep(self.training_interval)  # See Issue: https://github.com/MLShukai/ami/issues/175
 
