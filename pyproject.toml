@@ -1,8 +1,8 @@
 [tool.poetry]
 name = "ami"
-version = "0.1.0" # After updated your version, you have to run `poetry install` again.
-description = "Your project description."
-authors = ["Python Template <python.template@example.com>"]
+version = "2024.05.0" # CalVer. After updated your version, you have to run `poetry install` again.
+description = "AMI: Autonomous Machine Intelligence"
+authors = ["Geson Anko <X(Twitter)@GesonAnkoVR>"]
 readme = "README.md"
 
 [tool.poetry.dependencies]
