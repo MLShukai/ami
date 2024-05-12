@@ -8,6 +8,7 @@ image_encoder:
     width: ${shared.image_width}
     channels: ${shared.image_channels}
     latent_dim: 512 # From primitive AMI.
+    do_batchnorm: True
 
 image_decoder:
   _target_: ami.models.model_wrapper.ModelWrapper
@@ -19,6 +20,7 @@ image_decoder:
     width: ${models.image_encoder.model.width}
     channels: ${models.image_encoder.model.channels}
     latent_dim: ${models.image_encoder.model.latent_dim}
+    do_batchnorm: True
 
 forward_dynamics:
   _target_: ami.models.model_wrapper.ModelWrapper
