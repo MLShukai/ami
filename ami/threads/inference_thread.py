@@ -64,7 +64,7 @@ class InferenceThread(BackgroundThread):
             if time.perf_counter() - previous_logged_time > self.log_step_time_interval:
                 mean_elapsed_time = np.mean(elapsed_times)
                 std_elapsed_time = np.std(elapsed_times)
-                self.logger.debug(
+                self.logger.info(
                     f"Step time: {mean_elapsed_time:.3e} ± {std_elapsed_time:.3e} [s] in {len(elapsed_times)} steps."
                 )
                 elapsed_times.clear()
