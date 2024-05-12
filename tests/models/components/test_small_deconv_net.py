@@ -19,15 +19,17 @@ class TestSmallDeconvNet:
             channels,
             dim_in,
             positional_bias,
-            nl""",
+            nl,
+            do_batchnorm
+            """,
         [
-            (8, 256, 256, 3, 256, False, torch.nn.LeakyReLU()),
-            (1, 128, 256, 3, 128, True, torch.nn.LeakyReLU(negative_slope=0.2)),
-            (4, 512, 128, 3, 256, True, torch.nn.LeakyReLU()),
+            (8, 256, 256, 3, 256, False, torch.nn.LeakyReLU(), False),
+            (1, 128, 256, 3, 128, True, torch.nn.LeakyReLU(negative_slope=0.2), True),
+            (4, 512, 128, 3, 256, True, torch.nn.LeakyReLU(), False),
         ],
     )
-    def test_forward(self, batch, height, width, channels, dim_in, positional_bias, nl):
-        mod = cls(height, width, channels, dim_in, positional_bias, nl)
+    def test_forward(self, batch, height, width, channels, dim_in, positional_bias, nl, do_batchnorm):
+        mod = cls(height, width, channels, dim_in, positional_bias, nl, do_batchnorm)
         x = torch.randn(batch, dim_in)
         x = mod.forward(x)
         assert x.size(0) == batch, "batch size mismatch"
