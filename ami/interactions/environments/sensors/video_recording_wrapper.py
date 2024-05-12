@@ -7,6 +7,7 @@ import numpy as np
 from torch import Tensor
 
 from ami.interactions.environments.sensors.base_sensor import BaseSensor
+from ami.logger import get_inference_thread_logger
 
 from .base_sensor import BaseSensorWrapper
 
@@ -50,11 +51,17 @@ class VideoRecordingWrapper(BaseSensorWrapper[Tensor, Tensor]):
         self.fourcc = fourcc
         self.do_rgb_to_bgr = do_rgb_to_bgr
         self.do_scale_255 = do_scale_255
+        self.logger = get_inference_thread_logger(self.__class__.__name__)
 
     def setup_video_writer(self) -> None:
         codec = cv2.VideoWriter_fourcc(*self.fourcc)  # type: ignore
         self.video_path = self.output_dir / datetime.now().strftime(self.file_name_format)
         self.video_writer = cv2.VideoWriter(str(self.video_path), codec, self.frame_rate, self.frame_size)
+        self.logger.info(f"Recording video to '{self.video_path}'")
+
+    def release_video_writer(self) -> None:
+        self.logger.info(f"Saved video to '{self.video_path}'")
+        self.video_writer.release()
 
     def setup(self) -> None:
         super().setup()
@@ -82,11 +89,11 @@ class VideoRecordingWrapper(BaseSensorWrapper[Tensor, Tensor]):
 
     def teardown(self) -> None:
         super().teardown()
-        self.video_writer.release()
+        self.release_video_writer()
 
     def on_paused(self) -> None:
         super().on_paused()
-        self.video_writer.release()  # 経験が途切れるため一度リリース
+        self.release_video_writer()  # 経験が途切れるため一度リリース
 
     def on_resumed(self) -> None:
         super().on_resumed()
