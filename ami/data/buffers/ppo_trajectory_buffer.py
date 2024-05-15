@@ -15,6 +15,7 @@ class PPOTrajectoryBuffer(CausalDataBuffer):
 
     Returning objects are;
         - observations
+        - hiddens
         - actions
         - action log probabilities
         - advantages
@@ -33,6 +34,7 @@ class PPOTrajectoryBuffer(CausalDataBuffer):
             max_len,
             key_list=[
                 DataKeys.OBSERVATION,
+                DataKeys.HIDDEN,
                 DataKeys.ACTION,
                 DataKeys.ACTION_LOG_PROBABILITY,
                 DataKeys.REWARD,
@@ -52,6 +54,7 @@ class PPOTrajectoryBuffer(CausalDataBuffer):
             tensor_dict[key] = torch.stack(list(self.buffer_dict[key]))
 
         observations = tensor_dict[DataKeys.OBSERVATION][:-1]
+        hiddens = tensor_dict[DataKeys.HIDDEN][:-1]
         actions = tensor_dict[DataKeys.ACTION][:-1]
         logprobs = tensor_dict[DataKeys.ACTION_LOG_PROBABILITY][:-1]
         rewards = tensor_dict[DataKeys.REWARD][:-1]
@@ -63,7 +66,7 @@ class PPOTrajectoryBuffer(CausalDataBuffer):
         advantages = compute_advantage(rewards, values, final_next_value, self.gamma, self.gae_lambda)
         returns = advantages + values
 
-        return TensorDataset(observations, actions, logprobs, advantages, returns, values)
+        return TensorDataset(observations, hiddens, actions, logprobs, advantages, returns, values)
 
 
 def compute_advantage(
