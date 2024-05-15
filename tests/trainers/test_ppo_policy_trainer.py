@@ -18,7 +18,6 @@ from ami.models.policy_value_common_net import PolicyValueCommonNet
 from ami.models.utils import ModelWrappersDict
 from ami.tensorboard_loggers import StepIntervalLogger
 from ami.trainers.ppo_policy_trainer import PPOPolicyTrainer
-
 from tests.models.test_policy_value_common_net import CatObsHidden
 
 

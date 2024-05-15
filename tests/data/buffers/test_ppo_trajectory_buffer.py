@@ -18,7 +18,9 @@ class TestPPOTrajectoryBuffer:
         """,
         [(128, 0.99, 0.99, (64, 64), (4, 64), (64, 64), 256), (64, 0.98, 0.999, (3, 84, 84), (5,), 32)],
     )
-    def test_make_dataset(self, max_size, gamma, gae_lambda, observation_shape, hidden_shape, action_shape, num_collect):
+    def test_make_dataset(
+        self, max_size, gamma, gae_lambda, observation_shape, hidden_shape, action_shape, num_collect
+    ):
         buffer = PPOTrajectoryBuffer.reconstructable_init(max_size, gamma, gae_lambda)
 
         assert buffer.dataset_size == 0
