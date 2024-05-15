@@ -95,7 +95,7 @@ class CuriosityImagePPOAgent(BaseAgent[Tensor, Tensor]):
         self.step_data[DataKeys.OBSERVATION] = observation  # o_t
         self.step_data[DataKeys.EMBED_OBSERVATION] = embed_obs  # z_t
 
-        action_dist, value = self.policy_value(observation, self.forward_dynamics)
+        action_dist, value = self.policy_value(observation, self.forward_dynamics_hidden_state)
         action = action_dist.sample()
         action_log_prob = action_dist.log_prob(action)
 
