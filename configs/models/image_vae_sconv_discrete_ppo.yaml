@@ -66,9 +66,9 @@ policy_value:
       _target_: torch.nn.Sequential
       _args_:
         - _target_: ami.models.components.small_conv_net.SmallConvNet
-          height: ${interaction.environment.sensor.height}
-          width: ${interaction.environment.sensor.width}
-          channels: 3
+          height: ${shared.image_height}
+          width: ${shared.image_width}
+          channels: ${shared.image_channels}
           dim_out: 512
         - _target_: torch.nn.Linear
           in_features: ${..0.dim_out}
