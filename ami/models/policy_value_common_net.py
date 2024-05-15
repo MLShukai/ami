@@ -43,7 +43,8 @@ class PolicyValueCommonNet(nn.Module):
 
 
 class SelectObservation(nn.Module):
-    """Selects the observation only."""
+    """Selects the observation only to keep compatibility with
+    `PritmiveAMI`."""
 
     def forward(self, observation: Tensor, hidden: Tensor) -> Tensor:
         return observation
