@@ -84,15 +84,15 @@ class PPOPolicyTrainer(BaseTrainer):
         self.trajectory_data_user.update()
         return self.trajectory_data_user.buffer.dataset_size >= self.minimum_dataset_size
 
-    def model_forward(self, obs: Tensor) -> tuple[Distribution, Tensor]:
+    def model_forward(self, obs: Tensor, hiddens: Tensor) -> tuple[Distribution, Tensor]:
         """Written for type annotation."""
-        return self.policy_value(obs)
+        return self.policy_value(obs, hiddens)
 
     def training_step(self, batch: tuple[Tensor, ...]) -> dict[str, Tensor]:
         """Perform a single training step on a batch of data."""
-        obses, actions, logprobs, advantanges, returns, values = batch
+        obses, hiddens, actions, logprobs, advantanges, returns, values = batch
 
-        new_action_dist, new_values = self.model_forward(obses)
+        new_action_dist, new_values = self.model_forward(obses, hiddens)
         new_logprobs = new_action_dist.log_prob(actions)
         entropy = new_action_dist.entropy()
 

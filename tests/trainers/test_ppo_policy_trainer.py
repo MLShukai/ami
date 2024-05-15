@@ -18,6 +18,7 @@ from ami.models.policy_value_common_net import PolicyValueCommonNet
 from ami.models.utils import ModelWrappersDict
 from ami.tensorboard_loggers import StepIntervalLogger
 from ami.trainers.ppo_policy_trainer import PPOPolicyTrainer
+from tests.models.test_policy_value_common_net import CatObsHidden
 
 
 class TestPPOPolicyTrainer:
@@ -33,11 +34,14 @@ class TestPPOPolicyTrainer:
 
     @pytest.fixture
     def policy_value(self):
-        base_model = nn.Linear(128, 16)
+        obs_layer = nn.Linear(128, 64)
+        hidden_layer = nn.Linear(256, 128)
+        obs_hidden_proj = CatObsHidden()
+        core_model = nn.Linear(128 + 64, 16)
         policy = DiscretePolicyHead(16, [8])
         value = FullyConnectedValueHead(16)
 
-        return PolicyValueCommonNet(base_model, policy, value)
+        return PolicyValueCommonNet(obs_layer, hidden_layer, obs_hidden_proj, core_model, policy, value)
 
     @pytest.fixture
     def policy_value_wrappers_dict(
@@ -54,6 +58,7 @@ class TestPPOPolicyTrainer:
         return StepData(
             {
                 DataKeys.OBSERVATION: torch.randn(128),
+                DataKeys.HIDDEN: torch.randn(256),
                 DataKeys.ACTION: torch.zeros((1,), dtype=torch.int64),
                 DataKeys.ACTION_LOG_PROBABILITY: torch.randn(1),
                 DataKeys.REWARD: torch.randn(1),

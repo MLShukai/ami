@@ -12,12 +12,15 @@ class TestPPOTrajectoryBuffer:
         gamma,
         gae_lambda,
         observation_shape,
+        hidden_shape,
         action_shape,
         num_collect,
         """,
-        [(128, 0.99, 0.99, (64, 64), (64, 64), 256), (64, 0.98, 0.999, (3, 84, 84), (5,), 32)],
+        [(128, 0.99, 0.99, (64, 64), (4, 64), (64, 64), 256), (64, 0.98, 0.999, (3, 84, 84), (8, 128), (5,), 32)],
     )
-    def test_make_dataset(self, max_size, gamma, gae_lambda, observation_shape, action_shape, num_collect):
+    def test_make_dataset(
+        self, max_size, gamma, gae_lambda, observation_shape, hidden_shape, action_shape, num_collect
+    ):
         buffer = PPOTrajectoryBuffer.reconstructable_init(max_size, gamma, gae_lambda)
 
         assert buffer.dataset_size == 0
@@ -25,6 +28,7 @@ class TestPPOTrajectoryBuffer:
         for _ in range(num_collect):
             step_data = StepData()
             step_data[DataKeys.OBSERVATION] = torch.randn(*observation_shape)
+            step_data[DataKeys.HIDDEN] = torch.randn(*hidden_shape)
             step_data[DataKeys.ACTION] = torch.randn(*action_shape)
             step_data[DataKeys.ACTION_LOG_PROBABILITY] = torch.randn(*action_shape)
             step_data[DataKeys.REWARD] = torch.randn(1)
@@ -37,8 +41,9 @@ class TestPPOTrajectoryBuffer:
         length = min(max_size, num_collect) - 1
         assert buffer.dataset_size == length
 
-        observations, actions, logprobs, advantages, returns, values = dataset[0:length]
+        observations, hiddens, actions, logprobs, advantages, returns, values = dataset[0:length]
         assert observations.size() == (length, *observation_shape)
+        assert hiddens.size() == (length, *hidden_shape)
         assert actions.size() == (length, *action_shape)
         assert logprobs.size() == (length, *action_shape)
         assert advantages.size() == (length, 1)
