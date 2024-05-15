@@ -1,5 +1,3 @@
-from typing import Any
-
 import torch.nn as nn
 from torch import Tensor
 from torch.distributions import Distribution
@@ -14,7 +12,7 @@ class PolicyValueCommonNet(nn.Module):
         self.policy_head = policy_head
         self.value_head = value_head
 
-    def forward(self, *args: Any, **kwds: Any) -> tuple[Distribution, Tensor]:
+    def forward(self, observation: Tensor) -> tuple[Distribution, Tensor]:
         """Returns the action distribution and estimated value."""
-        h = self.base_model(*args, **kwds)
+        h = self.base_model(observation)
         return self.policy_head(h), self.value_head(h)
