@@ -8,12 +8,17 @@ from ami.models.components.fully_connected_value_head import FullyConnectedValue
 from ami.models.policy_value_common_net import PolicyValueCommonNet
 
 
+class CatObsHidden(nn.Module):
+    def forward(self, obs, hidden):
+        return torch.cat([obs, hidden], -1)
+
+
 class TestPolicyValueCommonNet:
     @pytest.fixture
     def net(self) -> PolicyValueCommonNet:
         obs_layer = nn.Linear(128, 64)
         hidden_layer = nn.Linear(256, 128)
-        obs_hidden_proj = lambda o, h: torch.cat([o, h], dim=-1)
+        obs_hidden_proj = CatObsHidden()
         core_model = nn.Linear(128 + 64, 16)
         policy = DiscretePolicyHead(16, [8])
         value = FullyConnectedValueHead(16)
