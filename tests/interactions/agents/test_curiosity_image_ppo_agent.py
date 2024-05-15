@@ -22,6 +22,7 @@ from ami.models.components.fully_connected_value_head import FullyConnectedValue
 from ami.models.components.multi_embeddings import MultiEmbeddings
 from ami.models.components.sconv import SConv
 from ami.models.components.small_conv_net import SmallConvNet
+from ami.models.policy_value_common_net import SelectObservation
 from ami.models.utils import InferenceWrappersDict, ModelWrapper, ModelWrappersDict
 from ami.tensorboard_loggers import TimeIntervalLogger
 
@@ -62,6 +63,9 @@ class TestCuriosityImagePPOAgent:
         )
 
         policy_value = PolicyValueCommonNet(
+            nn.Identity(),
+            nn.Identity(),
+            SelectObservation(),
             SmallConvNet(HEIGHT, WIDTH, CHANNELS, EMBED_OBS_DIM),
             DiscretePolicyHead(EMBED_OBS_DIM, ACTION_CHOICES_PER_CATEGORY),
             FullyConnectedValueHead(EMBED_OBS_DIM),
