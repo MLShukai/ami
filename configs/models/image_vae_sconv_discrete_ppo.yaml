@@ -62,6 +62,12 @@ policy_value:
   has_inference: True
   model:
     _target_: ami.models.policy_value_common_net.PolicyValueCommonNet
+    observation_projection:
+      _target_: torch.nn.Identity
+    forward_dynamics_hidden_projection:
+      _target_: torch.nn.Identity
+    observation_hidden_projection:
+      _target_: ami.models.policy_value_common_net.SelectObservation
     core_model:
       _target_: torch.nn.Sequential
       _args_:
