@@ -23,17 +23,26 @@ class PPOTrajectoryBuffer(CausalDataBuffer):
         - values
     """
 
-    def __init__(self, max_len: int, gamma: float = 0.99, gae_lambda: float = 0.95) -> None:
+    def __init__(
+        self,
+        max_len: int,
+        gamma: float = 0.99,
+        gae_lambda: float = 0.95,
+        use_embed_obs_as_observation: bool = False,
+    ) -> None:
         """
         Args:
             max_size: The max size of internal buffer.
             gamma: Discount factor.
             gae_lambda: The lambda of generalized advantage estimation.
+            use_embed_obs_as_observation: Uses the embed observation as observation.
         """
+        self.obs_key = DataKeys.EMBED_OBSERVATION if use_embed_obs_as_observation else DataKeys.OBSERVATION
+
         super().__init__(
             max_len,
             key_list=[
-                DataKeys.OBSERVATION,
+                self.obs_key,
                 DataKeys.HIDDEN,
                 DataKeys.ACTION,
                 DataKeys.ACTION_LOG_PROBABILITY,
@@ -53,7 +62,7 @@ class PPOTrajectoryBuffer(CausalDataBuffer):
         for key in self._key_list:
             tensor_dict[key] = torch.stack(list(self.buffer_dict[key]))
 
-        observations = tensor_dict[DataKeys.OBSERVATION][:-1]
+        observations = tensor_dict[self.obs_key][:-1]
         hiddens = tensor_dict[DataKeys.HIDDEN][:-1]
         actions = tensor_dict[DataKeys.ACTION][:-1]
         logprobs = tensor_dict[DataKeys.ACTION_LOG_PROBABILITY][:-1]
