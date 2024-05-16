@@ -1,3 +1,4 @@
+import torch
 import torch.nn as nn
 from torch import Tensor
 from torch.distributions import Distribution
@@ -48,3 +49,24 @@ class SelectObservation(nn.Module):
 
     def forward(self, observation: Tensor, hidden: Tensor) -> Tensor:
         return observation
+
+
+class ConcatFlattenedObservationAndStackedHidden(nn.Module):
+    """Concatenates the flattened observation and stacked hidden states.
+
+    Shape:
+        - flattened_obs: (*, N)
+        - stacked_hidden: (*, D, N)
+
+        Return shape: (*, D+1, N) if transpose is False, else (*, N, D+1)
+    """
+
+    def __init__(self, transpose: bool = False) -> None:
+        super().__init__()
+        self.transpose = transpose
+
+    def forward(self, flattened_obs: Tensor, stacked_hidden: Tensor) -> Tensor:
+        out = torch.cat([flattened_obs.unsqueeze(-2), stacked_hidden], dim=-2)
+        if self.transpose:
+            out = out.transpose(-2, -1)
+        return out
