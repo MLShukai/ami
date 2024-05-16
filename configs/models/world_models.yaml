@@ -67,7 +67,7 @@ policy_value:
       in_features: ${models.image_encoder.model.latent_dim}
       out_features: 512
     forward_dynamics_hidden_projection:
-      _target_: torch.nn.Linear
+      _target_: ami.models.components.fc_complex_to_real.FCComplexToReal
       in_features: ${models.forward_dynamics.model.core_model.dim_ff_hidden}
       out_features: ${..observation_projection.out_features}
     observation_hidden_projection:
