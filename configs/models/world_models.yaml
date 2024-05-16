@@ -76,15 +76,15 @@ policy_value:
     core_model:
       _target_: ami.models.components.global_convolutions.GlobalConvolutions1d
       in_channels: ${..observation_projection.out_features}
-      out_features: 512
+      out_channels: 512
       kernel_size: ${python.eval:"${models.forward_dynamics.model.core_model.depth} + 1"}
       num_layers: 1
     policy_head:
       _target_: ami.models.components.discrete_policy_head.DiscretePolicyHead
-      dim_in: ${..core_model.out_features}
+      dim_in: ${..core_model.out_channels}
       action_choices_per_category:
         _target_: hydra.utils.get_object
         path: ami.interactions.environments.actuators.vrchat_osc_discrete_actuator.ACTION_CHOICES_PER_CATEGORY
     value_head:
       _target_: ami.models.components.fully_connected_value_head.FullyConnectedValueHead
-      dim_in: ${..core_model.out_features}
+      dim_in: ${..core_model.out_channels}
