@@ -19,6 +19,7 @@ def register_custom_resolvers() -> None:
         OmegaConf.register_new_resolver(
             "torch.dtype", convert_dtype_str_to_torch_dtype
         )  # Usage: ${torch.dtype: float32}
+        OmegaConf.register_new_resolver("cvt_time_str", time_string_to_seconds)  # Usage: ${cvt_time_str:"1h"}
 
         _registered = True
 

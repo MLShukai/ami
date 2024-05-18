@@ -11,6 +11,7 @@ def test_resolovers():
     assert OmegaConf.create({"device": "${torch.device: cuda:0}"}).device == torch.device("cuda:0")
     assert OmegaConf.create({"eval": "${python.eval: 1 + 2 * 3 / 4}"}).eval == 2.5
     assert OmegaConf.create({"dtype": "${torch.dtype: complex64}"}).dtype == torch.complex64
+    assert OmegaConf.create({"time": "${cvt_time_str: 10.0h}"}).time == 60 * 60 * 10
 
 
 def test_time_string_to_seconds():
