@@ -47,17 +47,26 @@ class PredictionErrorReward:
 class CuriosityImagePPOAgent(BaseAgent[Tensor, Tensor]):
     """Image input curiosity agent with ppo policy."""
 
-    def __init__(self, initial_hidden: Tensor, logger: TimeIntervalLogger, reward: PredictionErrorReward) -> None:
+    def __init__(
+        self,
+        initial_hidden: Tensor,
+        logger: TimeIntervalLogger,
+        reward: PredictionErrorReward,
+        use_embed_obs_for_policy: bool = False,
+    ) -> None:
         """Constructs Agent.
 
         Args:
             initial_hidden: Initial hidden state for the forward dynamics model.
+            use_embed_obs_for_policy: Use embed observation as observation for policy input.
+                Implemented for adapting the world models learning method.
         """
         super().__init__()
 
         self.forward_dynamics_hidden_state = initial_hidden
         self.logger = logger
         self.reward_computer = reward
+        self.use_embed_obs_for_policy = use_embed_obs_for_policy
 
     def on_inference_models_attached(self) -> None:
         super().on_inference_models_attached()
@@ -95,7 +104,13 @@ class CuriosityImagePPOAgent(BaseAgent[Tensor, Tensor]):
         self.step_data[DataKeys.OBSERVATION] = observation  # o_t
         self.step_data[DataKeys.EMBED_OBSERVATION] = embed_obs  # z_t
 
-        action_dist, value = self.policy_value(observation, self.forward_dynamics_hidden_state)
+        # Adaptiing World Models learning method.
+        if self.use_embed_obs_for_policy:
+            policy_obs = embed_obs
+        else:
+            policy_obs = observation
+
+        action_dist, value = self.policy_value(policy_obs, self.forward_dynamics_hidden_state)
         action = action_dist.sample()
         action_log_prob = action_dist.log_prob(action)
 

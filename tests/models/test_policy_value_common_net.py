@@ -5,7 +5,10 @@ from torch.distributions import Distribution
 
 from ami.models.components.discrete_policy_head import DiscretePolicyHead
 from ami.models.components.fully_connected_value_head import FullyConnectedValueHead
-from ami.models.policy_value_common_net import PolicyValueCommonNet
+from ami.models.policy_value_common_net import (
+    ConcatFlattenedObservationAndStackedHidden,
+    PolicyValueCommonNet,
+)
 
 
 class CatObsHidden(nn.Module):
@@ -31,3 +34,18 @@ class TestPolicyValueCommonNet:
         assert isinstance(action_dist, Distribution)
         assert action_dist.sample().shape == (1,)
         assert value.shape == (1,)
+
+
+class TestConcatFlattenedObservationAndStackedHidden:
+    def test_forward(self):
+        mod = ConcatFlattenedObservationAndStackedHidden()
+
+        obs, hidden = torch.randn(3, 10), torch.randn(3, 4, 10)
+        out = mod.forward(obs, hidden)
+        assert out.shape == (3, 5, 10)
+        assert torch.equal(obs, out[:, 0])
+
+        mod = ConcatFlattenedObservationAndStackedHidden(transpose=True)
+        out = mod.forward(obs, hidden)
+        assert out.shape == (3, 10, 5)
+        assert torch.equal(obs, out[:, :, 0])
