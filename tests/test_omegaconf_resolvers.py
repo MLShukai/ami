@@ -23,6 +23,7 @@ def test_time_string_to_seconds():
     assert time_string_to_seconds("2w") == 1209600.0
     assert time_string_to_seconds("1mo") == 2628000.0
     assert time_string_to_seconds("1y") == 31536000.0
+    assert time_string_to_seconds("100ms") == 0.1
 
     # Invalid format cases
     with pytest.raises(ValueError, match="Invalid time format: abc"):
@@ -35,8 +36,6 @@ def test_time_string_to_seconds():
         time_string_to_seconds("h")
 
     # Unknown time unit cases
-    with pytest.raises(ValueError, match="Unknown time unit: ms"):
-        time_string_to_seconds("1ms")
 
-    with pytest.raises(ValueError, match="Unknown time unit: minutes"):
-        time_string_to_seconds("1minutes")
+    with pytest.raises(ValueError, match="Unknown time unit: nan"):
+        time_string_to_seconds("1nan")

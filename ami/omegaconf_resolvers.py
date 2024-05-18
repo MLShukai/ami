@@ -41,6 +41,7 @@ def convert_dtype_str_to_torch_dtype(dtype_str: str) -> torch.dtype:
 
 
 TIME_UNITS = {
+    "ms": 0.001,  # milli seconds
     "s": 1,  # seconds
     "m": 60,  # minutes
     "h": 3600,  # hours
