@@ -2,6 +2,8 @@
 
 See: https://omegaconf.readthedocs.io/en/latest/custom_resolvers.html
 """
+import re
+
 import torch
 from omegaconf import OmegaConf
 
@@ -17,6 +19,7 @@ def register_custom_resolvers() -> None:
         OmegaConf.register_new_resolver(
             "torch.dtype", convert_dtype_str_to_torch_dtype
         )  # Usage: ${torch.dtype: float32}
+        OmegaConf.register_new_resolver("cvt_time_str", time_string_to_seconds)  # Usage: ${cvt_time_str:"1h"}
 
         _registered = True
 
@@ -35,3 +38,34 @@ def convert_dtype_str_to_torch_dtype(dtype_str: str) -> torch.dtype:
     if not isinstance(dtype, torch.dtype):
         raise TypeError(f"Dtype name {dtype_str} is not dtype! Object: {dtype}")
     return dtype
+
+
+TIME_UNITS = {
+    "ms": 0.001,  # milli seconds
+    "s": 1,  # seconds
+    "m": 60,  # minutes
+    "h": 3600,  # hours
+    "d": 86400,  # days
+    "w": 604800,  # weeks
+    "mo": 2628000,  # months (30.44 days)
+    "y": 31536000,  # years (365 days)
+}
+
+
+def time_string_to_seconds(time_str: str) -> float:
+    """Converts the time string (e.g., 1.0h, 1d) to seconds."""
+
+    # Extract the numeric and unit parts using regex
+    matched = re.match(r"(\d*\.?\d+)([a-zA-Z]+)", time_str)
+    if not matched:
+        raise ValueError(f"Invalid time format: {time_str}")
+
+    num_part = matched.group(1)
+    unit_part = matched.group(2)
+
+    num_value = float(num_part)
+
+    if unit_part in TIME_UNITS:
+        return num_value * TIME_UNITS[unit_part]
+    else:
+        raise ValueError(f"Unknown time unit: {unit_part}")
