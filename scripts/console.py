@@ -57,6 +57,14 @@ class Console(cmd.Cmd):
         """Exit the console."""
         return self.do_quit(line)
 
+    def do_save_checkpoint(self, line: str) -> None:
+        """Saves a checkpoint."""
+        response = requests.post(f"http://{self._host}:{self._port}/api/save-checkpoint")
+        print(json.loads(response.text)["result"])
+
+    def do_ckpt(self, line: str) -> None:
+        return self.do_save_checkpoint(line)
+
     def completedefault(self, text: str, line: str, begidx: int, endidx: int) -> list[str]:
         # FIXME: Not working as expected
         commands = ["pause", "resume", "shutdown", "quit"]

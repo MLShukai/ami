@@ -2,6 +2,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import TypeAlias
 
+from ..logger import get_main_thread_logger
 from ..threads.base_thread import BaseThread
 
 StrPath: TypeAlias = str | Path
@@ -14,7 +15,7 @@ class Checkpointing:
     and `load_state` methods to manage checkpoints.
     """
 
-    def __init__(self, checkpoints_dir: StrPath, checkpoint_name_format: str = "%Y-%m-%d_%H-%M-%S.ckpt") -> None:
+    def __init__(self, checkpoints_dir: StrPath, checkpoint_name_format: str = "%Y-%m-%d_%H-%M-%S,%f.ckpt") -> None:
         """Initializes the Checkpointing class.
 
         Args:
@@ -26,6 +27,8 @@ class Checkpointing:
         self.checkpoints_dir.mkdir(exist_ok=True)
         self.checkpoint_name_format = checkpoint_name_format
         self._threads: list[BaseThread] = []
+
+        self._logger = get_main_thread_logger(self.__class__.__name__)
 
     def add_threads(self, *threads: BaseThread) -> None:
         """Adds thread objects whose state will be saved and loaded."""
@@ -39,6 +42,12 @@ class Checkpointing:
             Path: The path to the saved checkpoint directory.
         """
         checkpoint_path = self.checkpoints_dir / datetime.now().strftime(self.checkpoint_name_format)
+        if checkpoint_path.exists():
+            self._logger.warning(
+                f"Aborted saving checkpoint because the checkpoint path already exists.: '{checkpoint_path}.'"
+            )
+            return checkpoint_path
+
         checkpoint_path.mkdir()
         for thread in self._threads:
             thread.save_state(checkpoint_path / thread.thread_name)

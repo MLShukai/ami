@@ -89,6 +89,8 @@ class MainThread(BaseThread):
                 case ControlCommands.SHUTDOWN:
                     self.logger.info("Shutting down...")
                     self.thread_controller.shutdown()
+                case ControlCommands.SAVE_CHECKPOINT:
+                    self.save_checkpoint()
 
     def save_checkpoint(self) -> None:
         """Saves a checkpoint after pausing the all background thread."""
