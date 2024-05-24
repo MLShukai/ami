@@ -18,6 +18,7 @@ class ControlCommands(Enum):
     SHUTDOWN = auto()
     PAUSE = auto()
     RESUME = auto()
+    SAVE_CHECKPOINT = auto()
 
 
 class WebApiHandler:
@@ -91,6 +92,7 @@ class WebApiHandler:
         bottle.post("/api/pause", callback=self._post_pause)
         bottle.post("/api/resume", callback=self._post_resume)
         bottle.post("/api/shutdown", callback=self._post_shutdown)
+        bottle.post("/api/save-checkpoint", callback=self._post_save_checkpoint)
 
         bottle.error(404)(self._error_404)
         bottle.error(405)(self._error_405)
@@ -123,6 +125,11 @@ class WebApiHandler:
     def _post_shutdown(self) -> PayloadType:
         self._logger.info("Shutting down threads")
         self._received_commands_queue.put(ControlCommands.SHUTDOWN)
+        return {"result": "ok"}
+
+    def _post_save_checkpoint(self) -> PayloadType:
+        self._logger.info("Saving a checkpoint.")
+        self._received_commands_queue.put(ControlCommands.SAVE_CHECKPOINT)
         return {"result": "ok"}
 
     def _error_404(self, error: bottle.HTTPError) -> str:

@@ -71,6 +71,11 @@ class TestWebApiHandler:
         with pytest.raises(queue.Empty):
             handler.receive_command()
 
+        response = app.post("http://localhost:8080/api/save-checkpoint")
+        assert response.status_code == 200
+        assert response.json == {"result": "ok"}
+        assert handler.receive_command() is ControlCommands.SAVE_CHECKPOINT
+
     def test_error_404(self, app) -> None:
         response = app.get("http://localhost:8080/api/invalid", status=404)
         assert "error" in response.json
