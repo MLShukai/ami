@@ -49,10 +49,6 @@ class Console(cmd.Cmd):
         print(json.loads(response.text)["result"])
         return True
 
-    def do_s(self, line: str) -> bool:
-        """Shutdown the AMI system."""
-        return self.do_shutdown(line)
-
     def do_quit(self, line: str) -> bool:
         """Exit the console."""
         return True
