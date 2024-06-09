@@ -13,22 +13,22 @@ DROPOUT = 0.1
 CHUNK_SIZE = 16
 
 
-class TestSconv:
+class TestSioConv:
     @pytest.fixture
-    def sconv(self):
-        sconv = SioConv(DEPTH, DIM, NUM_HEAD, DIM_FF_HIDDEN, DROPOUT, CHUNK_SIZE)
-        return sconv
+    def sioconv(self):
+        sioconv = SioConv(DEPTH, DIM, NUM_HEAD, DIM_FF_HIDDEN, DROPOUT, CHUNK_SIZE)
+        return sioconv
 
-    def test_sconv(self, sconv):
+    def test_sconv(self, sioconv):
         x_shape = (BATCH, LEN, DIM)
         x = torch.randn(*x_shape)
         hidden_shape = (BATCH, DEPTH, LEN, DIM)
         hidden = torch.randn(*hidden_shape)
 
-        x, hidden = sconv(x, hidden[:, :, -1, :])
+        x, hidden = sioconv(x, hidden[:, :, -1, :])
         assert x.shape == x_shape
         assert hidden.shape == hidden_shape
 
-        x, hidden = sconv(x, hidden[:, :, -1, :])
+        x, hidden = sioconv(x, hidden[:, :, -1, :])
         assert x.shape == x_shape
         assert hidden.shape == hidden_shape
