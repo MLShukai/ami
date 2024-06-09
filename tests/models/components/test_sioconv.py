@@ -1,7 +1,7 @@
 import pytest
 import torch
 
-from ami.models.components.sconv2 import SConv2
+from ami.models.components.sioconv import SioConv
 
 BATCH = 4
 DEPTH = 8
@@ -16,7 +16,7 @@ CHUNK_SIZE = 16
 class TestSconv:
     @pytest.fixture
     def sconv(self):
-        sconv = SConv2(DEPTH, DIM, NUM_HEAD, DIM_FF_HIDDEN, DROPOUT, CHUNK_SIZE)
+        sconv = SioConv(DEPTH, DIM, NUM_HEAD, DIM_FF_HIDDEN, DROPOUT, CHUNK_SIZE)
         return sconv
 
     def test_sconv(self, sconv):

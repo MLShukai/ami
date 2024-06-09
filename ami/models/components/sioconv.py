@@ -37,7 +37,7 @@ class FFNSwiGLU(nn.Module):
         return x
 
 
-class SConvLayer(nn.Module):
+class SioConvLayer(nn.Module):
     def __init__(
         self,
         dim: int,
@@ -116,10 +116,10 @@ class SConvLayer(nn.Module):
         return y, hidden_next
 
 
-class ChunkWiseSConvLayer(nn.Module):
+class ChunkWiseSioConvLayer(nn.Module):
     def __init__(self, dim: int, num_head: int, chunk_size: int):
         super().__init__()
-        self.sconv = SConvLayer(dim, num_head)
+        self.sioconv = SioConvLayer(dim, num_head)
         self.last_hidden = None
         self.last_hidden_init = nn.Parameter(torch.randn(num_head, dim // num_head))
         self.is_refresh = True
@@ -139,7 +139,7 @@ class ChunkWiseSConvLayer(nn.Module):
         output_chunks = []
         hidden_next_chunks = []
         for input_chunk in input_chunks:
-            output_chunk, hidden_next_chunk = self.sconv(input_chunk, hidden)
+            output_chunk, hidden_next_chunk = self.sioconv(input_chunk, hidden)
             output_chunks.append(output_chunk)
             hidden_next_chunks.append(hidden_next_chunk)
             hidden = hidden_next_chunk[:, -1, :, :]
@@ -149,19 +149,19 @@ class ChunkWiseSConvLayer(nn.Module):
         return output, hidden_next
 
 
-class SConvBlock(nn.Module):
+class SioConvBlock(nn.Module):
     def __init__(self, dim: int, num_head: int, dim_ff_hidden: int, dropout: float, chunk_size: int):
         super().__init__()
-        self.sconv = ChunkWiseSConvLayer(dim, num_head, chunk_size)
+        self.sioconv = ChunkWiseSioConvLayer(dim, num_head, chunk_size)
         self.ffn = FFNSwiGLU(dim, dim_ff_hidden)
-        self.norm_sconv = RMSNorm(dim)
+        self.norm_sioconv = RMSNorm(dim)
         self.norm_ffn = RMSNorm(dim)
         self.dropout = nn.Dropout(dropout)
 
     def forward(self, x: Tensor, hidden: Tensor) -> tuple[Tensor, Tensor]:
         x_ = x
-        x = self.norm_sconv(x)
-        x, hidden = self.sconv(x, hidden)
+        x = self.norm_sioconv(x)
+        x, hidden = self.sioconv(x, hidden)
         x = self.dropout(x)
         x = x + x_
 
@@ -174,8 +174,8 @@ class SConvBlock(nn.Module):
         return x, hidden
 
 
-class SConv2(StackedHiddenState):
+class SioConv(StackedHiddenState):
     def __init__(self, depth: int, dim: int, num_head: int, dim_ff_hidden: int, dropout: float, chunk_size: int):
         super().__init__(
-            nn.ModuleList([SConvBlock(dim, num_head, dim_ff_hidden, dropout, chunk_size) for _ in range(depth)])
+            nn.ModuleList([SioConvBlock(dim, num_head, dim_ff_hidden, dropout, chunk_size) for _ in range(depth)])
         )

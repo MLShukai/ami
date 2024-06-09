@@ -43,7 +43,7 @@ forward_dynamics:
       in_features: ${python.eval:"${..action_flatten.embedding_dim} * 5 + ${models.image_encoder.model.latent_dim}"}
       out_features: ${..core_model.dim}
     core_model:
-      _target_: ami.models.components.sconv2.SConv2
+      _target_: ami.models.components.sioconv.SioConv
       depth: 4
       dim: 512
       num_head: 8
