@@ -54,7 +54,7 @@ class SioConvLayer(nn.Module):
         self.fc_y = nn.Linear(dim, dim)
         self.fc_y_act = nn.Linear(dim, dim)
         self.act = nn.SiLU()
-        self.ln_a = nn.Parameter(torch.log(torch.empty(num_head).uniform_(*a_init_range)))
+        self.ln_a = nn.Parameter(torch.log(torch.empty(num_head).uniform_(a_init_range[0], a_init_range[1])))
         self.fc_dt = nn.Linear(dim, num_head)
         dt = torch.exp(torch.empty(num_head).uniform_(np.log(dt_init_range[0]), np.log(dt_init_range[1])))
         # inv_softplus_dt = torch.log(torch.exp(dt)-1) equals
@@ -87,7 +87,7 @@ class SioConvLayer(nn.Module):
             batch, len, num_head, inner_dim
         )  # (batch, len, num_head, inner_dim)
 
-        ones = torch.ones(len, device=x.device)
+        ones = torch.ones(len, device=x.device, dtype=x.dtype)
         ones_fft = torch.fft.rfft(ones, n=len * 2)
 
         ln_da = -torch.exp(self.ln_a) * F.softplus(self.fc_dt(x))  # (batch, len, num_head)
