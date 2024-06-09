@@ -1,7 +1,7 @@
 # @package _global_
 
 defaults:
-  - override /interaction: vrchat_with_curiosity_image_ppo_agent_sconv2
+  - override /interaction: vrchat_with_curiosity_image_ppo_agent
   - override /models: world_models_sconv2
   - override /data_collectors: image_dynamics_ppo
   - override /trainers: image_vae_forward_dynamics_ppo
@@ -9,6 +9,12 @@ defaults:
 interaction:
   agent:
     use_embed_obs_for_policy: True
+    initial_hidden:
+      _target_: torch.zeros
+      _args_:
+        - ${models.forward_dynamics.model.core_model.depth}
+        - ${models.forward_dynamics.model.core_model.dim}
+      dtype: ${torch.dtype:float}
 
 data_collectors:
   ppo_trajectory:
