@@ -17,6 +17,7 @@ hydra-core = "^1.3.2"
 hydra-colorlog = "^1.2.0"
 vrchat-io = {git = "https://github.com/Geson-anko/vrchat-io.git", rev = "main"}
 tensorboard = "2.15.0"
+einops = "^0.8.0"
 
 
 [tool.poetry.group.dev.dependencies]

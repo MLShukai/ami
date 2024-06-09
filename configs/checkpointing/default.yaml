@@ -5,4 +5,4 @@ checkpointing:
 
   checkpoints_dir: ${paths.checkpoints_dir}
 
-interval: ${cvt_time_str:"10s"}
+interval: ${cvt_time_str:"0.5d"}
