@@ -28,4 +28,4 @@ trainers:
       batch_size: ${python.eval:128+1}
     minimum_new_data_count: ${.partial_dataloader.batch_size}
 
-task_name: world_models
+task_name: world_models_sioconv
