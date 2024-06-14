@@ -96,7 +96,7 @@ class SioConvLayer(nn.Module):
         ln_da_masked_conv = torch.fft.irfft(torch.einsum("blmh,l->blmh", ln_da_masked_fft, ones_fft), dim=1).narrow(
             1, 0, len
         )  # (batch, len, len, num_head)
-        da_masked_conv = torch.exp(ln_da_masked_conv).tril()  # (batch, len, len, num_head)
+        da_masked_conv = torch.exp(ln_da_masked_conv).permute(0,3,1,2).tril().permute(0,2,3,1)  # (batch, len, len, num_head)
 
         h_inner_chunk = torch.einsum("blmh,bmhi->blhi", da_masked_conv, z)
 
