@@ -91,7 +91,9 @@ class SioConvLayer(nn.Module):
         ones_fft = torch.fft.rfft(ones, n=len * 2)
 
         ln_da = -torch.exp(self.ln_a) * F.softplus(self.fc_dt(x))  # (batch, len, num_head)
-        ln_da_masked = einops.repeat(ln_da, "b l h ->b l m h", m=len).tril(-1)  # (batch, len, len, num_head)
+        ln_da_masked = (
+            einops.repeat(ln_da, "b l h ->b l m h", m=len).permute(0, 3, 1, 2).tril(-1).permute(0, 2, 3, 1)
+        )  # (batch, len, len, num_head)
         ln_da_masked_fft = torch.fft.rfft(ln_da_masked, n=len * 2, dim=1)  # (batch, len, len, num_head)
         ln_da_masked_conv = torch.fft.irfft(torch.einsum("blmh,l->blmh", ln_da_masked_fft, ones_fft), dim=1).narrow(
             1, 0, len
