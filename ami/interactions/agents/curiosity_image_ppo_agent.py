@@ -82,6 +82,7 @@ class CuriosityImagePPOAgent(BaseAgent[Tensor, Tensor]):
     predicted_next_embed_observation_dist: Distribution
     forward_dynamics_hidden_state: Tensor
     step_data: StepData
+    previous_action: Tensor
 
     def _common_step(self, observation: Tensor, initial_step: bool = False) -> Tensor:
         """Common step procedure for agent.
@@ -95,6 +96,10 @@ class CuriosityImagePPOAgent(BaseAgent[Tensor, Tensor]):
         if not initial_step:
             # 報酬計算は初期ステップではできないためスキップ。
             reward = self.reward_computer.compute(self.predicted_next_embed_observation_dist, embed_obs)
+
+            if self.previous_action[0] == 1:  # 前に進んだ時に報酬を与える。
+                reward += 10.0
+
             self.step_data[DataKeys.REWARD] = reward  # r_{t+1}
             self.logger.log("agent/reward", reward)
 
@@ -113,6 +118,7 @@ class CuriosityImagePPOAgent(BaseAgent[Tensor, Tensor]):
         action_dist, value = self.policy_value(policy_obs, self.forward_dynamics_hidden_state)
         action = action_dist.sample()
         action_log_prob = action_dist.log_prob(action)
+        self.previous_action = action
 
         self.step_data[DataKeys.ACTION] = action  # a_t
         self.step_data[DataKeys.ACTION_LOG_PROBABILITY] = action_log_prob  # log \pi(a_t | o_t)
