@@ -9,6 +9,8 @@ import torch
 from torch import Tensor
 from typing_extensions import override
 
+from ami.logger import get_inference_thread_logger
+
 from .base_actuator import BaseActuator, BaseActuatorWrapper
 
 
@@ -48,6 +50,7 @@ class TensorActionHDF5Recorder(BaseActuatorWrapper[Tensor, Tensor]):
             recording_shape: Shape to reshape tensors before recording.
         """
         super().__init__(actuator)
+        self._logger = get_inference_thread_logger(self.__class__.__name__)
         self._file_path = Path(file_path)
         self._flush_batch_size = flush_batch_size
         self._batch_name_format = batch_name_format
@@ -65,6 +68,7 @@ class TensorActionHDF5Recorder(BaseActuatorWrapper[Tensor, Tensor]):
         commands to flush the current batch or terminate the thread.
         """
         running = True
+        self._logger.info(f"Saving actions to '{self._file_path}'")
         with h5py.File(self._file_path, "a") as file_writer:
             while running:
                 match value := self._data_or_command_queue.get():
@@ -87,6 +91,7 @@ class TensorActionHDF5Recorder(BaseActuatorWrapper[Tensor, Tensor]):
         """
         if len(self._current_batch) == 0:
             return
+        self._logger.info(f"Flushing batch, data size: {len(self._current_batch)}")
 
         batch = torch.stack(self._current_batch).numpy()
         batch_name = datetime.now().strftime(self._batch_name_format)
