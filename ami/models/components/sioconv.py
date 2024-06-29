@@ -87,29 +87,16 @@ class SioConvLayer(nn.Module):
             batch, len, num_head, inner_dim
         )  # (batch, len, num_head, inner_dim)
 
-        ones = torch.ones(len, device=x.device, dtype=x.dtype)
-        ones_fft = torch.fft.rfft(ones, n=len * 2)
-
         ln_da = -torch.exp(self.ln_a) * F.softplus(self.fc_dt(x))  # (batch, len, num_head)
-        ln_da_masked = (
-            einops.repeat(ln_da, "b l h ->b l m h", m=len).permute(0, 3, 1, 2).tril(-1).permute(0, 2, 3, 1)
-        )  # (batch, len, len, num_head)
-        ln_da_masked_fft = torch.fft.rfft(ln_da_masked, n=len * 2, dim=1)  # (batch, len, len, num_head)
-        ln_da_masked_conv = torch.fft.irfft(torch.einsum("blmh,l->blmh", ln_da_masked_fft, ones_fft), dim=1).narrow(
-            1, 0, len
-        )  # (batch, len, len, num_head)
-        da_masked_conv = (
-            torch.exp(ln_da_masked_conv).permute(0, 3, 1, 2).tril().permute(0, 2, 3, 1)
-        )  # (batch, len, len, num_head)
+        ln_da_masked = einops.repeat(ln_da, "b l h ->b h l m", m=len).tril(-1)  # (batch, len, len, num_head)
+        ln_da_masked_cumsum = torch.cumsum(ln_da_masked, dim=2)
+        da_masked_cumsum = torch.exp(ln_da_masked_cumsum).tril()
 
-        h_inner_chunk = torch.einsum("blmh,bmhi->blhi", da_masked_conv, z)
+        h_inner_chunk = torch.einsum("bhlm,bmhi->blhi", da_masked_cumsum, z)
 
-        ln_da_fft = torch.fft.rfft(ln_da, n=len * 2, dim=1)
-        ln_da_conv = torch.fft.irfft(torch.einsum("blh,l->blh", ln_da_fft, ones_fft), dim=1).narrow(
-            1, 0, len
-        )  # (batch, len, num_head)
+        ln_da_cumsum = torch.cumsum(ln_da, dim=1)
 
-        h_cross_chunk = torch.einsum("blh,bhi->blhi", torch.exp(ln_da_conv), hidden)
+        h_cross_chunk = torch.einsum("blh,bhi->blhi", torch.exp(ln_da_cumsum), hidden)
 
         h = h_inner_chunk + h_cross_chunk
 
