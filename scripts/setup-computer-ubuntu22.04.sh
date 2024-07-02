@@ -52,3 +52,23 @@ sudo apt-get update
 sudo apt-get install -y nvidia-container-toolkit
 sudo nvidia-ctk runtime configure --runtime=docker
 sudo systemctl restart docker
+
+# --- VRChat ---
+# OBS
+sudo apt-get install -y ffmpeg
+sudo add-apt-repository ppa:obsproject/obs-studio
+sudo apt update
+sudo apt-get install -y obs-studio
+
+# Steam は手動でインストール。
+wget https://cdn.akamai.steamstatic.com/client/installer/steam.deb
+sudo dpkg -i steam.deb
+
+# --- RemoteDesktop ---
+# NoMachine
+wget https://download.nomachine.com/download/8.11/Linux/nomachine_8.11.3_4_amd64.deb -O nomachine.deb
+sudo dpkg -i nomachine.deb
+
+# Sunshine
+wget https://github.com/LizardByte/Sunshine/releases/download/v0.23.1/sunshine-ubuntu-22.04-amd64.deb -O sunshine.deb
+sudo dpkg -i sunshine.deb
