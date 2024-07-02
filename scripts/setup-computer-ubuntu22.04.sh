@@ -71,4 +71,27 @@ sudo dpkg -i nomachine.deb
 
 # Sunshine
 wget https://github.com/LizardByte/Sunshine/releases/download/v0.23.1/sunshine-ubuntu-22.04-amd64.deb -O sunshine.deb
-sudo dpkg -i sunshine.deb
+sudo apt-get install -y -f ./sunshine.deb
+echo 'KERNEL=="uinput", SUBSYSTEM=="misc", OPTIONS+="static_node=uinput", TAG+="uaccess"' | \
+sudo tee /etc/udev/rules.d/60-sunshine.rules
+sudo udevadm control --reload-rules
+sudo udevadm trigger
+sudo modprobe uinput
+mkdir -p ~/.config/systemd/user
+echo "[Unit]
+Description=Sunshine self-hosted game stream host for Moonlight.
+StartLimitIntervalSec=500
+StartLimitBurst=5
+
+[Service]
+ExecStart=<see table>
+Restart=on-failure
+RestartSec=5s
+#Flatpak Only
+#ExecStop=flatpak kill dev.lizardbyte.sunshine
+
+[Install]
+WantedBy=graphical-session.target" >> ~/.config/systemd/user/sunshine.service
+systemctl --user enable sunshine
+systemctl --user start sunshine
+systemctl --user status sunshine
