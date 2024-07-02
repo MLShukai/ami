@@ -84,7 +84,7 @@ StartLimitIntervalSec=500
 StartLimitBurst=5
 
 [Service]
-ExecStart=<see table>
+ExecStart=/usr/bin/sunshine
 Restart=on-failure
 RestartSec=5s
 #Flatpak Only
