@@ -38,10 +38,10 @@ sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plug
 
 sudo docker run --rm hello-world
 
-# No sudo
-sudo groupadd docker
-sudo gpasswd -a $USER docker
-sudo systemctl restart docker
+# No sudo (not working)
+# sudo groupadd docker
+# sudo gpasswd -a $USER docker
+# sudo systemctl restart docker
 
 # Nvidia container toolkit
 curl -fsSL https://nvidia.github.io/libnvidia-container/gpgkey | sudo gpg --dearmor -o /usr/share/keyrings/nvidia-container-toolkit-keyring.gpg \
