@@ -16,7 +16,7 @@ sudo perl -p -i.bak -e 's%(deb(?:-src|)\s+)https?://(?!archive\.canonical\.com|s
 sudo apt update
 sudo apt upgrade -y
 
-sudo apt install -y curl openssh-server git tmux nvidia-driver-550 btrfs-progs
+sudo apt install -y curl openssh-server git tmux nvidia-driver-550 btrfs-progs htop nvtop
 
 # --- Docker https://docs.docker.com/engine/install/ubuntu/ ---
 for pkg in docker.io docker-doc docker-compose docker-compose-v2 podman-docker containerd runc; do sudo apt-get remove $pkg; done
@@ -55,7 +55,7 @@ sudo systemctl restart docker
 
 # --- VRChat ---
 # OBS
-sudo apt-get install -y ffmpeg
+sudo apt-get install -y ffmpeg v4l-utils
 sudo add-apt-repository -y ppa:obsproject/obs-studio
 sudo apt update
 sudo apt-get install -y obs-studio
