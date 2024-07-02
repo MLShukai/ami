@@ -56,7 +56,7 @@ sudo systemctl restart docker
 # --- VRChat ---
 # OBS
 sudo apt-get install -y ffmpeg
-sudo add-apt-repository ppa:obsproject/obs-studio
+sudo add-apt-repository -y ppa:obsproject/obs-studio
 sudo apt update
 sudo apt-get install -y obs-studio
 
