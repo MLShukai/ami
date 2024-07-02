@@ -65,6 +65,9 @@ wget https://cdn.akamai.steamstatic.com/client/installer/steam.deb
 sudo dpkg -i steam.deb
 
 # --- RemoteDesktop ---
+# Tailscale
+curl -fsSL https://tailscale.com/install.sh | sh
+
 # NoMachine
 wget https://download.nomachine.com/download/8.11/Linux/nomachine_8.11.3_4_amd64.deb -O nomachine.deb
 sudo dpkg -i nomachine.deb
