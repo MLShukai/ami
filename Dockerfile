@@ -13,7 +13,7 @@ RUN apt-get update && apt-get install -y \
     curl \
     git \
     make \
-    screen \
+    tmux \
     python3 \
     python3-pip \
     libopencv-dev \
