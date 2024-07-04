@@ -28,16 +28,16 @@ type:
 run: format test-full type
 
 docker-build: ## Build docker image.
-	docker build -t ami --no-cache .
+	docker build -t ami-vconf24 --no-cache .
 
 docker-run: ## Run built docker image.
 	docker run -it --gpus all \
-	--mount type=volume,source=ami,target=/workspace \
-	ami
+	--mount type=volume,source=ami-vconf24,target=/workspace \
+	ami-vconf24
 
 docker-run-host: ## Run the built Docker image along with network, camera, and other host OS device access
 	docker run -it --gpus all \
-	--mount type=volume,source=ami,target=/workspace \
+	--mount type=volume,source=ami-vconf24,target=/workspace \
 	--mount type=bind,source=`pwd`/logs,target=/workspace/logs \
 	--device `v4l2-ctl --list-devices | grep -A 1 'OBS Virtual Camera' | grep -oP '\t\K/dev.*'`:/dev/video0:mwr \
 	--net host \
