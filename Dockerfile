@@ -14,15 +14,12 @@ RUN apt-get update && apt-get install -y \
     git \
     make \
     screen \
-    software-properties-common \
+    python3 \
+    python3-pip \
     libopencv-dev \
     && rm -rf /var/lib/apt/lists/*
 
-RUN add-apt-repository ppa:deadsnakes/ppa -y && apt-get update && apt-get install -y \
-    python3.11 python3-pip \
-    && rm -rf /var/lib/apt/lists/*
-
 # Install python dependencies
-RUN python3.11 -m pip install poetry && \
+RUN python3.10 -m pip install poetry && \
     poetry install && \
     echo "cd /workspace && poetry shell" >> ~/.bashrc
