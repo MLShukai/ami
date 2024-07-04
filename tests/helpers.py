@@ -2,13 +2,13 @@
 import pickle
 import platform
 from pathlib import Path
-from typing import Self
 
 import pytest
 import rootutils
 import torch
 import torch.nn as nn
 from torch.utils.data import TensorDataset
+from typing_extensions import Self
 
 from ami.data.buffers.base_data_buffer import BaseDataBuffer
 from ami.data.step_data import DataKeys, StepData

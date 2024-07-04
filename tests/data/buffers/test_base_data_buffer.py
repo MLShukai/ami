@@ -1,8 +1,7 @@
-from typing import Self
-
 import pytest
 import torch
 from torch.utils.data import TensorDataset
+from typing_extensions import Self
 
 from ami.data.buffers.base_data_buffer import BaseDataBuffer
 from ami.data.step_data import DataKeys, StepData

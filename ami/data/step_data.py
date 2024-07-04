@@ -1,10 +1,12 @@
 """This file contains all names (keys) of data and the container class."""
 import copy
-from enum import StrEnum
-from typing import Any, Self
+from enum import Enum
+from typing import Any
+
+from typing_extensions import Self
 
 
-class DataKeys(StrEnum):
+class DataKeys(str, Enum):
     """Enumerates all the names of data obtained from the interaction between
     the environment and the agent."""
 
