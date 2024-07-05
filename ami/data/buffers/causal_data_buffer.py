@@ -2,11 +2,10 @@ import json
 import pickle
 from collections import deque
 from pathlib import Path
-from typing import Self
 
 import torch
 from torch.utils.data import TensorDataset
-from typing_extensions import override
+from typing_extensions import Self, override
 
 from ..step_data import DataKeys, StepData
 from .base_data_buffer import BaseDataBuffer
