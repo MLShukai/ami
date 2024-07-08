@@ -41,4 +41,4 @@ docker-run-host: ## Run the built Docker image along with network, camera, and o
 	--mount type=bind,source=`pwd`/logs,target=/workspace/logs \
 	--device `v4l2-ctl --list-devices | grep -A 1 'OBS Virtual Camera' | grep -oP '\t\K/dev.*'`:/dev/video0:mwr \
 	--net host \
-	ami
+	ami-vconf24
