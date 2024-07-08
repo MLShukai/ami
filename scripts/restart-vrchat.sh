@@ -1,5 +1,11 @@
 #!/bin/bash
 
+# Check if Steam is running
+if ! pgrep -x steam > /dev/null; then
+    echo "Alert: Steam is not running. Please start Steam **IN HOST DISPLAY** before running this script."
+    exit 1
+fi
+
 # Find VRChat process and kill it if found
 vrchat_pid=$(pgrep -i vrchat)
 if [ -n "$vrchat_pid" ]; then
