@@ -1,12 +1,14 @@
 #!/bin/bash
 
-# Check if VRChat is running and kill it if found
-if pgrep VRChat > /dev/null; then
-    killall VRChat
-    echo "VRChat has been terminated. Waiting for 10 seconds..."
+# Find VRChat process and kill it if found
+vrchat_pid=$(pgrep -i vrchat)
+if [ -n "$vrchat_pid" ]; then
+    echo "VRChat process found. Terminating..."
+    kill $vrchat_pid
+    echo "Waiting for 10 seconds..."
     sleep 10
 else
-    echo "VRChat is not running."
+    echo "VRChat process not found."
 fi
 
 # Launch VRChat through Steam
