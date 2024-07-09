@@ -1,3 +1,5 @@
+#!/bin/bash
+
 # This script setups the computer (ubuntu22.04)
 
 # Change mirror server and Upgrade
