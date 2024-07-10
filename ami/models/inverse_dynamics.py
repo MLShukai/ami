@@ -1,5 +1,6 @@
 import torch.nn as nn
 from torch import Tensor
+from torch.distributions import Distribution
 
 
 class InverseDynamics(nn.Module):
@@ -23,7 +24,7 @@ class InverseDynamics(nn.Module):
         self.observation_encoder = observation_encoder
         self.action_predictor = action_predictor
 
-    def forward(self, obs: Tensor, next_obs: Tensor) -> Tensor:
+    def forward(self, obs: Tensor, next_obs: Tensor) -> Distribution:
         embed = self.observation_encoder(obs)
         next_embed = self.observation_encoder(next_obs)
         action_hat = self.action_predictor(embed, next_embed)
