@@ -188,7 +188,7 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(description="Auto control VRChat menu")
     parser.add_argument("--window", type=str, default="VRChat", help="Target window name")
-    parser.add_argument("--scenario", type=str, required=True, help="Scenario directory name")
+    parser.add_argument("--scenario", type=str, required=True, help="Path to the scenario directory")
     parser.add_argument(
         "--menu_image", type=str, default=os.path.join(base_dir, "menu.png"), help="Path to the menu.png file"
     )
@@ -198,10 +198,8 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    scenario_dir = os.path.join(base_dir, args.scenario)
-
-    if not os.path.exists(scenario_dir):
-        print(f"Error: Scenario directory '{scenario_dir}' does not exist.")
+    if not os.path.exists(args.scenario):
+        print(f"Error: Scenario directory '{args.scenario}' does not exist.")
         exit(1)
 
     if not os.path.exists(args.menu_image):
@@ -210,7 +208,7 @@ if __name__ == "__main__":
 
     auto_control_vrchat_menu(
         window_name=args.window,
-        scenario_dir=scenario_dir,
+        scenario_dir=args.scenario,
         menu_image=args.menu_image,
         confidence=args.confidence,
         menu_wait=args.menu_wait,
