@@ -28,8 +28,10 @@ RUN python3.10 -m pip install poetry && \
     poetry install && \
     echo "cd /workspace && poetry shell" >> ~/.bashrc
 
-# Change permission
-RUN chmod +x /workspace/start-xvfb.sh
+# Copy Xvfb script
+COPY scripts/start-xvfb.sh /start-xvfb.sh
+RUN chmod +x /start-xvfb.sh
+
 
 # Set DISPLAY environment variable
 ENV DISPLAY=:99
