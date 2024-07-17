@@ -17,9 +17,25 @@ RUN apt-get update && apt-get install -y \
     python3 \
     python3-pip \
     libopencv-dev \
+    xvfb \
+    x11-utils \
+    libgl1-mesa-glx \
+    libgl1-mesa-dri \
     && rm -rf /var/lib/apt/lists/*
 
 # Install python dependencies
 RUN python3.10 -m pip install poetry && \
     poetry install && \
     echo "cd /workspace && poetry shell" >> ~/.bashrc
+
+# Change permission
+RUN chmod +x /workspace/start-xvfb.sh
+
+# Set DISPLAY environment variable
+ENV DISPLAY=:99
+
+# Set entrypoint to run Xvfb
+ENTRYPOINT ["/workspace/start-xvfb.sh"]
+
+# Default command (can be overridden)
+CMD ["/bin/bash"]
