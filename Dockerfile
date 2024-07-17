@@ -37,7 +37,7 @@ RUN chmod +x /start-xvfb.sh
 ENV DISPLAY=:99
 
 # Set entrypoint to run Xvfb
-ENTRYPOINT ["/workspace/start-xvfb.sh"]
+ENTRYPOINT ["/start-xvfb.sh"]
 
 # Default command (can be overridden)
 CMD ["/bin/bash"]
