@@ -8,7 +8,7 @@ Installation:
 
 2. Ensure you have the necessary libraries installed.
    On Gnome Ubuntu/Debian:
-   sudo apt-get install gnome-screenshot
+   sudo apt-get install python3-tk python3-dev gnome-screenshot
 
 Usage:
 1. Create a 'vrchat_images' directory in the same folder as this script.
