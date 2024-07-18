@@ -15,7 +15,7 @@ class TrainingThread(BackgroundThread):
 
     THREAD_TYPE = ThreadTypes.TRAINING
 
-    def __init__(self, trainers: TrainersList, models: ModelWrappersDict, training_interval: float = 1e-10) -> None:
+    def __init__(self, trainers: TrainersList, models: ModelWrappersDict, training_interval: float = 0.0001) -> None:
         """Constructs the training thread class with the trainers and models.
 
         Args:
