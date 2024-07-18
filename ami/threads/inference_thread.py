@@ -57,7 +57,7 @@ class InferenceThread(BackgroundThread):
             start = time.perf_counter()
 
             self.interaction.step()
-            time.sleep(1e-6)  # GILのコンテキストスイッチングを意図的に呼び出す。
+            time.sleep(1e-9)  # GILのコンテキストスイッチングを意図的に呼び出す。
 
             elapsed_times.append(time.perf_counter() - start)
 
