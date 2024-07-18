@@ -1,0 +1,4 @@
+python-xlib
+opencv-python
+numpy
+pyautogui
