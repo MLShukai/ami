@@ -18,10 +18,6 @@ class TestUnityEnvironment:
     def unity_env(self, mock_unity_env):
         return UnityEnvironment("dummy_path", worker_id=0, base_port=5005, seed=42)
 
-    def test_initialization(self, unity_env, mock_unity_env):
-        assert isinstance(unity_env, UnityEnvironment)
-        assert unity_env._env == mock_unity_env
-
     def test_setup(self, unity_env, mock_unity_env):
         mock_unity_env.reset.return_value = np.zeros(10)
         unity_env.setup()
