@@ -13,7 +13,7 @@ class DummyEncoder(nn.Module):
 class DummyActionPredictor(nn.Module):
     def forward(self, embed, next_embed):
         mean = embed + next_embed
-        std = torch.ones_like(mean)  # 標準偏差を1に設定
+        std = torch.ones_like(mean)  # set standard deviations to 1
         return Normal(mean, std)
 
 
