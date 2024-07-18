@@ -90,12 +90,17 @@ def select_vrchat_window(client: obsws) -> bool:
 
 
 def start_virtual_camera(client: obsws) -> None:
-    virtual_cam_status = client.call(requests.GetVirtualCamStatus()).datain
-    if not virtual_cam_status["outputActive"]:
-        client.call(requests.StartVirtualCam())
-        print("Virtual camera started.")
-    else:
-        print("Virtual camera is already running.")
+    client.call(requests.StartVirtualCam())
+    print("Virtual camera started.")
+
+    # Not working on OBS 30.2.0
+    #
+    # virtual_cam_status = client.call(requests.GetVirtualCamStatus()).datain
+    # if not virtual_cam_status["outputActive"]:
+    #     client.call(requests.StartVirtualCam())
+    #     print("Virtual camera started.")
+    # else:
+    #     print("Virtual camera is already running.")
 
 
 def main() -> None:
