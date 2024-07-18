@@ -34,8 +34,6 @@ import cv2
 import numpy as np
 import pyautogui
 from Xlib import X, display
-from Xlib.ext import xtest
-from Xlib.XK import string_to_keysym
 from Xlib.xobject.drawable import Window
 
 # Xlib display setup
@@ -92,23 +90,19 @@ def focus_non_vrchat_window(target_window: str) -> None:
             break
 
 
-def press_key(keycode: int) -> None:
-    xtest.fake_input(d, X.KeyPress, keycode)
-    d.sync()
-    time.sleep(0.1)
-    xtest.fake_input(d, X.KeyRelease, keycode)
-    d.sync()
+def press_key(key: str) -> None:
+    pyautogui.press(key)
+
+
+def move_to(x: int, y: int) -> None:
+    pyautogui.moveTo(x, y, duration=0.1)
 
 
 def click_at(x: int, y: int) -> None:
-    xtest.fake_input(d, X.MotionNotify, x=x, y=y)
-    d.sync()
+    move_to(x, y)
+    pyautogui.mouseDown()
     time.sleep(0.1)
-    xtest.fake_input(d, X.ButtonPress, 1)
-    d.sync()
-    time.sleep(0.1)
-    xtest.fake_input(d, X.ButtonRelease, 1)
-    d.sync()
+    pyautogui.mouseUp()
 
 
 def find_image(
@@ -149,19 +143,17 @@ def auto_control_vrchat_menu(
     # Get window position and size
     geom = vrchat_window.get_geometry()
     window_region = (geom.x, geom.y, geom.width, geom.height)
-
-    # ESC key keycode
-    esc_keycode = d.keysym_to_keycode(string_to_keysym("Escape"))
+    time.sleep(menu_wait)
 
     # Reset in case menu is already open
-    press_key(esc_keycode)
+    press_key("esc")
     time.sleep(menu_wait)
 
     # Check if menu is open, press ESC if needed
     _, max_val = find_image(menu_image, region=window_region)
     print(f"Menu image confidence: {max_val}")
     if max_val < confidence:
-        press_key(esc_keycode)
+        press_key("esc")
         time.sleep(menu_wait)  # Wait for menu to appear
 
     # Click images in sequence
