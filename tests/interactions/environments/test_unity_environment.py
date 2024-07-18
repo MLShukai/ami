@@ -12,7 +12,7 @@ class TestUnityEnvironment:
         """内部で使用されているUnity環境との連携クラスをモックで置換する。"""
         mock_raw_env = mocker.patch("ami.interactions.environments.unity_environment.RawUnityEnv")
         mock_gym_wrapper = mocker.patch("ami.interactions.environments.unity_environment.UnityToGymWrapper")
-        return mock_gym_wrapper() # インスタンスモックを返す。
+        return mock_gym_wrapper()  # インスタンスモックを返す。
 
     @pytest.fixture
     def unity_env(self, mock_unity_env):
@@ -23,9 +23,9 @@ class TestUnityEnvironment:
         assert unity_env._env == mock_unity_env
 
     def test_setup(self, unity_env, mock_unity_env):
-        mock_unity_env.reset.return_value = torch.zeros(10)
+        mock_unity_env.reset.return_value = np.zeros(10)
         unity_env.setup()
-        assert torch.equal(unity_env.observation, torch.zeros(10))
+        np.testing.assert_equal(unity_env.observation, np.zeros(10))
 
     def test_teardown(self, unity_env, mock_unity_env):
         unity_env.teardown()
@@ -33,10 +33,10 @@ class TestUnityEnvironment:
 
     def test_affect(self, unity_env, mock_unity_env):
         action = torch.tensor([1.0, 2.0, 3.0])
-        mock_unity_env.step.return_value = (torch.ones(10), 0, False, {})
+        mock_unity_env.step.return_value = (np.ones(10), 0, False, {})
         unity_env.affect(action)
         mock_unity_env.step.assert_called_once()
-        assert torch.equal(unity_env.observation, torch.ones(10))
+        np.testing.assert_equal(unity_env.observation, np.ones(10))
 
     def test_observe(self, unity_env):
         unity_env.observation = np.ones(10)
