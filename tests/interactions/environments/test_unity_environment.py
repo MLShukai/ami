@@ -1,21 +1,18 @@
-from unittest.mock import Mock, patch
-
 import numpy as np
 import pytest
 import torch
+from pytest_mock import MockerFixture
 
 from ami.interactions.environments.unity_environment import UnityEnvironment
 
 
 class TestUnityEnvironment:
     @pytest.fixture
-    def mock_unity_env(self):
-        with patch("ami.interactions.environments.unity_environment.RawUnityEnv") as mock_raw_env, patch(
-            "ami.interactions.environments.unity_environment.UnityToGymWrapper"
-        ) as mock_gym_wrapper:
-            mock_raw_env.return_value = Mock()
-            mock_gym_wrapper.return_value = Mock()
-            yield mock_gym_wrapper.return_value
+    def mock_unity_env(self, mocker: MockerFixture):
+        """内部で使用されているUnity環境との連携クラスをモックで置換する。"""
+        mock_raw_env = mocker.patch("ami.interactions.environments.unity_environment.RawUnityEnv")
+        mock_gym_wrapper = mocker.patch("ami.interactions.environments.unity_environment.UnityToGymWrapper")
+        return mock_gym_wrapper() # インスタンスモックを返す。
 
     @pytest.fixture
     def unity_env(self, mock_unity_env):
