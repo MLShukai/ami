@@ -1,8 +1,12 @@
 import pytest
 import torch
+import torch.nn as nn
 from torch.distributions import Normal
 
-from ami.models.components.mixture_desity_network import NormalMixture
+from ami.models.components.mixture_desity_network import (
+    NormalMixture,
+    NormalMixtureDensityNetwork,
+)
 
 
 class TestNormalMixture:
@@ -49,3 +53,49 @@ class TestNormalMixture:
         # Test error handling for invalid arguments
         with pytest.raises(AssertionError):
             NormalMixture(torch.randn(3, 2), torch.randn(3, 3), torch.rand(3, 2).add_(0.1))
+
+
+class TestNormalMixtureDensityNetwork:
+    @pytest.mark.parametrize("in_features", [10, 20])
+    @pytest.mark.parametrize("out_features", [5, 8])
+    @pytest.mark.parametrize("num_components", [2, 3])
+    @pytest.mark.parametrize("batch_size", [1, 32])
+    def test_normal_mixture_density_network(self, in_features, out_features, num_components, batch_size):
+        # Create NormalMixtureDensityNetwork instance
+        network = NormalMixtureDensityNetwork(in_features, out_features, num_components)
+
+        # Create input tensor
+        x = torch.randn(batch_size, in_features)
+
+        # Forward pass
+        output = network(x)
+
+        # Check output type
+        assert isinstance(output, NormalMixture)
+
+        # Check output shapes
+        assert output.batch_shape == torch.Size([batch_size, out_features])
+        assert output.event_shape == torch.Size([])
+        assert output.log_pi.shape == (batch_size, out_features, num_components)
+        assert output.mu.shape == (batch_size, out_features, num_components)
+        assert output.sigma.shape == (batch_size, out_features, num_components)
+
+        # Check that sigma is positive
+        assert (output.sigma > 0).all()
+
+        # Check that log_pi is a valid log probability
+        assert torch.allclose(output.log_pi.exp().sum(dim=-1), torch.ones(batch_size, out_features))
+
+    def test_normal_mixture_density_network_gradients(self):
+        in_features, out_features, num_components = 10, 5, 3
+        network = NormalMixtureDensityNetwork(in_features, out_features, num_components)
+        x = torch.randn(32, in_features, requires_grad=True)
+
+        output = network(x)
+        sample = output.rsample()
+        loss = sample.sum()
+        loss.backward()
+
+        # Check that gradients are computed
+        assert x.grad is not None
+        assert output.sample().grad is None

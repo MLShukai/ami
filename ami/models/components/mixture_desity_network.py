@@ -1,4 +1,5 @@
 import torch
+import torch.nn as nn
 import torch.nn.functional as F
 from torch import Size, Tensor
 from torch.distributions import Distribution, Normal, constraints
@@ -68,3 +69,33 @@ class NormalMixture(Distribution):
             self.SQRT_2_PI * sigma + self.eps
         )
         return torch.logsumexp(log_pi + normal_prob, -1)
+
+
+class NormalMixtureDensityNetwork(nn.Module):
+    """A neural network that outputs parameters for a mixture of normal
+    distributions.
+
+    This network takes an input tensor and produces the parameters
+    (mixture weights, means, and standard deviations) for a mixture of
+    normal distributions. It can be used as the output layer in a neural
+    network for tasks that require modeling complex, multi-modal
+    distributions.
+    """
+
+    def __init__(self, in_features: int, out_features: int, num_components: int) -> None:
+        """
+        Args:
+            in_feature: The number of input features.
+            out_features: The number of output features (dimensionality of each normal distribution).
+            num_components: The number of mixture components.
+        """
+        super().__init__()
+        self.mu_layers = nn.ModuleList(nn.Linear(in_features, out_features) for _ in range(num_components))
+        self.sigma_layers = nn.ModuleList(nn.Linear(in_features, out_features) for _ in range(num_components))
+        self.logits_layers = nn.ModuleList(nn.Linear(in_features, out_features) for _ in range(num_components))
+
+    def forward(self, x: Tensor) -> NormalMixture:
+        mu = torch.stack([lyr(x) for lyr in self.mu_layers], dim=-1)
+        sigma = torch.stack([F.softplus(lyr(x)) for lyr in self.sigma_layers], dim=-1)
+        log_pi = torch.stack([lyr(x) for lyr in self.logits_layers], dim=-1).log_softmax(-1)
+        return NormalMixture(log_pi, mu, sigma)
