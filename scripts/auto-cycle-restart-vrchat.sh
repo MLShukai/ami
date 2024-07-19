@@ -12,14 +12,19 @@ command_exists() {
 }
 
 # Check if required commands exist
-if ! command_exists pgrep || ! command_exists kill || ! command_exists steam || ! command_exists python3; then
-    echo "Error: Required commands (pgrep, kill, steam, or python3) not found. Please install them."
+if ! command_exists curl || ! command_exists pgrep || ! command_exists kill || ! command_exists steam || ! command_exists python3; then
+    echo "Error: Required commands (curl, pgrep, kill, steam, or python3) not found. Please install them."
     exit 1
 fi
 
 # Check if the Python script exists
 if [ ! -f "${SCRIPT_DIR}/obs_vrchat_setup.py" ]; then
     echo "Error: obs_vrchat_setup.py not found in the script directory."
+    exit 1
+fi
+
+if [ ! -f "${SCRIPT_DIR}/auto_control_vrchat_menu.py" ]; then
+    echo "Error: auto_control_vrchat_menu.py not found in the script directory."
     exit 1
 fi
 
@@ -33,15 +38,24 @@ fi
 restart_and_setup() {
     echo "Restarting VRChat and setting up OBS..."
 
+    # Pause the AMI
+    curl -X POST http://localhost:8391/api/pause
+
     # Run the restart-vrchat.sh script
     bash "${SCRIPT_DIR}/restart-vrchat.sh"
 
     # Wait for VRChat to start (adjust this time if needed)
     echo "Waiting for VRChat to start..."
-    sleep 30
+    sleep 60
 
     # Run the Python script to setup OBS
     python3 "${SCRIPT_DIR}/obs_vrchat_setup.py"
+
+    # Run the Python script to control VRChat menu
+    python3 "${SCRIPT_DIR}/auto_control_vrchat_menu.py" --scenario "${SCRIPT_DIR}/vrchat_images/create_and_join_group_public_japan_street"
+
+    # Resume the AMI
+    curl -X POST http://localhost:8391/api/resume
 
     echo "Cycle completed."
 }
