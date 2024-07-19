@@ -19,7 +19,11 @@ LAUNCH_CONFIG = "launch.yaml"
 EXPERIMENT_CONFIG_DIR = CONFIG_DIR / "experiment"
 EXPERIMENT_CONFIG_FILES = EXPERIMENT_CONFIG_DIR.glob("*.*")
 
-EXPERIMENT_CONFIG_OVERRIDES = [[f"experiment={file.name.rsplit('.', 1)[0]}"] for file in EXPERIMENT_CONFIG_FILES]
+EXPERIMENT_CONFIG_OVERRIDES = [
+    [f"experiment={file.name.rsplit('.', 1)[0]}"]
+    for file in EXPERIMENT_CONFIG_FILES
+    if file.name not in {"unity_sioconv.yaml"}
+]
 HYDRA_OVERRIDES = [[]] + EXPERIMENT_CONFIG_OVERRIDES
 
 
