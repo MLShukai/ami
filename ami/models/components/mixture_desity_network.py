@@ -24,11 +24,11 @@ class NormalMixture(Distribution):
         log_pi, mu, sigma are must be same shape.
 
         Args:
-            log_pi (Tensor): Tensor representing the mixture log ratios of each normal distribution.
-            mu (Tensor): Tensor representing the means of each normal distribution.
-            sigma (Tensor): Tensor representing the standard deviations of each normal distribution.
-            eps (float): A small value for numerical stability.
-            validate_args (bool | None): Whether to validate the arguments.
+            log_pi: Tensor representing the mixture log ratios of each normal distribution.
+            mu: Tensor representing the means of each normal distribution.
+            sigma: Tensor representing the standard deviations of each normal distribution.
+            eps: A small value for numerical stability.
+            validate_args: Whether to validate the arguments.
         Shape:
             log_pi, mu, sigma: (*, Components)
         """
