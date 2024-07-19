@@ -1,9 +1,6 @@
 _target_: ami.interactions.fixed_interval_interaction.FixedIntervalInteraction
 
 defaults:
-  - agent: curiosity_image_ppo
-  - environment: vrchat_image_discrete
-
-interval_adjustor:
-  _target_: ami.interactions.interval_adjustors.SleepIntervalAdjustor
-  interval: 0.1 # 100 ms, 10 Hz.
+  - default
+  - override agent: curiosity_image_ppo
+  - override environment: vrchat_image_discrete
