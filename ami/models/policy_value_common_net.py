@@ -87,12 +87,18 @@ class LerpStackedHidden(nn.Module):
         self.logit_coef = nn.Linear(dim, 1)
 
     def forward(self, stacked_hidden: Tensor) -> Tensor:
-        return torch.einsum(
+        is_batch = len(stacked_hidden.shape) == 3
+        if not is_batch:
+            stacked_hidden = stacked_hidden.unsqueeze(0)
+        out = torch.einsum(
             "bd,dij,bdj->bi",
             nn.functional.softmax(self.logit_coef(stacked_hidden), dim=-1).squeeze(-1),
             self.projection,
             stacked_hidden,
         )
+        if not is_batch:
+            out = out.squeeze(0)
+        return out
 
 
 class ConcatFlattenedObservationAndLerpedHidden(nn.Module):
