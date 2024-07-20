@@ -1,0 +1,31 @@
+# @package _global_
+
+defaults:
+  - override /interaction: vrchat_with_curiosity_image_ppo_agent
+  - override /models: world_models_sioconv_lerp_hidden
+  - override /data_collectors: image_dynamics_ppo
+  - override /trainers: image_vae_forward_dynamics_ppo
+
+interaction:
+  agent:
+    use_embed_obs_for_policy: True
+    initial_hidden:
+      _target_: torch.zeros
+      _args_:
+        - ${models.forward_dynamics.model.core_model.depth}
+        - ${models.forward_dynamics.model.core_model.dim}
+      dtype: ${torch.dtype:float}
+
+data_collectors:
+  ppo_trajectory:
+    use_embed_obs_as_observation: True
+  forward_dynamics_trajectory:
+    max_len: ${python.eval:"(128 + 1) * 16"} # batch_size * 16
+
+trainers:
+  forward_dynamics:
+    partial_dataloader:
+      batch_size: ${python.eval:128+1}
+    minimum_new_data_count: ${.partial_dataloader.batch_size}
+
+task_name: world_models_sioconv_lerp_hidden

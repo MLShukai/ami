@@ -70,3 +70,60 @@ class ConcatFlattenedObservationAndStackedHidden(nn.Module):
         if self.transpose:
             out = out.transpose(-2, -1)
         return out
+
+
+class LerpStackedHidden(nn.Module):
+    """Linear interpolation along depth of stacked hidden.
+
+    Shape:
+        - stacked_hidden: (*, D, N)
+
+        Return shape: (*, N)
+    """
+
+    def __init__(self, dim: int, depth: int, num_head: int) -> None:
+        super().__init__()
+        self.hidden_proj = nn.Parameter(torch.randn(depth, dim, dim) * (dim**-0.5))
+        self.logit_coef_proj = nn.Linear(depth * dim, depth)
+        self.num_head = num_head
+        self.norm = nn.GroupNorm(num_head, num_head)
+
+    def forward(self, stacked_hidden: Tensor) -> Tensor:
+        is_batch = len(stacked_hidden.shape) == 3
+        if not is_batch:
+            stacked_hidden = stacked_hidden.unsqueeze(0)
+
+        batch, depth, dim = stacked_hidden.shape
+        stacked_hidden = self.norm(stacked_hidden.reshape(batch * depth, self.num_head, dim // self.num_head)).reshape(
+            batch, depth, dim
+        )
+
+        logit_coef = self.logit_coef_proj(stacked_hidden.reshape(batch, depth * dim))
+
+        out = torch.einsum(
+            "bd,dij,bdj->bi",
+            nn.functional.softmax(logit_coef, dim=-1).squeeze(-1),
+            self.hidden_proj,
+            stacked_hidden,
+        )
+        if not is_batch:
+            out = out.squeeze(0)
+        return out
+
+
+class ConcatFlattenedObservationAndLerpedHidden(nn.Module):
+    """Concatenates the flattened observation and stacked hidden states.
+
+    Shape:
+        - flattened_obs: (*, N_OBS)
+        - lerped_hidden: (*, N_HIDDEN)
+
+        Return shape: (*, N_OUT)
+    """
+
+    def __init__(self, dim_obs: int, dim_hidden: int, dim_out: int):
+        super().__init__()
+        self.fc = nn.Linear(dim_obs + dim_hidden, dim_out)
+
+    def forward(self, flattened_obs: Tensor, lerped_hidden: Tensor) -> Tensor:
+        return self.fc(torch.cat([flattened_obs, lerped_hidden], dim=-1))
