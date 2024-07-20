@@ -70,3 +70,44 @@ class ConcatFlattenedObservationAndStackedHidden(nn.Module):
         if self.transpose:
             out = out.transpose(-2, -1)
         return out
+
+
+class LerpStackedHidden(nn.Module):
+    """Linear interpolation along depth of stacked hidden.
+
+    Shape:
+        - stacked_hidden: (*, D, N)
+
+        Return shape: (*, N)
+    """
+
+    def __init__(self, dim: int, depth: int) -> None:
+        super().__init__()
+        self.projection = nn.Parameter(torch.randn(depth, dim, dim))
+        self.logit_coef = nn.Linear(dim, 1)
+
+    def forward(self, stacked_hidden: Tensor) -> Tensor:
+        return torch.einsum(
+            "bd,dij,bdj->bi",
+            nn.functional.softmax(self.logit_coef(stacked_hidden), dim=-1).squeeze(-1),
+            self.projection,
+            stacked_hidden,
+        )
+
+
+class ConcatFlattenedObservationAndLerpedHidden(nn.Module):
+    """Concatenates the flattened observation and stacked hidden states.
+
+    Shape:
+        - flattened_obs: (*, N_OBS)
+        - lerped_hidden: (*, N_HIDDEN)
+
+        Return shape: (*, N_OUT)
+    """
+
+    def __init__(self, dim_obs: int, dim_hidden: int, dim_out: int):
+        super().__init__()
+        self.fc = nn.Linear(dim_obs + dim_hidden, dim_out)
+
+    def forward(self, flattened_obs: Tensor, lerped_hidden: Tensor) -> Tensor:
+        return self.fc(torch.cat([flattened_obs, lerped_hidden], dim=-1))
