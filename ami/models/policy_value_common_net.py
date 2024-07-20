@@ -83,17 +83,18 @@ class LerpStackedHidden(nn.Module):
 
     def __init__(self, dim: int, depth: int) -> None:
         super().__init__()
-        self.projection = nn.Parameter(torch.randn(depth, dim, dim))
-        self.logit_coef = nn.Linear(dim, 1)
+        self.hidden_projection = nn.Parameter(torch.randn(depth, dim, dim))
+        self.logit_coef_proj = nn.Parameter(torch.randn(depth, dim))
 
     def forward(self, stacked_hidden: Tensor) -> Tensor:
         is_batch = len(stacked_hidden.shape) == 3
         if not is_batch:
             stacked_hidden = stacked_hidden.unsqueeze(0)
+        logit_coef = torch.einsum("di,bdi->bd", self.logit_coef_proj, stacked_hidden)
         out = torch.einsum(
             "bd,dij,bdj->bi",
-            nn.functional.softmax(self.logit_coef(stacked_hidden), dim=-1).squeeze(-1),
-            self.projection,
+            nn.functional.softmax(logit_coef, dim=-1).squeeze(-1),
+            self.hidden_projection,
             stacked_hidden,
         )
         if not is_batch:
