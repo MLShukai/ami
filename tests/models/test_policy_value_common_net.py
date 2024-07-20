@@ -55,7 +55,7 @@ class TestConcatFlattenedObservationAndStackedHidden:
 
 class TestLerpedStackedHidden:
     def test_forward(self):
-        mod = LerpStackedHidden(128, 8)
+        mod = LerpStackedHidden(128, 8, 4)
 
         hidden = torch.randn(4, 8, 128)
         out = mod.forward(hidden)
