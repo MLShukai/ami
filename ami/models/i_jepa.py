@@ -39,6 +39,12 @@ class IJEPAEncoder(VisionTransformer):
     def __init__(
         self, img_size: int, patch_size: int, model_size: IJEPAEncoderSize
     ) -> None:
+        """
+        Args:
+            img_size: Input image's size
+            patch_size: How many patches to divide input image into.
+            model_size: Which model size to use.
+        """
         super().__init__(
             img_size=img_size,
             patch_size=patch_size,
@@ -56,6 +62,14 @@ class IJEPAPredictor(VisionTransformerPredictor):
         predictor_embed_dim: int = 384,
         depth: int = 12,
     ) -> None:
+        """
+        Args:
+            patch_size: How many patches to divide input image into.
+            embed_dim: Embed dim of I-JEPA's context encoder.
+            num_heads: num_heads of I-JEPA's context encoder.
+            predictor_embed_dim: Output tensor's dimension.
+            depth: Num of transformers in this predictor.
+        """
         super().__init__(
             patch_size=patch_size,
             embed_dim=embed_dim,
