@@ -63,7 +63,7 @@ class TensorBoardLogger:
         """
         loggables: dict[str, LoggableTypes] = {}
         for key, value in hparams.items():
-            if not isinstance(value, LoggableTypes):  # type: ignore
+            if not isinstance(value, LoggableTypes):
                 value = str(value)
             loggables[key] = value
         return loggables
