@@ -86,7 +86,7 @@ class LerpStackedHidden(nn.Module):
         self.hidden_proj = nn.Parameter(torch.randn(depth, dim, dim) * (dim**-0.5))
         self.logit_coef_proj = nn.Linear(depth * dim, depth)
         self.num_head = num_head
-        self.norm = nn.GroupNorm(num_head, num_head)
+        self.norm = nn.InstanceNorm1d(num_head)
 
     def forward(self, stacked_hidden: Tensor) -> Tensor:
         is_batch = len(stacked_hidden.shape) == 3
