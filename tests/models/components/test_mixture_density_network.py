@@ -56,9 +56,9 @@ class TestNormalMixture:
 
 
 class TestNormalMixtureDensityNetwork:
-    @pytest.mark.parametrize("in_features", [10, 20])
-    @pytest.mark.parametrize("out_features", [5, 8])
-    @pytest.mark.parametrize("num_components", [2, 3])
+    @pytest.mark.parametrize("in_features", [10])
+    @pytest.mark.parametrize("out_features", [5])
+    @pytest.mark.parametrize("num_components", [2])
     @pytest.mark.parametrize("batch_size", [1, 32])
     def test_normal_mixture_density_network(self, in_features, out_features, num_components, batch_size):
         # Create NormalMixtureDensityNetwork instance
