@@ -83,7 +83,8 @@ class LerpStackedHidden(nn.Module):
 
     def __init__(self, dim: int, depth: int, num_head: int) -> None:
         super().__init__()
-        self.hidden_proj = nn.Parameter(torch.randn(depth, dim, dim) * (dim**-0.5))
+        self.hidden_linear_weight = nn.Parameter(torch.randn(depth, dim, dim) * (dim**-0.5))
+        self.hidden_linear_bias = nn.Parameter(torch.randn(depth, dim) * (dim**-0.5))
         self.logit_coef_proj = nn.Linear(depth * dim, depth)
         self.num_head = num_head
         self.norm = nn.InstanceNorm1d(num_head)
@@ -100,12 +101,12 @@ class LerpStackedHidden(nn.Module):
 
         logit_coef = self.logit_coef_proj(stacked_hidden.reshape(batch, depth * dim))
 
-        out = torch.einsum(
-            "bd,dij,bdj->bi",
-            nn.functional.softmax(logit_coef, dim=-1).squeeze(-1),
-            self.hidden_proj,
-            stacked_hidden,
-        )
+        hidden_linear = torch.einsum(
+            "dij,bdj->bdi", self.hidden_linear_weight, stacked_hidden
+        ) + self.hidden_linear_bias.unsqueeze(0)
+
+        out = torch.einsum("bd,bdi->bi", nn.functional.softmax(logit_coef, dim=-1), hidden_linear)
+
         if not is_batch:
             out = out.squeeze(0)
         return out
