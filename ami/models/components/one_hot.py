@@ -46,8 +46,8 @@ class MultiOneHots(nn.Module):
         super().__init__()
 
         out_features = max(choices_per_category)
-        num_cateogies = len(choices_per_category)
-        mask = torch.zeros((num_cateogies, out_features), dtype=torch.bool)
+        num_categories = len(choices_per_category)
+        mask = torch.zeros((num_categories, out_features), dtype=torch.bool)
         for i, c in enumerate(choices_per_category):
             assert c > 0, f"Category index {i} has no choices!"
             mask[i, c:] = True
