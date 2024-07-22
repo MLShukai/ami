@@ -76,9 +76,9 @@ class LerpStackedHidden(nn.Module):
     """Linear interpolation along depth of stacked hidden.
 
     Shape:
-        - stacked_hidden: (*, D, N)
+        - stacked_hidden: (D, N) | (B, D, N)
 
-        Return shape: (*, N)
+        Return shape: (N,) | (B, N)
     """
 
     def __init__(self, dim: int, depth: int, num_head: int) -> None:
