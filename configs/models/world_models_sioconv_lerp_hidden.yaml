@@ -79,7 +79,10 @@ policy_value:
       dim_hidden: ${models.forward_dynamics.model.core_model.dim}
       dim_out: 512
     core_model:
-      _target_: torch.nn.Identity
+      _target_: ami.models.components.resnet.ResNetFF
+      dim: ${..observation_hidden_projection.dim_out}
+      dim_hidden: 1024
+      depth: 4
     policy_head:
       _target_: ami.models.components.discrete_policy_head.DiscretePolicyHead
       dim_in: ${..observation_hidden_projection.dim_out}
