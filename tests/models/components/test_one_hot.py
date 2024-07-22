@@ -158,10 +158,10 @@ class TestOneHotToEmbedding:
     def test_one_hot_to_embedding_gradients(self):
         num_embeddings, embedding_dim = 10, 5
         one_hot_embedding = OneHotToEmbedding(num_embeddings, embedding_dim)
-        x = torch.eye(num_embeddings)
+        x = torch.eye(num_embeddings, requires_grad=True)
 
         output = one_hot_embedding(x)
+        output.sum().backward()
 
-        # Check that gradients
-        assert one_hot_embedding._weight.requires_grad is True
-        assert output.requires_grad is True
+        assert one_hot_embedding._weight.grad is not None
+        assert x.grad is not None
