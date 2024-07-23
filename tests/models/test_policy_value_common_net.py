@@ -6,7 +6,9 @@ from torch.distributions import Distribution
 from ami.models.components.discrete_policy_head import DiscretePolicyHead
 from ami.models.components.fully_connected_value_head import FullyConnectedValueHead
 from ami.models.policy_value_common_net import (
+    ConcatFlattenedObservationAndLerpedHidden,
     ConcatFlattenedObservationAndStackedHidden,
+    LerpStackedHidden,
     PolicyValueCommonNet,
 )
 
@@ -49,3 +51,22 @@ class TestConcatFlattenedObservationAndStackedHidden:
         out = mod.forward(obs, hidden)
         assert out.shape == (3, 10, 5)
         assert torch.equal(obs, out[:, :, 0])
+
+
+class TestLerpedStackedHidden:
+    def test_forward(self):
+        mod = LerpStackedHidden(128, 8, 4)
+
+        hidden = torch.randn(4, 8, 128)
+        out = mod.forward(hidden)
+        assert out.shape == (4, 128)
+
+
+class TestConcatFlattenedObservationAndLerpedHidden:
+    def test_forward(self):
+        mod = ConcatFlattenedObservationAndLerpedHidden(32, 64, 128)
+
+        obs = torch.randn(4, 32)
+        hidden = torch.randn(4, 64)
+        out = mod.forward(obs, hidden)
+        assert out.shape == (4, 128)

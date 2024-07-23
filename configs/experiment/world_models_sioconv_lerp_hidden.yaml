@@ -1,0 +1,7 @@
+# @package _global_
+
+defaults:
+  - world_models_sioconv
+  - override /models: world_models_sioconv_lerp_hidden
+
+task_name: world_models_sioconv_lerp_hidden
