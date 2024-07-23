@@ -4,7 +4,7 @@ import torch
 from ami.models.components.resnet import ResNetFF
 
 
-class TestMultiEmbedding:
+class TestResNetFF:
     @pytest.mark.parametrize(
         """
         batch,
