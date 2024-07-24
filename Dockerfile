@@ -26,7 +26,8 @@ RUN apt-get update && apt-get install -y \
 # Install python dependencies
 RUN python3.10 -m pip install poetry && \
     poetry install && \
-    echo "cd /workspace && poetry shell" >> ~/.bashrc
+    echo "cd /workspace && poetry shell" >> ~/.bashrc && \
+    echo "eval '$(poetry run python scripts/launch.py -sc install=bash)'" >> ~/.bashrc
 
 # Copy Xvfb script
 COPY scripts/start-xvfb.sh /start-xvfb.sh
