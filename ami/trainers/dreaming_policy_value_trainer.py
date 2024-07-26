@@ -52,8 +52,13 @@ class DreamingPolicyValueTrainer(BaseTrainer):
             partial_policy_optimizer: A partially instantiated optimizer for policy lacking provided parameters.
             partial_value_optimizer: A partially instantiated optimizer for value lacking provided parameters.
             device: The accelerator device (e.g., CPU, GPU) utilized for training the model.
+            logger: A StepIntervalLogger object for logging training progress.
+            max_epochs: Maximum number of epochs for training.
             imagination_trajectory_length: The length of dreaming steps.
-            ...
+            discount_factor: Discount factor (gamma) for reinforcement learning.
+            eligibility_trace_decay: Decay factor (lambda) for eligibility trace in lambda-return calculation.
+            entropy_coef: Coefficient for entropy regularization in policy loss.
+            minimum_dataset_size: Minimum size of the dataset required to start training.
             minimum_new_data_count: Minimum number of new data count required to run the training.
         """
         super().__init__()
@@ -142,7 +147,7 @@ class DreamingPolicyValueTrainer(BaseTrainer):
 
                 # Update value network.
                 value_optimizer.zero_grad()
-                value_losses: list[Tensor] = []
+                value_losses = []
                 for i in range(self.imagination_trajectory_length):
                     obs, hidden = observations[i].detach(), hiddens[i].detach()
                     target = returns[i].detach()
@@ -164,24 +169,35 @@ class DreamingPolicyValueTrainer(BaseTrainer):
         self.value_optimizer_state = value_optimizer.state_dict()
 
     def imagine_trajectory(self, initial_state: tuple[Tensor, Tensor]) -> tuple[Tensor, ...]:
-        """
+        """Imagines a trajectory of states, actions, and rewards using the
+        current policy and value networks.
+
+        This method uses the policy network to generate actions, the forward dynamics model to predict
+        next states and rewards, and the value network to estimate future values. It simulates a
+        trajectory of length `imagination_trajectory_length` starting from the given initial state.
+
         Args:
-            initial_state: observation and hidden state.
+            initial_state: A tuple containing the initial observation and hidden state tensors.
 
         Returns:
-            tuple[Tensor, ...]: observations, hiddens, actions, action_entopies, rewards, next_values.
-                The first dimension is imagination trajectory length.
-
+            tuple[Tensor, ...]: A tuple containing the following tensors, each with the first dimension
+            equal to the imagination trajectory length or its +1:
+                - observations: Predicted observations for each step.
+                - hiddens: Hidden states for each step.
+                - actions: Actions taken at each step.
+                - action_entropies: Entropies of the action distributions at each step.
+                - rewards: Predicted rewards for each step.
+                - next_values: Estimated values of the next states.
         """
         observation, hidden = initial_state
 
         # Setup buffers
-        observations: list[Tensor] = [observation]  # o_0:H+1
-        hiddens: list[Tensor] = [hidden]  # h_0:H+1
-        actions: list[Tensor] = []  # a_0:H
-        action_entropies: list[Tensor] = []
-        rewards: list[Tensor] = []  # r_1:H+1
-        next_values: list[Tensor] = []  # v_1:H+1
+        observations = [observation]  # o_0:H+1
+        hiddens = [hidden]  # h_0:H+1
+        actions = []  # a_0:H
+        action_entropies = []
+        rewards = []  # r_1:H+1
+        next_values = []  # v_1:H+1
 
         for _ in range(self.imagination_trajectory_length):  # H step
 
@@ -235,16 +251,25 @@ class DreamingPolicyValueTrainer(BaseTrainer):
 def compute_lambda_return(
     rewards: Tensor, next_values: Tensor, discount_factor: float, eligibility_trace_decay: float
 ) -> Tensor:
-    """Computes the lambda Return.
+    """Computes the lambda return for a given sequence of rewards and estimated
+    next state values.
+
+    The lambda return is a mixture of n-step returns for different n, weighted by the eligibility
+    trace decay factor (lambda). It provides a balance between bias and variance in the return estimation.
 
     Args:
-        rewards: r_1:T+1, (L, *)
-        next_values: v_1:T+1, (L, *)
-        discount_factor: gamma.
-        eligibility_trace_decay: lambda.
+        rewards: Tensor of shape (L, *) containing the rewards for each step. L is the sequence length.
+        next_values: Tensor of shape (L, *) containing the estimated values of the next states.
+        discount_factor: The discount factor (gamma) for future rewards (0 < gamma <= 1).
+        eligibility_trace_decay: The decay factor (lambda) for the eligibility trace (0 <= lambda <= 1).
 
     Returns:
-        lambda_returns: g_0:T, (L, *).
+        lambda_returns: Tensor of shape (L, *) containing the computed lambda returns for each step.
+            The first dimension corresponds to the time steps, starting from t=0 to t=L-1.
+
+    Note:
+        The shapes of rewards and next_values should be identical.
+        The * in the shape represents any number of additional dimensions (e.g., batch size).
     """
     assert rewards.shape == next_values.shape
 
