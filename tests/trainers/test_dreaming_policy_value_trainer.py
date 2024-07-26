@@ -7,24 +7,24 @@ from torch.optim import Adam
 from torch.utils.data import DataLoader
 
 from ami.data.step_data import DataKeys, StepData
-from ami.data.utils import DataCollectorsDict, DataUsersDict
+from ami.data.utils import DataCollectorsDict
 from ami.models.components.fully_connected_normal import FullyConnectedNormal
 from ami.models.components.sioconv import SioConv
-from ami.models.components.fc_complex_to_real import FCComplexToReal
-from ami.models.policy_value_common_net import ConcatFlattenedObservationAndLerpedHidden, LerpStackedHidden
+from ami.models.policy_value_common_net import (
+    ConcatFlattenedObservationAndLerpedHidden,
+    LerpStackedHidden,
+)
 from ami.models.utils import ModelWrappersDict
-from ami.tensorboard_loggers import StepIntervalLogger
 from ami.trainers.dreaming_policy_value_trainer import (
+    BufferNames,
     DreamingPolicyValueTrainer,
     ForwardDynamcisWithActionReward,
     ModelNames,
     ModelWrapper,
-    StepIntervalLogger,
     PolicyOrValueNetwork,
-    BufferNames,
-    RandomDataBuffer
+    RandomDataBuffer,
+    StepIntervalLogger,
 )
-
 
 BATCH = 4
 DEPTH = 8
@@ -48,7 +48,7 @@ class TestDreamingPolicyValueTrainer:
             SioConv(DEPTH, DIM, NUM_HEAD, DIM_FF_HIDDEN, DROPOUT, CHUNK_SIZE),
             FullyConnectedNormal(DIM, DIM_OBS),
             FullyConnectedNormal(DIM, DIM_ACTION),
-            FullyConnectedNormal(DIM, 1)
+            FullyConnectedNormal(DIM, 1),
         )
 
     @pytest.fixture
@@ -58,7 +58,7 @@ class TestDreamingPolicyValueTrainer:
             LerpStackedHidden(DIM, DEPTH, NUM_HEAD),
             ConcatFlattenedObservationAndLerpedHidden(DIM_OBS, DIM, DIM),
             nn.ReLU(),
-            FullyConnectedNormal(DIM, DIM_ACTION)
+            FullyConnectedNormal(DIM, DIM_ACTION),
         )
 
     @pytest.fixture
@@ -68,7 +68,7 @@ class TestDreamingPolicyValueTrainer:
             LerpStackedHidden(DIM, DEPTH, NUM_HEAD),
             ConcatFlattenedObservationAndLerpedHidden(DIM_OBS, DIM, DIM),
             nn.ReLU(),
-            FullyConnectedNormal(DIM, 1)
+            FullyConnectedNormal(DIM, 1),
         )
 
     @pytest.fixture
@@ -130,7 +130,7 @@ class TestDreamingPolicyValueTrainer:
         device,
         model_wrappers_dict,
         data_users_dict,
-        logger
+        logger,
     ):
         trainer = DreamingPolicyValueTrainer(
             partial_dataloader,
@@ -139,6 +139,7 @@ class TestDreamingPolicyValueTrainer:
             device,
             logger,
             imagination_trajectory_length=8,
+            minimum_new_data_count=4,
         )
         trainer.attach_model_wrappers_dict(model_wrappers_dict)
         trainer.attach_data_users_dict(data_users_dict)
@@ -157,3 +158,22 @@ class TestDreamingPolicyValueTrainer:
         assert trainer._is_new_data_available() is True
         trainer.run()
         assert trainer._is_new_data_available() is False
+
+    def test_save_and_load_state(self, trainer: DreamingPolicyValueTrainer, tmp_path, mocker) -> None:
+        trainer_path = tmp_path / "dreamer"
+        trainer.save_state(trainer_path)
+        assert trainer_path.exists()
+        assert (trainer_path / "policy_optimizer.pt").exists()
+        assert (trainer_path / "value_optimizer.pt").exists()
+        assert (trainer_path / "logger.pt").exists()
+        logger_state = trainer.logger.state_dict()
+
+        mocked_logger_load_state_dict = mocker.spy(trainer.logger, "load_state_dict")
+        trainer.policy_optimizer_state.clear()
+        trainer.value_optimizer_state.clear()
+        assert trainer.policy_optimizer_state == {}
+        assert trainer.value_optimizer_state == {}
+        trainer.load_state(trainer_path)
+        assert trainer.policy_optimizer_state != {}
+        assert trainer.value_optimizer_state != {}
+        mocked_logger_load_state_dict.assert_called_once_with(logger_state)
