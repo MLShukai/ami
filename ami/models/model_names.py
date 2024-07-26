@@ -6,3 +6,5 @@ class ModelNames(str, Enum):
     IMAGE_DECODER = "image_decoder"
     POLICY_VALUE = "policy_value"
     FORWARD_DYNAMICS = "forward_dynamics"
+    POLICY = "policy"
+    VALUE = "value"
