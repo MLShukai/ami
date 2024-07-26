@@ -145,14 +145,17 @@ class DreamingPolicyValueTrainer(BaseTrainer):
                 policy_loss.backward()
                 policy_optimizer.step()
 
+                # Stop gradient for learning value network.
+                observations = observations.detach()
+                hiddens = hiddens.detach()
+                returns = returns.detach()
+
                 # Update value network.
                 value_optimizer.zero_grad()
                 value_losses = []
                 for i in range(self.imagination_trajectory_length):
-                    obs, hidden = observations[i].detach(), hiddens[i].detach()
-                    target = returns[i].detach()
-                    value_dist: Distribution = self.value_net(obs, hidden)
-                    value_losses.append(-value_dist.log_prob(target).mean())
+                    value_dist: Distribution = self.value_net(observations[i], hiddens[i])
+                    value_losses.append(-value_dist.log_prob(returns[i]).mean())
                 value_loss = torch.mean(torch.stack(value_losses))
                 value_loss.backward()
                 value_optimizer.step()
