@@ -1,3 +1,5 @@
+# Ref: https://github.com/facebookresearch/ijepa
+
 from functools import partial
 from pathlib import Path
 import itertools
@@ -16,13 +18,19 @@ from ami.data.buffers.random_data_buffer import RandomDataBuffer
 from ami.data.interfaces import ThreadSafeDataUser
 from ami.models.model_names import ModelNames
 from ami.models.model_wrapper import ModelWrapper
-from ami.models.i_jepa import IJEPAEncoder, IJEPAPredictor
+from ami.models.i_jepa import (
+    IJEPAEncoder,
+    IJEPAPredictor,
+    repeat_interleave_batch,
+    apply_masks,
+)
 from ami.tensorboard_loggers import StepIntervalLogger
 
 from .base_trainer import BaseTrainer
+from .components.i_jepa_mask_collator import IJEPAMaskCollator
 
 
-class ImageVAETrainer(BaseTrainer):
+class IJEPATrainer(BaseTrainer):
     def __init__(
         self,
         partial_dataloader: partial[DataLoader[torch.Tensor]],
@@ -52,6 +60,18 @@ class ImageVAETrainer(BaseTrainer):
         self.max_epochs = max_epochs
         self.minimum_dataset_size = minimum_dataset_size
         self.minimum_new_data_count = minimum_new_data_count
+
+        self.collator = IJEPAMaskCollator(
+            input_size=(224, 224),
+            patch_size=16,
+            enc_mask_scale=(0.85, 1.0),
+            pred_mask_scale=(0.15, 0.2),
+            aspect_ratio=(0.75, 1.5),
+            nenc=1,
+            npred=4,
+            min_keep=10,
+            allow_overlap=False,
+        )
 
     def on_data_users_dict_attached(self) -> None:
         self.image_data_user: ThreadSafeDataUser[RandomDataBuffer] = self.get_data_user(
@@ -112,15 +132,41 @@ class ImageVAETrainer(BaseTrainer):
         optimizer.load_state_dict(self.optimizer_state)
         # prepare about dataset
         dataset = self.image_data_user.get_dataset()
-        dataloader = self.partial_dataloader(dataset=dataset)
+        dataloader = self.partial_dataloader(dataset=dataset, collate_fn=self.collator)
 
         for _ in range(self.max_epochs):
             for batch in dataloader:
-                (image_batch,) = batch
+                (image_batch, masks_for_context_encoder, masks_for_predictor) = batch
                 image_batch = image_batch.to(self.device)
                 optimizer.zero_grad()
-                image_batch_reconstructed, dist_batch = vae(image_batch)
-                loss = nn.functional.smooth_l1_loss(input, target, reduction="mean")
+
+                # target encoder
+                with torch.no_grad():
+                    latent_from_target_encoder = target_encoder(imgs)
+                    latent_from_target_encoder = F.layer_norm(
+                        latent_from_target_encoder,
+                        (latent_from_target_encoder.size(-1),),
+                    )  # normalize over feature-dim
+                    B = len(latent_from_target_encoder)
+                    # -- create targets (masked regions of h)
+                    latent_from_target_encoder = apply_masks(
+                        latent_from_target_encoder, masks_pred
+                    )
+                    latent_from_target_encoder = repeat_interleave_batch(
+                        latent_from_target_encoder, B, repeat=len(masks_enc)
+                    )
+                # context encoder
+                latent_from_context_encoder = encoder(imgs, masks_enc)
+                # predictor
+                latent_from_predictor = predictor(
+                    latent_from_context_encoder, masks_enc, masks_pred
+                )
+                # calc loss
+                loss = nn.functional.smooth_l1_loss(
+                    latent_from_predictor,
+                    latent_from_target_encoder,
+                    reduction="mean",
+                )
                 self.logger.log("i-jepa/loss", loss)
                 loss.backward()
                 optimizer.step()
