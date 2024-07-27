@@ -141,6 +141,9 @@ class DreamingPolicyValueTrainer(BaseTrainer):
                 observation = observation.to(self.device)
                 hidden = hidden.to(self.device)
 
+                # Value network is used only inference in the imagination.
+                self.value_net.freeze_model()
+
                 trajectory = self.imagine_trajectory(initial_state=(observation, hidden))
 
                 returns = compute_lambda_return(
@@ -161,6 +164,7 @@ class DreamingPolicyValueTrainer(BaseTrainer):
                 returns = returns.detach()
 
                 # Update value network.
+                self.value_net.unfreeze_model()
                 value_optimizer.zero_grad()
                 value_losses = []
                 for i in range(self.imagination_trajectory_length):
