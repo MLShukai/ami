@@ -1,5 +1,6 @@
 from functools import partial
 from pathlib import Path
+from typing import TypedDict
 
 import torch
 from torch import Tensor
@@ -18,6 +19,17 @@ from ami.models.policy_or_value_network import PolicyOrValueNetwork
 from ami.tensorboard_loggers import StepIntervalLogger
 
 from .base_trainer import BaseTrainer
+
+
+class ImaginationTrajectory(TypedDict):
+    """TypedDict which contains the outputs of imagination."""
+
+    observations: Tensor  # o_0:H+1
+    hiddens: Tensor  # h_0:H+1
+    actions: Tensor  # a_0:H
+    action_entropies: Tensor  # Ha_0:H
+    rewards: Tensor  # r_1:H+1
+    next_values: Tensor  # v_1:H+1
 
 
 class DreamingPolicyValueTrainer(BaseTrainer):
@@ -129,25 +141,23 @@ class DreamingPolicyValueTrainer(BaseTrainer):
                 observation = observation.to(self.device)
                 hidden = hidden.to(self.device)
 
-                observations, hiddens, _, action_entropies, rewards, next_values = self.imagine_trajectory(
-                    initial_state=(observation, hidden)
-                )
+                trajectory = self.imagine_trajectory(initial_state=(observation, hidden))
 
                 returns = compute_lambda_return(
-                    rewards, next_values, self.discount_factor, self.eligibility_trace_decay
+                    trajectory["rewards"], trajectory["next_values"], self.discount_factor, self.eligibility_trace_decay
                 )
 
                 # Update policy network
                 policy_optimizer.zero_grad()
-                entropy_loss = action_entropies.mean()
+                entropy_loss = trajectory["action_entropies"].mean()
                 return_loss = returns.sum(0).mean()
                 policy_loss = -(return_loss + entropy_loss * self.entropy_coef)  # maximize.
                 policy_loss.backward()
                 policy_optimizer.step()
 
                 # Stop gradient for learning value network.
-                observations = observations.detach()
-                hiddens = hiddens.detach()
+                observations = trajectory["observations"].detach()
+                hiddens = trajectory["hiddens"].detach()
                 returns = returns.detach()
 
                 # Update value network.
@@ -171,7 +181,7 @@ class DreamingPolicyValueTrainer(BaseTrainer):
         self.policy_optimizer_state = policy_optimizer.state_dict()
         self.value_optimizer_state = value_optimizer.state_dict()
 
-    def imagine_trajectory(self, initial_state: tuple[Tensor, Tensor]) -> tuple[Tensor, ...]:
+    def imagine_trajectory(self, initial_state: tuple[Tensor, Tensor]) -> ImaginationTrajectory:
         """Imagines a trajectory of states, actions, and rewards using the
         current policy and value networks.
 
@@ -183,7 +193,7 @@ class DreamingPolicyValueTrainer(BaseTrainer):
             initial_state: A tuple containing the initial observation and hidden state tensors.
 
         Returns:
-            tuple[Tensor, ...]: A tuple containing the following tensors, each with the first dimension
+            ImaginationTrajectory: A dict containing the following tensors, each with the first dimension
             equal to the imagination trajectory length or its +1:
                 - observations: Predicted observations for each step.
                 - hiddens: Hidden states for each step.
@@ -228,13 +238,13 @@ class DreamingPolicyValueTrainer(BaseTrainer):
             rewards.append(reward)
             next_values.append(next_value)
 
-        return (
-            torch.stack(observations),
-            torch.stack(hiddens),
-            torch.stack(actions),
-            torch.stack(action_entropies),
-            torch.stack(rewards),
-            torch.stack(next_values),
+        return ImaginationTrajectory(
+            observations=torch.stack(observations),
+            hiddens=torch.stack(hiddens),
+            actions=torch.stack(actions),
+            action_entropies=torch.stack(action_entropies),
+            rewards=torch.stack(rewards),
+            next_values=torch.stack(next_values),
         )
 
     @override
