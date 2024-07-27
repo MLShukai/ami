@@ -7,6 +7,7 @@ import torch
 import torch.nn as nn
 
 import dataclasses
+from .components.vision_transformer import VisionTransformer, VisionTransformerPredictor
 
 IJEPAEncoderSize = TypeVar(
     "IJEPAEncoderSize", Literal["tiny", "small", "base", "large", "huge", "giant"]
