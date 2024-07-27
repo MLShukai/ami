@@ -150,16 +150,20 @@ class IJEPATrainer(BaseTrainer):
                     B = len(latent_from_target_encoder)
                     # -- create targets (masked regions of h)
                     latent_from_target_encoder = apply_masks(
-                        latent_from_target_encoder, masks_pred
+                        latent_from_target_encoder, masks_for_predictor
                     )
                     latent_from_target_encoder = repeat_interleave_batch(
-                        latent_from_target_encoder, B, repeat=len(masks_enc)
+                        latent_from_target_encoder,
+                        B,
+                        repeat=len(masks_for_context_encoder),
                     )
                 # context encoder
-                latent_from_context_encoder = encoder(imgs, masks_enc)
+                latent_from_context_encoder = encoder(imgs, masks_for_context_encoder)
                 # predictor
                 latent_from_predictor = predictor(
-                    latent_from_context_encoder, masks_enc, masks_pred
+                    latent_from_context_encoder,
+                    masks_for_context_encoder,
+                    masks_for_predictor,
                 )
                 # calc loss
                 loss = nn.functional.smooth_l1_loss(
