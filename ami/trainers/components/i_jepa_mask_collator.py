@@ -1,34 +1,38 @@
 # Ref: https://github.com/facebookresearch/ijepa
 
+import math
+from logging import getLogger
+from multiprocessing import Value
 from typing import List, Optional, Tuple
 
-import math
 import torch
-from multiprocessing import Value
-from logging import getLogger
 
 logger = getLogger()
+
 
 class IJEPAMaskCollator:
     def __init__(
         self,
-        input_size: Tuple[int, int]=(224, 224),
-        patch_size: int=16,
-        enc_mask_scale: Tuple[float, float]=(0.85, 1.0),
-        pred_mask_scale: Tuple[float, float]=(0.15, 0.2),
-        aspect_ratio: Tuple[float, float]=(0.75, 1.5),
-        n_masks_for_context_encoder: int=1,
-        n_masks_for_predictor: int=4,
-        min_keep: int=10,
-        allow_overlap: bool=False,
+        input_size: Tuple[int, int] = (224, 224),
+        patch_size: int = 16,
+        enc_mask_scale: Tuple[float, float] = (0.85, 1.0),
+        pred_mask_scale: Tuple[float, float] = (0.15, 0.2),
+        aspect_ratio: Tuple[float, float] = (0.75, 1.5),
+        n_masks_for_context_encoder: int = 1,
+        n_masks_for_predictor: int = 4,
+        min_keep: int = 10,
+        allow_overlap: bool = False,
     ) -> None:
+        """Collator for dataloader during training I-JEPA.
+
+        Collate input images and create masks for context_encoder and
+        predictor.
         """
-        """
-        super(IJEPAMaskCollator, self).__init__()
+        super().__init__()
         if not isinstance(input_size, tuple):
             input_size = (input_size,) * 2
         self.patch_size = patch_size
-        assert input_size[0]%patch_size==0 and input_size[1]%patch_size==0
+        assert input_size[0] % patch_size == 0 and input_size[1] % patch_size == 0
         self.height, self.width = (
             input_size[0] // patch_size,
             input_size[1] // patch_size,
@@ -39,9 +43,7 @@ class IJEPAMaskCollator:
         self.n_masks_for_context_encoder = n_masks_for_context_encoder
         self.n_masks_for_predictor = n_masks_for_predictor
         self.min_keep = min_keep  # minimum number of patches to keep
-        self.allow_overlap = (
-            allow_overlap  # whether to allow overlap b/w enc and pred masks
-        )
+        self.allow_overlap = allow_overlap  # whether to allow overlap b/w enc and pred masks
         self._itr_counter = Value("i", -1)  # collator is shared across worker processes
 
     def step(self) -> int:
@@ -137,19 +139,18 @@ class IJEPAMaskCollator:
         # --
         return mask, mask_complement
 
-    def __call__(
-        self, images: List[torch.Tensor]
-    ) -> Tuple[torch.Tensor, List[torch.Tensor], List[torch.Tensor]]:
-        """Collate input images and create masks for context_encoder and predictor.
+    def __call__(self, images: List[torch.Tensor]) -> Tuple[torch.Tensor, List[torch.Tensor], List[torch.Tensor]]:
+        """Collate input images and create masks for context_encoder and
+        predictor.
 
         Args:
-            images (List[torch.Tensor]): 
-                images list. len(images)==batch_size. 
+            images (List[torch.Tensor]):
+                images list. len(images)==batch_size.
                 Each image is shape [3, height, width]
 
         Returns:
             Tuple[torch.Tensor, List[torch.Tensor], List[torch.Tensor]]:
-                collated_images (torch.Tensor): 
+                collated_images (torch.Tensor):
                     Collated images (shape is [batch_size, 3, height, width])
                 collated_masks_for_context_encoder (List[torch.Tensor]):
                     Collated mask indices patch for context encoder.
@@ -188,9 +189,7 @@ class IJEPAMaskCollator:
             masks_for_predictor: List[torch.Tensor] = []
             masks_complement: List[torch.Tensor] = []
             for _ in range(self.n_masks_for_predictor):
-                mask, mask_complement = self._sample_mask(
-                    mask_size=mask_size_for_predictor
-                )
+                mask, mask_complement = self._sample_mask(mask_size=mask_size_for_predictor)
                 masks_for_predictor.append(mask)
                 masks_complement.append(mask_complement)
                 min_keep_pred = min(min_keep_pred, len(mask))
@@ -216,17 +215,11 @@ class IJEPAMaskCollator:
 
         # collate masks for predictor
         collated_masks_for_predictor: List[torch.Tensor] = torch.utils.data.default_collate(
-            [
-                [cm[:min_keep_pred] for cm in cm_list]
-                for cm_list in masks_list_for_predictor
-            ]
+            [[cm[:min_keep_pred] for cm in cm_list] for cm_list in masks_list_for_predictor]
         )
         # collate masks for context_encoder
         collated_masks_for_context_encoder: List[torch.Tensor] = torch.utils.data.default_collate(
-            [
-                [cm[:min_keep_enc] for cm in cm_list]
-                for cm_list in masks_list_for_context_encoder
-            ]
+            [[cm[:min_keep_enc] for cm in cm_list] for cm_list in masks_list_for_context_encoder]
         )
 
         return (

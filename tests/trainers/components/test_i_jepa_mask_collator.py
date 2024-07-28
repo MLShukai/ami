@@ -1,9 +1,7 @@
 import pytest
 import torch
 
-from ami.trainers.components.i_jepa_mask_collator import (
-    IJEPAMaskCollator
-)
+from ami.trainers.components.i_jepa_mask_collator import IJEPAMaskCollator
 
 
 class TestIJEPAMaskCollator:
@@ -49,25 +47,29 @@ class TestIJEPAMaskCollator:
             collated_masks_for_predictor,
         ) = collator(images)
         # check image sizes
-        assert collated_images.size(0)==batch_size, "batch_size mismatch"
-        assert collated_images.size(1)==3, "batch_size mismatch"
-        assert collated_images.size(2)==image_size, "collated_images height mismatch"
-        assert collated_images.size(3)==image_size, "collated_images width mismatch"
+        assert collated_images.size(0) == batch_size, "batch_size mismatch"
+        assert collated_images.size(1) == 3, "batch_size mismatch"
+        assert collated_images.size(2) == image_size, "collated_images height mismatch"
+        assert collated_images.size(3) == image_size, "collated_images width mismatch"
         # calc num of patch
         n_patch_vertical = image_size // patch_size
         n_patch_horizontal = image_size // patch_size
         n_patch = n_patch_vertical * n_patch_horizontal
         # check about masks for context encoder
-        assert len(collated_masks_for_context_encoder)==n_masks_for_context_encoder
+        assert len(collated_masks_for_context_encoder) == n_masks_for_context_encoder
         for masks_for_context_encoder in collated_masks_for_context_encoder:
-            assert masks_for_context_encoder.dim()==2
-            assert masks_for_context_encoder.size(0)==batch_size, "batch_size mismatch (masks_for_context_encoder)"
-            assert masks_for_context_encoder.size(1)<=n_patch, "too much size (masks_for_context_encoder)"
-            assert torch.all(0<=masks_for_context_encoder) and torch.all(masks_for_context_encoder<n_patch), "invalid indices (masks_for_context_encoder)"
+            assert masks_for_context_encoder.dim() == 2
+            assert masks_for_context_encoder.size(0) == batch_size, "batch_size mismatch (masks_for_context_encoder)"
+            assert masks_for_context_encoder.size(1) <= n_patch, "too much size (masks_for_context_encoder)"
+            assert torch.all(0 <= masks_for_context_encoder) and torch.all(
+                masks_for_context_encoder < n_patch
+            ), "invalid indices (masks_for_context_encoder)"
         # check about masks for predictor
-        assert len(collated_masks_for_predictor)==n_masks_for_predictor
+        assert len(collated_masks_for_predictor) == n_masks_for_predictor
         for masks_for_predictor in collated_masks_for_predictor:
-            assert masks_for_predictor.dim()==2
-            assert masks_for_predictor.size(0)==batch_size, "batch_size mismatch (masks_for_predictor)"
-            assert masks_for_predictor.size(1)<=n_patch, "too much size (masks_for_predictor)"
-            assert torch.all(0<=masks_for_predictor) and torch.all(masks_for_predictor<n_patch), "invalid indices (masks_for_predictor)"
+            assert masks_for_predictor.dim() == 2
+            assert masks_for_predictor.size(0) == batch_size, "batch_size mismatch (masks_for_predictor)"
+            assert masks_for_predictor.size(1) <= n_patch, "too much size (masks_for_predictor)"
+            assert torch.all(0 <= masks_for_predictor) and torch.all(
+                masks_for_predictor < n_patch
+            ), "invalid indices (masks_for_predictor)"
