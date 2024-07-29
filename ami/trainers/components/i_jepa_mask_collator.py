@@ -16,8 +16,8 @@ class IJEPAMaskCollator:
         self,
         input_size: Tuple[int, int] = (224, 224),
         patch_size: int = 16,
-        enc_mask_scale: Tuple[float, float] = (0.85, 1.0),
-        pred_mask_scale: Tuple[float, float] = (0.15, 0.2),
+        encoder_mask_scale: Tuple[float, float] = (0.85, 1.0),
+        prediction_mask_scale: Tuple[float, float] = (0.15, 0.2),
         aspect_ratio: Tuple[float, float] = (0.75, 1.5),
         n_masks_for_context_encoder: int = 1,
         n_masks_for_predictor: int = 4,
@@ -38,8 +38,8 @@ class IJEPAMaskCollator:
             input_size[0] // patch_size,
             input_size[1] // patch_size,
         )
-        self.enc_mask_scale = enc_mask_scale
-        self.pred_mask_scale = pred_mask_scale
+        self.encoder_mask_scale = encoder_mask_scale
+        self.prediction_mask_scale = prediction_mask_scale
         self.aspect_ratio = aspect_ratio
         self.n_masks_for_context_encoder = n_masks_for_context_encoder
         self.n_masks_for_predictor = n_masks_for_predictor
@@ -170,13 +170,13 @@ class IJEPAMaskCollator:
         # randomly sampling size of mask for predictor
         mask_size_for_predictor: Tuple[int, int] = self._sample_mask_size(
             generator=g,
-            scale_range=self.pred_mask_scale,
+            scale_range=self.prediction_mask_scale,
             aspect_ratio_range=self.aspect_ratio,
         )
         # randomly sampling size of mask for context_encoder
         mask_size_for_context_encoder: Tuple[int, int] = self._sample_mask_size(
             generator=g,
-            scale_range=self.enc_mask_scale,
+            scale_range=self.encoder_mask_scale,
             aspect_ratio_range=(1.0, 1.0),
         )
 
