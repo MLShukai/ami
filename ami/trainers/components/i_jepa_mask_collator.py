@@ -1,13 +1,14 @@
 # Ref: https://github.com/facebookresearch/ijepa
 
 import math
-from logging import getLogger
 from multiprocessing import Value
 from typing import List, Optional, Tuple
 
 import torch
 
-logger = getLogger()
+from ami.logger import get_training_thread_logger
+
+logger = get_training_thread_logger(__file__)
 
 
 class IJEPAMaskCollator:
