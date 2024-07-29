@@ -11,7 +11,7 @@ from ami.logger import get_training_thread_logger
 logger = get_training_thread_logger(__file__)
 
 
-class IJEPAMaskCollator:
+class IJEPAMultiBlockMaskCollator:
     def __init__(
         self,
         input_size: tuple[int, int] | int = (224, 224),
