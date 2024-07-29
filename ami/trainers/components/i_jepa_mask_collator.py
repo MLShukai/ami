@@ -16,9 +16,9 @@ class IJEPAMaskCollator:
         self,
         input_size: tuple[int, int] | int = (224, 224),
         patch_size: int = 16,
-        encoder_mask_scale: Tuple[float, float] = (0.85, 1.0),
-        prediction_mask_scale: Tuple[float, float] = (0.15, 0.2),
-        aspect_ratio: Tuple[float, float] = (0.75, 1.5),
+        encoder_mask_scale: tuple[float, float] = (0.85, 1.0),
+        prediction_mask_scale: tuple[float, float] = (0.15, 0.2),
+        aspect_ratio: tuple[float, float] = (0.75, 1.5),
         n_masks_for_context_encoder: int = 1,
         n_masks_for_predictor: int = 4,
         min_keep: int = 10,
@@ -57,18 +57,18 @@ class IJEPAMaskCollator:
     def _sample_mask_size(
         self,
         generator: torch.Generator,
-        scale_range: Tuple[float, float],
-        aspect_ratio_range: Tuple[float, float],
-    ) -> Tuple[int, int]:
+        scale_range: tuple[float, float],
+        aspect_ratio_range: tuple[float, float],
+    ) -> tuple[int, int]:
         """randomly sampling mask's size.
 
         Args:
             generator (torch.Generator): Generator to make pseudo random numbers.
-            scale_range (Tuple[float, float]): Min and max values of mask scale.
-            aspect_ratio_range (Tuple[float, float]): Min and max values of aspect ratio.
+            scale_range (tuple[float, float]): Min and max values of mask scale.
+            aspect_ratio_range (tuple[float, float]): Min and max values of aspect ratio.
 
         Returns:
-            Tuple[int, int]: Height and width of mask about to create.
+            tuple[int, int]: Height and width of mask about to create.
         """
         _rand = torch.rand(1, generator=generator).item()
         # -- Sample mask scale
@@ -88,17 +88,17 @@ class IJEPAMaskCollator:
 
     def _sample_mask(
         self,
-        mask_size: Tuple[int, int],
-        acceptable_regions: Optional[List[torch.Tensor]] = None,
-    ) -> Tuple[torch.Tensor, torch.Tensor]:
+        mask_size: tuple[int, int],
+        acceptable_regions: Optional[list[torch.Tensor]] = None,
+    ) -> tuple[torch.Tensor, torch.Tensor]:
         """make masks.
 
         Args:
-            mask_size (Tuple[int, int]): mask size (height and width).
-            acceptable_regions (List[torch.Tensor] or None):
+            mask_size (tuple[int, int]): mask size (height and width).
+            acceptable_regions (list[torch.Tensor] or None):
 
         Returns:
-            Tuple[torch.Tensor, torch.Tensor]:
+            tuple[torch.Tensor, torch.Tensor]:
                 mask (shape: [self.height * self.width]) and
                 mask_complement (shape: [self.height, self.width]).
         """
@@ -138,23 +138,23 @@ class IJEPAMaskCollator:
         # --
         return mask, mask_complement
 
-    def __call__(self, images: List[torch.Tensor]) -> Tuple[torch.Tensor, List[torch.Tensor], List[torch.Tensor]]:
+    def __call__(self, images: list[torch.Tensor]) -> tuple[torch.Tensor, list[torch.Tensor], list[torch.Tensor]]:
         """Collate input images and create masks for context_encoder and
         predictor.
 
         Args:
-            images (List[torch.Tensor]):
+            images (list[torch.Tensor]):
                 images list. len(images)==batch_size.
                 Each image is shape [3, height, width]
 
         Returns:
-            Tuple[torch.Tensor, List[torch.Tensor], List[torch.Tensor]]:
+            tuple[torch.Tensor, list[torch.Tensor], list[torch.Tensor]]:
                 collated_images (torch.Tensor):
                     Collated images (shape is [batch_size, 3, height, width])
-                collated_masks_for_context_encoder (List[torch.Tensor]):
+                collated_masks_for_context_encoder (list[torch.Tensor]):
                     Collated mask indices patch for context encoder.
                     (Each Tensor's shape is [batch_size, n_patch_to_keep].)
-                collated_masks_for_predictor (List[torch.Tensor]):
+                collated_masks_for_predictor (list[torch.Tensor]):
                     Collated mask indices patch for predictor.
                     (Each Tensor's shape is [batch_size, n_patch_to_keep].)
         """
@@ -166,27 +166,27 @@ class IJEPAMaskCollator:
         g = torch.Generator()
         g.manual_seed(seed)
         # randomly sampling size of mask for predictor
-        mask_size_for_predictor: Tuple[int, int] = self._sample_mask_size(
+        mask_size_for_predictor: tuple[int, int] = self._sample_mask_size(
             generator=g,
             scale_range=self.prediction_mask_scale,
             aspect_ratio_range=self.aspect_ratio,
         )
         # randomly sampling size of mask for context_encoder
-        mask_size_for_context_encoder: Tuple[int, int] = self._sample_mask_size(
+        mask_size_for_context_encoder: tuple[int, int] = self._sample_mask_size(
             generator=g,
             scale_range=self.encoder_mask_scale,
             aspect_ratio_range=(1.0, 1.0),
         )
 
         # make masks
-        masks_list_for_predictor: List[List[torch.Tensor]] = []
-        masks_list_for_context_encoder: List[List[torch.Tensor]] = []
+        masks_list_for_predictor: list[list[torch.Tensor]] = []
+        masks_list_for_context_encoder: list[list[torch.Tensor]] = []
         min_keep_pred = self.height * self.width
         min_keep_enc = self.height * self.width
         for _ in range(B):
             # create mask for predictor and mask to constrain range
-            masks_for_predictor: List[torch.Tensor] = []
-            masks_complement: List[torch.Tensor] = []
+            masks_for_predictor: list[torch.Tensor] = []
+            masks_complement: list[torch.Tensor] = []
             for _ in range(self.n_masks_for_predictor):
                 mask, mask_complement = self._sample_mask(mask_size=mask_size_for_predictor)
                 masks_for_predictor.append(mask)
@@ -194,7 +194,7 @@ class IJEPAMaskCollator:
                 min_keep_pred = min(min_keep_pred, len(mask))
             masks_list_for_predictor.append(masks_for_predictor)
 
-            acceptable_regions: Optional[List[torch.Tensor]] = masks_complement
+            acceptable_regions: Optional[list[torch.Tensor]] = masks_complement
             try:
                 if self.allow_overlap:
                     acceptable_regions = None
@@ -202,7 +202,7 @@ class IJEPAMaskCollator:
                 logger.warning(f"Encountered exception in mask-generator {e}")
 
             # create mask for context_encoder
-            masks_for_context_encoder: List[torch.Tensor] = []
+            masks_for_context_encoder: list[torch.Tensor] = []
             for _ in range(self.n_masks_for_context_encoder):
                 mask, _ = self._sample_mask(
                     mask_size=mask_size_for_context_encoder,
@@ -213,11 +213,11 @@ class IJEPAMaskCollator:
             masks_list_for_context_encoder.append(masks_for_context_encoder)
 
         # collate masks for predictor
-        collated_masks_for_predictor: List[torch.Tensor] = torch.utils.data.default_collate(
+        collated_masks_for_predictor: list[torch.Tensor] = torch.utils.data.default_collate(
             [[cm[:min_keep_pred] for cm in cm_list] for cm_list in masks_list_for_predictor]
         )
         # collate masks for context_encoder
-        collated_masks_for_context_encoder: List[torch.Tensor] = torch.utils.data.default_collate(
+        collated_masks_for_context_encoder: list[torch.Tensor] = torch.utils.data.default_collate(
             [[cm[:min_keep_enc] for cm in cm_list] for cm_list in masks_list_for_context_encoder]
         )
 
