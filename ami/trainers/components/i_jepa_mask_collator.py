@@ -198,11 +198,8 @@ class IJEPAMultiBlockMaskCollator:
             masks_list_for_predictor.append(masks_for_predictor)
 
             acceptable_regions: Optional[list[torch.Tensor]] = masks_complement
-            try:
-                if self.allow_overlap:
-                    acceptable_regions = None
-            except Exception as e:
-                logger.warning(f"Encountered exception in mask-generator {e}")
+            if self.allow_overlap:
+                acceptable_regions = None
 
             # create mask for context_encoder
             masks_for_context_encoder: list[torch.Tensor] = []
