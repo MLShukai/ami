@@ -94,8 +94,11 @@ class IJEPAMultiBlockMaskCollator:
         """make masks.
 
         Args:
-            mask_size (tuple[int, int]): mask size (height and width).
-            acceptable_regions (list[torch.Tensor] or None):
+            mask_size (tuple[int, int]):
+                mask size (height and width).
+            acceptable_regions (list[torch.Tensor] | None):
+                Represents areas that may be masked.
+                Necessary to prevent masks for context encoder from being covered by the masks for predictor.
 
         Returns:
             tuple[torch.Tensor, torch.Tensor]:
