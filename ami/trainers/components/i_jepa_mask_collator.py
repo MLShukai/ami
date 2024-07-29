@@ -70,14 +70,14 @@ class IJEPAMaskCollator:
         Returns:
             tuple[int, int]: Height and width of mask about to create.
         """
-        _rand = torch.rand(1, generator=generator).item()
+        _scale_rand, _ratio_rand = torch.rand(2, generator=generator).tolist()
         # -- Sample mask scale
         min_s, max_s = scale_range
-        mask_scale = min_s + _rand * (max_s - min_s)
+        mask_scale = min_s + _scale_rand * (max_s - min_s)
         max_keep = int(self.height * self.width * mask_scale)
         # -- Sample mask aspect-ratio
         min_ar, max_ar = aspect_ratio_range
-        aspect_ratio = min_ar + _rand * (max_ar - min_ar)
+        aspect_ratio = min_ar + _ratio_rand * (max_ar - min_ar)
         # -- Compute height and width of mask (given scale and aspect-ratio)
         h = int(round(math.sqrt(max_keep * aspect_ratio)))
         w = int(round(math.sqrt(max_keep / aspect_ratio)))
