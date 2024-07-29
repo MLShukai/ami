@@ -44,7 +44,7 @@ class IJEPAMultiBlockMaskCollator:
         self.n_masks_for_context_encoder = n_masks_for_context_encoder
         self.n_masks_for_predictor = n_masks_for_predictor
         self.min_keep = min_keep  # minimum number of patches to keep
-        self.allow_overlap = allow_overlap  # whether to allow overlap b/w enc and pred masks
+        self.allow_overlap = allow_overlap  # whether to allow overlap between encoder and predictor masks
         self._itr_counter = Value("i", -1)  # collator is shared across worker processes
 
     def step(self) -> int:
