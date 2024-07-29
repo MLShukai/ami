@@ -14,7 +14,7 @@ logger = get_training_thread_logger(__file__)
 class IJEPAMaskCollator:
     def __init__(
         self,
-        input_size: Tuple[int, int] = (224, 224),
+        input_size: tuple[int, int] | int = (224, 224),
         patch_size: int = 16,
         encoder_mask_scale: Tuple[float, float] = (0.85, 1.0),
         prediction_mask_scale: Tuple[float, float] = (0.15, 0.2),
@@ -30,7 +30,7 @@ class IJEPAMaskCollator:
         predictor.
         """
         super().__init__()
-        if not isinstance(input_size, tuple):
+        if isinstance(input_size, int):
             input_size = (input_size,) * 2
         self.patch_size = patch_size
         assert input_size[0] % patch_size == 0 and input_size[1] % patch_size == 0
