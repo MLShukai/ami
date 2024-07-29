@@ -184,8 +184,8 @@ class IJEPAMultiBlockMaskCollator:
         # make masks
         masks_list_for_predictor: list[list[torch.Tensor]] = []
         masks_list_for_context_encoder: list[list[torch.Tensor]] = []
-        min_keep_pred = self.height * self.width
-        min_keep_enc = self.height * self.width
+        min_keep_predictor = self.height * self.width
+        min_keep_encoder = self.height * self.width
         for _ in range(B):
             # create mask for predictor and mask to constrain range
             masks_for_predictor: list[torch.Tensor] = []
@@ -194,7 +194,7 @@ class IJEPAMultiBlockMaskCollator:
                 mask, mask_complement = self._sample_mask(mask_size=mask_size_for_predictor)
                 masks_for_predictor.append(mask)
                 masks_complement.append(mask_complement)
-                min_keep_pred = min(min_keep_pred, len(mask))
+                min_keep_predictor = min(min_keep_predictor, len(mask))
             masks_list_for_predictor.append(masks_for_predictor)
 
             acceptable_regions: Optional[list[torch.Tensor]] = masks_complement
@@ -209,16 +209,16 @@ class IJEPAMultiBlockMaskCollator:
                     acceptable_regions=acceptable_regions,
                 )
                 masks_for_context_encoder.append(mask)
-                min_keep_enc = min(min_keep_enc, len(mask))
+                min_keep_encoder = min(min_keep_encoder, len(mask))
             masks_list_for_context_encoder.append(masks_for_context_encoder)
 
         # collate masks for predictor
         collated_masks_for_predictor: list[torch.Tensor] = torch.utils.data.default_collate(
-            [[cm[:min_keep_pred] for cm in cm_list] for cm_list in masks_list_for_predictor]
+            [[cm[:min_keep_predictor] for cm in cm_list] for cm_list in masks_list_for_predictor]
         )
         # collate masks for context_encoder
         collated_masks_for_context_encoder: list[torch.Tensor] = torch.utils.data.default_collate(
-            [[cm[:min_keep_enc] for cm in cm_list] for cm_list in masks_list_for_context_encoder]
+            [[cm[:min_keep_encoder] for cm in cm_list] for cm_list in masks_list_for_context_encoder]
         )
 
         return (
