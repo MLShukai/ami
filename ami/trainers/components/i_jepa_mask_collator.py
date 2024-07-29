@@ -102,7 +102,7 @@ class IJEPAMultiBlockMaskCollator:
 
         Returns:
             tuple[torch.Tensor, torch.Tensor]:
-                mask (shape: [self.height * self.width]) and
+                mask (shape: [range(self.min_keep to self.height * self.width)]) and
                 mask_complement (shape: [self.height, self.width]).
         """
         h, w = mask_size
