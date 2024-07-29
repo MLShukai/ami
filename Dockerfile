@@ -8,7 +8,12 @@ ADD ./ /workspace/
 # Install dependencies
 ARG DEBIAN_FRONTEND=noninteractive
 RUN ln -sf /usr/share/zoneinfo/Asia/Tokyo /etc/localtime
-# RUN perl -p -i.bak -e 's%(deb(?:-src|)\s+)https?://(?!archive\.canonical\.com|security\.ubuntu\.com)[^\s]+%$1http://ftp.naist.jp/pub/Linux/ubuntu/%' /etc/apt/sources.list
+# Change apt source to japan
+# For linux host (x86_64)
+RUN sed -i -e 's|archive.ubuntu.com/ubuntu|ftp.naist.jp/pub/Linux/ubuntu|g' /etc/apt/sources.list
+# For linux or mac host (arm64)
+RUN sed -i -e 's|ports.ubuntu.com|jp.mirror.coganng.com|g' /etc/apt/sources.list
+
 RUN apt-get update && apt-get install -y \
     curl \
     git \
@@ -21,6 +26,7 @@ RUN apt-get update && apt-get install -y \
     x11-utils \
     libgl1-mesa-glx \
     libgl1-mesa-dri \
+    libhdf5-dev \
     && rm -rf /var/lib/apt/lists/*
 
 # Install python dependencies
