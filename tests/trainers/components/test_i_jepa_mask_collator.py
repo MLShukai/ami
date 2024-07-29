@@ -30,8 +30,8 @@ class TestIJEPAMaskCollator:
         collator = IJEPAMaskCollator(
             input_size=(image_size, image_size),
             patch_size=patch_size,
-            enc_mask_scale=(0.85, 1.0),
-            pred_mask_scale=(0.15, 0.2),
+            encoder_mask_scale=(0.85, 1.0),
+            predictor_mask_scale=(0.15, 0.2),
             aspect_ratio=(0.75, 1.5),
             n_masks_for_context_encoder=n_masks_for_context_encoder,
             n_masks_for_predictor=n_masks_for_predictor,
