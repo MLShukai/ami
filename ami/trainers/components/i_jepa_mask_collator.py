@@ -2,7 +2,7 @@
 
 import math
 from multiprocessing import Value
-from typing import List, Optional, Tuple
+from typing import Optional
 
 import torch
 
@@ -81,10 +81,8 @@ class IJEPAMaskCollator:
         # -- Compute height and width of mask (given scale and aspect-ratio)
         h = int(round(math.sqrt(max_keep * aspect_ratio)))
         w = int(round(math.sqrt(max_keep / aspect_ratio)))
-        while h >= self.height:
-            h -= 1
-        while w >= self.width:
-            w -= 1
+        h = min(self.height, h)
+        w = min(self.width, w)
 
         return (h, w)
 
