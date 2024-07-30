@@ -149,8 +149,8 @@ class CuriosityImagePPOAgent(BaseAgent[Tensor, Tensor]):
         self.forward_dynamics_hidden_state = torch.load(path / "forward_dynamics_hidden_state.pt", map_location="cpu")
 
 
-class CuriosityImageUnknownAgent(BaseAgent[Tensor, Tensor]):
-    """Image input curiosity agent with isolated policy and value network.
+class CuriosityImageSeparatePolicyValueAgent(BaseAgent[Tensor, Tensor]):
+    """Image input curiosity agent with separate policy and value network.
 
     And uses ForwardDynamicsWithActionReward
     """
