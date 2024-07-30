@@ -31,12 +31,12 @@ docker-build: ## Build docker image.
 	docker build -t ami-vconf24 --no-cache .
 
 # Docker GPU Option.
-USING_GPU_INDICES := all
+USING_GPU_DEVICES := all # Index 0,1,2, ... or device UUID.
 
 GPU_AVAILABLE := $(shell [ -f /proc/driver/nvidia/version ] && echo 1 || echo 0)
 
 ifeq ($(GPU_AVAILABLE),1)
-    DOCKER_GPU_OPTION := --gpus $(USING_GPU_INDICES)
+    DOCKER_GPU_OPTION := --gpus device=$(USING_GPU_DEVICES)
 else
     DOCKER_GPU_OPTION :=
 endif
