@@ -31,7 +31,7 @@ docker-build: ## Build docker image.
 	docker build -t ami-vconf24 --no-cache .
 
 # Docker GPU Option.
-USING_GPU_INDICES=all
+USING_GPU_INDICES := all
 
 GPU_AVAILABLE := $(shell [ -f /proc/driver/nvidia/version ] && echo 1 || echo 0)
 
