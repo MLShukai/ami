@@ -220,7 +220,7 @@ class CuriosityImageSeparatePolicyValueAgent(BaseAgent[Tensor, Tensor]):
 
         action_dist: Distribution = self.policy_net(pv_obs, self.forward_dynamics_hidden_state)
         value_dist: Distribution = self.value_net(pv_obs, self.forward_dynamics_hidden_state)
-        action, value = action_dist.sample(), value_dist.sample()
+        action, value = action_dist.sample(), value_dist.sample().squeeze()
         action_log_prob = action_dist.log_prob(action)
 
         self.step_data[DataKeys.ACTION] = action  # a_t

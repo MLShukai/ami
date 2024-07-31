@@ -233,7 +233,7 @@ class TestCuriosityImageSeparatePolicyValueAgent:
         assert agent.step_data[DataKeys.EMBED_OBSERVATION].shape == (EMBED_OBS_DIM,)
         assert agent.step_data[DataKeys.ACTION].shape == (ACTION_DIM,)
         assert agent.step_data[DataKeys.ACTION_LOG_PROBABILITY].shape == (ACTION_DIM,)
-        assert agent.step_data[DataKeys.VALUE].shape == (1,)
+        assert agent.step_data[DataKeys.VALUE].shape == ()
         assert agent.step_data[DataKeys.HIDDEN].shape == (DEPTH, SCONV_DIM)
         assert agent.step_data[DataKeys.REWARD].shape == ()
 
