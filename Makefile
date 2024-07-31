@@ -27,8 +27,10 @@ type:
 
 run: format test-full type
 
+NAME := $(shell whoami)
+
 docker-build: ## Build docker image.
-	docker build -t ami-vconf24 --no-cache .
+	docker build -t ami-vconf24:$(NAME) --no-cache .
 
 # Docker GPU Option.
 USING_GPU_DEVICES := all # Index 0,1,2, ... or device UUID.
@@ -43,20 +45,20 @@ endif
 
 docker-run: ## Run built docker image.
 	docker run -it $(DOCKER_GPU_OPTION) \
-	--mount type=volume,source=ami-vconf24,target=/workspace \
-	ami-vconf24
+	--mount type=volume,source=ami-vconf24_$(NAME),target=/workspace \
+	ami-vconf24:$(NAME)
 
 docker-run-host: ## Run the built Docker image along with network, camera, and other host OS device access
 	docker run -it $(DOCKER_GPU_OPTION) \
-	--mount type=volume,source=ami-vconf24,target=/workspace \
+	--mount type=volume,source=ami-vconf24_$(NAME),target=/workspace \
 	--mount type=bind,source=`pwd`/logs,target=/workspace/logs \
 	--device `v4l2-ctl --list-devices | grep -A 1 'OBS Virtual Camera' | grep -oP '\t\K/dev.*'`:/dev/video0:mwr \
 	--net host \
-	ami-vconf24
+	ami-vconf24:$(NAME)
 
 docker-run-unity: ## Run the built Docker image with Unity executables
 	docker run -it $(DOCKER_GPU_OPTION) \
-	--mount type=volume,source=ami-vconf24,target=/workspace \
+	--mount type=volume,source=ami-vconf24_$(NAME),target=/workspace \
 	--mount type=bind,source=`pwd`/logs,target=/workspace/logs \
 	--mount type=bind,source=`pwd`/unity_executables,target=/workspace/unity_executables \
-	ami-vconf24
+	ami-vconf24:$(NAME)
