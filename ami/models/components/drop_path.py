@@ -1,15 +1,13 @@
 # Ref: https://github.com/facebookresearch/ijepa
 
-import math
-
-import numpy as np
-import numpy.typing as npt
 import torch
 import torch.nn as nn
 
 
 class DropPath(nn.Module):
-    """Layer for regularization. During training, probabilistically drop some elements to 0. 
+    """Layer for regularization.
+
+    During training, probabilistically drop some elements to 0.
     """
 
     def __init__(self, drop_prob: float):
