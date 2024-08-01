@@ -38,4 +38,4 @@ class TestDropPath:
             for _ in range(0, n_loops_for_convergence):
                 output_tensor = drop_path(input_tensor)
                 n_dropped += (output_tensor == 0.0).sum()
-            assert abs(n_dropped / (n_loops_for_convergence * output_tensor.numel()) - drop_prob) < allowable_difference
+            assert n_dropped / (n_loops_for_convergence * output_tensor.numel())  = pytest.approx(drop_prob, abs=allowable_difference)
