@@ -1,5 +1,6 @@
 import random
 
+import numpy as np
 import pytest
 import torch
 
@@ -26,3 +27,4 @@ class TestPositionalEmbeddings:
         )
         assert positional_embeddings.shape[0] == expected_n_tokens, "num of tokens mismatch."
         assert positional_embeddings.shape[1] == embed_dim, "dim mismatch."
+        assert np.all(np.abs(positional_embeddings) <= 1.0), "some invalid values."

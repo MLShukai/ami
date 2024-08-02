@@ -18,7 +18,6 @@ def get_2d_positional_embeddings(embed_dim: int, grid_size: int | tuple[int, int
             positional embeddings (shape: [grid_size[0]*grid_size[1], embed_dim]).
     """
     grid_size_h, grid_size_w = (grid_size, grid_size) if isinstance(grid_size, int) else grid_size
-    print("a", embed_dim, (grid_size_h, grid_size_w))
     grid_h = np.arange(grid_size_h, dtype=float)
     grid_w = np.arange(grid_size_w, dtype=float)
     meshgrid = np.meshgrid(grid_w, grid_h)  # here w goes first as args
