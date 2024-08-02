@@ -1,0 +1,26 @@
+# @package _global_
+
+defaults:
+  - override /interaction: vrchat_with_curiosity_image_ppo_agent
+  - override /interaction/agent: curiosity_image_separate_policy_value
+  - override /models: dreamer
+  - override /data_collectors: image_dynamics_dreaming
+  - override /trainers: image_vae_forward_dynamics_dreaming
+
+interaction:
+  agent:
+    use_embed_obs_for_policy_and_value: True
+    initial_hidden:
+      _target_: torch.zeros
+      _args_:
+        - ${models.forward_dynamics.model.core_model.depth}
+        - ${models.forward_dynamics.model.core_model.dim}
+      dtype: ${torch.dtype:float}
+
+trainers:
+  forward_dynamics:
+    partial_dataloader:
+      batch_size: ${python.eval:128+1}
+    minimum_new_data_count: ${.partial_dataloader.batch_size}
+
+task_name: dreamer

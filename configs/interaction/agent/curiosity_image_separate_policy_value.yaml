@@ -1,0 +1,4 @@
+defaults:
+  - curiosity_image_ppo
+
+_target_: ami.interactions.agents.curiosity_image_ppo_agent.CuriosityImageSeparatePolicyValueAgent
