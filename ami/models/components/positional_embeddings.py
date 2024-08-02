@@ -11,7 +11,7 @@ def get_2d_positional_embeddings(embed_dim: int, grid_size: int | tuple[int, int
         grid_size (int | tuple[int,int]): int of the grid height and width.
     Returns:
         npt.NDArray[np.float64]:
-            positional embeddings (shape: [grid_size[0]*grid_size[1], embed_dim]).
+            positional embeddings (shape: [grid_size_h*grid_size_w, embed_dim]).
     """
     grid_size_h, grid_size_w = (grid_size, grid_size) if isinstance(grid_size, int) else grid_size
     grid_h = np.arange(grid_size_h, dtype=float)
