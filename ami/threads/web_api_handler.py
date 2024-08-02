@@ -73,7 +73,7 @@ class WebApiHandler:
         while failed:
             try:
                 self._logger.info(f"Serving system command at '{self._host}:{self._port}'")
-                bottle.run(host=self._host, port=self._port)
+                bottle.run(host=self._host, port=self._port, quiet=True)
                 failed = False
             except OSError:
                 self._logger.info(f"Address '{self._host}:{self._port}' is already used, increment port number...")
