@@ -36,6 +36,8 @@ class MLP(nn.Module):
 
 
 class Attention(nn.Module):
+    """Attention Layer."""
+
     def __init__(
         self,
         dim: int,
@@ -74,6 +76,8 @@ class Attention(nn.Module):
 
 
 class VisionTransformerLayer(nn.Module):
+    """Vision Transformer Layer."""
+
     def __init__(
         self,
         embedding_dim: int,
@@ -106,7 +110,15 @@ class VisionTransformerLayer(nn.Module):
         )
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        y, attn = self.attn(self.norm1(x))
+        """Apply Vision Transformer.
+
+        Args:
+            x (torch.Tensor): Shape is [batch_size, n_patches, embedding_dim]
+
+        Returns:
+            torch.Tensor: Shape is same as input.
+        """
+        y, _ = self.attn(self.norm1(x))
         x = x + self.drop_path(y)
         x = x + self.drop_path(self.mlp(self.norm2(x)))
         return x
