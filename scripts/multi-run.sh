@@ -34,10 +34,7 @@ if [ -z "$COMMAND" ]; then
     show_help
 fi
 
-# Execution function
-
 # Parallel execution
-export -f run_command
 seq $TOTAL_RUNS | xargs -P $PARALLEL_RUNS -I {} bash -c "$COMMAND"
 
 echo "All executions completed."
