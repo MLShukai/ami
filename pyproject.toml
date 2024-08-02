@@ -20,6 +20,7 @@ tensorboard = "2.15.0"
 einops = "^0.8.0"
 h5py = "^3.11.0"
 mlagents-envs = {git = "https://github.com/MLShukai/ml-agents.git", subdirectory = "ml-agents-envs", rev = "develop"}
+hydra-joblib-launcher = "^1.2.0"
 
 
 [tool.poetry.group.dev.dependencies]
