@@ -35,12 +35,9 @@ if [ -z "$COMMAND" ]; then
 fi
 
 # Execution function
-run_command() {
-    $COMMAND
-}
 
 # Parallel execution
 export -f run_command
-seq $TOTAL_RUNS | xargs -P $PARALLEL_RUNS -I {} bash -c 'run_command'
+seq $TOTAL_RUNS | xargs -P $PARALLEL_RUNS -I {} bash -c "$COMMAND"
 
 echo "All executions completed."
