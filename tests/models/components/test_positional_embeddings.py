@@ -2,7 +2,6 @@ import random
 
 import numpy as np
 import pytest
-import torch
 
 from ami.models.components.positional_embeddings import get_2d_positional_embeddings
 

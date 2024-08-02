@@ -1,11 +1,7 @@
 # Ref: https://github.com/facebookresearch/ijepa
 
-import math
-
 import numpy as np
 import numpy.typing as npt
-import torch
-import torch.nn as nn
 
 
 def get_2d_positional_embeddings(embed_dim: int, grid_size: int | tuple[int, int]) -> npt.NDArray[np.float64]:
