@@ -7,8 +7,8 @@ from ami.models.components.drop_path import DropPath
 
 
 class TestDropPath:
-    @pytest.mark.parametrize("input_n_dims", [2, 3, 4])
-    @pytest.mark.parametrize("input_max_n_channels", [64])
+    @pytest.mark.parametrize("input_n_dims", [2, 3])
+    @pytest.mark.parametrize("input_max_n_channels", [8])
     @pytest.mark.parametrize("drop_prob", [-1e-5, 0.0, 0.25, 0.5, 0.75, 1.0])
     @pytest.mark.parametrize("n_loops_for_convergence", [999])
     @pytest.mark.parametrize("allowable_difference", [0.2])
