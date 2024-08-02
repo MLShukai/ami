@@ -18,20 +18,20 @@ class MLP(nn.Module):
         in_features: int,
         hidden_features: int,
         out_features: int,
-        drop: float = 0.0,
+        dropout: float = 0.0,
     ) -> None:
         super().__init__()
         self.fc1 = nn.Linear(in_features, hidden_features)
         self.act = nn.GELU()
         self.fc2 = nn.Linear(hidden_features, out_features)
-        self.drop = nn.Dropout(drop)
+        self.dropout = nn.Dropout(dropout)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         x = self.fc1(x)
         x = self.act(x)
-        x = self.drop(x)
+        x = self.dropout(x)
         x = self.fc2(x)
-        x = self.drop(x)
+        x = self.dropout(x)
         return x
 
 
@@ -85,7 +85,7 @@ class VisionTransformerLayer(nn.Module):
         mlp_ratio: float = 4.0,
         qkv_bias: bool = False,
         qk_scale: float | None = None,
-        drop: float = 0.0,
+        dropout: float = 0.0,
         attn_drop: float = 0.0,
         drop_path: float = 0.0,
     ) -> None:
@@ -97,7 +97,7 @@ class VisionTransformerLayer(nn.Module):
             qkv_bias=qkv_bias,
             qk_scale=qk_scale,
             attn_drop=attn_drop,
-            proj_drop=drop,
+            proj_drop=dropout,
         )
         self.drop_path = DropPath(drop_path) if drop_path > 0.0 else nn.Identity()
         self.norm2 = nn.LayerNorm(embedding_dim, eps=1e-6)
@@ -106,7 +106,7 @@ class VisionTransformerLayer(nn.Module):
             in_features=embedding_dim,
             hidden_features=mlp_hidden_dim,
             out_features=embedding_dim,
-            drop=drop,
+            dropout=dropout,
         )
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
