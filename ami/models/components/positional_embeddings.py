@@ -57,10 +57,10 @@ def get_1d_sincos_positional_embeddings(
     omega = np.arange(embed_dim // 2, dtype=float)
     omega /= embed_dim / 2.0
     omega = 1.0 / 10000**omega  # [embed_dim//2]
-    outer = np.outer(positions, omega)  # [grid_size_h*grid_size_w, embed_dim//2]
+    outer = np.outer(positions, omega)  # [length, embed_dim//2]
 
-    positional_embeddings_sin = np.sin(outer)  # [grid_size_h*grid_size_w, embed_dim//2]
-    positional_embeddings_cos = np.cos(outer)  # [grid_size_h*grid_size_w, embed_dim//2]
+    positional_embeddings_sin = np.sin(outer)  # [length, embed_dim//2]
+    positional_embeddings_cos = np.cos(outer)  # [length, embed_dim//2]
 
     positional_embeddings = np.concatenate(
         [positional_embeddings_sin, positional_embeddings_cos], axis=-1
