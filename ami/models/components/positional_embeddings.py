@@ -11,7 +11,7 @@ def get_2d_positional_embeddings(embed_dim: int, grid_size: int | tuple[int, int
         grid_size (int | tuple[int,int]): int of the grid height and width.
     Returns:
         npt.NDArray[np.float64]:
-            positional embeddings (shape: [grid_size_h*grid_size_w, embed_dim]).
+            positional embeddings (shape: [grid_size_h, grid_size_w, embed_dim]).
     """
     grid_size_h, grid_size_w = (grid_size, grid_size) if isinstance(grid_size, int) else grid_size
     grid_h = np.arange(grid_size_h, dtype=float)
@@ -36,8 +36,9 @@ def get_2d_sincos_positional_embeddings_from_grid(
         embed_dim // 2, grid[1].reshape(-1)
     )  # [grid_size_h*grid_size_w, embed_dim//2]
 
-    embeddings = np.concatenate([embeddings_h, embeddings_w], axis=1)  # [grid_size_h*grid_size_w, embed_dim]
-    return embeddings
+    embeddings = np.concatenate([embeddings_h, embeddings_w], axis=-1)  # [grid_size_h*grid_size_w, embed_dim]
+    _, grid_size_h, grid_size_w = grid.shape
+    return embeddings.reshape(grid_size_h, grid_size_w, embed_dim)
 
 
 def get_1d_sincos_positional_embeddings(
