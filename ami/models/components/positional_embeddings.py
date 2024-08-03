@@ -30,40 +30,39 @@ def get_2d_sincos_positional_embeddings_from_grid(
     assert embed_dim % 2 == 0
 
     # use half of dimensions to encode grid_h
-    embeddings_h = get_1d_sincos_positional_embeddings_from_grid(
-        embed_dim // 2, grid[0]
+    embeddings_h = get_1d_sincos_positional_embeddings(
+        embed_dim // 2, grid[0].reshape(-1)
     )  # [grid_size_h*grid_size_w, embed_dim//2]
-    embeddings_w = get_1d_sincos_positional_embeddings_from_grid(
-        embed_dim // 2, grid[1]
+    embeddings_w = get_1d_sincos_positional_embeddings(
+        embed_dim // 2, grid[1].reshape(-1)
     )  # [grid_size_h*grid_size_w, embed_dim//2]
 
     embeddings = np.concatenate([embeddings_h, embeddings_w], axis=1)  # [grid_size_h*grid_size_w, embed_dim]
     return embeddings
 
 
-def get_1d_sincos_positional_embeddings_from_grid(
+def get_1d_sincos_positional_embeddings(
     embed_dim: int, positions: npt.NDArray[np.float64]
 ) -> npt.NDArray[np.float64]:
     """
     Args:
         embed_dim (int): dim of positional embeddings.
-        positions (npt.NDArray[np.float64]): positions to be encoded (shape: [1, grid_size_h, grid_size_w]).
+        positions (npt.NDArray[np.float64]): positions to be encoded (shape: [length, ]).
     Returns:
         npt.NDArray[np.float64]:
-            positional embeddings (shape: [grid_size_h*grid_size_w, embed_dim]).
+            positional embeddings (shape: [length, embed_dim]).
     """
     assert embed_dim % 2 == 0
+    assert positions.ndim == 1
     omega = np.arange(embed_dim // 2, dtype=float)
     omega /= embed_dim / 2.0
     omega = 1.0 / 10000**omega  # [embed_dim//2]
-
-    positions = positions.reshape(-1)  # [grid_size_h*grid_size_w]
     outer = np.outer(positions, omega)  # [grid_size_h*grid_size_w, embed_dim//2]
 
     positional_embeddings_sin = np.sin(outer)  # [grid_size_h*grid_size_w, embed_dim//2]
     positional_embeddings_cos = np.cos(outer)  # [grid_size_h*grid_size_w, embed_dim//2]
 
     positional_embeddings = np.concatenate(
-        [positional_embeddings_sin, positional_embeddings_cos], axis=1
-    )  # [grid_size_h*grid_size_w, embed_dim]
+        [positional_embeddings_sin, positional_embeddings_cos], axis=-1
+    )  # [length, embed_dim]
     return positional_embeddings
