@@ -7,12 +7,23 @@ from ami.models.components.positional_embeddings import get_2d_positional_embedd
 
 
 @pytest.mark.parametrize("embed_dim", [384, 768])
-@pytest.mark.parametrize("grid_size", [
-    (1), (128), # Check whether to pass when even with a single value.
-    (1, 128), (128, 1), # Check whether to pass when either one is 1.
-    (128, 64), (64, 128), # Check whether to pass when two values are different and not both 1's.
-    (1, 1), (128, 128), # Check whether to pass when both sides have the same number.
-])
+@pytest.mark.parametrize(
+    "grid_size",
+    [
+        # Check whether to pass when even with a single value.
+        (1),
+        (128),
+        # Check whether to pass when either one is 1.
+        (1, 128),
+        (128, 1),
+        # Check whether to pass when two values are different and not both 1's.
+        (128, 64),
+        (64, 128),
+        # Check whether to pass when two values are the same number.
+        (1, 1),
+        (128, 128),
+    ],
+)
 def test_get_2d_positional_embeddings(
     embed_dim: int,
     grid_size: int | tuple[int, int],
