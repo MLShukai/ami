@@ -26,7 +26,17 @@ def get_2d_positional_embeddings(embed_dim: int, grid_size: int | tuple[int, int
 def get_2d_sincos_positional_embeddings_from_grid(
     embed_dim: int, grid: npt.NDArray[np.float64]
 ) -> npt.NDArray[np.float64]:
+    """
+    Args:
+        embed_dim (int): dim of positional embeddings.
+        grid (npt.NDArray[np.float64]): positions to be encoded is represented as grid(shape: [2, grid_size_h, grid_size_w]).
+    Returns:
+        npt.NDArray[np.float64]:
+            positional embeddings (shape: [grid_size_h, grid_size_w, embed_dim]).
+    """
+    
     assert embed_dim % 2 == 0
+    assert grid.shape[0]==2 #grid_h, grid_w
 
     # use half of dimensions to encode grid_h
     embeddings_h = get_1d_sincos_positional_embeddings(
