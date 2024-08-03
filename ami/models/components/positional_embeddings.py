@@ -19,7 +19,6 @@ def get_2d_positional_embeddings(embed_dim: int, grid_size: int | tuple[int, int
     meshgrid = np.meshgrid(grid_w, grid_h)  # here w goes first as args
     grid = np.stack(meshgrid, axis=0)  # [2, grid_size_h, grid_size_w]
 
-    grid = np.expand_dims(grid, 1)  # [2, 1, grid_size_h, grid_size_w]
     positional_embeddings = get_2d_sincos_positional_embeddings_from_grid(embed_dim, grid)
     return positional_embeddings
 
