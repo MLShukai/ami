@@ -162,7 +162,7 @@ class TestCuriosityImageSeparatePolicyValueAgent:
             SConv(DEPTH, SCONV_DIM, SCONV_DIM, 0.1),
             FullyConnectedFixedStdNormal(SCONV_DIM, EMBED_OBS_DIM),
             FullyConnectedFixedStdNormal(SCONV_DIM, ACTION_DIM),
-            FullyConnectedFixedStdNormal(SCONV_DIM, 1),
+            FullyConnectedFixedStdNormal(SCONV_DIM, 1, squeeze_feature_dim=True),
         )
 
         policy_net = PolicyOrValueNetwork(
@@ -178,7 +178,7 @@ class TestCuriosityImageSeparatePolicyValueAgent:
             nn.Identity(),
             SelectObservation(),
             nn.Linear(EMBED_OBS_DIM, EMBED_OBS_DIM),
-            FullyConnectedFixedStdNormal(EMBED_OBS_DIM, 1),
+            FullyConnectedFixedStdNormal(EMBED_OBS_DIM, 1, squeeze_feature_dim=True),
         )
 
         mwd = ModelWrappersDict(

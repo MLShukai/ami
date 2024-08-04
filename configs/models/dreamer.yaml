@@ -67,6 +67,7 @@ forward_dynamics:
       in_features: ${..core_model.dim}
       out_features: 1
       num_components: 8
+      squeeze_feature_dim: True
 
 policy:
   _target_: ami.models.model_wrapper.ModelWrapper
@@ -129,3 +130,4 @@ value:
       _target_: ami.models.components.fully_connected_normal.FullyConnectedNormal
       dim_in: ${..observation_hidden_projection.dim_out}
       dim_out: 1
+      squeeze_feature_dim: True
