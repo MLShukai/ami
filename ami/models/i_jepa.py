@@ -471,7 +471,7 @@ class VisionTransformerPredictor(nn.Module):
             x = vit_layer(x)
         x = self.predictor_norm(x)
 
-        # return predictions at patches correspond to indices in patch_selections_for_predictor
+        # return predictions for patches correspond to indices in patch_selections_for_predictor
         x = x[:, boundary:]
         x = self.predictor_proj(x)
 
