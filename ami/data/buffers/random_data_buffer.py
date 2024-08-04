@@ -54,7 +54,7 @@ class RandomDataBuffer(BaseDataBuffer):
         else:
             replace_index = np.random.randint(0, self.__max_len)
             for key in self.__key_list:
-                self.__buffer_dict[key][replace_index] = step_data[key]
+                self.__buffer_dict[key][replace_index] = torch.Tensor(step_data[key]).cpu()
 
     @property
     def buffer_dict(self) -> dict[DataKeys, list[torch.Tensor]]:
