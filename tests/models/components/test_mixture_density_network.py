@@ -99,3 +99,17 @@ class TestNormalMixtureDensityNetwork:
         # Check that gradients are computed
         assert x.grad is not None
         assert output.sample().grad is None
+
+    def test_squeeze_feature_dim(self):
+        with pytest.raises(AssertionError):
+            # out_features must be 1.
+            NormalMixtureDensityNetwork(10, 2, 3, squeeze_feature_dim=True)
+
+        # `squeeze_feature_dim` default false.
+        NormalMixtureDensityNetwork(10, 2, 3)
+
+        # check squeezing.
+        net = NormalMixtureDensityNetwork(10, 1, 3, squeeze_feature_dim=True)
+        x = torch.randn(10)
+        out = net(x)
+        assert out.sample().shape == ()
