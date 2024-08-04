@@ -51,7 +51,6 @@ class MainThread(BaseThread):
         self.logger.info("Start main thread.")
         self.thread_controller.activate()
 
-        self.logger.info(f"Serving system command at 'http://{self._host}:{self._port}'")
         self.web_api_handler.run_in_background()
 
         try:

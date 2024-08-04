@@ -72,7 +72,7 @@ sudo dpkg -i steam.deb
 curl -fsSL https://tailscale.com/install.sh | sh
 
 # NoMachine
-wget https://download.nomachine.com/download/8.11/Linux/nomachine_8.11.3_4_amd64.deb -O nomachine.deb
+wget https://download.nomachine.com/download/8.13/Linux/nomachine_8.13.1_1_amd64.deb -O nomachine.deb
 sudo dpkg -i nomachine.deb
 
 # Sunshine
