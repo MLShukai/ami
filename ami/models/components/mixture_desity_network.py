@@ -82,20 +82,33 @@ class NormalMixtureDensityNetwork(nn.Module):
     distributions.
     """
 
-    def __init__(self, in_features: int, out_features: int, num_components: int) -> None:
+    def __init__(
+        self, in_features: int, out_features: int, num_components: int, squeeze_feature_dim: bool = False
+    ) -> None:
         """
         Args:
             in_feature: The number of input features.
             out_features: The number of output features (dimensionality of each normal distribution).
             num_components: The number of mixture components.
+            squeeze_feature_dim: Whether or not to squeeze the feature dimension of output tensor.
         """
         super().__init__()
+        if squeeze_feature_dim:
+            assert out_features == 1, "Can not squeeze feature dimension!"
         self.mu_layers = nn.ModuleList(nn.Linear(in_features, out_features) for _ in range(num_components))
         self.sigma_layers = nn.ModuleList(nn.Linear(in_features, out_features) for _ in range(num_components))
         self.logits_layers = nn.ModuleList(nn.Linear(in_features, out_features) for _ in range(num_components))
+
+        self.squeeze_feature_dim = squeeze_feature_dim
 
     def forward(self, x: Tensor) -> NormalMixture:
         mu = torch.stack([lyr(x) for lyr in self.mu_layers], dim=-1)
         sigma = torch.stack([F.softplus(lyr(x)) for lyr in self.sigma_layers], dim=-1)
         log_pi = torch.stack([lyr(x) for lyr in self.logits_layers], dim=-1).log_softmax(-1)
+
+        if self.squeeze_feature_dim:
+            mu = mu.squeeze(-2)
+            sigma = sigma.squeeze(-2)
+            log_pi = log_pi.squeeze(-2)
+
         return NormalMixture(log_pi, mu, sigma)
