@@ -26,6 +26,6 @@ logger:
 
 device: ${devices.0}
 max_epochs: 1
-imagination_trajectory_length: 50
+imagination_trajectory_length: 25
 minimum_dataset_size: ${.partial_dataloader.batch_size}
 minimum_new_data_count: ${.partial_dataloader.batch_size}

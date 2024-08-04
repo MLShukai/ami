@@ -15,7 +15,7 @@ forward_dynamics_trajectory:
 
 dreaming_initial_states:
   _target_: ami.data.buffers.random_data_buffer.RandomDataBuffer.reconstructable_init
-  max_len: 2048
+  max_len: 64
   key_list:
     - "embed_observation"
     - "hidden"
