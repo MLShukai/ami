@@ -89,7 +89,7 @@ class TrainerImpl(BaseTrainer):
         data = dataset[0][0]
         self.model1(data)
         self.model2(data)
-        time.sleep(0.5)
+        time.sleep(0.1)
 
     def save_state(self, path: Path) -> None:
         path.mkdir()

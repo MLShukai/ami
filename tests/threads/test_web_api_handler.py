@@ -93,6 +93,7 @@ class TestWebApiHandler:
         status = ThreadControllerStatus(controller)
         handler1 = WebApiHandler(status, "localhost", PORT)
         handler1.run_in_background()
+        time.sleep(0.001)
 
         response = requests.get(f"http://localhost:{PORT}/api/status")
         assert response.status_code == 200
@@ -102,6 +103,6 @@ class TestWebApiHandler:
 
         handler2 = WebApiHandler(status, "localhost", PORT)
         handler2.run_in_background()
-        time.sleep(0.01)
+        time.sleep(0.001)
         response = requests.get(f"http://localhost:{PORT+1}/api/status")
         assert response.status_code == 200
