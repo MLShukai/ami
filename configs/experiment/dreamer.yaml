@@ -16,6 +16,12 @@ interaction:
         - ${models.forward_dynamics.model.core_model.depth}
         - ${models.forward_dynamics.model.core_model.dim}
       dtype: ${torch.dtype:float}
+  action_wrappers:
+    - _target_: ami.interactions.io_wrappers.function_wrapper.FunctionIOWrapper
+      wrap_function:
+        _target_: torch.argmax
+        _partial_: true
+        dim: -1
 
 trainers:
   forward_dynamics:
