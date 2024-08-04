@@ -78,6 +78,9 @@ class WebApiHandler:
             except OSError:
                 self._logger.info(f"Address '{self._host}:{self._port}' is already used, increment port number...")
                 self._port += 1
+            except Exception:
+                self._logger.exception("Other exception has occurred in starting API server...")
+                raise
 
     def run_in_background(self) -> None:
         """Run the API server in background thread."""
