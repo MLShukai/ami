@@ -24,6 +24,9 @@ interaction:
         dim: -1
 
 trainers:
+  image_vae:
+    partial_dataloader:
+      batch_size: 128
   forward_dynamics:
     partial_dataloader:
       batch_size: ${python.eval:128+1}
