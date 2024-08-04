@@ -255,8 +255,7 @@ class VisionTransformerEncoder(nn.Module):
         # x: [batch_size, n_patches, embed_dim]
 
         # add positional embedding to x
-        positional_encodings = self.interpolate_pos_encoding(x, self.positional_encodings)
-        x = x + positional_encodings
+        x = x + self.positional_encodings
 
         # Extract patches from x based on indices contained in patch_selections_for_context_encoder
         if patch_selections_for_context_encoder is not None:
@@ -269,22 +268,6 @@ class VisionTransformerEncoder(nn.Module):
         x = self.norm(x)
 
         return x
-
-    def interpolate_pos_encoding(self, x: torch.Tensor, positional_embeddings: torch.Tensor) -> torch.Tensor:
-        npatch = x.shape[1] - 1
-        N = positional_embeddings.shape[1] - 1
-        if npatch == N:
-            return positional_embeddings
-        class_emb = positional_embeddings[:, 0]
-        positional_embeddings = positional_embeddings[:, 1:]
-        dim = x.shape[-1]
-        positional_embeddings = nn.functional.interpolate(
-            positional_embeddings.reshape(1, int(math.sqrt(N)), int(math.sqrt(N)), dim).permute(0, 3, 1, 2),
-            scale_factor=math.sqrt(npatch / N),
-            mode="bicubic",
-        )
-        positional_embeddings = positional_embeddings.permute(0, 2, 3, 1).view(1, -1, dim)
-        return torch.cat((class_emb.unsqueeze(0), positional_embeddings), dim=1)
 
 
 class VisionTransformerPredictor(nn.Module):
