@@ -44,7 +44,12 @@ class WebApiHandler:
         {"result": "ok"}
     """
 
-    def __init__(self, controller_status: ThreadControllerStatus, host: str = "localhost", port: int = 8080) -> None:
+    def __init__(
+        self,
+        controller_status: ThreadControllerStatus,
+        host: str = "localhost",
+        port: int = 8080,
+    ) -> None:
         """Initialize the WebApiHandler.
 
         Args:
@@ -64,7 +69,18 @@ class WebApiHandler:
 
     def run(self) -> None:
         """Run the API server."""
-        bottle.run(host=self._host, port=self._port)
+        failed = True
+        while failed:
+            try:
+                self._logger.info(f"Serving system command at '{self._host}:{self._port}'")
+                bottle.run(host=self._host, port=self._port, quiet=True)
+                failed = False
+            except OSError:
+                self._logger.info(f"Address '{self._host}:{self._port}' is already used, increment port number...")
+                self._port += 1
+            except Exception:
+                self._logger.exception("Other exception has occurred in starting API server...")
+                raise
 
     def run_in_background(self) -> None:
         """Run the API server in background thread."""

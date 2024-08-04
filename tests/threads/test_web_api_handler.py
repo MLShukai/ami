@@ -1,8 +1,10 @@
 import queue
+import time
 from collections.abc import Generator
 
 import bottle
 import pytest
+import requests
 from webtest import TestApp
 
 from ami.threads.thread_control import ThreadController, ThreadControllerStatus
@@ -83,3 +85,23 @@ class TestWebApiHandler:
     def test_error_405(self, app) -> None:
         response = app.post("http://localhost:8080/api/status", status=405)
         assert "error" in response.json
+
+    def test_increment_port_when_already_used(self, controller: ThreadController) -> None:
+        PORT = 8092
+
+        controller = ThreadController()
+        status = ThreadControllerStatus(controller)
+        handler1 = WebApiHandler(status, "localhost", PORT)
+        handler1.run_in_background()
+
+        response = requests.get(f"http://localhost:{PORT}/api/status")
+        assert response.status_code == 200
+
+        with pytest.raises(requests.exceptions.ConnectionError):
+            requests.get(f"http://localhost:{PORT+1}/api/status")
+
+        handler2 = WebApiHandler(status, "localhost", PORT)
+        handler2.run_in_background()
+        time.sleep(0.01)
+        response = requests.get(f"http://localhost:{PORT+1}/api/status")
+        assert response.status_code == 200
