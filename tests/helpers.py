@@ -1,6 +1,7 @@
 """This file contains helper objects for testing some features."""
 import pickle
 import platform
+import time
 from pathlib import Path
 
 import pytest
@@ -88,6 +89,7 @@ class TrainerImpl(BaseTrainer):
         data = dataset[0][0]
         self.model1(data)
         self.model2(data)
+        time.sleep(0.1)
 
     def save_state(self, path: Path) -> None:
         path.mkdir()

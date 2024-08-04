@@ -39,7 +39,7 @@ jobs:
 
       - name: Run pytest
         run: |
-          poetry run pytest
+          poetry run pytest -vv --log-level=INFO
 
       - name: Run mypy
         run: |

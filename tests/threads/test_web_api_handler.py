@@ -1,4 +1,5 @@
 import queue
+import time
 from collections.abc import Generator
 
 import bottle
@@ -86,18 +87,22 @@ class TestWebApiHandler:
         assert "error" in response.json
 
     def test_increment_port_when_already_used(self, controller: ThreadController) -> None:
+        PORT = 8092
+
         controller = ThreadController()
         status = ThreadControllerStatus(controller)
-        handler1 = WebApiHandler(status, "localhost", 8090)
+        handler1 = WebApiHandler(status, "localhost", PORT)
         handler1.run_in_background()
+        time.sleep(0.001)
 
-        response = requests.get("http://localhost:8090/api/status")
+        response = requests.get(f"http://localhost:{PORT}/api/status")
         assert response.status_code == 200
 
         with pytest.raises(requests.exceptions.ConnectionError):
-            requests.get("http://localhost:8091/api/status")
+            requests.get(f"http://localhost:{PORT+1}/api/status")
 
-        handler2 = WebApiHandler(status, "localhost", 8090)
+        handler2 = WebApiHandler(status, "localhost", PORT)
         handler2.run_in_background()
-        response = requests.get("http://localhost:8091/api/status")
+        time.sleep(0.001)
+        response = requests.get(f"http://localhost:{PORT+1}/api/status")
         assert response.status_code == 200
