@@ -1,4 +1,5 @@
 import queue
+import time
 from collections.abc import Generator
 
 import bottle
@@ -101,5 +102,6 @@ class TestWebApiHandler:
 
         handler2 = WebApiHandler(status, "localhost", PORT)
         handler2.run_in_background()
+        time.sleep(0.01)
         response = requests.get(f"http://localhost:{PORT+1}/api/status")
         assert response.status_code == 200
