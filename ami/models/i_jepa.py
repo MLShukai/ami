@@ -10,22 +10,31 @@ from .components.positional_embeddings import get_2d_positional_embeddings
 from .components.vision_transformer_layer import VisionTransformerLayer
 
 
-def repeat_interleave_batch(x: torch.Tensor, batch_size: int, repeat: int) -> torch.Tensor:
+def repeat_patches_along_with_batch_axis(
+    x: torch.Tensor, batch_size: int, n_masks_for_context_encoder: int
+) -> torch.Tensor:
     """
 
     Args:
         x (torch.Tensor):
+            Input patches.
+            (shape is [batch_size * n_masks_for_predictor, n_patches, dims])
         batch_size (int):
-            batch size
-        repeat (int):
+            batch size.
+        n_masks_for_context_encoder (int):
+            num of masks for context encoder.
 
     Returns:
         torch.Tensor:
-            (shape: [])
+            Repeated patches along with first axis.
+            (shape: [batch_size * n_masks_for_context_encoder * n_masks_for_predictor, n_patches, dims])
     """
-    N = len(x) // batch_size
+    n_masks_for_predictor = len(x) // batch_size
     x = torch.cat(
-        [torch.cat([x[i * batch_size : (i + 1) * batch_size] for _ in range(repeat)], dim=0) for i in range(N)],
+        [
+            torch.cat([x[i * batch_size : (i + 1) * batch_size] for _ in range(n_masks_for_context_encoder)], dim=0)
+            for i in range(n_masks_for_predictor)
+        ],
         dim=0,
     )
     return x
@@ -45,7 +54,7 @@ def select_mask_patches(x: torch.Tensor, masks: list[torch.Tensor]) -> torch.Ten
     Returns:
         torch.Tensor:
             patches Selected from input x.
-            (shape: [batch_size, n_patches_to_be_selected, dims])
+            (shape: [batch_size*len(masks), n_patches_to_be_selected, dims])
     """
     selected_x = []
     for m in masks:
@@ -440,8 +449,8 @@ class VisionTransformerPredictor(nn.Module):
         positional_encodings_for_prediction = select_mask_patches(
             positional_encodings_for_prediction, masks_for_predictor
         )
-        positional_encodings_for_prediction = repeat_interleave_batch(
-            positional_encodings_for_prediction, batch_size, repeat=len(masks_for_context_encoder)
+        positional_encodings_for_prediction = repeat_patches_along_with_batch_axis(
+            positional_encodings_for_prediction, batch_size, n_masks_for_context_encoder=len(masks_for_context_encoder)
         )
         # prepare mask tokens for patch to be predicted
         tokens_for_prediction = self.mask_token.repeat(
