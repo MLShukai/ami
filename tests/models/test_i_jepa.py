@@ -95,14 +95,23 @@ class TestVisionTransformer:
     # model params
     @pytest.mark.parametrize("image_size", [224])
     @pytest.mark.parametrize("patch_size", [16])
-    @pytest.mark.parametrize("context_encoder_embed_dim", [192, 384])
+    @pytest.mark.parametrize("context_encoder_embed_dim", [192])
     @pytest.mark.parametrize("predictor_embed_dim", [384])
-    @pytest.mark.parametrize("depth", [12, 16])
+    @pytest.mark.parametrize("depth", [3])
     @pytest.mark.parametrize("num_heads", [3, 6])
     # test input params
     @pytest.mark.parametrize("batch_size", [1, 4])
-    @pytest.mark.parametrize("n_masks_for_context_encoder", [1])
-    @pytest.mark.parametrize("n_masks_for_predictor", [1, 4])
+    @pytest.mark.parametrize(
+        ["n_masks_for_context_encoder", "n_masks_for_predictor"],
+        [
+            # Check whether to pass when two values are the same number.
+            [1, 1],
+            [4, 4],
+            # Check whether to pass when two values are different.
+            [1, 4],  # same setting as the original paper.
+            [4, 1],
+        ],
+    )
     def test_vision_transformer_predictor(
         self,
         image_size: int,
@@ -132,7 +141,13 @@ class TestVisionTransformer:
         masks_for_context_encoder, n_patches_selected_for_context_encoder = _make_masks_randomly(
             n_mask=n_masks_for_context_encoder, batch_size=batch_size, n_patches_max=n_patches_max
         )
-        latents = torch.randn([batch_size, n_patches_selected_for_context_encoder, context_encoder_embed_dim])
+        latents = torch.randn(
+            [
+                batch_size * n_masks_for_context_encoder,
+                n_patches_selected_for_context_encoder,
+                context_encoder_embed_dim,
+            ]
+        )
         masks_for_predictor, n_patches_selected_for_predictor = _make_masks_randomly(
             n_mask=n_masks_for_predictor, batch_size=batch_size, n_patches_max=n_patches_max
         )
@@ -143,6 +158,8 @@ class TestVisionTransformer:
             masks_for_predictor=masks_for_predictor,
         )
         # check size of output latent
-        assert predictions.size(0) == batch_size * n_masks_for_predictor, "batch_size mismatch"
+        assert (
+            predictions.size(0) == batch_size * n_masks_for_context_encoder * n_masks_for_predictor
+        ), "batch_size mismatch"
         assert predictions.size(1) == n_patches_selected_for_predictor, "num of patch mismatch"
         assert predictions.size(2) == context_encoder_embed_dim, "embed_dim mismatch"

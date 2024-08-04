@@ -17,7 +17,7 @@ def repeat_interleave_batch(x: torch.Tensor, batch_size: int, repeat: int) -> to
         x (torch.Tensor):
         batch_size (int):
             batch size
-        repeat (int): 
+        repeat (int):
 
     Returns:
         torch.Tensor:
@@ -78,9 +78,9 @@ class PatchEmbed(nn.Module):
         """
         super().__init__()
         self.proj = nn.Conv2d(
-            in_channels=in_channels, 
-            out_channels=embed_dim, 
-            kernel_size=patch_size, 
+            in_channels=in_channels,
+            out_channels=embed_dim,
+            kernel_size=patch_size,
             stride=patch_size,
         )
 
@@ -163,11 +163,11 @@ class VisionTransformerEncoder(nn.Module):
         )
         # define positional encodings
         assert img_size % patch_size == 0
-        n_patches = (img_size//patch_size)**2
+        n_patches = (img_size // patch_size) ** 2
         self.positional_encodings: torch.Tensor
         positional_encodings = get_2d_positional_embeddings(
             embed_dim,
-            img_size//patch_size,
+            img_size // patch_size,
         ).reshape(1, n_patches, embed_dim)
         self.register_buffer("positional_encodings", torch.from_numpy(positional_encodings).float())
         # define transformers
@@ -341,9 +341,9 @@ class VisionTransformerPredictor(nn.Module):
         dpr = np.linspace(0, drop_path_rate, depth).tolist()  # stochastic depth decay rule
         # define positional encodings
         self.positional_encodings: torch.Tensor
-        positional_encodings = get_2d_positional_embeddings(
-            predictor_embed_dim, int(n_patches**0.5)
-        ).reshape(1, n_patches, predictor_embed_dim)
+        positional_encodings = get_2d_positional_embeddings(predictor_embed_dim, int(n_patches**0.5)).reshape(
+            1, n_patches, predictor_embed_dim
+        )
         self.register_buffer("positional_encodings", torch.from_numpy(positional_encodings).float())
         # define transformers
         self.vit_layers = nn.ModuleList(
@@ -404,9 +404,11 @@ class VisionTransformerPredictor(nn.Module):
         Args:
             latents (torch.Tensor):
                 Input latents from context_encoder.
-                (shape: [batch_size, n_patches_selected_in_context_encoder, context_encoder_embed_dim])
+                Since the first axis of output of Context Encoder (VisionTransformerEncoder) is batch_size*len(masks_for_context_encoder),
+                the first axis of latents is also batch_size*len(masks_for_context_encoder) accordingly.
+                (shape: [batch_size*len(masks_for_context_encoder), n_patches_selected_in_context_encoder, context_encoder_embed_dim])
             masks_for_context_encoder (list[torch.Tensor]):
-                Masks used to create input latents above using context_encoder.
+                Masks which were used to create input latents above using context_encoder.
                 (shape of each Tensor: [batch_size, n_patches_selected_in_context_encoder])
             masks_for_predictor (list[torch.Tensor]):
                 Masks corresponding to the position of the patches to be predict.
@@ -418,6 +420,10 @@ class VisionTransformerPredictor(nn.Module):
                 (shape: [batch_size*len(masks_for_predictor), n_patches_to_predict, context_encoder_embed_dim])
         """
 
+        # Since the first axis of output of Context Encoder (VisionTransformerEncoder)
+        # is batch_size*len(masks_for_context_encoder),
+        # the first axis of latents is also batch_size*len(masks_for_context_encoder) accordingly.
+        assert len(latents) % len(masks_for_context_encoder) == 0
         batch_size = len(latents) // len(masks_for_context_encoder)
 
         # map from encoder-dim to pedictor-dim
@@ -431,10 +437,16 @@ class VisionTransformerPredictor(nn.Module):
 
         # prepare positional embedding for patches to be predicted
         positional_encodings_for_prediction = self.positional_encodings.repeat(batch_size, 1, 1)
-        positional_encodings_for_prediction = select_mask_patches(positional_encodings_for_prediction, masks_for_predictor)
-        positional_encodings_for_prediction = repeat_interleave_batch(positional_encodings_for_prediction, batch_size, repeat=len(masks_for_context_encoder))
+        positional_encodings_for_prediction = select_mask_patches(
+            positional_encodings_for_prediction, masks_for_predictor
+        )
+        positional_encodings_for_prediction = repeat_interleave_batch(
+            positional_encodings_for_prediction, batch_size, repeat=len(masks_for_context_encoder)
+        )
         # prepare mask tokens for patch to be predicted
-        tokens_for_prediction = self.mask_token.repeat(positional_encodings_for_prediction.size(0), positional_encodings_for_prediction.size(1), 1)
+        tokens_for_prediction = self.mask_token.repeat(
+            positional_encodings_for_prediction.size(0), positional_encodings_for_prediction.size(1), 1
+        )
         # add positional embedding
         tokens_for_prediction += positional_encodings_for_prediction
         # concat x with patches to be predicted
