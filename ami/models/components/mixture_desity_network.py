@@ -10,7 +10,7 @@ class NormalMixture(Distribution):
 
     SQRT_2_PI = (2 * torch.pi) ** 0.5
     arg_constraints = {
-        "log_pi": constraints.less_than(0.0),
+        "log_pi": constraints.less_than(0.0 + 1e-6),
         "mu": constraints.real,
         "sigma": constraints.positive,
     }
