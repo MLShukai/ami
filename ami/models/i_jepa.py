@@ -5,6 +5,7 @@ import math
 import numpy as np
 import torch
 import torch.nn as nn
+from functools import partial
 
 from .components.positional_embeddings import get_2d_positional_embeddings
 from .components.vision_transformer_layer import VisionTransformerLayer
@@ -200,30 +201,8 @@ class IJEPAEncoder(nn.Module):
         self.norm = nn.LayerNorm(embed_dim, eps=1e-6)
         # initialize
         self.init_std = init_std
-        self.apply(self._init_weights)
-        self.fix_init_weight()
-
-    def fix_init_weight(self) -> None:
-        def rescale(param: torch.Tensor, layer_id: int) -> None:
-            param.div_(math.sqrt(2.0 * layer_id))
-
-        for layer_id, layer in enumerate(self.vit_layers, start=1):
-            rescale(layer.attn.proj.weight.data, layer_id)
-            rescale(layer.mlp.fc2.weight.data, layer_id)
-
-    def _init_weights(self, m: nn.Module) -> None:
-        match m:
-            case nn.Linear():
-                torch.nn.init.trunc_normal_(m.weight, std=self.init_std)
-                if m.bias is not None:
-                    nn.init.constant_(m.bias, 0)
-            case nn.LayerNorm():
-                nn.init.constant_(m.bias, 0)
-                nn.init.constant_(m.weight, 1.0)
-            case nn.Conv2d():
-                torch.nn.init.trunc_normal_(m.weight, std=self.init_std)
-                if m.bias is not None:
-                    nn.init.constant_(m.bias, 0)
+        self.apply(partial(_init_weights, init_std=init_std))
+        fix_init_weight(self.vit_layers)
 
     def forward(
         self,
@@ -359,30 +338,8 @@ class IJEPAPredictor(nn.Module):
         # initialize
         self.init_std = init_std
         torch.nn.init.trunc_normal_(self.token_for_prediction, std=self.init_std)
-        self.apply(self._init_weights)
-        self.fix_init_weight()
-
-    def fix_init_weight(self) -> None:
-        def rescale(param: torch.Tensor, layer_id: int) -> None:
-            param.div_(math.sqrt(2.0 * layer_id))
-
-        for layer_id, layer in enumerate(self.vit_layers, start=1):
-            rescale(layer.attn.proj.weight.data, layer_id)
-            rescale(layer.mlp.fc2.weight.data, layer_id)
-
-    def _init_weights(self, m: nn.Module) -> None:
-        match m:
-            case nn.Linear():
-                torch.nn.init.trunc_normal_(m.weight, std=self.init_std)
-                if m.bias is not None:
-                    nn.init.constant_(m.bias, 0)
-            case nn.LayerNorm():
-                nn.init.constant_(m.bias, 0)
-                nn.init.constant_(m.weight, 1.0)
-            case nn.Conv2d():
-                torch.nn.init.trunc_normal_(m.weight, std=self.init_std)
-                if m.bias is not None:
-                    nn.init.constant_(m.bias, 0)
+        self.apply(partial(_init_weights, init_std=init_std))
+        fix_init_weight(self.vit_layers)
 
     def forward(
         self,
@@ -458,3 +415,25 @@ class IJEPAPredictor(nn.Module):
         x = self.predictor_proj(x)
 
         return x
+
+def fix_init_weight(vit_layers: nn.ModuleList) -> None:
+    def rescale(param: torch.Tensor, layer_id: int) -> None:
+        param.div_(math.sqrt(2.0 * layer_id))
+
+    for layer_id, layer in enumerate(vit_layers, start=1):
+        rescale(layer.attn.proj.weight.data, layer_id)
+        rescale(layer.mlp.fc2.weight.data, layer_id)
+
+def _init_weights(m: nn.Module, init_std: float) -> None:
+    match m:
+        case nn.Linear():
+            torch.nn.init.trunc_normal_(m.weight, std=init_std)
+            if m.bias is not None:
+                nn.init.constant_(m.bias, 0)
+        case nn.LayerNorm():
+            nn.init.constant_(m.bias, 0)
+            nn.init.constant_(m.weight, 1.0)
+        case nn.Conv2d():
+            torch.nn.init.trunc_normal_(m.weight, std=init_std)
+            if m.bias is not None:
+                nn.init.constant_(m.bias, 0)
