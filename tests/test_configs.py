@@ -19,7 +19,7 @@ LAUNCH_CONFIG = "launch.yaml"
 EXPERIMENT_CONFIG_DIR = CONFIG_DIR / "experiment"
 EXPERIMENT_CONFIG_FILES = EXPERIMENT_CONFIG_DIR.glob("*.*")
 
-IGNORE_EXPERIMENT_CONFIGS = {"unity_sioconv.yaml"}
+IGNORE_EXPERIMENT_CONFIGS = {"unity_sioconv.yaml", "dreamer_unity.yaml"}
 EXPERIMENT_CONFIG_OVERRIDES = [
     [f"experiment={file.name.rsplit('.', 1)[0]}"]
     for file in EXPERIMENT_CONFIG_FILES

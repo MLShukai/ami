@@ -20,13 +20,13 @@ class MaskedOneHotCategoricalStraightThrough(OneHotCategoricalStraightThrough):
             mask: Mask tensor. True elements indicate invalid choices.
         """
         assert logits.shape[-mask.ndim :] == mask.shape
-        logits[..., mask] = -torch.inf
+        logits = logits.masked_fill(mask, -torch.inf)
         self.mask = mask
         super().__init__(logits=logits, validate_args=validate_args)
 
     def entropy(self) -> Tensor:
-        log_prob = torch.log_softmax(self.logits, dim=-1)
-        log_prob[..., self.mask] = 0.0
+        log_prob: Tensor = torch.log_softmax(self.logits, dim=-1)
+        log_prob = log_prob.masked_fill(self.mask, 0.0)
         return -torch.sum(self.probs * log_prob, dim=-1)
 
 

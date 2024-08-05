@@ -1,0 +1,133 @@
+image_encoder:
+  _target_: ami.models.vae.EncoderWrapper
+  default_device: ${devices.0}
+  has_inference: True
+  model:
+    _target_: ami.models.vae.Conv2dEncoder
+    height: ${shared.image_height}
+    width: ${shared.image_width}
+    channels: ${shared.image_channels}
+    latent_dim: 512 # From primitive AMI.
+    do_batchnorm: True
+
+image_decoder:
+  _target_: ami.models.model_wrapper.ModelWrapper
+  default_device: ${devices.0}
+  has_inference: False
+  model:
+    _target_: ami.models.vae.Conv2dDecoder
+    height: ${models.image_encoder.model.height}
+    width: ${models.image_encoder.model.width}
+    channels: ${models.image_encoder.model.channels}
+    latent_dim: ${models.image_encoder.model.latent_dim}
+    do_batchnorm: True
+
+forward_dynamics:
+  _target_: ami.models.model_wrapper.ModelWrapper
+  default_device: ${devices.0}
+  has_inference: True
+  model:
+    _target_: ami.models.forward_dynamics.ForwardDynamcisWithActionReward
+    observation_flatten:
+      _target_: torch.nn.Identity
+    action_flatten:
+      _target_: torch.nn.Sequential
+      _args_:
+        - _target_: ami.models.components.one_hot.OneHotToEmbedding
+          num_embeddings: 3 # max of action choices in `vrchat_osc_discrete_actuator.ACTION_CHOICES_PER_CATEGORY`
+          embedding_dim: 8
+        - _target_: torch.nn.Flatten
+          start_dim: -2
+    obs_action_projection:
+      _target_: torch.nn.Linear
+      # action_embedding_dim * num_action_choices + obs_embedding_dim
+      in_features: ${python.eval:"${..action_flatten._args_.0.embedding_dim} * 5 + ${models.image_encoder.model.latent_dim}"}
+      out_features: ${..core_model.dim}
+    core_model:
+      _target_: ami.models.components.sioconv.SioConv
+      depth: 8
+      dim: 512
+      num_head: 8
+      dim_ff_hidden: 512
+      chunk_size: 512
+      dropout: 0.1
+    obs_hat_dist_head:
+      _target_: ami.models.components.mixture_desity_network.NormalMixtureDensityNetwork
+      in_features: ${..core_model.dim}
+      out_features: ${models.image_encoder.model.latent_dim}
+      num_components: 8
+    action_hat_dist_head:
+      _target_: ami.models.components.one_hot.MultiOneHots
+      in_features: ${..core_model.dim}
+      choices_per_category:
+        _target_: hydra.utils.get_object
+        path: ami.interactions.environments.actuators.vrchat_osc_discrete_actuator.ACTION_CHOICES_PER_CATEGORY
+    reward_hat_dist_head:
+      _target_: ami.models.components.mixture_desity_network.NormalMixtureDensityNetwork
+      in_features: ${..core_model.dim}
+      out_features: 1
+      num_components: 8
+      squeeze_feature_dim: True
+
+policy:
+  _target_: ami.models.model_wrapper.ModelWrapper
+  default_device: ${devices.0}
+  has_inference: True
+  model:
+    _target_: ami.models.policy_or_value_network.PolicyOrValueNetwork
+    observation_projection:
+      _target_: torch.nn.Linear
+      in_features: ${models.image_encoder.model.latent_dim}
+      out_features: 512
+    forward_dynamics_hidden_projection:
+      _target_: ami.models.policy_value_common_net.LerpStackedHidden
+      dim: ${models.forward_dynamics.model.core_model.dim}
+      depth: ${models.forward_dynamics.model.core_model.depth}
+      num_head: ${models.forward_dynamics.model.core_model.num_head}
+    observation_hidden_projection:
+      _target_: ami.models.policy_value_common_net.ConcatFlattenedObservationAndLerpedHidden
+      dim_obs: ${..observation_projection.out_features}
+      dim_hidden: ${models.forward_dynamics.model.core_model.dim}
+      dim_out: 512
+    core_model:
+      _target_: ami.models.components.resnet.ResNetFF
+      dim: ${..observation_hidden_projection.dim_out}
+      dim_hidden: 1024
+      depth: 2
+    dist_head:
+      _target_: ami.models.components.one_hot.MultiOneHots
+      in_features: ${..observation_hidden_projection.dim_out}
+      choices_per_category:
+        _target_: hydra.utils.get_object
+        path: ami.interactions.environments.actuators.vrchat_osc_discrete_actuator.ACTION_CHOICES_PER_CATEGORY
+
+value:
+  _target_: ami.models.model_wrapper.ModelWrapper
+  default_device: ${devices.0}
+  has_inference: True
+  model:
+    _target_: ami.models.policy_or_value_network.PolicyOrValueNetwork
+    observation_projection:
+      _target_: torch.nn.Linear
+      in_features: ${models.image_encoder.model.latent_dim}
+      out_features: 512
+    forward_dynamics_hidden_projection:
+      _target_: ami.models.policy_value_common_net.LerpStackedHidden
+      dim: ${models.forward_dynamics.model.core_model.dim}
+      depth: ${models.forward_dynamics.model.core_model.depth}
+      num_head: ${models.forward_dynamics.model.core_model.num_head}
+    observation_hidden_projection:
+      _target_: ami.models.policy_value_common_net.ConcatFlattenedObservationAndLerpedHidden
+      dim_obs: ${..observation_projection.out_features}
+      dim_hidden: ${models.forward_dynamics.model.core_model.dim}
+      dim_out: 512
+    core_model:
+      _target_: ami.models.components.resnet.ResNetFF
+      dim: ${..observation_hidden_projection.dim_out}
+      dim_hidden: 1024
+      depth: 2
+    dist_head:
+      _target_: ami.models.components.fully_connected_normal.FullyConnectedNormal
+      dim_in: ${..observation_hidden_projection.dim_out}
+      dim_out: 1
+      squeeze_feature_dim: True
