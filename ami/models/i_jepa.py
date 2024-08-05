@@ -101,7 +101,7 @@ class PatchEmbed(nn.Module):
         return x
 
 
-class VisionTransformerEncoder(nn.Module):
+class IJEPAEncoder(nn.Module):
     """Used as I-JEPA context_encoder and target_encoder."""
 
     def __init__(
@@ -270,7 +270,7 @@ class VisionTransformerEncoder(nn.Module):
         return x
 
 
-class VisionTransformerPredictor(nn.Module):
+class IJEPAPredictor(nn.Module):
     """Used as I-JEPA predictor."""
 
     def __init__(
@@ -398,7 +398,7 @@ class VisionTransformerPredictor(nn.Module):
         Args:
             latents (torch.Tensor):
                 Input latents from context_encoder.
-                Since the first axis of output of Context Encoder (VisionTransformerEncoder) is batch_size*len(patch_selections_for_context_encoder),
+                Since the first axis of output of Context Encoder (IJEPAEncoder) is batch_size*len(patch_selections_for_context_encoder),
                 the first axis of latents is also batch_size*len(patch_selections_for_context_encoder) accordingly.
                 (shape: [batch_size*len(patch_selections_for_context_encoder), n_patches_selected_in_context_encoder, context_encoder_embed_dim])
             patch_selections_for_context_encoder (list[torch.Tensor]):
@@ -414,7 +414,7 @@ class VisionTransformerPredictor(nn.Module):
                 (shape: [batch_size*len(patch_selections_for_predictor), n_patches_to_predict, context_encoder_embed_dim])
         """
 
-        # Since the first axis of output of Context Encoder (VisionTransformerEncoder)
+        # Since the first axis of output of Context Encoder (IJEPAEncoder)
         # is batch_size*len(patch_selections_for_context_encoder),
         # the first axis of latents is also batch_size*len(patch_selections_for_context_encoder) accordingly.
         assert len(latents) % len(patch_selections_for_context_encoder) == 0

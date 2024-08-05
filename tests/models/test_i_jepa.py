@@ -4,7 +4,7 @@ from typing import Optional
 import pytest
 import torch
 
-from ami.models.i_jepa import VisionTransformerEncoder, VisionTransformerPredictor
+from ami.models.i_jepa import IJEPAEncoder, IJEPAPredictor
 
 
 def _make_patch_selections_randomly(
@@ -63,7 +63,7 @@ class TestVisionTransformer:
     ):
         assert image_size % patch_size == 0
         # define encoder made of ViT
-        encoder = VisionTransformerEncoder(
+        encoder = IJEPAEncoder(
             img_size=image_size,
             patch_size=patch_size,
             embed_dim=embed_dim,
@@ -136,7 +136,7 @@ class TestVisionTransformer:
         n_patch_horizontal = image_size // patch_size
         n_patches = n_patch_vertical * n_patch_horizontal
         # define encoder made of ViT
-        predictor = VisionTransformerPredictor(
+        predictor = IJEPAPredictor(
             n_patches=n_patches,
             context_encoder_embed_dim=context_encoder_embed_dim,
             predictor_embed_dim=predictor_embed_dim,
