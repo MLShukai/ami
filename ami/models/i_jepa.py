@@ -30,15 +30,15 @@ def repeat_patches_along_with_batch_axis(
             (shape: [batch_size * n_patch_selections_for_context_encoder * n_patch_selections_for_predictor, n_patches, dims])
     """
     n_patch_selections_for_predictor = len(x) // batch_size
-    x = torch.cat(
-        [
+    out = []
+    for i in range(n_patch_selections_for_predictor):
+        out.append(
             torch.cat(
-                [x[i * batch_size : (i + 1) * batch_size] for _ in range(n_patch_selections_for_context_encoder)], dim=0
+                [x[i * batch_size : (i + 1) * batch_size] for _ in range(n_patch_selections_for_context_encoder)],
+            dim=0
             )
-            for i in range(n_patch_selections_for_predictor)
-        ],
-        dim=0,
-    )
+        )
+        return torch.cat(out, dim=0)
     return x
 
 
