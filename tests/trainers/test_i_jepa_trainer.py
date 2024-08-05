@@ -1,3 +1,4 @@
+import copy
 from functools import partial
 
 import pytest
@@ -105,9 +106,12 @@ class TestIJEPATrainer:
             {
                 "i_jepa_context_encoder": ModelWrapper(i_jepa_encoder, device, False),
                 "i_jepa_predictor": ModelWrapper(i_jepa_predictor, device, False),
-                "i_jepa_target_encoder": ModelWrapper(i_jepa_encoder, device, False),
+                "i_jepa_target_encoder": ModelWrapper(copy.deepcopy(i_jepa_encoder), device, False),
             }
         )
+        assert not (
+            id(d["i_jepa_context_encoder"].model) == id(d["i_jepa_target_encoder"].model)
+        ), "context_encoder and target_encoder must be allocated in memory as separate entities."
         d.send_to_default_device()
         return d
 

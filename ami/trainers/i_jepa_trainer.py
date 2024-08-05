@@ -88,6 +88,9 @@ class IJEPATrainer(BaseTrainer):
         context_encoder = self.context_encoder.model
         predictor = self.predictor.model
         target_encoder = self.target_encoder.model
+        assert not (
+            id(context_encoder) == id(target_encoder)
+        ), "context_encoder and target_encoder must be allocated in memory as separate entities."
         # move to device
         context_encoder = context_encoder.to(self.device)
         predictor = predictor.to(self.device)
