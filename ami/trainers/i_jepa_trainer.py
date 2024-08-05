@@ -1,9 +1,9 @@
 # Ref: https://github.com/facebookresearch/ijepa
 
+import copy
+import itertools
 from functools import partial
 from pathlib import Path
-import itertools
-import copy
 
 import torch
 from torch.optim import Optimizer
@@ -13,14 +13,14 @@ from typing_extensions import override
 from ami.data.buffers.buffer_names import BufferNames
 from ami.data.buffers.random_data_buffer import RandomDataBuffer
 from ami.data.interfaces import ThreadSafeDataUser
-from ami.models.model_names import ModelNames
-from ami.models.model_wrapper import ModelWrapper
 from ami.models.i_jepa import (
     IJEPAEncoder,
     IJEPAPredictor,
     repeat_patches_along_with_batch_axis,
     select_patches_by_indices,
 )
+from ami.models.model_names import ModelNames
+from ami.models.model_wrapper import ModelWrapper
 from ami.tensorboard_loggers import StepIntervalLogger
 
 from .base_trainer import BaseTrainer
@@ -62,20 +62,12 @@ class IJEPATrainer(BaseTrainer):
         self.minimum_new_data_count = minimum_new_data_count
 
     def on_data_users_dict_attached(self) -> None:
-        self.image_data_user: ThreadSafeDataUser[RandomDataBuffer] = self.get_data_user(
-            BufferNames.IMAGE
-        )
+        self.image_data_user: ThreadSafeDataUser[RandomDataBuffer] = self.get_data_user(BufferNames.IMAGE)
 
     def on_model_wrappers_dict_attached(self) -> None:
-        self.context_encoder: ModelWrapper[IJEPAEncoder] = self.get_training_model(
-            "i_jepa_context_encoder"
-        )
-        self.predictor: ModelWrapper[IJEPAPredictor] = self.get_training_model(
-            "i_jepa_predictor"
-        )
-        self.target_encoder: ModelWrapper[IJEPAEncoder] = self.get_training_model(
-            "i_jepa_target_encoder"
-        )
+        self.context_encoder: ModelWrapper[IJEPAEncoder] = self.get_training_model("i_jepa_context_encoder")
+        self.predictor: ModelWrapper[IJEPAPredictor] = self.get_training_model("i_jepa_predictor")
+        self.target_encoder: ModelWrapper[IJEPAEncoder] = self.get_training_model("i_jepa_target_encoder")
 
         # Since the model is swapped between the inference and training threads each time it is trained,
         # the model and optimizer are built within the `train()` method.
@@ -86,10 +78,7 @@ class IJEPATrainer(BaseTrainer):
 
     def is_trainable(self) -> bool:
         self.image_data_user.update()
-        return (
-            len(self.image_data_user.buffer) >= self.minimum_dataset_size
-            and self._is_new_data_available()
-        )
+        return len(self.image_data_user.buffer) >= self.minimum_dataset_size and self._is_new_data_available()
 
     def _is_new_data_available(self) -> bool:
         return self.image_data_user.buffer.new_data_count >= self.minimum_new_data_count
@@ -104,9 +93,7 @@ class IJEPATrainer(BaseTrainer):
         predictor = predictor.to(self.device)
         target_encoder = target_encoder.to(self.device)
         # define optimizer
-        optimizer = self.partial_optimizer(
-            itertools.chain(context_encoder.parameters(), predictor.parameters())
-        )
+        optimizer = self.partial_optimizer(itertools.chain(context_encoder.parameters(), predictor.parameters()))
         optimizer.load_state_dict(self.optimizer_state)
         # prepare about dataset
         dataset = self.image_data_user.get_dataset()
@@ -115,8 +102,8 @@ class IJEPATrainer(BaseTrainer):
         for _ in range(self.max_epochs):
             for batch in dataloader:
                 (image_batch, masks_for_context_encoder, masks_for_predictor) = batch
-                assert len(image_batch)==1# must be fixed in another PR
-                image_batch = image_batch[0]# must be fixed in another PR
+                assert len(image_batch) == 1  # must be fixed in another PR
+                image_batch = image_batch[0]  # must be fixed in another PR
                 image_batch = image_batch.to(self.device)
                 masks_for_context_encoder = [masks.to(self.device) for masks in masks_for_context_encoder]
                 masks_for_predictor = [masks.to(self.device) for masks in masks_for_predictor]
@@ -141,8 +128,7 @@ class IJEPATrainer(BaseTrainer):
                     )
                 # context encoder
                 latent_from_context_encoder = context_encoder(
-                    images=image_batch, 
-                    patch_selections_for_context_encoder=masks_for_context_encoder
+                    images=image_batch, patch_selections_for_context_encoder=masks_for_context_encoder
                 )
                 # predictor
                 latent_from_predictor = predictor(
@@ -164,13 +150,11 @@ class IJEPATrainer(BaseTrainer):
                 with torch.no_grad():
                     # In the original I-JEPA, m changes through training process.
                     # But in ami-q, since assuming Semi-permanent training, m is set as fixed value.
-                    m = 0.996 # based on the original I-JEPA initinal setting.
+                    m = 0.996  # based on the original I-JEPA initinal setting.
                     for target_encoder_param, context_encoder_param in zip(
                         target_encoder.parameters(), context_encoder.parameters()
                     ):
-                        target_encoder_param.data.mul_(m).add_(
-                            (1.0 - m) * context_encoder_param.detach().data
-                        )
+                        target_encoder_param.data.mul_(m).add_((1.0 - m) * context_encoder_param.detach().data)
 
         self.optimizer_state = optimizer.state_dict()
         self.logger_state = self.logger.state_dict()

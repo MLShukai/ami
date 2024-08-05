@@ -23,4 +23,3 @@ i_jepa_predictor:
     predictor_embed_dim: 384
     depth: 6
     num_heads: 12
-

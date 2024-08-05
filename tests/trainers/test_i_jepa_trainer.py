@@ -9,27 +9,28 @@ from ami.data.buffers.buffer_names import BufferNames
 from ami.data.buffers.random_data_buffer import RandomDataBuffer
 from ami.data.step_data import DataKeys, StepData
 from ami.data.utils import DataCollectorsDict
+from ami.models.i_jepa import IJEPAEncoder, IJEPAPredictor
 from ami.models.model_names import ModelNames
 from ami.models.model_wrapper import ModelWrapper
 from ami.models.utils import ModelWrappersDict
-from ami.models.i_jepa import IJEPAEncoder, IJEPAPredictor
 from ami.tensorboard_loggers import StepIntervalLogger
-from ami.trainers.i_jepa_trainer import IJEPATrainer
 from ami.trainers.components.i_jepa_mask_collator import IJEPAMultiBlockMaskCollator
+from ami.trainers.i_jepa_trainer import IJEPATrainer
 
 # input data params
 IMAGE_SIZE = 256
 PATCH_SIZE = 16
-assert IMAGE_SIZE%PATCH_SIZE==0
+assert IMAGE_SIZE % PATCH_SIZE == 0
 N_PATCHES = IMAGE_SIZE // PATCH_SIZE
 
 # model params
 ENCODER_EMBEDDING_DIM = 48
 ENCODER_NUM_HEADS = 6
-assert ENCODER_EMBEDDING_DIM%ENCODER_NUM_HEADS==0
+assert ENCODER_EMBEDDING_DIM % ENCODER_NUM_HEADS == 0
 PREDICTOR_EMBEDDING_DIM = 24
 PREDICTOR_NUM_HEADS = 3
-assert PREDICTOR_EMBEDDING_DIM%PREDICTOR_NUM_HEADS==0
+assert PREDICTOR_EMBEDDING_DIM % PREDICTOR_NUM_HEADS == 0
+
 
 class TestIJEPATrainer:
     @pytest.fixture
@@ -39,9 +40,9 @@ class TestIJEPATrainer:
 
     @pytest.fixture
     def partial_optimizer(self):
-        partial_optimizer = partial(AdamW, lr=1e-4, weight_decay=0.04) # based on the original paper's initial params
+        partial_optimizer = partial(AdamW, lr=1e-4, weight_decay=0.04)  # based on the original paper's initial params
         return partial_optimizer
-    
+
     @pytest.fixture
     def i_jepa_mask_collator(self):
         # based on the original paper settings
@@ -125,7 +126,9 @@ class TestIJEPATrainer:
         device: torch.device,
         logger: StepIntervalLogger,
     ) -> IJEPATrainer:
-        trainer = IJEPATrainer(partial_dataloader, partial_optimizer, i_jepa_mask_collator, device, logger, minimum_new_data_count=1)
+        trainer = IJEPATrainer(
+            partial_dataloader, partial_optimizer, i_jepa_mask_collator, device, logger, minimum_new_data_count=1
+        )
         trainer.attach_model_wrappers_dict(model_wrappers_dict)
         trainer.attach_data_users_dict(image_buffer_dict.get_data_users())
         return trainer
