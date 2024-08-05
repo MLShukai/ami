@@ -252,7 +252,7 @@ class IJEPAPredictor(nn.Module):
 
     def __init__(
         self,
-        n_patches: int,
+        n_patches: int | tuple[int, int],
         context_encoder_embed_dim: int = 768,
         predictor_embed_dim: int = 384,
         depth: int = 6,
@@ -268,8 +268,8 @@ class IJEPAPredictor(nn.Module):
         """Used as I-JEPA predictor.
 
         Args:
-            n_patches (int):
-                Total num of patches.
+            n_patches (int | tuple[int, int]):
+                Num of patches along with vertical and horizontal.
             context_encoder_embed_dim (int):
                 Embedding dims of input latents.
                 Defaults to 768.
@@ -311,10 +311,11 @@ class IJEPAPredictor(nn.Module):
         self.token_for_prediction = nn.Parameter(torch.zeros(1, 1, predictor_embed_dim))
         dpr = np.linspace(0, drop_path_rate, depth).tolist()  # stochastic depth decay rule
         # define positional encodings
+        (n_patches_vertical, n_patches_horizontal) = (n_patches, n_patches) if isinstance(n_patches, int) else n_patches
         self.positional_encodings: torch.Tensor
-        positional_encodings = get_2d_positional_embeddings(predictor_embed_dim, int(n_patches**0.5)).reshape(
-            1, n_patches, predictor_embed_dim
-        )
+        positional_encodings = get_2d_positional_embeddings(
+            predictor_embed_dim, grid_size=(n_patches_vertical, n_patches_horizontal)
+        ).reshape(1, n_patches_vertical * n_patches_horizontal, predictor_embed_dim)
         self.register_buffer("positional_encodings", torch.from_numpy(positional_encodings).float())
         # define transformers
         self.vit_layers = nn.ModuleList(
