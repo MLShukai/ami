@@ -1,11 +1,11 @@
 # Ref: https://github.com/facebookresearch/ijepa
 
 import math
+from functools import partial
 
 import numpy as np
 import torch
 import torch.nn as nn
-from functools import partial
 
 from .components.positional_embeddings import get_2d_positional_embeddings
 from .components.vision_transformer_layer import VisionTransformerLayer
@@ -35,8 +35,7 @@ def repeat_patches_along_with_batch_axis(
     for i in range(n_patch_selections_for_predictor):
         out.append(
             torch.cat(
-                [x[i * batch_size : (i + 1) * batch_size] for _ in range(n_patch_selections_for_context_encoder)],
-            dim=0
+                [x[i * batch_size : (i + 1) * batch_size] for _ in range(n_patch_selections_for_context_encoder)], dim=0
             )
         )
     return torch.cat(out, dim=0)
@@ -416,6 +415,7 @@ class IJEPAPredictor(nn.Module):
 
         return x
 
+
 def fix_init_weight(vit_layers: nn.ModuleList) -> None:
     def rescale(param: torch.Tensor, layer_id: int) -> None:
         param.div_(math.sqrt(2.0 * layer_id))
@@ -423,6 +423,7 @@ def fix_init_weight(vit_layers: nn.ModuleList) -> None:
     for layer_id, layer in enumerate(vit_layers, start=1):
         rescale(layer.attn.proj.weight.data, layer_id)
         rescale(layer.mlp.fc2.weight.data, layer_id)
+
 
 def _init_weights(m: nn.Module, init_std: float) -> None:
     match m:
