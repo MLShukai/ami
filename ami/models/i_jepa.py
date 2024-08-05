@@ -38,8 +38,7 @@ def repeat_patches_along_with_batch_axis(
             dim=0
             )
         )
-        return torch.cat(out, dim=0)
-    return x
+    return torch.cat(out, dim=0)
 
 
 def select_patches_by_indices(x: torch.Tensor, patch_selections: list[torch.Tensor]) -> torch.Tensor:
