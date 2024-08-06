@@ -87,16 +87,14 @@ class IJEPATrainer(BaseTrainer):
         return self.image_data_user.buffer.new_data_count >= self.minimum_new_data_count
 
     def train(self) -> None:
-        # define models
-        context_encoder = self.context_encoder.model
-        predictor = self.predictor.model
-        target_encoder = self.target_encoder.model
         # move to device
-        context_encoder = context_encoder.to(self.device)
-        predictor = predictor.to(self.device)
-        target_encoder = target_encoder.to(self.device)
+        self.context_encoder = self.context_encoder.to(self.device)
+        self.predictor = self.predictor.to(self.device)
+        self.target_encoder = self.target_encoder.to(self.device)
         # define optimizer
-        optimizer = self.partial_optimizer(itertools.chain(context_encoder.parameters(), predictor.parameters()))
+        optimizer = self.partial_optimizer(
+            itertools.chain(self.context_encoder.parameters(), self.predictor.parameters())
+        )
         optimizer.load_state_dict(self.optimizer_state)
         # prepare about dataset
         dataset = self.image_data_user.get_dataset()
@@ -114,7 +112,7 @@ class IJEPATrainer(BaseTrainer):
 
                 # target encoder
                 with torch.no_grad():
-                    latent_from_target_encoder = target_encoder(image_batch)
+                    latent_from_target_encoder = self.target_encoder(image_batch)
                     latent_from_target_encoder = torch.nn.functional.layer_norm(
                         latent_from_target_encoder,
                         (latent_from_target_encoder.size(-1),),
@@ -130,11 +128,11 @@ class IJEPATrainer(BaseTrainer):
                         len(masks_for_context_encoder),
                     )
                 # context encoder
-                latent_from_context_encoder = context_encoder(
+                latent_from_context_encoder = self.context_encoder(
                     images=image_batch, patch_selections_for_context_encoder=masks_for_context_encoder
                 )
                 # predictor
-                latent_from_predictor = predictor(
+                latent_from_predictor = self.predictor(
                     latents=latent_from_context_encoder,
                     patch_selections_for_context_encoder=masks_for_context_encoder,
                     patch_selections_for_predictor=masks_for_predictor,
@@ -155,7 +153,7 @@ class IJEPATrainer(BaseTrainer):
                     # But in ami-q, since assuming Semi-permanent training, m is set as fixed value.
                     m = 0.996  # based on the original I-JEPA initinal setting.
                     for target_encoder_param, context_encoder_param in zip(
-                        target_encoder.parameters(), context_encoder.parameters()
+                        self.target_encoder.parameters(), self.context_encoder.parameters()
                     ):
                         target_encoder_param.data.mul_(m).add_((1.0 - m) * context_encoder_param.detach().data)
 
