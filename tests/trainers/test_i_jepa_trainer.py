@@ -35,17 +35,7 @@ assert PREDICTOR_EMBEDDING_DIM % PREDICTOR_NUM_HEADS == 0
 
 class TestIJEPATrainer:
     @pytest.fixture
-    def partial_dataloader(self):
-        partial_dataloader = partial(DataLoader, batch_size=2, shuffle=True)
-        return partial_dataloader
-
-    @pytest.fixture
-    def partial_optimizer(self):
-        partial_optimizer = partial(AdamW, lr=1e-4, weight_decay=0.04)  # based on the original paper's initial params
-        return partial_optimizer
-
-    @pytest.fixture
-    def i_jepa_mask_collator(self):
+    def i_jepa_mask_collator(self) -> IJEPAMultiBlockMaskCollator:
         # based on the original paper settings
         i_jepa_mask_collator = IJEPAMultiBlockMaskCollator(
             input_size=IMAGE_SIZE,
@@ -58,6 +48,16 @@ class TestIJEPATrainer:
             min_keep=10,
         )
         return i_jepa_mask_collator
+    
+    @pytest.fixture
+    def partial_dataloader(self, i_jepa_mask_collator: IJEPAMultiBlockMaskCollator):
+        partial_dataloader = partial(DataLoader, batch_size=2, shuffle=True, collate_fn=i_jepa_mask_collator)
+        return partial_dataloader
+
+    @pytest.fixture
+    def partial_optimizer(self):
+        partial_optimizer = partial(AdamW, lr=1e-4, weight_decay=0.04)  # based on the original paper's initial params
+        return partial_optimizer
 
     @pytest.fixture
     def i_jepa_encoder(self):
@@ -124,14 +124,13 @@ class TestIJEPATrainer:
         self,
         partial_dataloader,
         partial_optimizer,
-        i_jepa_mask_collator: IJEPAMultiBlockMaskCollator,
         model_wrappers_dict: DataCollectorsDict,
         image_buffer_dict: DataCollectorsDict,
         device: torch.device,
         logger: StepIntervalLogger,
     ) -> IJEPATrainer:
         trainer = IJEPATrainer(
-            partial_dataloader, partial_optimizer, i_jepa_mask_collator, device, logger, minimum_new_data_count=1
+            partial_dataloader, partial_optimizer, device, logger, minimum_new_data_count=1
         )
         trainer.attach_model_wrappers_dict(model_wrappers_dict)
         trainer.attach_data_users_dict(image_buffer_dict.get_data_users())

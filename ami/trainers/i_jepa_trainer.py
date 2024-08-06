@@ -24,7 +24,6 @@ from ami.models.model_wrapper import ModelWrapper
 from ami.tensorboard_loggers import StepIntervalLogger
 
 from .base_trainer import BaseTrainer
-from .components.i_jepa_mask_collator import IJEPAMultiBlockMaskCollator
 
 
 class IJEPATrainer(BaseTrainer):
@@ -43,14 +42,12 @@ class IJEPATrainer(BaseTrainer):
         Args:
             partial_dataloader: A partially instantiated dataloader lacking a provided dataset.
             partial_optimizer: A partially instantiated optimizer lacking provided parameters.
-            i_jepa_mask_collator: A collator to make masks for I-JEPA models.
             device: The accelerator device (e.g., CPU, GPU) utilized for training the model.
             minimum_new_data_count: Minimum number of new data count required to run the training.
         """
         super().__init__()
         self.partial_optimizer = partial_optimizer
         self.partial_dataloader = partial_dataloader
-        self.i_jepa_mask_collator = i_jepa_mask_collator
         self.device = device
         self.logger = logger
         self.max_epochs = max_epochs
@@ -96,7 +93,7 @@ class IJEPATrainer(BaseTrainer):
         optimizer.load_state_dict(self.optimizer_state)
         # prepare about dataset
         dataset = self.image_data_user.get_dataset()
-        dataloader = self.partial_dataloader(dataset=dataset, collate_fn=self.i_jepa_mask_collator)
+        dataloader = self.partial_dataloader(dataset=dataset)
 
         for _ in range(self.max_epochs):
             for batch in dataloader:
