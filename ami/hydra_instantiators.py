@@ -31,15 +31,17 @@ def instantiate_data_collectors(data_collectors_cfg: DictConfig) -> DataCollecto
 def instantiate_models(models_cfg: DictConfig) -> ModelWrappersDict:
     d = ModelWrappersDict()
     aliases = []
-    for name, cfg in models_cfg.items():
-        match cfg:
+    for name, cfg_or_alias_target in models_cfg.items():
+        match cfg_or_alias_target:
             case DictConfig():
+                cfg = cfg_or_alias_target
                 logger.info(f"Instantiating <{cfg._target_}[{cfg.model._target_}]>")
                 model_wrapper: ModelWrapper[Any] = hydra.utils.instantiate(cfg)
                 d[ModelNames(str(name))] = model_wrapper
             case str():
-                logger.info(f"Model name {name!r} is alias to {cfg!r}")
-                aliases.append((name, cfg))
+                target = cfg_or_alias_target
+                logger.info(f"Model name {name!r} is alias to {target!r}")
+                aliases.append((name, target))
             case _:
                 raise RuntimeError(f"Model config or alias must be DictConfig or str! {cfg}")
     for alias, target in aliases:
