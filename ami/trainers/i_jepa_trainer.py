@@ -32,7 +32,6 @@ class IJEPATrainer(BaseTrainer):
         self,
         partial_dataloader: partial[DataLoader[torch.Tensor]],
         partial_optimizer: partial[Optimizer],
-        i_jepa_mask_collator: IJEPAMultiBlockMaskCollator,
         device: torch.device,
         logger: StepIntervalLogger,
         max_epochs: int = 1,
