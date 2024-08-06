@@ -12,6 +12,7 @@ from typing_extensions import override
 from ami.data.buffers.buffer_names import BufferNames
 from ami.data.buffers.random_data_buffer import RandomDataBuffer
 from ami.data.interfaces import ThreadSafeDataUser
+from ami.models.components.mixture_desity_network import NormalMixture
 from ami.models.forward_dynamics import ForwardDynamcisWithActionReward
 from ami.models.model_names import ModelNames
 from ami.models.model_wrapper import ModelWrapper
@@ -54,6 +55,7 @@ class DreamingPolicyValueTrainer(BaseTrainer):
         discount_factor: float = 0.99,  # gamma for rl
         eligibility_trace_decay: float = 0.95,  # for lambda-return
         entropy_coef: float = 0.001,
+        imagination_temperature: float = 1.0,
         minimum_dataset_size: int = 1,
         minimum_new_data_count: int = 0,
     ) -> None:
@@ -70,6 +72,7 @@ class DreamingPolicyValueTrainer(BaseTrainer):
             discount_factor: Discount factor (gamma) for reinforcement learning.
             eligibility_trace_decay: Decay factor (lambda) for eligibility trace in lambda-return calculation.
             entropy_coef: Coefficient for entropy regularization in policy loss.
+            imagination_temperature: The sampling uncertainty for forward dynamics prediction (mixture density network only.)
             minimum_dataset_size: Minimum size of the dataset required to start training.
             minimum_new_data_count: Minimum number of new data count required to run the training.
         """
@@ -84,6 +87,7 @@ class DreamingPolicyValueTrainer(BaseTrainer):
         self.discount_factor = discount_factor
         self.eligibility_trace_decay = eligibility_trace_decay
         self.entropy_coef = entropy_coef
+        self.imagination_temperature = imagination_temperature
         self.minimum_dataset_size = minimum_dataset_size
         self.minimum_new_data_count = minimum_new_data_count
 
@@ -227,8 +231,15 @@ class DreamingPolicyValueTrainer(BaseTrainer):
             next_hidden: Tensor
             next_obs_dist, _, reward_dist, next_hidden = self.forward_dynamics(observation, hidden, action)
 
-            observation = next_obs_dist.rsample()
-            reward = reward_dist.rsample()
+            if isinstance(next_obs_dist, NormalMixture):
+                observation = next_obs_dist.rsample(temperature=self.imagination_temperature)
+            else:
+                observation = next_obs_dist.rsample()
+
+            if isinstance(reward_dist, NormalMixture):
+                reward = reward_dist.rsample(temperature=self.imagination_temperature)
+            else:
+                reward = reward_dist.rsample()
             hidden = next_hidden
 
             value_dist: Distribution = self.value_net(observation, hidden)
