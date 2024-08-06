@@ -35,7 +35,6 @@ class IJEPATrainer(BaseTrainer):
         i_jepa_mask_collator: IJEPAMultiBlockMaskCollator,
         device: torch.device,
         logger: StepIntervalLogger,
-        kl_coef: float = 1.0,
         max_epochs: int = 1,
         minimum_dataset_size: int = 1,
         minimum_new_data_count: int = 0,
@@ -47,7 +46,6 @@ class IJEPATrainer(BaseTrainer):
             partial_optimizer: A partially instantiated optimizer lacking provided parameters.
             i_jepa_mask_collator: A collator to make masks for I-JEPA models.
             device: The accelerator device (e.g., CPU, GPU) utilized for training the model.
-            kl_coef: The coefficient for balancing KL divergence relative to the reconstruction loss.
             minimum_new_data_count: Minimum number of new data count required to run the training.
         """
         super().__init__()
