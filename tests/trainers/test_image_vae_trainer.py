@@ -13,13 +13,7 @@ from ami.data.utils import DataCollectorsDict, DataUsersDict
 from ami.models.model_names import ModelNames
 from ami.models.model_wrapper import ModelWrapper
 from ami.models.utils import ModelWrappersDict
-from ami.models.vae import (
-    Conv2dDecoder,
-    Conv2dEncoder,
-    Decoder,
-    Encoder,
-    EncoderWrapper,
-)
+from ami.models.vae import Conv2dDecoder, Conv2dEncoder, Decoder, Encoder, encoder_infer
 from ami.tensorboard_loggers import StepIntervalLogger
 from ami.trainers.image_vae_trainer import ImageVAETrainer
 
@@ -67,7 +61,7 @@ class TestImageVAETrainer:
     ) -> ModelWrappersDict:
         d = ModelWrappersDict(
             {
-                ModelNames.IMAGE_ENCODER: EncoderWrapper(image_encoder, device, True),
+                ModelNames.IMAGE_ENCODER: ModelWrapper(image_encoder, device, True, encoder_infer),
                 ModelNames.IMAGE_DECODER: ModelWrapper(image_decoder, device, False),
             }
         )
