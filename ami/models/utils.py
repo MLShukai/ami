@@ -92,7 +92,7 @@ class ModelWrappersDict(UserDict[str, ModelWrapper[nn.Module]], SaveAndLoadState
 
     @override
     def __delitem__(self, key: str) -> None:
-        raise RuntimeError(f"Deleting item is prohibited due to the presence of alias keys! Key:{key!r}")
+        raise RuntimeError(f"Deleting item is prohibited! Key:{key!r}")
 
 
 def count_model_parameters(model: nn.Module) -> tuple[int, int, int]:
