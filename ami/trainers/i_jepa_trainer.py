@@ -56,7 +56,6 @@ class IJEPATrainer(BaseTrainer):
         self.i_jepa_mask_collator = i_jepa_mask_collator
         self.device = device
         self.logger = logger
-        self.kl_coef = kl_coef
         self.max_epochs = max_epochs
         self.minimum_dataset_size = minimum_dataset_size
         self.minimum_new_data_count = minimum_new_data_count
