@@ -72,6 +72,13 @@ class IJEPATrainer(BaseTrainer):
             itertools.chain(self.context_encoder.parameters(), self.predictor.parameters())
         ).state_dict()
 
+        # copy weights from target_encoder to context_encoder
+        with torch.no_grad():
+            for context_encoder_param, target_encoder_param in zip(
+                self.context_encoder.parameters(), self.target_encoder.parameters()
+            ):
+                context_encoder_param.copy_(target_encoder_param)
+
     def is_trainable(self) -> bool:
         self.image_data_user.update()
         return len(self.image_data_user.buffer) >= self.minimum_dataset_size and self._is_new_data_available()
