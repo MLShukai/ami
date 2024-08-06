@@ -48,7 +48,7 @@ class TestIJEPATrainer:
             min_keep=10,
         )
         return i_jepa_mask_collator
-    
+
     @pytest.fixture
     def partial_dataloader(self, i_jepa_mask_collator: IJEPAMultiBlockMaskCollator):
         partial_dataloader = partial(DataLoader, batch_size=2, shuffle=True, collate_fn=i_jepa_mask_collator)
@@ -129,9 +129,7 @@ class TestIJEPATrainer:
         device: torch.device,
         logger: StepIntervalLogger,
     ) -> IJEPATrainer:
-        trainer = IJEPATrainer(
-            partial_dataloader, partial_optimizer, device, logger, minimum_new_data_count=1
-        )
+        trainer = IJEPATrainer(partial_dataloader, partial_optimizer, device, logger, minimum_new_data_count=1)
         trainer.attach_model_wrappers_dict(model_wrappers_dict)
         trainer.attach_data_users_dict(image_buffer_dict.get_data_users())
         return trainer
