@@ -65,7 +65,7 @@ class TestEncoderWrapper:
         return encoder_wrapper
 
     def test__inference(self, encoder_wrapper):
-        inference = encoder_wrapper.create_inference()
+        inference = encoder_wrapper.inference_wrapper
         x = torch.randn(16, CHANNELS, HEIGHT, WIDTH)
         z = inference(x)
         assert z.size() == (16, DIM_EMBED)
