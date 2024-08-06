@@ -104,9 +104,11 @@ class TestIJEPATrainer:
     ) -> ModelWrappersDict:
         d = ModelWrappersDict(
             {
-                "i_jepa_context_encoder": ModelWrapper(i_jepa_encoder, device, False),
-                "i_jepa_predictor": ModelWrapper(i_jepa_predictor, device, False),
-                "i_jepa_target_encoder": ModelWrapper(copy.deepcopy(i_jepa_encoder), device, False),
+                ModelNames.I_JEPA_CONTEXT_ENCODER: ModelWrapper(i_jepa_encoder, device, has_inference=False),
+                ModelNames.I_JEPA_PREDICTOR: ModelWrapper(i_jepa_predictor, device, has_inference=False),
+                ModelNames.I_JEPA_TARGET_ENCODER: ModelWrapper(
+                    copy.deepcopy(i_jepa_encoder), device, has_inference=True
+                ),
             }
         )
         d.send_to_default_device()
