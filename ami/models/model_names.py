@@ -8,3 +8,6 @@ class ModelNames(str, Enum):
     FORWARD_DYNAMICS = "forward_dynamics"
     POLICY = "policy"
     VALUE = "value"
+    I_JEPA_PREDICTOR = "i_jepa_predictor"
+    I_JEPA_CONTEXT_ENCODER = "i_jepa_context_encoder"
+    I_JEPA_TARGET_ENCODER = "i_jepa_target_encoder"  # Always alias to other key: `IMAGE_ENCODDER`.
