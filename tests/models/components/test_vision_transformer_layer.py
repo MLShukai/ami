@@ -8,7 +8,7 @@ from ami.models.components.vision_transformer_layer import VisionTransformerLaye
 
 class TestVisionTransformerLayer:
     # model params
-    @pytest.mark.parametrize("embedding_dim", [384, 768])
+    @pytest.mark.parametrize("embedding_dim", [24, 48])
     @pytest.mark.parametrize("num_heads", [3, 6])
     @pytest.mark.parametrize("mlp_ratio", [4.0, 48 / 11])
     # test input params

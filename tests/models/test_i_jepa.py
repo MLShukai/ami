@@ -43,8 +43,8 @@ class TestVisionTransformer:
     @pytest.mark.parametrize(
         ["embed_dim", "depth", "num_heads", "mlp_ratio"],
         [
-            [192, 12, 3, 4],  # tiny
-            [384, 12, 6, 4],  # small
+            [8, 2, 2, 4],  # tiny
+            [32, 2, 4, 4],  # small
         ],
     )
     # test input params
@@ -102,10 +102,10 @@ class TestVisionTransformer:
     # model params
     @pytest.mark.parametrize("image_size", [224])
     @pytest.mark.parametrize("patch_size", [16])
-    @pytest.mark.parametrize("context_encoder_embed_dim", [192])
-    @pytest.mark.parametrize("predictor_embed_dim", [384])
-    @pytest.mark.parametrize("depth", [3])
-    @pytest.mark.parametrize("num_heads", [3, 6])
+    @pytest.mark.parametrize("context_encoder_embed_dim", [8])
+    @pytest.mark.parametrize("predictor_embed_dim", [32])
+    @pytest.mark.parametrize("depth", [2])
+    @pytest.mark.parametrize("num_heads", [2, 4])
     # test input params
     @pytest.mark.parametrize("batch_size", [1, 4])
     @pytest.mark.parametrize(
