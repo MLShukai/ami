@@ -103,8 +103,6 @@ class IJEPATrainer(BaseTrainer):
         for _ in range(self.max_epochs):
             for batch in dataloader:
                 (image_batch, masks_for_context_encoder, masks_for_predictor) = batch
-                assert len(image_batch) == 1  # must be fixed in another PR
-                image_batch = image_batch[0]  # must be fixed in another PR
                 image_batch = image_batch.to(self.device)
                 masks_for_context_encoder = [masks.to(self.device) for masks in masks_for_context_encoder]
                 masks_for_predictor = [masks.to(self.device) for masks in masks_for_predictor]
