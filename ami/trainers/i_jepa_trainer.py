@@ -64,9 +64,9 @@ class IJEPATrainer(BaseTrainer):
         self.image_data_user: ThreadSafeDataUser[RandomDataBuffer] = self.get_data_user(BufferNames.IMAGE)
 
     def on_model_wrappers_dict_attached(self) -> None:
-        self.context_encoder: ModelWrapper[IJEPAEncoder] = self.get_training_model("i_jepa_context_encoder")
-        self.predictor: ModelWrapper[IJEPAPredictor] = self.get_training_model("i_jepa_predictor")
-        self.target_encoder: ModelWrapper[IJEPAEncoder] = self.get_training_model("i_jepa_target_encoder")
+        self.context_encoder: ModelWrapper[IJEPAEncoder] = self.get_training_model(ModelNames.I_JEPA_CONTEXT_ENCODER)
+        self.predictor: ModelWrapper[IJEPAPredictor] = self.get_training_model(ModelNames.I_JEPA_PREDICTOR)
+        self.target_encoder: ModelWrapper[IJEPAEncoder] = self.get_training_model(ModelNames.I_JEPA_TARGET_ENCODER)
 
         # Since the model is swapped between the inference and training threads each time it is trained,
         # the model and optimizer are built within the `train()` method.
