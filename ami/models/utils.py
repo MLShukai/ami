@@ -2,7 +2,7 @@
 from collections import UserDict
 from enum import Enum
 from pathlib import Path
-from typing import TypeAlias
+from typing import Any, TypeAlias
 
 import torch
 import torch.nn as nn
@@ -33,6 +33,11 @@ class ModelWrappersDict(UserDict[str, ModelWrapper[nn.Module]], SaveAndLoadState
         There is always only one instance of `InferenceWrappersDict` corresponding to this `ModelWrappersDict` class.
     """
 
+    @override
+    def __init__(self, *args: Any, **kwds: Any) -> None:
+        self._alias_keys: set[str] = set()
+        super().__init__(*args, **kwds)
+
     _inference_wrappers_dict: InferenceWrappersDict | None = None
 
     def send_to_default_device(self) -> None:
@@ -43,7 +48,7 @@ class ModelWrappersDict(UserDict[str, ModelWrapper[nn.Module]], SaveAndLoadState
     def _create_inferences(self) -> InferenceWrappersDict:
         """Creates an instance of `InferenceWrappersDict` from the given model
         wrappers."""
-        return InferenceWrappersDict({k: v.create_inference() for k, v in self.items() if v.has_inference})
+        return InferenceWrappersDict({k: v.inference_wrapper for k, v in self.items() if v.has_inference})
 
     @property
     def inference_wrappers_dict(self) -> InferenceWrappersDict:
@@ -53,24 +58,41 @@ class ModelWrappersDict(UserDict[str, ModelWrapper[nn.Module]], SaveAndLoadState
         """
         if self._inference_wrappers_dict is None:
             self._inference_wrappers_dict = self._create_inferences()
-            return self._inference_wrappers_dict
-        else:
-            return self._inference_wrappers_dict
+        return self._inference_wrappers_dict
 
     @override
     def save_state(self, path: Path) -> None:
         """Saves the model parameters to `path`."""
         path.mkdir()
-        for name, wrapper in self.items():
+        for name in self._names_without_alias:
             model_path = path / (name + ".pt")
+            wrapper = self[name]
             torch.save(wrapper.model.state_dict(), model_path)
 
     @override
     def load_state(self, path: Path) -> None:
         """Loads the model parameters from `path`."""
-        for name, wrapper in self.items():
+        for name in self._names_without_alias:
             model_path = path / (name + ".pt")
+            wrapper = self[name]
             wrapper.model.load_state_dict(torch.load(model_path, map_location=wrapper.device))
+
+    @property
+    def _names_without_alias(self) -> set[str]:
+        """Returns the set of model names without alias name."""
+        return set(self.keys()) - self._alias_keys
+
+    @override
+    def __setitem__(self, key: str, item: ModelWrapper[nn.Module]) -> None:
+        if key in self:
+            raise KeyError(f"Key overwriting is prohibited due to the presence of alias keys! Key:{key!r}")
+        elif item in self.values():
+            self._alias_keys.add(key)
+        return super().__setitem__(key, item)
+
+    @override
+    def __delitem__(self, key: str) -> None:
+        raise RuntimeError(f"Deleting item is prohibited due to the presence of alias keys! Key:{key!r}")
 
 
 def count_model_parameters(model: nn.Module) -> tuple[int, int, int]:

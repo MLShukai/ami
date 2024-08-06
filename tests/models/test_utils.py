@@ -1,3 +1,4 @@
+import pytest
 import torch
 
 from ami.models.model_wrapper import ModelWrapper
@@ -55,6 +56,31 @@ class TestWrappersDict:
 
         for (wrapper, new_wrapper) in zip(mwd.values(), new_mwd.values()):
             assert torch.equal(wrapper.model.p, new_wrapper.model.p)
+
+    def test_key_alias(self, tmp_path):
+        wrapper1 = ModelWrapper(ModelMultiplyP(), "cpu", True)
+        wrapper2 = ModelWrapper(ModelMultiplyP(), "cpu", True)
+        mwd = ModelWrappersDict(a=wrapper1, b=wrapper1)
+        mwd["c"] = wrapper2
+        mwd["d"] = wrapper2
+
+        assert mwd._alias_keys == {"b", "d"}
+        assert mwd._names_without_alias == {"a", "c"}
+
+        with pytest.raises(KeyError):
+            mwd["a"] = wrapper2
+        with pytest.raises(RuntimeError):
+            del mwd["a"]
+
+        # Test parameter saving
+        models_path = tmp_path / "models"
+        mwd.save_state(models_path)
+        assert (models_path / "a.pt").exists()
+        assert not (models_path / "b.pt").exists()
+        assert (models_path / "c.pt").exists()
+        assert not (models_path / "d.pt").exists()
+
+        mwd.load_state(models_path)
 
 
 class DummyModel(torch.nn.Module):
