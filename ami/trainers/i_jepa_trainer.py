@@ -61,6 +61,9 @@ class IJEPATrainer(BaseTrainer):
         self.context_encoder: ModelWrapper[IJEPAEncoder] = self.get_training_model(ModelNames.I_JEPA_CONTEXT_ENCODER)
         self.predictor: ModelWrapper[IJEPAPredictor] = self.get_training_model(ModelNames.I_JEPA_PREDICTOR)
         self.target_encoder: ModelWrapper[IJEPAEncoder] = self.get_training_model(ModelNames.I_JEPA_TARGET_ENCODER)
+        assert not (
+            id(self.context_encoder.model) == id(self.target_encoder.model)
+        ), "context_encoder and target_encoder must be allocated in memory as separate entities."
 
         # Since the model is swapped between the inference and training threads each time it is trained,
         # the model and optimizer are built within the `train()` method.
@@ -81,9 +84,6 @@ class IJEPATrainer(BaseTrainer):
         context_encoder = self.context_encoder.model
         predictor = self.predictor.model
         target_encoder = self.target_encoder.model
-        assert not (
-            id(context_encoder) == id(target_encoder)
-        ), "context_encoder and target_encoder must be allocated in memory as separate entities."
         # move to device
         context_encoder = context_encoder.to(self.device)
         predictor = predictor.to(self.device)
