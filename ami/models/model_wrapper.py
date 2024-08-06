@@ -46,8 +46,6 @@ class ModelWrapper(nn.Module, Generic[ModuleType]):
     The `forward` method is utilized during the training procedure (in the training thread),
     while the `infer` method is used during the inference procedure (in the inference thread).
 
-    Override the `infer` method to implement a custom inference flow.
-
     The device on which the model is running can be determined through the `device` attribute.
     """
 
