@@ -106,7 +106,19 @@ class ModelWrapper(nn.Module, Generic[ModuleType]):
             p.requires_grad = True
         self.train()
 
-    def create_inference(self) -> ThreadSafeInferenceWrapper[ModuleType]:
+    _inference_wrapper: ThreadSafeInferenceWrapper[ModuleType] | None = None
+
+    @property
+    def inference_wrapper(self) -> ThreadSafeInferenceWrapper[ModuleType]:
+        """Returns the inference wrapper.
+
+        NOTE: Returns a reference to the existing instance if it has already been created.
+        """
+        if self._inference_wrapper is None:
+            self._inference_wrapper = self._create_inference()
+        return self._inference_wrapper
+
+    def _create_inference(self) -> ThreadSafeInferenceWrapper[ModuleType]:
         """Creates the inference wrapper for the inference thread.
 
         Do not call when the model wrapper has no inference model.
