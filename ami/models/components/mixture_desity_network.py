@@ -91,7 +91,12 @@ class NormalMixtureDensityNetwork(nn.Module):
     """
 
     def __init__(
-        self, in_features: int, out_features: int, num_components: int, squeeze_feature_dim: bool = False
+        self,
+        in_features: int,
+        out_features: int,
+        num_components: int,
+        squeeze_feature_dim: bool = False,
+        eps: float = 1e-5,
     ) -> None:
         """
         Args:
@@ -99,6 +104,7 @@ class NormalMixtureDensityNetwork(nn.Module):
             out_features: The number of output features (dimensionality of each normal distribution).
             num_components: The number of mixture components.
             squeeze_feature_dim: Whether or not to squeeze the feature dimension of output tensor.
+            eps: A small value for numerical stability.
         """
         super().__init__()
         if squeeze_feature_dim:
@@ -108,10 +114,11 @@ class NormalMixtureDensityNetwork(nn.Module):
         self.logits_layers = nn.ModuleList(nn.Linear(in_features, out_features) for _ in range(num_components))
 
         self.squeeze_feature_dim = squeeze_feature_dim
+        self.eps = eps
 
     def forward(self, x: Tensor) -> NormalMixture:
         mu = torch.stack([lyr(x) for lyr in self.mu_layers], dim=-1)
-        sigma = torch.stack([F.softplus(lyr(x)) for lyr in self.sigma_layers], dim=-1)
+        sigma = torch.stack([F.softplus(lyr(x)) for lyr in self.sigma_layers], dim=-1) + self.eps
         logits = torch.stack([lyr(x) for lyr in self.logits_layers], dim=-1)
 
         if self.squeeze_feature_dim:
