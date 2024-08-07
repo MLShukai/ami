@@ -153,7 +153,7 @@ class DreamingPolicyValueTrainer(BaseTrainer):
                 # Update policy network
                 policy_optimizer.zero_grad()
                 entropy_loss = trajectory["action_entropies"].mean()
-                return_loss = returns.sum(0).mean()
+                return_loss = returns.mean()
                 policy_loss = -(return_loss + entropy_loss * self.entropy_coef)  # maximize.
                 policy_loss.backward()
                 policy_optimizer.step()
