@@ -39,7 +39,7 @@ class TestIJEPAMultiBlockMaskCollator:
             allow_overlap=False,
         )
         # define sample inputs
-        images = [torch.randn([3, image_size, image_size]) for _ in range(batch_size)]
+        images = [(torch.randn([3, image_size, image_size]),) for _ in range(batch_size)]
         # collate batch and create masks.
         (
             collated_images,
