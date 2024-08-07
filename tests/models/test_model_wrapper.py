@@ -1,8 +1,21 @@
 import pytest
 import torch
 
-from ami.models.model_wrapper import ModelWrapper, ThreadSafeInferenceWrapper
+from ami.models.model_wrapper import (
+    ModelWrapper,
+    ThreadSafeInferenceWrapper,
+    default_infer,
+)
 from tests.helpers import ModelMultiplyP, skip_if_gpu_is_not_available
+
+
+@skip_if_gpu_is_not_available()
+def test_default_infer(gpu_device: torch.device):
+    wrapper = ModelWrapper(ModelMultiplyP(), gpu_device, True)
+    wrapper.to_default_device()
+    data = torch.randn(10)
+    assert data.device == torch.device("cpu")
+    assert default_infer(wrapper, data).device == gpu_device
 
 
 class TestWrappers:

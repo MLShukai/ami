@@ -18,7 +18,7 @@ from ami.models.forward_dynamics import ForwardDynamcisWithActionReward, Forward
 from ami.models.model_names import ModelNames
 from ami.models.model_wrapper import ModelWrapper
 from ami.models.utils import ModelWrappersDict
-from ami.models.vae import Conv2dEncoder, EncoderWrapper
+from ami.models.vae import Conv2dEncoder, encoder_infer
 from ami.tensorboard_loggers import StepIntervalLogger
 from ami.trainers.forward_dynamics_trainer import (
     ForwardDynamicsTrainer,
@@ -80,7 +80,7 @@ class TestForwardDynamicsTrainer:
 
     @pytest.fixture
     def encoder_wrapper(self, encoder, device):
-        encoder_wrapper = EncoderWrapper(encoder, default_device=device)
+        encoder_wrapper = ModelWrapper(encoder, default_device=device, inference_forward=encoder_infer)
         return encoder_wrapper
 
     @pytest.fixture
@@ -245,7 +245,7 @@ class TestForwardDynamicsWithActionRewardTrainer:
 
     @pytest.fixture
     def encoder_wrapper(self, encoder, device):
-        return EncoderWrapper(encoder, default_device=device)
+        return ModelWrapper(encoder, default_device=device, inference_forward=encoder_infer)
 
     @pytest.fixture
     def trajectory_step_data(self) -> StepData:
