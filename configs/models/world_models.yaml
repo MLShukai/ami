@@ -1,7 +1,10 @@
 image_encoder:
-  _target_: ami.models.vae.EncoderWrapper
+  _target_: ami.models.model_wrapper.ModelWrapper
   default_device: ${devices.0}
   has_inference: True
+  inference_forward:
+    _target_: hydra.utils.get_method
+    path: ami.models.vae.encoder_infer
   model:
     _target_: ami.models.vae.Conv2dEncoder
     height: ${shared.image_height}

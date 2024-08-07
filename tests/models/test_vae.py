@@ -5,7 +5,13 @@ import torch
 
 from ami.models.components.small_conv_net import SmallConvNet
 from ami.models.components.small_deconv_net import SmallDeconvNet
-from ami.models.vae import VAE, Conv2dDecoder, Conv2dEncoder, EncoderWrapper
+from ami.models.vae import (
+    VAE,
+    Conv2dDecoder,
+    Conv2dEncoder,
+    ModelWrapper,
+    encoder_infer,
+)
 
 HEIGHT = 256
 WIDTH = 256
@@ -53,19 +59,7 @@ class TestVAE:
         assert z.sample().shape == torch.Size((8, DIM_EMBED))
 
 
-class TestEncoderWrapper:
-    @pytest.fixture
-    def encoder(self):
-        encoder = Conv2dEncoder(HEIGHT, WIDTH, CHANNELS, DIM_EMBED)
-        return encoder
-
-    @pytest.fixture
-    def encoder_wrapper(self, encoder):
-        encoder_wrapper = EncoderWrapper(encoder)
-        return encoder_wrapper
-
-    def test__inference(self, encoder_wrapper):
-        inference = encoder_wrapper.inference_wrapper
-        x = torch.randn(16, CHANNELS, HEIGHT, WIDTH)
-        z = inference(x)
-        assert z.size() == (16, DIM_EMBED)
+def test_encoder_infer():
+    encoder = ModelWrapper(Conv2dEncoder(HEIGHT, WIDTH, CHANNELS, DIM_EMBED), inference_forward=encoder_infer)
+    x = torch.randn(16, CHANNELS, HEIGHT, WIDTH)
+    assert encoder.infer(x).size() == (16, DIM_EMBED)

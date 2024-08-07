@@ -68,7 +68,6 @@ class VAE(nn.Module):
         return x_reconstructed, z_dist
 
 
-class EncoderWrapper(ModelWrapper[Encoder]):
-    def infer(self, x: torch.Tensor) -> torch.Tensor:
-        z: torch.Tensor = self.model.forward(x.to(self.device)).loc
-        return z
+def encoder_infer(wrapper: ModelWrapper[Encoder], x: torch.Tensor) -> torch.Tensor:
+    z: torch.Tensor = wrapper.model.forward(x.to(wrapper.device)).loc
+    return z

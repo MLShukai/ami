@@ -141,12 +141,14 @@ class IJEPAMultiBlockMaskCollator:
         # --
         return mask, mask_complement
 
-    def __call__(self, images: list[torch.Tensor]) -> tuple[torch.Tensor, list[torch.Tensor], list[torch.Tensor]]:
+    def __call__(
+        self, images: list[tuple[torch.Tensor]]
+    ) -> tuple[torch.Tensor, list[torch.Tensor], list[torch.Tensor]]:
         """Collate input images and create masks for context_encoder and
         predictor.
 
         Args:
-            images (list[torch.Tensor]):
+            images (list[tuple[torch.Tensor]]):
                 images list. len(images)==batch_size.
                 Each image is shape [3, height, width]
 
@@ -163,7 +165,7 @@ class IJEPAMultiBlockMaskCollator:
         """
         B = len(images)
 
-        collated_images: torch.Tensor = torch.utils.data.default_collate(images)
+        collated_images: torch.Tensor = torch.utils.data.default_collate(images)[0]
 
         seed = self.step()
         g = torch.Generator()
