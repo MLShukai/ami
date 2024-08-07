@@ -14,12 +14,12 @@ class TestNormalMixture:
     @pytest.mark.parametrize("num_components", [2, 3])
     def test_normal_mixture(self, batch_shape, num_components):
         # Create test data
-        log_pi = torch.randn(*batch_shape, num_components).log_softmax(-1)
+        logits = torch.randn(*batch_shape, num_components)
         mu = torch.randn(*batch_shape, num_components)
         sigma = torch.rand(*batch_shape, num_components).add_(0.1)  # Ensure positive values
 
         # Create NormalMixture instance
-        mixture = NormalMixture(log_pi, mu, sigma)
+        mixture = NormalMixture(logits, mu, sigma)
 
         # Test batch_shape
         assert mixture.batch_shape == torch.Size(batch_shape)
@@ -41,18 +41,22 @@ class TestNormalMixture:
         rsample = mixture.rsample()
         assert rsample.shape == torch.Size(batch_shape)
 
+        # Test temperature sample
+        assert mixture.rsample(temperature=10.0).shape == torch.Size(batch_shape)
+        assert mixture.sample(temperature=0.1).shape == torch.Size(batch_shape)
+
         # Test consistency with individual normal components
         components = [Normal(mu[..., i], sigma[..., i]) for i in range(num_components)]
         mixture_log_prob = mixture.log_prob(sample)
         component_log_probs = torch.stack([comp.log_prob(sample) for comp in components], dim=-1)
-        component_log_probs += log_pi
+        component_log_probs += logits.log_softmax(-1)
         expected_log_prob = torch.logsumexp(component_log_probs, dim=-1)
         assert torch.allclose(mixture_log_prob, expected_log_prob, atol=1e-3)
 
     def test_normal_mixture_invalid_args(self):
         # Test error handling for invalid arguments
         with pytest.raises(AssertionError):
-            NormalMixture(torch.randn(3, 2), torch.randn(3, 3), torch.rand(3, 2).add_(0.1))
+            NormalMixture(torch.randn(3, 2), torch.randn(3, 3), -torch.ones(3, 2))
 
 
 class TestNormalMixtureDensityNetwork:
@@ -76,6 +80,7 @@ class TestNormalMixtureDensityNetwork:
         # Check output shapes
         assert output.batch_shape == torch.Size([batch_size, out_features])
         assert output.event_shape == torch.Size([])
+        assert output.logits.shape == (batch_size, out_features, num_components)
         assert output.log_pi.shape == (batch_size, out_features, num_components)
         assert output.mu.shape == (batch_size, out_features, num_components)
         assert output.sigma.shape == (batch_size, out_features, num_components)

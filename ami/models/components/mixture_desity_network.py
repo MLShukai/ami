@@ -10,45 +10,53 @@ class NormalMixture(Distribution):
 
     SQRT_2_PI = (2 * torch.pi) ** 0.5
     arg_constraints = {
-        "log_pi": constraints.less_than(0.0 + 1e-6),
+        "logits": constraints.real,
         "mu": constraints.real,
         "sigma": constraints.positive,
     }
 
     def __init__(
-        self, log_pi: Tensor, mu: Tensor, sigma: Tensor, eps: float = 1e-6, validate_args: bool | None = None
+        self, logits: Tensor, mu: Tensor, sigma: Tensor, eps: float = 1e-6, validate_args: bool | None = None
     ) -> None:
         """Constructor for the NormalMixture class.
 
         This constructor initializes the parameters of the mixture normal distribution and calls the parent class constructor.
-        log_pi, mu, sigma are must be same shape.
+        logits, mu, sigma are must be same shape.
 
         Args:
-            log_pi: Tensor representing the mixture log ratios of each normal distribution.
+            logits: Tensor representing the unnormalized log probabilities for each component in the mixture distribution.
             mu: Tensor representing the means of each normal distribution.
             sigma: Tensor representing the standard deviations of each normal distribution.
             eps: A small value for numerical stability.
             validate_args: Whether to validate the arguments.
         Shape:
-            log_pi, mu, sigma: (*, Components)
+            logits, mu, sigma: (*, Components)
         """
-        assert log_pi.shape == mu.shape == sigma.shape
-        batch_shape = log_pi.shape[:-1]
-        self.num_components = log_pi.size(-1)
-        self.log_pi = log_pi
+        assert logits.shape == mu.shape == sigma.shape
+        batch_shape = logits.shape[:-1]
+        self.num_components = logits.size(-1)
+        self.logits = logits
         self.mu = mu
         self.sigma = sigma
         self.eps = eps
 
         super().__init__(batch_shape, validate_args=validate_args)
 
+    @property
+    def log_pi(self) -> Tensor:
+        return self.logits.log_softmax(-1)
+
     def _get_expand_shape(self, shape: Size) -> tuple[int, ...]:
         return *shape, *self.batch_shape, self.num_components
 
-    def rsample(self, sample_shape: Size = Size()) -> Tensor:
+    def rsample(self, sample_shape: Size = Size(), temperature: float = 1.0) -> Tensor:
+        """
+        Args:
+            temperature: Sampling uncertainty.
+        """
         shape = self._get_expand_shape(sample_shape)
 
-        pi = self.log_pi.exp().expand(shape).contiguous()
+        pi = self.logits.div(temperature).softmax(-1).expand(shape).contiguous()
         samples = torch.multinomial(
             pi.view(-1, pi.size(-1)),
             1,
@@ -57,8 +65,8 @@ class NormalMixture(Distribution):
         sample_sigma = self.sigma.expand(shape).gather(-1, samples).squeeze(-1)
         return torch.randn_like(sample_mu) * sample_sigma + sample_mu
 
-    def sample(self, sample_shape: Size = Size()) -> Tensor:
-        return self.rsample(sample_shape).detach()
+    def sample(self, sample_shape: Size = Size(), temperature: float = 1.0) -> Tensor:
+        return self.rsample(sample_shape, temperature).detach()
 
     def log_prob(self, value: Tensor) -> Tensor:
         shape = *value.shape, self.num_components
@@ -83,7 +91,12 @@ class NormalMixtureDensityNetwork(nn.Module):
     """
 
     def __init__(
-        self, in_features: int, out_features: int, num_components: int, squeeze_feature_dim: bool = False
+        self,
+        in_features: int,
+        out_features: int,
+        num_components: int,
+        squeeze_feature_dim: bool = False,
+        eps: float = 1e-5,
     ) -> None:
         """
         Args:
@@ -91,6 +104,7 @@ class NormalMixtureDensityNetwork(nn.Module):
             out_features: The number of output features (dimensionality of each normal distribution).
             num_components: The number of mixture components.
             squeeze_feature_dim: Whether or not to squeeze the feature dimension of output tensor.
+            eps: A small value for numerical stability.
         """
         super().__init__()
         if squeeze_feature_dim:
@@ -100,15 +114,16 @@ class NormalMixtureDensityNetwork(nn.Module):
         self.logits_layers = nn.ModuleList(nn.Linear(in_features, out_features) for _ in range(num_components))
 
         self.squeeze_feature_dim = squeeze_feature_dim
+        self.eps = eps
 
     def forward(self, x: Tensor) -> NormalMixture:
         mu = torch.stack([lyr(x) for lyr in self.mu_layers], dim=-1)
-        sigma = torch.stack([F.softplus(lyr(x)) for lyr in self.sigma_layers], dim=-1)
-        log_pi = torch.stack([lyr(x) for lyr in self.logits_layers], dim=-1).log_softmax(-1)
+        sigma = torch.stack([F.softplus(lyr(x)) for lyr in self.sigma_layers], dim=-1) + self.eps
+        logits = torch.stack([lyr(x) for lyr in self.logits_layers], dim=-1)
 
         if self.squeeze_feature_dim:
             mu = mu.squeeze(-2)
             sigma = sigma.squeeze(-2)
-            log_pi = log_pi.squeeze(-2)
+            logits = logits.squeeze(-2)
 
-        return NormalMixture(log_pi, mu, sigma)
+        return NormalMixture(logits, mu, sigma)
