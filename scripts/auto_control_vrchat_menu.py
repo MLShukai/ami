@@ -185,7 +185,7 @@ if __name__ == "__main__":
         "--menu_image", type=str, default=os.path.join(base_dir, "menu.png"), help="Path to the menu.png file"
     )
     parser.add_argument("--confidence", type=float, default=0.8, help="Confidence threshold for image recognition")
-    parser.add_argument("--menu_wait", type=float, default=1.0, help="Wait time after pressing ESC key")
+    parser.add_argument("--menu_wait", type=float, default=2.0, help="Wait time after pressing ESC key")
     parser.add_argument("--click_wait", type=float, default=1.5, help="Wait time after clicking an image")
 
     args = parser.parse_args()
