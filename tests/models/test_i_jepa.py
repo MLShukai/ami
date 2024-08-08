@@ -4,7 +4,12 @@ from typing import Optional
 import pytest
 import torch
 
-from ami.models.i_jepa import IJEPAEncoder, IJEPAPredictor
+from ami.models.i_jepa import (
+    IJEPAEncoder,
+    IJEPAPredictor,
+    ModelWrapper,
+    i_jepa_encoder_infer,
+)
 
 
 def _make_patch_selections_randomly(
@@ -173,3 +178,22 @@ class TestVisionTransformer:
         ), "batch_size mismatch"
         assert predictions.size(1) == n_patches_selected_for_predictor, "num of patch mismatch"
         assert predictions.size(2) == context_encoder_embed_dim, "embed_dim mismatch"
+
+
+def test_i_jepa_encoder_infer(device):
+    wrapper = ModelWrapper(
+        IJEPAEncoder(img_size=128, patch_size=16, in_channels=3, embed_dim=64, depth=4, num_heads=2),
+        device,
+        has_inference=True,
+        inference_forward=i_jepa_encoder_infer,
+    )
+    wrapper.to_default_device()
+
+    out: torch.Tensor = wrapper.infer(torch.randn(3, 128, 128))
+    assert out.ndim == 1
+    assert out.shape == (64 * (128 // 16) ** 2,)
+    assert out.device == device
+
+    out: torch.Tensor = wrapper.infer(torch.randn(8, 3, 128, 128))
+    assert out.ndim == 2
+    assert out.shape == (8, 64 * (128 // 16) ** 2)

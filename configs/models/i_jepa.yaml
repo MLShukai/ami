@@ -5,6 +5,9 @@ i_jepa_target_encoder:
   _target_: ami.models.model_wrapper.ModelWrapper
   default_device: ${devices.0}
   has_inference: True
+  inference_forward:
+    _target_: hydra.utils.get_method
+    path: ami.models.i_jepa.i_jepa_encoder_infer
   model:
     _target_: ami.models.i_jepa.IJEPAEncoder
     img_size:
