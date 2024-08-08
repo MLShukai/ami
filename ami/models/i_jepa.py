@@ -9,6 +9,7 @@ import torch.nn as nn
 
 from .components.positional_embeddings import get_2d_positional_embeddings
 from .components.vision_transformer_layer import VisionTransformerLayer
+from .utils import size_2d, size_2d_to_int_tuple
 
 
 def repeat_patches_along_with_batch_axis(
@@ -69,14 +70,14 @@ class PatchEmbed(nn.Module):
 
     def __init__(
         self,
-        patch_size: int = 16,
+        patch_size: size_2d = 16,
         in_channels: int = 3,
         embed_dim: int = 768,
     ) -> None:
         """
 
         Args:
-            patch_size (int):
+            patch_size (size_2d):
                 Pixel size per a patch.
                 Defaults to 16.
             in_channels (int):
@@ -105,8 +106,8 @@ class IJEPAEncoder(nn.Module):
 
     def __init__(
         self,
-        img_size: int = 224,
-        patch_size: int = 16,
+        img_size: size_2d = 224,
+        patch_size: size_2d = 16,
         in_channels: int = 3,
         embed_dim: int = 768,
         depth: int = 12,
@@ -122,10 +123,10 @@ class IJEPAEncoder(nn.Module):
         """Used as I-JEPA context_encoder and target_encoder.
 
         Args:
-            img_size (int):
+            img_size (size_2d):
                 Input image size.
                 Defaults to 224.
-            patch_size (int):
+            patch_size (size_2d):
                 Pixel size per a patch.
                 Defaults to 16.
             in_channels (int):
@@ -172,12 +173,18 @@ class IJEPAEncoder(nn.Module):
             embed_dim=embed_dim,
         )
         # define positional encodings
-        assert img_size % patch_size == 0
-        n_patches = (img_size // patch_size) ** 2
+        img_size = size_2d_to_int_tuple(img_size)
+        patch_size = size_2d_to_int_tuple(patch_size)
+        img_height, img_width = img_size
+        patch_height, patch_width = patch_size
+        assert img_height % patch_height == 0
+        assert img_width % patch_width == 0
+        n_patches_hw = (img_height // patch_height), (img_width // patch_width)
+        n_patches = n_patches_hw[0] * n_patches_hw[1]
         self.positional_encodings: torch.Tensor
         positional_encodings = get_2d_positional_embeddings(
             embed_dim,
-            img_size // patch_size,
+            n_patches_hw,
         ).reshape(1, n_patches, embed_dim)
         self.register_buffer("positional_encodings", torch.from_numpy(positional_encodings).float())
         # define transformers
@@ -213,7 +220,7 @@ class IJEPAEncoder(nn.Module):
         Args:
             images (torch.Tensor):
                 Input images.
-                (shape: [batch_size, 3, img_size, img_size])
+                (shape: [batch_size, 3, height, width])
             patch_selections_for_context_encoder (list[torch.Tensor] | None):
                 Masks to select indices of images embedded as patches.
                 (shape of each Tensor: [batch_size, n_patches])
@@ -252,7 +259,7 @@ class IJEPAPredictor(nn.Module):
 
     def __init__(
         self,
-        n_patches: int | tuple[int, int],
+        n_patches: size_2d,
         context_encoder_embed_dim: int = 768,
         predictor_embed_dim: int = 384,
         depth: int = 6,
@@ -268,7 +275,7 @@ class IJEPAPredictor(nn.Module):
         """Used as I-JEPA predictor.
 
         Args:
-            n_patches (int | tuple[int, int]):
+            n_patches (size_2d):
                 Num of patches along with vertical and horizontal.
             context_encoder_embed_dim (int):
                 Embedding dims of input latents.
@@ -311,7 +318,7 @@ class IJEPAPredictor(nn.Module):
         self.token_for_prediction = nn.Parameter(torch.zeros(1, 1, predictor_embed_dim))
         dpr = np.linspace(0, drop_path_rate, depth).tolist()  # stochastic depth decay rule
         # define positional encodings
-        (n_patches_vertical, n_patches_horizontal) = (n_patches, n_patches) if isinstance(n_patches, int) else n_patches
+        (n_patches_vertical, n_patches_horizontal) = size_2d_to_int_tuple(n_patches)
         self.positional_encodings: torch.Tensor
         positional_encodings = get_2d_positional_embeddings(
             predictor_embed_dim, grid_size=(n_patches_vertical, n_patches_horizontal)

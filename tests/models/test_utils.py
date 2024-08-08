@@ -7,6 +7,7 @@ from ami.models.utils import (
     ModelWrappersDict,
     count_model_parameters,
     create_model_parameter_count_dict,
+    size_2d_to_int_tuple,
 )
 from tests.helpers import ModelMultiplyP, skip_if_gpu_is_not_available
 
@@ -111,3 +112,8 @@ def test_create_model_parameter_count_dict():
     }
 
     assert out["model1"] == out["model2"] == {"total": 15, "trainable": 10, "frozen": 5}
+
+
+def test_size_2d_to_int_tuple():
+    assert size_2d_to_int_tuple(10) == (10, 10)
+    assert size_2d_to_int_tuple((2, 3)) == (2, 3)
