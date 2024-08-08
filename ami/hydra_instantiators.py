@@ -35,7 +35,7 @@ def instantiate_models(models_cfg: DictConfig) -> ModelWrappersDict:
         match cfg_or_alias_target:
             case DictConfig():
                 cfg = cfg_or_alias_target
-                logger.info(f"Instantiating <{cfg._target_}[{cfg.model._target_}]>")
+                logger.info(f"Instantiating {name!r}: <{cfg._target_}[{cfg.model._target_}]>")
                 model_wrapper: ModelWrapper[Any] = hydra.utils.instantiate(cfg)
                 d[ModelNames(str(name))] = model_wrapper
             case str():
