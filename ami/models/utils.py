@@ -148,3 +148,11 @@ def create_model_parameter_count_dict(models: ModelWrappersDict) -> ModelParamet
     out["_all_"] = {"total": all_total, "trainable": all_trainable, "frozen": all_frozen}
 
     return out
+
+
+size_2d: TypeAlias = int | tuple[int, int]
+
+
+def size_2d_to_int_tuple(size: size_2d) -> tuple[int, int]:
+    """convert `size_2d` type to int tuple."""
+    return (size, size) if isinstance(size, int) else size
