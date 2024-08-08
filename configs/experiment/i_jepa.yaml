@@ -8,3 +8,5 @@ defaults:
 shared:
   image_width: 224
   image_height: 224
+
+task_name: i_jepa
