@@ -16,11 +16,11 @@ defaults:
   - paths: default
   - hydra: default
 
-  # experiment configs allow for version control of specific hyperparameters
-  - experiment: null
-
   # You can specify configuration values that are shared among all config files.
   - shared: default
+
+  # experiment configs allow for version control of specific hyperparameters
+  - experiment: null
 
 task_name: image_encoding
 

@@ -1,0 +1,10 @@
+# @package _global_
+
+defaults:
+  - override /models: i_jepa
+  - override /trainers: i_jepa
+  - override /shared: default
+
+shared:
+  image_width: 224
+  image_height: 224
