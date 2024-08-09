@@ -14,7 +14,6 @@ from ...models.model_names import ModelNames
 from ...models.model_wrapper import ThreadSafeInferenceWrapper
 from ...models.policy_or_value_network import PolicyOrValueNetwork
 from .base_agent import BaseAgent
-from .curiosity_image_ppo_agent import PredictionErrorReward
 
 
 class MultiStepImaginationCuriosityImageAgent(BaseAgent[Tensor, Tensor]):
@@ -37,7 +36,8 @@ class MultiStepImaginationCuriosityImageAgent(BaseAgent[Tensor, Tensor]):
 
         self.exact_forward_dynamics_hidden_state = initial_hidden
         self.logger = logger
-        self.reward_computer = PredictionErrorReward(reward_scale, reward_shift)
+        self.reward_scale = reward_scale
+        self.reward_shift = reward_shift
         self.max_imagination_steps = max_imagination_steps
 
     def on_inference_models_attached(self) -> None:
@@ -50,10 +50,10 @@ class MultiStepImaginationCuriosityImageAgent(BaseAgent[Tensor, Tensor]):
         self.value_net: ThreadSafeInferenceWrapper[PolicyOrValueNetwork] = self.get_inference_model(ModelNames.VALUE)
 
     # ------ Interaction Process ------
-    exact_forward_dynamics_hidden_state: Tensor
-    predicted_embed_obs_dists: list[Distribution]
-    predicted_embed_obses: list[Tensor]
-    forward_dynamics_hidden_states: list[Tensor]
+    exact_forward_dynamics_hidden_state: Tensor  # (depth, dim)
+    predicted_embed_obs_dists: Distribution  # (batch, dim)
+    predicted_embed_obses: Tensor  # (batch, dim)
+    forward_dynamics_hidden_states: Tensor  # (batch, depth, dim)
     step_data: StepData
 
     def _common_step(self, observation: Tensor, initial_step: bool = False) -> Tensor:
@@ -61,72 +61,67 @@ class MultiStepImaginationCuriosityImageAgent(BaseAgent[Tensor, Tensor]):
 
         If `initial_step` is False, some procedures are skipped.
         """
-        embed_obs = self.image_encoder(observation)
+        embed_obs: Tensor = self.image_encoder(observation)
 
         if not initial_step:
             # 報酬計算は初期ステップではできないためスキップ。
-            rewards = []
-            for dist in self.predicted_embed_obs_dists:
-                rewards.append(self.reward_computer.compute(dist, embed_obs))
+            embed_obs = embed_obs.type_as(self.predicted_embed_obses)
+            target_obses = embed_obs.expand_as(self.predicted_embed_obses)
+            reward_batch = (
+                -self.predicted_embed_obs_dists.log_prob(target_obses).flatten(1).mean(-1) * self.reward_scale
+                + self.reward_shift
+            )
 
-            self.logger.log("agent/reward", rewards[0])
-            for i, r in enumerate(rewards, start=1):
+            self.logger.log("agent/reward", reward_batch[0])
+            for i, r in enumerate(reward_batch, start=1):
                 self.logger.log(f"agent/reward_{i}step", r)
 
             # ステップの冒頭でデータコレクトすることで前ステップのデータを収集する。
-            self.step_data[DataKeys.REWARD] = rewards[0]
+            self.step_data[DataKeys.REWARD] = reward_batch[0]
             self.data_collectors.collect(self.step_data)
 
         self.step_data[DataKeys.OBSERVATION] = observation  # o_t
         self.step_data[DataKeys.EMBED_OBSERVATION] = embed_obs  # z_t
 
-        embed_obs_list = [embed_obs, *self.predicted_embed_obses]
-        hidden_list = [self.exact_forward_dynamics_hidden_state, *self.forward_dynamics_hidden_states]
+        embed_obs_batch = torch.cat([embed_obs.unsqueeze(0), self.predicted_embed_obses])[
+            : self.max_imagination_steps
+        ]  # (batch, dim)
+        hidden_batch = torch.cat(
+            [self.exact_forward_dynamics_hidden_state.unsqueeze(0), self.forward_dynamics_hidden_states]
+        )[
+            : self.max_imagination_steps
+        ]  # (batch, depth, dim)
 
-        # buffer lists.
-        pred_embed_obs_dist_list = []
-        pred_embed_obs_list = []
-        next_hidden_list = []
-        action_list = []
-        action_log_prob_list = []
-        value_list = []
+        action_dist_batch: Distribution = self.policy_net(embed_obs_batch, hidden_batch)
+        value_dist_batch: Distribution = self.value_net(embed_obs_batch, hidden_batch)
+        action_batch, value_batch = action_dist_batch.sample(), value_dist_batch.sample()
+        action_log_prob_batch = action_dist_batch.log_prob(action_batch)
 
-        for i in range(min(self.max_imagination_steps, len(embed_obs_list))):
-            action_dist: Distribution = self.policy_net(embed_obs_list[i], hidden_list[i])
-            value_dist: Distribution = self.value_net(embed_obs_list[i], hidden_list[i])
-            action, value = action_dist.sample(), value_dist.sample()
-            action_log_prob = action_dist.log_prob(action)
-            action_list.append(action)
-            action_log_prob_list.append(action_log_prob)
-            value_list.append(value)
+        pred_obs_dist_batch, _, _, next_hidden_batch = self.forward_dynamics(
+            embed_obs_batch, hidden_batch, action_batch
+        )
+        pred_obs_batch = pred_obs_dist_batch.sample()
 
-            pred_obs_dist, _, _, hidden = self.forward_dynamics(embed_obs_list[i], hidden_list[i], action)
-            pred_obs = pred_obs_dist.sample()
-            pred_embed_obs_dist_list.append(pred_obs_dist)
-            pred_embed_obs_list.append(pred_obs)
-            next_hidden_list.append(hidden)
-
-        self.step_data[DataKeys.ACTION] = action_list[0]  # a_t
-        self.step_data[DataKeys.ACTION_LOG_PROBABILITY] = action_log_prob_list[0]  # log \pi(a_t | o_t, h_t)
-        self.step_data[DataKeys.VALUE] = value_list[0]  # v_t
+        self.step_data[DataKeys.ACTION] = action_batch[0]  # a_t
+        self.step_data[DataKeys.ACTION_LOG_PROBABILITY] = action_log_prob_batch[0]  # log \pi(a_t | o_t, h_t)
+        self.step_data[DataKeys.VALUE] = value_batch[0]  # v_t
         self.step_data[DataKeys.HIDDEN] = self.exact_forward_dynamics_hidden_state  # h_t
-        self.logger.log("agent/value", value_list[0])
+        self.logger.log("agent/value", value_batch[0])
 
-        self.predicted_embed_obs_dists = pred_embed_obs_dist_list
-        self.predicted_embed_obses = pred_embed_obs_list
-        self.forward_dynamics_hidden_states = next_hidden_list
-        self.exact_forward_dynamics_hidden_state = next_hidden_list[0]
+        self.predicted_embed_obs_dists = pred_obs_dist_batch
+        self.predicted_embed_obses = pred_obs_batch
+        self.forward_dynamics_hidden_states = next_hidden_batch
+        self.exact_forward_dynamics_hidden_state = next_hidden_batch[0]
 
         self.logger.update()
 
-        return action_list[0]
+        return action_batch[0]
 
     def setup(self, observation: Tensor) -> Tensor:
         super().setup(observation)
         self.step_data = StepData()
-        self.predicted_embed_obs_dists = []
-        self.predicted_embed_obses = []
-        self.forward_dynamics_hidden_states = []
+        self.forward_dynamics_hidden_states = torch.empty(0).type_as(self.exact_forward_dynamics_hidden_state)
+        self.predicted_embed_obses = torch.empty(0).type_as(self.exact_forward_dynamics_hidden_state)
 
         return self._common_step(observation, initial_step=True)
 

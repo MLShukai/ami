@@ -110,15 +110,12 @@ class TestMultiStepImaginationCuriosityImageAgent:
         assert agent.step_data[DataKeys.HIDDEN].shape == (DEPTH, SCONV_DIM)
         assert agent.step_data[DataKeys.REWARD].shape == ()
 
-        assert len(agent.predicted_embed_obs_dists) == 3
-        for dist in agent.predicted_embed_obs_dists:
-            assert isinstance(dist, Distribution)
+        assert isinstance(agent.predicted_embed_obs_dists, Distribution)
+        assert len(agent.predicted_embed_obs_dists.sample()) == 3
         assert len(agent.predicted_embed_obses) == 3
-        for tensor in agent.predicted_embed_obses:
-            assert isinstance(tensor, torch.Tensor)
+        assert isinstance(agent.predicted_embed_obses, torch.Tensor)
         assert len(agent.forward_dynamics_hidden_states) == 3
-        for tensor in agent.forward_dynamics_hidden_states:
-            assert isinstance(tensor, torch.Tensor)
+        assert isinstance(agent.forward_dynamics_hidden_states, torch.Tensor)
 
     def test_save_and_load_state(self, agent: MultiStepImaginationCuriosityImageAgent, tmp_path):
         agent_path = tmp_path / "agent"
