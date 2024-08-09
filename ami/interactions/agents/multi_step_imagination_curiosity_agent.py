@@ -65,7 +65,8 @@ class MultiStepImaginationCuriosityImageAgent(BaseAgent[Tensor, Tensor]):
 
         if not initial_step:
             # 報酬計算は初期ステップではできないためスキップ。
-            embed_obs = embed_obs.type_as(self.predicted_embed_obses)
+            embed_obs = embed_obs.type(self.predicted_embed_obses.dtype)
+            embed_obs = embed_obs.to(self.predicted_embed_obses.device)
             target_obses = embed_obs.expand_as(self.predicted_embed_obses)
             reward_batch = (
                 -self.predicted_embed_obs_dists.log_prob(target_obses).flatten(1).mean(-1) * self.reward_scale
@@ -120,8 +121,11 @@ class MultiStepImaginationCuriosityImageAgent(BaseAgent[Tensor, Tensor]):
     def setup(self, observation: Tensor) -> Tensor:
         super().setup(observation)
         self.step_data = StepData()
-        self.forward_dynamics_hidden_states = torch.empty(0).type_as(self.exact_forward_dynamics_hidden_state)
-        self.predicted_embed_obses = torch.empty(0).type_as(self.exact_forward_dynamics_hidden_state)
+
+        device = self.exact_forward_dynamics_hidden_state.device
+        dtype = self.exact_forward_dynamics_hidden_state.dtype
+        self.forward_dynamics_hidden_states = torch.empty(0, device=device, dtype=dtype)
+        self.predicted_embed_obses = torch.empty(0, device=device)
 
         return self._common_step(observation, initial_step=True)
 
