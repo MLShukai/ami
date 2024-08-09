@@ -12,4 +12,4 @@ logger:
   log_dir: ${paths.tensorboard_dir}/agent
   log_every_n_seconds: 0
 
-max_imagination_steps: 10
+max_imagination_steps: 5
