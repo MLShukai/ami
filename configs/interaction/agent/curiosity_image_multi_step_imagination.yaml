@@ -6,6 +6,7 @@ initial_hidden:
     - ${models.forward_dynamics.model.core_model.depth}
     - ${models.forward_dynamics.model.core_model.dim}
   dtype: ${torch.dtype:float}
+  device: ${devices.0}
 
 logger:
   _target_: ami.tensorboard_loggers.TimeIntervalLogger
