@@ -96,7 +96,7 @@ policy:
       _target_: ami.models.components.resnet.ResNetFF
       dim: ${..observation_hidden_projection.dim_out}
       dim_hidden: 1024
-      depth: 2
+      depth: 4
     dist_head:
       _target_: ami.models.components.one_hot.MultiOneHots
       in_features: ${..observation_hidden_projection.dim_out}
@@ -128,7 +128,7 @@ value:
       _target_: ami.models.components.resnet.ResNetFF
       dim: ${..observation_hidden_projection.dim_out}
       dim_hidden: 1024
-      depth: 2
+      depth: 4
     dist_head:
       _target_: ami.models.components.fully_connected_normal.FullyConnectedNormal
       dim_in: ${..observation_hidden_projection.dim_out}
