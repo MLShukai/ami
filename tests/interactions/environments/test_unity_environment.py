@@ -16,7 +16,7 @@ class TestUnityEnvironment:
 
     @pytest.fixture
     def unity_env(self, mock_unity_env):
-        return UnityEnvironment("dummy_path", "dummy_path", worker_id=0, base_port=5005, seed=42)
+        return UnityEnvironment("dummy_path", worker_id=0, base_port=5005, seed=42)
 
     def test_setup(self, unity_env, mock_unity_env):
         mock_unity_env.reset.return_value = np.zeros(10)
