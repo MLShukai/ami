@@ -26,6 +26,7 @@ logger:
 
 device: ${devices.0}
 max_epochs: 1
+entropy_coef: 0.001
 imagination_trajectory_length: 25
 imagination_temperature: 1.0
 minimum_dataset_size: ${.partial_dataloader.batch_size}
