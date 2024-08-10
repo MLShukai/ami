@@ -15,7 +15,7 @@ from typing_extensions import override
 from .base_environment import BaseEnvironment
 
 
-class TransformLogChannel(SideChannel): # type: ignore
+class TransformLogChannel(SideChannel):  # type: ignore
     def __init__(self, id: UUID, log_file_path: str):
         super().__init__(id)
         self.log_file_path = log_file_path
