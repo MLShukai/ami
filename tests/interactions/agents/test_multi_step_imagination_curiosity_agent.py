@@ -1,3 +1,5 @@
+from functools import partial
+
 import pytest
 import torch
 import torch.nn as nn
@@ -12,6 +14,7 @@ from ami.interactions.agents.multi_step_imagination_curiosity_agent import (
     ModelNames,
     MultiStepImaginationCuriosityImageAgent,
     PolicyOrValueNetwork,
+    average_exponentially,
 )
 from ami.models.components.fully_connected_normal import FullyConnectedNormal
 from ami.models.components.sconv import SConv
@@ -86,7 +89,10 @@ class TestMultiStepImaginationCuriosityImageAgent:
     @pytest.fixture
     def agent(self, inference_models, data_collectors, logger) -> MultiStepImaginationCuriosityImageAgent:
         curiosity_agent = MultiStepImaginationCuriosityImageAgent(
-            torch.zeros(DEPTH, SCONV_DIM), logger, max_imagination_steps=3
+            torch.zeros(DEPTH, SCONV_DIM),
+            logger,
+            max_imagination_steps=3,
+            reward_average_method=partial(average_exponentially, decay=0.3),
         )
         curiosity_agent.attach_data_collectors(data_collectors)
         curiosity_agent.attach_inference_models(inference_models)
@@ -128,3 +134,21 @@ class TestMultiStepImaginationCuriosityImageAgent:
 
         agent.load_state(agent_path)
         assert torch.equal(agent.exact_forward_dynamics_hidden_state, hidden)
+
+
+def test_average_exponentially():
+    rewards = torch.ones(3)
+
+    out = average_exponentially(rewards, 0.1)
+    assert out.ndim == 0
+    assert out == pytest.approx(1)
+
+    rewards = torch.Tensor([1, 10, 100])
+    assert average_exponentially(rewards, 0.1) == pytest.approx(3 / 1.11)
+
+    # Assert decay < 0, or decay >= 1
+    with pytest.raises(AssertionError):
+        average_exponentially(rewards, -1)
+
+    with pytest.raises(AssertionError):
+        average_exponentially(rewards, 1)

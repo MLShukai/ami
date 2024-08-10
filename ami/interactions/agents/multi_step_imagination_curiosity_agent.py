@@ -1,4 +1,5 @@
 from pathlib import Path
+from typing import Callable
 
 import torch
 import torch.nn as nn
@@ -21,6 +22,7 @@ class MultiStepImaginationCuriosityImageAgent(BaseAgent[Tensor, Tensor]):
         self,
         initial_hidden: Tensor,
         logger: TimeIntervalLogger,
+        reward_average_method: Callable[[Tensor], Tensor],
         max_imagination_steps: int = 1,
         reward_scale: float = 1.0,
         reward_shift: float = 0.0,
@@ -29,6 +31,8 @@ class MultiStepImaginationCuriosityImageAgent(BaseAgent[Tensor, Tensor]):
 
         Args:
             initial_hidden: Initial hidden state for the forward dynamics model.
+            reward_average_method: The method for averaging rewards that predicted through multi imaginations.
+                Input is reward (imagination, ), and return value must be scalar.
             max_imagination_steps: Max step for imagination.
         """
         super().__init__()
@@ -36,6 +40,7 @@ class MultiStepImaginationCuriosityImageAgent(BaseAgent[Tensor, Tensor]):
 
         self.exact_forward_dynamics_hidden_state = initial_hidden
         self.logger = logger
+        self.reward_average_method = reward_average_method
         self.reward_scale = reward_scale
         self.reward_shift = reward_shift
         self.max_imagination_steps = max_imagination_steps
@@ -72,13 +77,13 @@ class MultiStepImaginationCuriosityImageAgent(BaseAgent[Tensor, Tensor]):
                 -self.predicted_embed_obs_dists.log_prob(target_obses).flatten(1).mean(-1) * self.reward_scale
                 + self.reward_shift
             )
-
-            self.logger.log("agent/reward", reward_batch[0])
+            reward = self.reward_average_method(reward_batch)
+            self.logger.log("agent/reward", reward)
             for i, r in enumerate(reward_batch, start=1):
                 self.logger.log(f"agent/reward_{i}step", r)
 
             # ステップの冒頭でデータコレクトすることで前ステップのデータを収集する。
-            self.step_data[DataKeys.REWARD] = reward_batch[0]
+            self.step_data[DataKeys.REWARD] = reward
             self.data_collectors.collect(self.step_data)
 
         self.step_data[DataKeys.OBSERVATION] = observation  # o_t
@@ -142,3 +147,23 @@ class MultiStepImaginationCuriosityImageAgent(BaseAgent[Tensor, Tensor]):
         self.exact_forward_dynamics_hidden_state = torch.load(
             path / "exact_forward_dynamics_hidden_state.pt", map_location="cpu"
         )
+
+
+def average_exponentially(rewards: Tensor, decay: float) -> Tensor:
+    """Averages rewards by exponential decay style.
+
+    Args:
+        rewards: shape (imaginations, )
+        decay: The exponential decay factor.
+
+    Returns:
+        Tensor: averaged reward tensor.
+    """
+    assert 0 <= decay < 1
+    assert rewards.ndim == 1
+
+    decay_factors = decay ** torch.arange(len(rewards), device=rewards.device, dtype=rewards.dtype)
+
+    equi_series_sum = (1 - decay ** len(rewards)) / (1 - decay)  # the sum of an equi-series
+
+    return torch.sum(rewards * decay_factors, dim=0) / equi_series_sum
