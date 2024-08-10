@@ -1,7 +1,7 @@
 _target_: ami.interactions.environments.unity_environment.UnityEnvironment
 
 file_path: ???
-log_file_path: ???
+log_file_path: null
 worker_id: 0
 
 time_scale: ${time_scale}
