@@ -17,7 +17,7 @@ from ami.interactions.agents.multi_step_imagination_curiosity_agent import (
     average_exponentially,
 )
 from ami.models.components.fully_connected_normal import FullyConnectedNormal
-from ami.models.components.sconv import SConv
+from ami.models.components.sioconv import SioConv
 from ami.models.components.small_conv_net import SmallConvNet
 from ami.models.policy_value_common_net import SelectObservation
 from ami.models.utils import InferenceWrappersDict, ModelWrapper, ModelWrappersDict
@@ -26,8 +26,9 @@ from ami.tensorboard_loggers import TimeIntervalLogger
 CHANNELS, WIDTH, HEIGHT = (3, 128, 128)
 EMBED_OBS_DIM = 64
 ACTION_DIM = 8
-SCONV_DIM = 64
+SIOCONV_DIM = 64
 DEPTH = 2
+HEAD = 4
 
 
 class TestMultiStepImaginationCuriosityImageAgent:
@@ -37,11 +38,11 @@ class TestMultiStepImaginationCuriosityImageAgent:
         forward_dynamics = ForwardDynamcisWithActionReward(
             nn.Identity(),
             nn.Identity(),
-            nn.Linear(EMBED_OBS_DIM + ACTION_DIM, SCONV_DIM),
-            SConv(DEPTH, SCONV_DIM, SCONV_DIM, 0.1),
-            FullyConnectedNormal(SCONV_DIM, EMBED_OBS_DIM),
-            FullyConnectedNormal(SCONV_DIM, ACTION_DIM),
-            FullyConnectedNormal(SCONV_DIM, 1, squeeze_feature_dim=True),
+            nn.Linear(EMBED_OBS_DIM + ACTION_DIM, SIOCONV_DIM),
+            SioConv(DEPTH, SIOCONV_DIM, HEAD, SIOCONV_DIM, 0.1, 16),
+            FullyConnectedNormal(SIOCONV_DIM, EMBED_OBS_DIM),
+            FullyConnectedNormal(SIOCONV_DIM, ACTION_DIM),
+            FullyConnectedNormal(SIOCONV_DIM, 1, squeeze_feature_dim=True),
         )
 
         policy_net = PolicyOrValueNetwork(
@@ -89,7 +90,7 @@ class TestMultiStepImaginationCuriosityImageAgent:
     @pytest.fixture
     def agent(self, inference_models, data_collectors, logger) -> MultiStepImaginationCuriosityImageAgent:
         curiosity_agent = MultiStepImaginationCuriosityImageAgent(
-            torch.zeros(DEPTH, SCONV_DIM),
+            torch.zeros(DEPTH, SIOCONV_DIM),
             logger,
             max_imagination_steps=3,
             reward_average_method=partial(average_exponentially, decay=0.3),
@@ -113,7 +114,7 @@ class TestMultiStepImaginationCuriosityImageAgent:
         assert agent.step_data[DataKeys.ACTION].shape == (ACTION_DIM,)
         assert agent.step_data[DataKeys.ACTION_LOG_PROBABILITY].shape == (ACTION_DIM,)
         assert agent.step_data[DataKeys.VALUE].shape == ()
-        assert agent.step_data[DataKeys.HIDDEN].shape == (DEPTH, SCONV_DIM)
+        assert agent.step_data[DataKeys.HIDDEN].shape == (DEPTH, SIOCONV_DIM)
         assert agent.step_data[DataKeys.REWARD].shape == ()
 
         assert isinstance(agent.predicted_embed_obs_dists, Distribution)
