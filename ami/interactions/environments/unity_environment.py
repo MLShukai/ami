@@ -11,7 +11,27 @@ from torch import Tensor
 from typing_extensions import override
 
 from .base_environment import BaseEnvironment
+from mlagents_envs.side_channel.side_channel import (
+    SideChannel,
+    IncomingMessage,
+)
+import uuid
 
+class TransformLogChannel(SideChannel):
+    def __init__(self, id):
+        super().__init__(id)
+
+    def on_message_received(self, msg: IncomingMessage):
+        value_list = msg.read_float32_list()
+        frame_count = value_list[0]
+        position_x = value_list[1]
+        position_y = value_list[2]
+        position_z = value_list[3]
+        euler_x = value_list[4]
+        euler_y = value_list[5]
+        euler_z = value_list[6]
+        format_string = f"{frame_count}, {position_x}, {position_y}, {position_z}, {euler_x}, {euler_y}, {euler_z}"
+        print(format_string)
 
 class UnityEnvironment(BaseEnvironment[Tensor, Tensor]):
     """A class for connecting to and interacting with a Unity ML Agents
@@ -50,13 +70,14 @@ class UnityEnvironment(BaseEnvironment[Tensor, Tensor]):
         super().__init__()
 
         self.engine_configuration_channel = EngineConfigurationChannel()
+        transform_log_channel = TransformLogChannel(uuid.UUID("621f0a70-4f87-11ea-a6bf-784f4387d1f7"))
         self._env = UnityToGymWrapper(
             RawUnityEnv(
                 file_path,
                 worker_id,
                 base_port,
                 seed=seed,
-                side_channels=[self.engine_configuration_channel],
+                side_channels=[self.engine_configuration_channel, transform_log_channel],
             ),
             allow_multiple_obs=False,
         )
