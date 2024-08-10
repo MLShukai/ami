@@ -7,6 +7,7 @@ defaults:
 interaction:
   environment:
     file_path: ${unity_env_path}
+    log_file_path: ${paths.output_dir}/unity.csv
     worker_id: ${unity_worker_id}
 
 unity_env_path: ??? # Please specify the arg `unity_env_path='<path/to/executable>'
