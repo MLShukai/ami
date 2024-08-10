@@ -76,18 +76,12 @@ class UnityEnvironment(BaseEnvironment[Tensor, Tensor]):
         super().__init__()
 
         self.engine_configuration_channel = EngineConfigurationChannel()
+        side_channels = [self.engine_configuration_channel]
         if log_file_path is not None:
             transform_log_channel = TransformLogChannel(UUID("621f0a70-4f87-11ea-a6bf-784f4387d1f7"), log_file_path)
+            side_channels.append(transform_log_channel)
         self._env = UnityToGymWrapper(
-            RawUnityEnv(
-                file_path,
-                worker_id,
-                base_port,
-                seed=seed,
-                side_channels=[self.engine_configuration_channel, transform_log_channel]
-                if log_file_path is not None
-                else [self.engine_configuration_channel],
-            ),
+            RawUnityEnv(file_path, worker_id, base_port, seed=seed, side_channels=side_channels),
             allow_multiple_obs=False,
         )
         self.engine_configuration_channel.set_configuration_parameters(
