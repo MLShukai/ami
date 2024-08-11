@@ -16,6 +16,14 @@ interaction:
         - ${models.forward_dynamics.model.core_model.depth}
         - ${models.forward_dynamics.model.core_model.dim}
       dtype: ${torch.dtype:float}
+
+  observation_wrappers:
+    - _target_: ami.interactions.io_wrappers.function_wrapper.FunctionIOWrapper
+      wrap_function:
+        _target_: ami.interactions.io_wrappers.function_wrapper.normalize_tensor
+        _partial_: True
+        eps: 1e-6
+
   action_wrappers:
     - _target_: ami.interactions.io_wrappers.function_wrapper.FunctionIOWrapper
       wrap_function:

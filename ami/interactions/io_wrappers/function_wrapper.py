@@ -1,5 +1,7 @@
 from typing import Callable, Generic
 
+import torch
+
 from .base_io_wrapper import BaseIOWrapper, WrappedType, WrappingType
 
 
@@ -11,3 +13,19 @@ class FunctionIOWrapper(BaseIOWrapper[WrappingType, WrappedType], Generic[Wrappi
 
     def wrap(self, input: WrappingType) -> WrappedType:
         return self.wrap_function(input)
+
+
+def normalize_tensor(x: torch.Tensor, eps: float = 1e-6) -> torch.Tensor:
+    """Normalizes the input tensor to have a mean of 0 and standard deviation
+    of 1.
+
+    Args:
+        x (torch.Tensor): Input tensor to be normalized
+        epsilon (float): Small value to prevent division by zero
+
+    Returns:
+        torch.Tensor: Normalized tensor
+    """
+    mean = torch.mean(x)
+    std = torch.std(x)
+    return (x - mean) / (std + eps)
