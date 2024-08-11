@@ -4,6 +4,7 @@ import pytest
 import torch
 import torch.nn as nn
 from torch.optim import Adam
+from torch.optim.lr_scheduler import ExponentialLR
 from torch.utils.data import DataLoader
 
 from ami.data.step_data import DataKeys, StepData
@@ -141,6 +142,8 @@ class TestDreamingPolicyValueTrainer:
             logger,
             imagination_trajectory_length=8,
             minimum_new_data_count=4,
+            partial_policy_lr_scheduler=partial(ExponentialLR, gamma=0.99),
+            partial_value_lr_scheduler=partial(ExponentialLR, gamma=0.99),
         )
         trainer.attach_model_wrappers_dict(model_wrappers_dict)
         trainer.attach_data_users_dict(data_users_dict)
@@ -166,17 +169,25 @@ class TestDreamingPolicyValueTrainer:
         assert trainer_path.exists()
         assert (trainer_path / "policy_optimizer.pt").exists()
         assert (trainer_path / "value_optimizer.pt").exists()
+        assert (trainer_path / "policy_lr_scheduler.pt").exists()
+        assert (trainer_path / "value_lr_scheduler.pt").exists()
         assert (trainer_path / "logger.pt").exists()
         logger_state = trainer.logger.state_dict()
 
         mocked_logger_load_state_dict = mocker.spy(trainer.logger, "load_state_dict")
         trainer.policy_optimizer_state.clear()
         trainer.value_optimizer_state.clear()
+        trainer.policy_lr_scheduler_state.clear()
+        trainer.value_lr_scheduler_state.clear()
         assert trainer.policy_optimizer_state == {}
         assert trainer.value_optimizer_state == {}
+        assert trainer.policy_lr_scheduler_state == {}
+        assert trainer.value_lr_scheduler_state == {}
         trainer.load_state(trainer_path)
         assert trainer.policy_optimizer_state != {}
         assert trainer.value_optimizer_state != {}
+        assert trainer.policy_lr_scheduler_state != {}
+        assert trainer.value_lr_scheduler_state != {}
         mocked_logger_load_state_dict.assert_called_once_with(logger_state)
 
 

@@ -23,6 +23,10 @@ from ami.tensorboard_loggers import StepIntervalLogger
 from .base_trainer import BaseTrainer
 
 
+def lambda_no_modify_lr(epoch: int) -> float:
+    return 1.0
+
+
 class ImaginationTrajectory(TypedDict):
     """TypedDict which contains the outputs of imagination."""
 
@@ -51,6 +55,8 @@ class DreamingPolicyValueTrainer(BaseTrainer):
         partial_value_optimizer: partial[Optimizer],
         device: torch.device,
         logger: StepIntervalLogger,
+        partial_policy_lr_scheduler: partial[LRScheduler] | None = None,
+        partial_value_lr_scheduler: partial[LRScheduler] | None = None,
         max_epochs: int = 1,
         imagination_trajectory_length: int = 1,
         discount_factor: float = 0.99,  # gamma for rl
@@ -68,6 +74,8 @@ class DreamingPolicyValueTrainer(BaseTrainer):
             partial_value_optimizer: A partially instantiated optimizer for value lacking provided parameters.
             device: The accelerator device (e.g., CPU, GPU) utilized for training the model.
             logger: A StepIntervalLogger object for logging training progress.
+            partial_policy_lr_scheduler: A partially instantiated lr scheduler for the policy network optimizer.
+            partial_value_lr_scheduler: A partially instantiated lr scheduler for the value network optimizer.
             max_epochs: Maximum number of epochs for training.
             imagination_trajectory_length: The length of dreaming steps.
             discount_factor: Discount factor (gamma) for reinforcement learning.
@@ -84,6 +92,16 @@ class DreamingPolicyValueTrainer(BaseTrainer):
         self.device = device
         self.logger = logger
         self.max_epochs = max_epochs
+        self.partial_policy_lr_scheduler = (
+            partial_policy_lr_scheduler
+            if partial_policy_lr_scheduler is not None
+            else partial(LambdaLR, lr_lambda=lambda_no_modify_lr)
+        )
+        self.partial_value_lr_scheduler = (
+            partial_value_lr_scheduler
+            if partial_value_lr_scheduler is not None
+            else partial(LambdaLR, lr_lambda=lambda_no_modify_lr)
+        )
         self.imagination_trajectory_length = imagination_trajectory_length
         self.discount_factor = discount_factor
         self.eligibility_trace_decay = eligibility_trace_decay
@@ -107,8 +125,13 @@ class DreamingPolicyValueTrainer(BaseTrainer):
         self.policy_net: ModelWrapper[PolicyOrValueNetwork] = self.get_training_model(ModelNames.POLICY)
         self.value_net: ModelWrapper[PolicyOrValueNetwork] = self.get_training_model(ModelNames.VALUE)
 
-        self.policy_optimizer_state = self.partial_policy_optimizer(self.policy_net.parameters()).state_dict()
-        self.value_optimizer_state = self.partial_value_optimizer(self.value_net.parameters()).state_dict()
+        policy_optim = self.partial_policy_optimizer(self.policy_net.parameters())
+        value_optim = self.partial_value_optimizer(self.value_net.parameters())
+        self.policy_optimizer_state = policy_optim.state_dict()
+        self.value_optimizer_state = value_optim.state_dict()
+
+        self.policy_lr_scheduler_state = self.partial_policy_lr_scheduler(optimizer=policy_optim).state_dict()  # type: ignore
+        self.value_lr_scheduler_state = self.partial_value_lr_scheduler(value_optim).state_dict()  # type: ignore
 
     @override
     def is_trainable(self) -> bool:
@@ -133,6 +156,12 @@ class DreamingPolicyValueTrainer(BaseTrainer):
         policy_optimizer.load_state_dict(self.policy_optimizer_state)
         value_optimizer = self.partial_value_optimizer(self.value_net.parameters())
         value_optimizer.load_state_dict(self.value_optimizer_state)
+
+        # Setup schedulers
+        policy_lr_scheduler = self.partial_policy_lr_scheduler(policy_optimizer)  # type: ignore
+        policy_lr_scheduler.load_state_dict(self.policy_lr_scheduler_state)
+        value_lr_scheduler = self.partial_value_lr_scheduler(value_optimizer)  # type: ignore
+        value_lr_scheduler.load_state_dict(self.value_lr_scheduler_state)
 
         # Setup dataset
         dataset = self.initial_states_data_user.get_dataset()
@@ -187,8 +216,14 @@ class DreamingPolicyValueTrainer(BaseTrainer):
                 self.logger.log(prefix + "value_loss", value_loss)
                 self.logger.update()
 
+            # Updating LR Schedulers
+            policy_lr_scheduler.step()
+            value_lr_scheduler.step()
+
         self.policy_optimizer_state = policy_optimizer.state_dict()
         self.value_optimizer_state = value_optimizer.state_dict()
+        self.policy_lr_scheduler_state = policy_lr_scheduler.state_dict()
+        self.value_lr_scheduler_state = value_lr_scheduler.state_dict()
 
     def imagine_trajectory(self, initial_state: tuple[Tensor, Tensor]) -> ImaginationTrajectory:
         """Imagines a trajectory of states, actions, and rewards using the
@@ -268,12 +303,16 @@ class DreamingPolicyValueTrainer(BaseTrainer):
         path.mkdir()
         torch.save(self.policy_optimizer_state, path / "policy_optimizer.pt")
         torch.save(self.value_optimizer_state, path / "value_optimizer.pt")
+        torch.save(self.policy_lr_scheduler_state, path / "policy_lr_scheduler.pt")
+        torch.save(self.value_lr_scheduler_state, path / "value_lr_scheduler.pt")
         torch.save(self.logger.state_dict(), path / "logger.pt")
 
     @override
     def load_state(self, path: Path) -> None:
         self.policy_optimizer_state = torch.load(path / "policy_optimizer.pt")
         self.value_optimizer_state = torch.load(path / "value_optimizer.pt")
+        self.policy_lr_scheduler_state = torch.load(path / "policy_lr_scheduler.pt")
+        self.value_lr_scheduler_state = torch.load(path / "value_lr_scheduler.pt")
         self.logger.load_state_dict(torch.load(path / "logger.pt"))
 
 
