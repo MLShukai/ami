@@ -56,9 +56,9 @@ class MultiStepImaginationCuriosityImageAgent(BaseAgent[Tensor, Tensor]):
 
     # ------ Interaction Process ------
     exact_forward_dynamics_hidden_state: Tensor  # (depth, dim)
-    predicted_embed_obs_dists: Distribution  # (batch, dim)
-    predicted_embed_obses: Tensor  # (batch, dim)
-    forward_dynamics_hidden_states: Tensor  # (batch, depth, dim)
+    predicted_embed_obs_dist_imaginations: Distribution  # (imaginations, dim)
+    predicted_embed_obs_imaginations: Tensor  # (imaginations, dim)
+    forward_dynamics_hidden_state_imaginations: Tensor  # (imaginations, depth, dim)
     step_data: StepData
 
     def _common_step(self, observation: Tensor, initial_step: bool = False) -> Tensor:
@@ -70,16 +70,17 @@ class MultiStepImaginationCuriosityImageAgent(BaseAgent[Tensor, Tensor]):
 
         if not initial_step:
             # 報酬計算は初期ステップではできないためスキップ。
-            embed_obs = embed_obs.type(self.predicted_embed_obses.dtype)
-            embed_obs = embed_obs.to(self.predicted_embed_obses.device)
-            target_obses = embed_obs.expand_as(self.predicted_embed_obses)
-            reward_batch = (
-                -self.predicted_embed_obs_dists.log_prob(target_obses).flatten(1).mean(-1) * self.reward_scale
+            embed_obs = embed_obs.type(self.predicted_embed_obs_imaginations.dtype)
+            embed_obs = embed_obs.to(self.predicted_embed_obs_imaginations.device)
+            target_obses = embed_obs.expand_as(self.predicted_embed_obs_imaginations)
+            reward_imaginations = (
+                -self.predicted_embed_obs_dist_imaginations.log_prob(target_obses).flatten(1).mean(-1)
+                * self.reward_scale
                 + self.reward_shift
             )
-            reward = self.reward_average_method(reward_batch)
+            reward = self.reward_average_method(reward_imaginations)
             self.logger.log("agent/reward", reward)
-            for i, r in enumerate(reward_batch, start=1):
+            for i, r in enumerate(reward_imaginations, start=1):
                 self.logger.log(f"agent/reward_{i}step", r)
 
             # ステップの冒頭でデータコレクトすることで前ステップのデータを収集する。
@@ -89,39 +90,39 @@ class MultiStepImaginationCuriosityImageAgent(BaseAgent[Tensor, Tensor]):
         self.step_data[DataKeys.OBSERVATION] = observation  # o_t
         self.step_data[DataKeys.EMBED_OBSERVATION] = embed_obs  # z_t
 
-        embed_obs_batch = torch.cat([embed_obs.unsqueeze(0), self.predicted_embed_obses])[
+        embed_obs_imaginations = torch.cat([embed_obs.unsqueeze(0), self.predicted_embed_obs_imaginations])[
             : self.max_imagination_steps
-        ]  # (batch, dim)
-        hidden_batch = torch.cat(
-            [self.exact_forward_dynamics_hidden_state.unsqueeze(0), self.forward_dynamics_hidden_states]
+        ]  # (imaginations, dim)
+        hidden_imaginations = torch.cat(
+            [self.exact_forward_dynamics_hidden_state.unsqueeze(0), self.forward_dynamics_hidden_state_imaginations]
         )[
             : self.max_imagination_steps
-        ]  # (batch, depth, dim)
+        ]  # (imaginations, depth, dim)
 
-        action_dist_batch: Distribution = self.policy_net(embed_obs_batch, hidden_batch)
-        value_dist_batch: Distribution = self.value_net(embed_obs_batch, hidden_batch)
-        action_batch, value_batch = action_dist_batch.sample(), value_dist_batch.sample()
-        action_log_prob_batch = action_dist_batch.log_prob(action_batch)
+        action_dist_imaginations: Distribution = self.policy_net(embed_obs_imaginations, hidden_imaginations)
+        value_dist_imaginations: Distribution = self.value_net(embed_obs_imaginations, hidden_imaginations)
+        action_imaginations, value_imaginations = action_dist_imaginations.sample(), value_dist_imaginations.sample()
+        action_log_prob_imaginations = action_dist_imaginations.log_prob(action_imaginations)
 
-        pred_obs_dist_batch, _, _, next_hidden_batch = self.forward_dynamics(
-            embed_obs_batch, hidden_batch, action_batch
+        pred_obs_dist_imaginations, _, _, next_hidden_imaginations = self.forward_dynamics(
+            embed_obs_imaginations, hidden_imaginations, action_imaginations
         )
-        pred_obs_batch = pred_obs_dist_batch.sample()
+        pred_obs_imaginations = pred_obs_dist_imaginations.sample()
 
-        self.step_data[DataKeys.ACTION] = action_batch[0]  # a_t
-        self.step_data[DataKeys.ACTION_LOG_PROBABILITY] = action_log_prob_batch[0]  # log \pi(a_t | o_t, h_t)
-        self.step_data[DataKeys.VALUE] = value_batch[0]  # v_t
+        self.step_data[DataKeys.ACTION] = action_imaginations[0]  # a_t
+        self.step_data[DataKeys.ACTION_LOG_PROBABILITY] = action_log_prob_imaginations[0]  # log \pi(a_t | o_t, h_t)
+        self.step_data[DataKeys.VALUE] = value_imaginations[0]  # v_t
         self.step_data[DataKeys.HIDDEN] = self.exact_forward_dynamics_hidden_state  # h_t
-        self.logger.log("agent/value", value_batch[0])
+        self.logger.log("agent/value", value_imaginations[0])
 
-        self.predicted_embed_obs_dists = pred_obs_dist_batch
-        self.predicted_embed_obses = pred_obs_batch
-        self.forward_dynamics_hidden_states = next_hidden_batch
-        self.exact_forward_dynamics_hidden_state = next_hidden_batch[0]
+        self.predicted_embed_obs_dist_imaginations = pred_obs_dist_imaginations
+        self.predicted_embed_obs_imaginations = pred_obs_imaginations
+        self.forward_dynamics_hidden_state_imaginations = next_hidden_imaginations
+        self.exact_forward_dynamics_hidden_state = next_hidden_imaginations[0]
 
         self.logger.update()
 
-        return action_batch[0]
+        return action_imaginations[0]
 
     def setup(self, observation: Tensor) -> Tensor:
         super().setup(observation)
@@ -129,8 +130,8 @@ class MultiStepImaginationCuriosityImageAgent(BaseAgent[Tensor, Tensor]):
 
         device = self.exact_forward_dynamics_hidden_state.device
         dtype = self.exact_forward_dynamics_hidden_state.dtype
-        self.forward_dynamics_hidden_states = torch.empty(0, device=device, dtype=dtype)
-        self.predicted_embed_obses = torch.empty(0, device=device)
+        self.forward_dynamics_hidden_state_imaginations = torch.empty(0, device=device, dtype=dtype)
+        self.predicted_embed_obs_imaginations = torch.empty(0, device=device)
 
         return self._common_step(observation, initial_step=True)
 
