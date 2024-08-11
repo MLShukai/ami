@@ -6,6 +6,7 @@ import torch
 from torch import Tensor
 from torch.distributions import Distribution
 from torch.optim import Optimizer
+from torch.optim.lr_scheduler import LambdaLR, LRScheduler
 from torch.utils.data import DataLoader
 from typing_extensions import override
 
@@ -311,3 +312,46 @@ def compute_lambda_return(
         lambda_returns.append(last_lambda_return)
 
     return torch.stack(list(reversed(lambda_returns)))
+
+
+class InitialMultiplicationLRScheduler(LambdaLR):
+    """A custom learning rate scheduler that applies a multiplication factor to
+    the learning rate for a specified number of initial epochs.
+
+    This scheduler allows you to modify the learning rate by a given factor for a set number of epochs
+    at the beginning of training, after which it reverts to the original learning rate. This can be
+    useful for various training strategies, such as:
+
+    1. Warm-up: Use a factor > 1 to gradually increase the learning rate.
+    2. Initial suppression: Use a factor < 1 to start with a lower learning rate.
+    3. Freezing: Use a factor of 0 to temporarily freeze learning for some layers.
+
+    Example:
+        optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
+        # To suppress initial learning rate:
+        scheduler = InitialMultiplicationLRScheduler(optimizer, multiplication_factor=0.1, initial_epochs=5)
+        # To implement a warm-up:
+        # scheduler = InitialMultiplicationLRScheduler(optimizer, multiplication_factor=10, initial_epochs=5)
+    """
+
+    def __init__(
+        self,
+        optimizer: Optimizer,
+        multiplication_factor: float,
+        initial_epochs: int,
+        last_epoch: int = -1,
+        verbose: bool = False,
+    ) -> None:
+        """
+        Args:
+            optimizer (Optimizer): The optimizer whose learning rate should be scheduled.
+            multiplication_factor (float): The factor by which to multiply the learning rate during the initial phase.
+            initial_epochs (int): The number of epochs to apply the modified learning rate.
+            last_epoch (int, optional): The index of the last epoch. Default: -1.
+            verbose (bool, optional): If True, prints a message to stdout for each update. Default: False.
+        """
+
+        def lr_lambda(epoch: int) -> float:
+            return multiplication_factor if epoch < initial_epochs else 1.0
+
+        super().__init__(optimizer, lr_lambda, last_epoch, verbose)

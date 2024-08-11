@@ -19,6 +19,7 @@ from ami.trainers.dreaming_policy_value_trainer import (
     BufferNames,
     DreamingPolicyValueTrainer,
     ForwardDynamcisWithActionReward,
+    InitialMultiplicationLRScheduler,
     ModelNames,
     ModelWrapper,
     PolicyOrValueNetwork,
@@ -177,3 +178,22 @@ class TestDreamingPolicyValueTrainer:
         assert trainer.policy_optimizer_state != {}
         assert trainer.value_optimizer_state != {}
         mocked_logger_load_state_dict.assert_called_once_with(logger_state)
+
+
+class TestInitialMultiplicationLRScheduler:
+    def test_lr(self):
+        layer = nn.Linear(3, 1)
+        optim = torch.optim.Adam(layer.parameters(), lr=1.0)
+
+        initial_epochs = 2
+        scheduler = InitialMultiplicationLRScheduler(optim, 0.1, initial_epochs)
+
+        loss = layer(torch.randn(3))
+        loss.backward()
+        optim.step()
+
+        assert scheduler.get_last_lr() == [0.1]
+        scheduler.step()
+        assert scheduler.get_last_lr() == [0.1]
+        scheduler.step()
+        assert scheduler.get_last_lr() == [1.0]
