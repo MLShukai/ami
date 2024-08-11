@@ -1,6 +1,7 @@
 """ここではconfigファイル上からオブジェクトを正常にインスタンス化可能かテストします。"""
 import hydra
 import pytest
+import torch
 from hydra.utils import instantiate
 from pytest_mock import MockerFixture
 
@@ -33,7 +34,7 @@ def test_instantiate(overrides: list[str], mocker: MockerFixture, tmp_path):
     mocker.patch("cv2.VideoCapture")
     mocker.patch("pythonosc.udp_client.SimpleUDPClient")
     with hydra.initialize_config_dir(str(CONFIG_DIR)):
-        cfg = hydra.compose(LAUNCH_CONFIG, overrides=overrides, return_hydra_config=True)
+        cfg = hydra.compose(LAUNCH_CONFIG, overrides=overrides + ["devices=cpu"], return_hydra_config=True)
         cfg.paths.output_dir = tmp_path
 
         interaction = instantiate(cfg.interaction)
