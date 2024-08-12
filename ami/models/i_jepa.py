@@ -7,6 +7,7 @@ import numpy as np
 import torch
 import torch.nn as nn
 
+from .components.patch_embedding import PatchEmbedding
 from .components.positional_embeddings import get_2d_positional_embeddings
 from .components.vision_transformer_layer import VisionTransformerLayer
 from .model_wrapper import ModelWrapper
@@ -64,42 +65,6 @@ def select_patches_by_indices(x: torch.Tensor, patch_selections: list[torch.Tens
         indices = patch_selection.unsqueeze(-1).repeat(1, 1, x.size(-1))
         selected_x.append(torch.gather(x, dim=1, index=indices))
     return torch.cat(selected_x, dim=0)
-
-
-class PatchEmbed(nn.Module):
-    """Convert input images into patch embeddings."""
-
-    def __init__(
-        self,
-        patch_size: size_2d = 16,
-        in_channels: int = 3,
-        embed_dim: int = 768,
-    ) -> None:
-        """
-
-        Args:
-            patch_size (size_2d):
-                Pixel size per a patch.
-                Defaults to 16.
-            in_channels (int):
-                Num of input images channels.
-                Defaults to 3.
-            embed_dim (int):
-                Num of embed dimensions per a patch
-                Defaults to 768.
-        """
-        super().__init__()
-        self.proj = nn.Conv2d(
-            in_channels=in_channels,
-            out_channels=embed_dim,
-            kernel_size=patch_size,
-            stride=patch_size,
-        )
-
-    # (batch, channels, height, width) -> (batch, n_patches, embed_dim)
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
-        x = self.proj(x).flatten(-2).transpose(-2, -1)
-        return x
 
 
 class IJEPAEncoder(nn.Module):
@@ -168,7 +133,7 @@ class IJEPAEncoder(nn.Module):
         self.num_features = self.embed_dim = embed_dim
         self.num_heads = num_heads
         # define input layer to convert input image into patches.
-        self.patch_embed = PatchEmbed(
+        self.patch_embed = PatchEmbedding(
             patch_size=patch_size,
             in_channels=in_channels,
             embed_dim=embed_dim,
