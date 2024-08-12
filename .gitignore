@@ -1,4 +1,5 @@
 poetry.lock
+/data/
 logs/
 .vscode/
 unity_executables/
