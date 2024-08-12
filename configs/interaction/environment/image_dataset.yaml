@@ -1,0 +1,14 @@
+_target_: ami.interactions.environments.dummy_environment.DummyEnvironment
+
+observation_generator:
+  _target_: ami.interactions.environments.image_folder_observation_generator.ImageFolderObservationGenerator
+  root_dir: ??? # Please specify dataset dir.
+  image_size:
+    - ${shared.image_height}
+    - ${shared.image_width}
+
+action_checker:
+  _target_: ami.interactions.environments.dummy_environment.ActionTypeChecker
+  action_type:
+    _target_: hydra.utils.get_class
+    path: torch.Tensor

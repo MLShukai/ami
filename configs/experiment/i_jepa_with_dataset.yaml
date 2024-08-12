@@ -1,0 +1,13 @@
+# @package _global_
+
+defaults:
+  - i_jepa
+  - override /interaction/environment: image_dataset
+
+interaction:
+  environment:
+    observation_generator:
+      root_dir: ${image_data_dir}
+
+image_data_dir: ??? # Specify as command line argument. `python launch.py experiment=<experiment file name> image_data_dir=<path/to/image_data>
+task_name: i_jepa_with_dataset
