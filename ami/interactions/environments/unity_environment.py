@@ -20,20 +20,21 @@ class TransformLogChannel(SideChannel):  # type: ignore
         super().__init__(id)
         self.log_file_path = log_file_path
         with open(self.log_file_path, mode="w") as f:
-            f.write("frame_count, position_x, position_y, position_z, eular_x, eular_y, eular_z\n")
+            f.write("frame_count, time, position_x, position_y, position_z, eular_x, eular_y, eular_z\n")
 
     def on_message_received(self, msg: IncomingMessage) -> None:
         with open(self.log_file_path, mode="a") as f:
             value_list = msg.read_float32_list()
             frame_count = value_list[0]
-            position_x = value_list[1]
-            position_y = value_list[2]
-            position_z = value_list[3]
-            euler_x = value_list[4]
-            euler_y = value_list[5]
-            euler_z = value_list[6]
+            time = value_list[1]
+            position_x = value_list[2]
+            position_y = value_list[3]
+            position_z = value_list[4]
+            euler_x = value_list[5]
+            euler_y = value_list[6]
+            euler_z = value_list[7]
             format_string = (
-                f"{frame_count}, {position_x}, {position_y}, {position_z}, {euler_x}, {euler_y}, {euler_z}\n"
+                f"{frame_count}, {time}, {position_x}, {position_y}, {position_z}, {euler_x}, {euler_y}, {euler_z}\n"
             )
             f.write(format_string)
 
