@@ -8,6 +8,13 @@ defaults:
   - override /trainers: image_vae_forward_dynamics_dreaming
 
 interaction:
+  observation_wrappers:
+    - _target_: ami.interactions.io_wrappers.function_wrapper.FunctionIOWrapper
+      wrap_function:
+        _target_: ami.interactions.io_wrappers.function_wrapper.normalize_tensor
+        _partial_: True
+        eps: 1e-6
+
   action_wrappers:
     - _target_: ami.interactions.io_wrappers.function_wrapper.FunctionIOWrapper
       wrap_function:
