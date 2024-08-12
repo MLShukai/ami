@@ -8,7 +8,7 @@ from torch.utils.data import default_collate
 from ami.models.utils import size_2d, size_2d_to_int_tuple
 
 
-class IJEPABoolMaskCollator:
+class BoolIJEPAMultiBlockMaskCollator:
     """I-JEPA collator function for providing boolean mask tensors.
 
     This collator creates boolean masks for both the context encoder and predictor.

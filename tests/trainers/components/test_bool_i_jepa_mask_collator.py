@@ -1,10 +1,12 @@
 import pytest
 import torch
 
-from ami.trainers.components.i_jepa_bool_mask_collator import IJEPABoolMaskCollator
+from ami.trainers.components.bool_i_jepa_mask_collator import (
+    BoolIJEPAMultiBlockMaskCollator,
+)
 
 
-class TestIJEPABoolMaskCollator:
+class TestBoolIJEPAMultiBlockMaskCollator:
 
     # collator params
     @pytest.mark.parametrize("image_size", [224, 512])
@@ -21,7 +23,7 @@ class TestIJEPABoolMaskCollator:
     ):
         assert image_size % patch_size == 0
         # define IJEPABoolMaskCollator
-        collator = IJEPABoolMaskCollator(
+        collator = BoolIJEPAMultiBlockMaskCollator(
             input_size=(image_size, image_size),
             patch_size=(patch_size, patch_size),
             n_masks=n_masks,
