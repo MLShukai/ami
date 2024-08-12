@@ -24,7 +24,7 @@ class IJEPABoolMaskCollator:
     def __init__(
         self,
         input_size: size_2d,
-        patch_size: size_2d = 16,
+        patch_size: size_2d,
         mask_scale: tuple[float, float] = (0.15, 0.50),
         n_masks: int = 4,
         aspect_ratio: tuple[float, float] = (0.75, 1.5),
