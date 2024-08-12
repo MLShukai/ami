@@ -20,7 +20,7 @@ class TransformLogChannel(SideChannel):  # type: ignore
         super().__init__(id)
         self.log_file_path = log_file_path
         with open(self.log_file_path, mode="w") as f:
-            f.write("frame_count, time, position_x, position_y, position_z, eular_x, eular_y, eular_z\n")
+            f.write("frame_count, time, position_x, position_y, position_z, euler_x, euler_y, euler_z\n")
 
     def on_message_received(self, msg: IncomingMessage) -> None:
         with open(self.log_file_path, mode="a") as f:
