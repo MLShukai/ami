@@ -25,7 +25,7 @@ class BoolIJEPAMultiBlockMaskCollator:
         self,
         input_size: size_2d,
         patch_size: size_2d,
-        mask_scale: tuple[float, float] = (0.15, 0.50),
+        mask_scale: tuple[float, float] = (0.10, 0.25),  # masking 1/9 ~ 1/4 region
         n_masks: int = 4,
         aspect_ratio: tuple[float, float] = (0.75, 1.5),
         min_keep: int = 10,
@@ -61,6 +61,10 @@ class BoolIJEPAMultiBlockMaskCollator:
         self.min_keep = min_keep  # minimum number of patches to keep unmasked
         self._itr_counter = Value("i", -1)  # collator is shared across worker processes
 
+    @property
+    def n_patches(self) -> int:
+        return self.n_patches_height * self.n_patches_width
+
     def step(self) -> int:
         """Increment and return the iteration counter."""
         i = self._itr_counter
@@ -85,17 +89,32 @@ class BoolIJEPAMultiBlockMaskCollator:
         # -- Sample mask scale
         min_s, max_s = self.mask_scale
         mask_scale = min_s + _scale_rand * (max_s - min_s)
-        max_keep = int(self.n_patches_height * self.n_patches_width * mask_scale)
+        max_keep = mask_scale * self.n_patches
 
         # -- Sample mask aspect-ratio
         min_ar, max_ar = self.aspect_ratio
         aspect_ratio = min_ar + _ratio_rand * (max_ar - min_ar)
 
         # -- Compute height and width of mask (given scale and aspect-ratio)
-        h = int(round(math.sqrt(max_keep * aspect_ratio)))
-        w = int(round(math.sqrt(max_keep / aspect_ratio)))
-        h = min(self.n_patches_height, h)
-        w = min(self.n_patches_width, w)
+        patch_ar = self.n_patches_width / self.n_patches_height
+        if patch_ar > aspect_ratio:
+            h_max = self.n_patches_height
+            w_max = self.n_patches_height * aspect_ratio
+        else:
+            h_max = self.n_patches_width / aspect_ratio
+            w_max = self.n_patches_width
+
+        num_patches_max = h_max * w_max
+        scale = math.sqrt(max_keep / num_patches_max)
+        h, w = round(scale * h_max), round(scale * w_max)
+
+        # Apply min keep
+        if h * w < self.min_keep:
+            scale = math.sqrt(self.min_keep / num_patches_max)
+            h, w = math.ceil(scale * h_max), math.ceil(scale * w_max)
+
+        # clamp
+        h, w = min(max(h, 1), self.n_patches_height), min(max(w, 1), self.n_patches_width)
 
         # -- Compute mask coordinates
         top = int(torch.randint(high=self.n_patches_height - h + 1, size=(1,), generator=generator).item())
@@ -126,18 +145,6 @@ class BoolIJEPAMultiBlockMaskCollator:
         predictor_target_mask = torch.logical_not(
             sampled_masks[int(torch.randint(high=len(sampled_masks), size=(1,), generator=generator).item())]
         )
-
-        # Ensure minimum number of unmasked patches for encoder
-        encoder_unmask_patch_count = encoder_mask.logical_not().sum()
-        if encoder_unmask_patch_count < self.min_keep:
-            encoder_mask[-self.min_keep :] = False
-            predictor_target_mask[-self.min_keep :] = True
-
-        # Sanity checks
-        if encoder_mask.logical_not().sum() == 0:
-            raise RuntimeError("Encoder mask is all True! No input for encoder!")
-        if predictor_target_mask.logical_not().sum() == 0:
-            raise RuntimeError("Predictor mask is all True! No prediction target for predictor!")
 
         return encoder_mask, predictor_target_mask
 

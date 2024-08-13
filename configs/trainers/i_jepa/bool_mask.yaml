@@ -13,7 +13,7 @@ partial_dataloader:
       - ${shared.image_height}
       - ${shared.image_width}
     patch_size: ${models.i_jepa_target_encoder.model.patch_size}
-    mask_scale: [0.15, 0.5]
+    mask_scale: [0.10, 0.25]
     aspect_ratio: [0.75, 1.5]
     n_masks: 4
     min_keep: 10
