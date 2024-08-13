@@ -103,6 +103,7 @@ class BoolMaskIJEPATrainer(BaseTrainer):
                 image_batch = image_batch.to(self.device)
                 masks_for_context_encoder = masks_for_context_encoder.to(self.device)
                 masks_for_predictor = masks_for_predictor.to(self.device)
+                optimizer.zero_grad()
 
                 # target encoder
                 with torch.no_grad():
