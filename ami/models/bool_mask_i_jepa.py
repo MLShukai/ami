@@ -329,7 +329,6 @@ def i_jepa_encoder_infer(wrapper: ModelWrapper[BoolMaskIJEPAEncoder], image: tor
 
     out: Tensor = wrapper(image)
     out = out.flatten(-2)
-    print("flatten", out.shape)
     if no_batch:
         out = out.squeeze(0)
 
