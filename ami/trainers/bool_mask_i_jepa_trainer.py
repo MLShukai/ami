@@ -123,7 +123,7 @@ class BoolMaskIJEPATrainer(BaseTrainer):
                 # shape: [batch, n_patches]
                 # Apply mask.
                 losses = torch.masked_fill(losses, masks_for_predictor, 0.0)
-                loss = losses.mean()
+                loss = losses.sum() / masks_for_predictor.logical_not().sum()
 
                 self.logger.log("i-jepa/loss", loss)
                 loss.backward()
