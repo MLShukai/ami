@@ -7,16 +7,12 @@ from ami.trainers.components.bool_i_jepa_mask_collator import (
 
 
 class TestBoolIJEPAMultiBlockMaskCollator:
-
     @pytest.mark.parametrize("image_size", [224])
     @pytest.mark.parametrize("patch_size", [16])
     @pytest.mark.parametrize("min_keep", [10])
     def test_sample_mask_rectangle(self, image_size, patch_size, min_keep):
         collator = BoolIJEPAMultiBlockMaskCollator(
-            input_size=image_size,
-            patch_size=patch_size,
-            mask_scale=(0.1, 0.25),
-            min_keep=min_keep
+            input_size=image_size, patch_size=patch_size, mask_scale=(0.1, 0.25), min_keep=min_keep
         )
         g = torch.Generator()
         n_patches = (image_size // patch_size) ** 2
@@ -28,8 +24,8 @@ class TestBoolIJEPAMultiBlockMaskCollator:
             assert left < right
             assert left >= 0
             assert bottom <= image_size
-            
-            height, width = (bottom - top),  (right - left)
+
+            height, width = (bottom - top), (right - left)
             # test mask scale
             assert height * width <= 0.25 * n_patches
             assert height * width >= 0.1 * n_patches
