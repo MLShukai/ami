@@ -27,7 +27,7 @@ class BoolMaskIJEPATrainer(BaseTrainer):
         partial_optimizer: partial[Optimizer],
         device: torch.device,
         logger: StepIntervalLogger,
-        target_encoder_update_moving_avarage: float = 0.996,  # based on the original I-JEPA initinal setting.
+        target_encoder_update_moving_average: float = 0.996,  # based on the original I-JEPA initinal setting.
         max_epochs: int = 1,
         minimum_dataset_size: int = 1,
         minimum_new_data_count: int = 0,
@@ -45,7 +45,7 @@ class BoolMaskIJEPATrainer(BaseTrainer):
         self.partial_dataloader = partial_dataloader
         self.device = device
         self.logger = logger
-        self.target_encoder_update_moving_avarage = target_encoder_update_moving_avarage
+        self.target_encoder_update_moving_average = target_encoder_update_moving_average
         self.max_epochs = max_epochs
         self.minimum_dataset_size = minimum_dataset_size
         self.minimum_new_data_count = minimum_new_data_count
@@ -134,7 +134,7 @@ class BoolMaskIJEPATrainer(BaseTrainer):
                 with torch.no_grad():
                     # In the original I-JEPA, m changes through training process.
                     # But in ami-q, since assuming Semi-permanent training, m is set as fixed value.
-                    m = self.target_encoder_update_moving_avarage
+                    m = self.target_encoder_update_moving_average
                     for target_encoder_param, context_encoder_param in zip(
                         self.target_encoder.parameters(), self.context_encoder.parameters()
                     ):

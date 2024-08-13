@@ -34,3 +34,4 @@ device: ${devices.0}
 max_epochs: 3
 minimum_dataset_size: ${.partial_dataloader.batch_size}
 minimum_new_data_count: 128 # From primitive ami.
+target_encoder_update_moving_average: 0.996
