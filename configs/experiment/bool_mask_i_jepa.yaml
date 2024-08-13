@@ -1,0 +1,12 @@
+# @package _global_
+
+defaults:
+  - override /models: bool_mask_i_jepa
+  - override /trainers: bool_mask_i_jepa
+  - override /shared: default
+
+shared:
+  image_width: 224
+  image_height: 224
+
+task_name: bool_mask_i_jepa

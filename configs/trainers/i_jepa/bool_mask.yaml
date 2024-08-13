@@ -1,0 +1,36 @@
+_target_: ami.trainers.bool_mask_i_jepa_trainer.BoolMaskIJEPATrainer
+
+partial_dataloader:
+  _target_: torch.utils.data.DataLoader
+  _partial_: true
+  batch_size: 8
+  shuffle: true
+  drop_last: true # for batchnorm.
+  # based on the original paper settings
+  collate_fn:
+    _target_: ami.trainers.components.bool_i_jepa_mask_collator.BoolIJEPAMultiBlockMaskCollator
+    input_size:
+      - ${shared.image_height}
+      - ${shared.image_width}
+    patch_size: ${models.i_jepa_target_encoder.model.patch_size}
+    mask_scale: [0.15, 0.5]
+    aspect_ratio: [0.75, 1.5]
+    n_masks: 4
+    min_keep: 10
+
+# based on the original paper's initial params
+partial_optimizer:
+  _target_: torch.optim.AdamW
+  _partial_: true
+  lr: 0.0001
+  weight_decay: 0.04
+
+logger:
+  _target_: ami.tensorboard_loggers.StepIntervalLogger
+  log_dir: ${paths.tensorboard_dir}/i_jepa
+  log_every_n_steps: 1
+
+device: ${devices.0}
+max_epochs: 3
+minimum_dataset_size: ${.partial_dataloader.batch_size}
+minimum_new_data_count: 128 # From primitive ami.
