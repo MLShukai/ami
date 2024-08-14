@@ -10,9 +10,10 @@ class TestBoolIJEPAMultiBlockMaskCollator:
     @pytest.mark.parametrize("image_size", [224])
     @pytest.mark.parametrize("patch_size", [16])
     @pytest.mark.parametrize("min_keep", [10])
-    def test_sample_mask_rectangle(self, image_size, patch_size, min_keep):
+    @pytest.mark.parametrize("mask_scale", [(0.1, 0.25)])
+    def test_sample_mask_rectangle(self, image_size, patch_size, min_keep, mask_scale):
         collator = BoolIJEPAMultiBlockMaskCollator(
-            input_size=image_size, patch_size=patch_size, mask_scale=(0.1, 0.25), min_keep=min_keep
+            input_size=image_size, patch_size=patch_size, mask_scale=mask_scale, min_keep=min_keep
         )
         g = torch.Generator()
         n_patches = (image_size // patch_size) ** 2
@@ -27,8 +28,9 @@ class TestBoolIJEPAMultiBlockMaskCollator:
 
             height, width = (bottom - top), (right - left)
             # test mask scale
-            assert height * width <= 0.25 * n_patches
-            assert height * width >= 0.1 * n_patches
+            mask_scale_min, mask_scale_max = mask_scale
+            assert height * width <= mask_scale_max * n_patches
+            assert height * width >= mask_scale_min * n_patches
             # test min keep
             assert height * width >= min_keep
 
