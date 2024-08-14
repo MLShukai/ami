@@ -137,7 +137,6 @@ class TestBoolMaskIEPAPredictor:
 @pytest.mark.parametrize("image_size", [128])
 @pytest.mark.parametrize("patch_size", [16])
 @pytest.mark.parametrize("out_dim", [32])
-@pytest.mark.parametrize("device", ["cuda"])
 # test input params
 @pytest.mark.parametrize("batch_size", [1, 4])
 def test_bool_mask_i_jepa_encoder_infer(
