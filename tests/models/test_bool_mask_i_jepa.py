@@ -141,15 +141,21 @@ class TestBoolMaskIEPAPredictor:
 # test input params
 @pytest.mark.parametrize("batch_size", [1, 4])
 def test_bool_mask_i_jepa_encoder_infer(
-    image_size=image_size,
-    patch_size=patch_size,
-    device=device,
-    out_dim=out_dim,
-    batch_size=batch_size,
+    image_size,
+    patch_size,
+    device,
+    out_dim,
+    batch_size,
 ):
     wrapper = ModelWrapper(
         BoolMaskIJEPAEncoder(
-            img_size=image_size, patch_size=patch_size, in_channels=3, embed_dim=64, out_dim=out_dim, depth=4, num_heads=2
+            img_size=image_size,
+            patch_size=patch_size,
+            in_channels=3,
+            embed_dim=64,
+            out_dim=out_dim,
+            depth=4,
+            num_heads=2,
         ),
         device,
         inference_forward=i_jepa_encoder_infer,
