@@ -189,9 +189,6 @@ class BoolTargetIJEPAPredictor(nn.Module):
         # prepare tokens representing patches to be predicted
         self.prediction_token_vector = nn.Parameter(torch.empty(hidden_dim))
 
-        # prepare token representing patches that are not prediction targets
-        self.non_target_token_vector = nn.Parameter(torch.empty(hidden_dim))
-
         # stochastic depth decay rule
         dpr = np.linspace(0, drop_path_rate, depth).tolist()
 
@@ -227,7 +224,6 @@ class BoolTargetIJEPAPredictor(nn.Module):
         # initialize
         self.init_std = init_std
         nn.init.trunc_normal_(self.prediction_token_vector, std=self.init_std)
-        nn.init.trunc_normal_(self.non_target_token_vector, std=self.init_std)
         self.apply(partial(_init_weights, init_std=init_std))
         fix_init_weight(self.vit_layers)
 
@@ -252,27 +248,18 @@ class BoolTargetIJEPAPredictor(nn.Module):
         # Map from encoder-dim to predictor-dim
         x: Tensor = self.input_proj(latents)
 
-        # Create prediction tensor
-        prediction = self.prediction_token_vector.expand_as(x)
         # Shape: [batch, n_patches, hidden_dim]
-        # Apply targets: replace target (True) patches with prediction tokens,
-        # and non-target (False) patches with non-target tokens
-        prediction = prediction.clone()  # Avoiding breaking gradient graph.
-        prediction[~predictor_targets] = self.non_target_token_vector
+        # Apply targets: adding prediction tokens,
+        x = x.clone()  # Avoid breaking gradient graph.
+        x[predictor_targets] += self.prediction_token_vector
 
         x = x + self.positional_encodings
-        prediction = prediction + self.positional_encodings
-
-        boundary = x.size(1)
-        x = torch.cat([x, prediction], dim=1)
 
         # Apply Vision Transformers
         for vit_layer in self.vit_layers:
             x = vit_layer(x)
         x = self.predictor_norm(x)
 
-        # return predictions for patches corresponding to target patches
-        x = x[:, boundary:]
         x = self.predictor_proj(x)
 
         return x
