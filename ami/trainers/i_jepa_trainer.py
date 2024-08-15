@@ -147,13 +147,13 @@ class IJEPATrainer(BaseTrainer):
                 optimizer.zero_grad()
                 loss.backward()
                 # log grad
-                flatten_grads = [
-                    p.grad.flatten()
-                    for p in itertools.chain(self.context_encoder.parameters(), self.predictor.parameters())
-                    if p.grad is not None
-                ]
-                grad_norm = torch.cat(flatten_grads).norm(1)
-                self.logger.log("i-jepa/l1gradnorm", grad_norm)
+                # flatten_grads = [
+                #     p.grad.flatten()
+                #     for p in itertools.chain(self.context_encoder.parameters(), self.predictor.parameters())
+                #     if p.grad is not None
+                # ]
+                # grad_norm = torch.cat(flatten_grads).norm(1)
+                # self.logger.log("i-jepa/l1gradnorm", grad_norm)
                 optimizer.step()
                 # target_encoder updates weights by moving average from context_encoder
                 with torch.no_grad():
