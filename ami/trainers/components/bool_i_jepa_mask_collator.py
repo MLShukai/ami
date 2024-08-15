@@ -1,4 +1,5 @@
 import math
+import random
 from multiprocessing import Value
 
 import torch
@@ -59,7 +60,7 @@ class BoolIJEPAMultiBlockMaskCollator:
         self.n_masks = n_masks
         self.aspect_ratio = aspect_ratio
         self.min_keep = min_keep  # minimum number of patches to keep unmasked
-        self._itr_counter = Value("i", -1)  # collator is shared across worker processes
+        self._itr_counter = Value("i", random.randrange(2**32))  # collator is shared across worker processes
 
     @property
     def n_patches(self) -> int:
