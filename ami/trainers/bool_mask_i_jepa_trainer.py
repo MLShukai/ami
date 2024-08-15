@@ -12,7 +12,7 @@ from typing_extensions import override
 from ami.data.buffers.buffer_names import BufferNames
 from ami.data.buffers.random_data_buffer import RandomDataBuffer
 from ami.data.interfaces import ThreadSafeDataUser
-from ami.models.bool_mask_i_jepa import BoolMaskIJEPAEncoder, BoolMaskIJEPAPredictor
+from ami.models.bool_mask_i_jepa import BoolMaskIJEPAEncoder, BoolTargetIJEPAPredictor
 from ami.models.model_names import ModelNames
 from ami.models.model_wrapper import ModelWrapper
 from ami.tensorboard_loggers import StepIntervalLogger
@@ -57,7 +57,7 @@ class BoolMaskIJEPATrainer(BaseTrainer):
         self.context_encoder: ModelWrapper[BoolMaskIJEPAEncoder] = self.get_training_model(
             ModelNames.I_JEPA_CONTEXT_ENCODER
         )
-        self.predictor: ModelWrapper[BoolMaskIJEPAPredictor] = self.get_training_model(ModelNames.I_JEPA_PREDICTOR)
+        self.predictor: ModelWrapper[BoolTargetIJEPAPredictor] = self.get_training_model(ModelNames.I_JEPA_PREDICTOR)
         self.target_encoder: ModelWrapper[BoolMaskIJEPAEncoder] = self.get_training_model(
             ModelNames.I_JEPA_TARGET_ENCODER
         )
@@ -99,10 +99,10 @@ class BoolMaskIJEPATrainer(BaseTrainer):
         for _ in range(self.max_epochs):
             batch: tuple[Tensor, Tensor, Tensor]
             for batch in dataloader:
-                (image_batch, masks_for_context_encoder, masks_for_predictor) = batch
+                (image_batch, masks_for_context_encoder, targets_for_predictor) = batch
                 image_batch = image_batch.to(self.device)
                 masks_for_context_encoder = masks_for_context_encoder.to(self.device)
-                masks_for_predictor = masks_for_predictor.to(self.device)
+                targets_for_predictor = targets_for_predictor.to(self.device)
                 optimizer.zero_grad()
 
                 # target encoder
@@ -117,14 +117,15 @@ class BoolMaskIJEPATrainer(BaseTrainer):
                 latent_from_context_encoder = self.context_encoder(image_batch, masks_for_context_encoder)
 
                 # predictor
-                latent_from_predictor = self.predictor(latent_from_context_encoder, masks_for_predictor)
+                latent_from_predictor = self.predictor(latent_from_context_encoder, targets_for_predictor)
 
                 # Element wise smooth l1 loss for masking.
                 losses = F.smooth_l1_loss(latent_from_predictor, latent_from_target_encoder, reduction="none").mean(-1)
                 # shape: [batch, n_patches]
-                # Apply mask.
-                losses = torch.masked_fill(losses, masks_for_predictor, 0.0)
-                loss = losses.sum() / masks_for_predictor.logical_not().sum()
+
+                # Ignore patches that are not selected for prediction.
+                losses = torch.masked_fill(losses, ~targets_for_predictor, 0.0)
+                loss = losses.sum() / targets_for_predictor.sum()
 
                 self.logger.log("i-jepa/loss", loss)
                 loss.backward()

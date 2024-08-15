@@ -48,7 +48,7 @@ class TestBoolIJEPAMultiBlockMaskCollator:
         batch_size: int,
     ):
         assert image_size % patch_size == 0
-        # define IJEPABoolMaskCollator
+        # define BoolIJEPAMultiBlockMaskCollator
         collator = BoolIJEPAMultiBlockMaskCollator(
             input_size=(image_size, image_size),
             patch_size=(patch_size, patch_size),
@@ -60,8 +60,8 @@ class TestBoolIJEPAMultiBlockMaskCollator:
         # collate batch and create masks
         (
             collated_images,
-            collated_masks_for_context_encoder,
-            collated_masks_for_predictor,
+            collated_encoder_masks,
+            collated_predictor_targets,
         ) = collator(images)
 
         # check image sizes
@@ -76,28 +76,53 @@ class TestBoolIJEPAMultiBlockMaskCollator:
         n_patch = n_patch_vertical * n_patch_horizontal
 
         # check masks for context encoder
-        assert collated_masks_for_context_encoder.dim() == 2
-        assert (
-            collated_masks_for_context_encoder.size(0) == batch_size
-        ), "batch_size mismatch (masks_for_context_encoder)"
-        assert collated_masks_for_context_encoder.size(1) == n_patch, "patch count mismatch (masks_for_context_encoder)"
-        assert collated_masks_for_context_encoder.dtype == torch.bool, "dtype mismatch (masks_for_context_encoder)"
+        assert collated_encoder_masks.dim() == 2
+        assert collated_encoder_masks.size(0) == batch_size, "batch_size mismatch (collated_encoder_masks)"
+        assert collated_encoder_masks.size(1) == n_patch, "patch count mismatch (collated_encoder_masks)"
+        assert collated_encoder_masks.dtype == torch.bool, "dtype mismatch (collated_encoder_masks)"
 
-        # check masks for predictor
-        assert collated_masks_for_predictor.dim() == 2
-        assert collated_masks_for_predictor.size(0) == batch_size, "batch_size mismatch (masks_for_predictor)"
-        assert collated_masks_for_predictor.size(1) == n_patch, "patch count mismatch (masks_for_predictor)"
-        assert collated_masks_for_predictor.dtype == torch.bool, "dtype mismatch (masks_for_predictor)"
+        # check masks for predictor target
+        assert collated_predictor_targets.dim() == 2
+        assert collated_predictor_targets.size(0) == batch_size, "batch_size mismatch (collated_predictor_targets)"
+        assert collated_predictor_targets.size(1) == n_patch, "patch count mismatch (collated_predictor_targets)"
+        assert collated_predictor_targets.dtype == torch.bool, "dtype mismatch (collated_predictor_targets)"
 
         # check that at least min_keep patches are unmasked for encoder
         assert (
-            torch.sum(~collated_masks_for_context_encoder, dim=1).min() >= collator.min_keep
+            torch.sum(~collated_encoder_masks, dim=1).min() >= collator.min_keep
         ), "min_keep not satisfied for encoder"
 
-        # check that at least one patch is unmasked for predictor
-        assert torch.sum(~collated_masks_for_predictor, dim=1).min() > 0, "no prediction target for predictor"
+        # check that at least one patch is masked for predictor target
+        assert torch.sum(collated_predictor_targets, dim=1).min() > 0, "no prediction target for predictor"
 
-        # check that encoder and predictor masks are not identical
+        # check that encoder masks and predictor targets are not identical
         assert not torch.all(
-            collated_masks_for_context_encoder == collated_masks_for_predictor
-        ), "encoder and predictor masks are identical"
+            collated_encoder_masks == collated_predictor_targets
+        ), "encoder masks and predictor targets must be different"
+
+    def test_sample_masks_and_target(self):
+        image_size, patch_size = 224, 16
+        collator = BoolIJEPAMultiBlockMaskCollator(
+            input_size=(image_size, image_size),
+            patch_size=(patch_size, patch_size),
+            n_masks=4,
+            min_keep=50,
+        )
+        g = torch.Generator()
+        encoder_mask, predictor_target = collator.sample_masks_and_target(g)
+
+        n_patches = (image_size // patch_size) ** 2
+
+        assert encoder_mask.shape == (n_patches,)
+        assert predictor_target.shape == (n_patches,)
+        assert encoder_mask.dtype == torch.bool
+        assert predictor_target.dtype == torch.bool
+
+        # Check that at least min_keep patches are unmasked for encoder
+        assert torch.sum(~encoder_mask) >= collator.min_keep
+
+        # Check that at least one patch is masked for predictor target
+        assert torch.sum(predictor_target) > 0
+
+        # Check that encoder mask and predictor target are not identical
+        assert not torch.all(encoder_mask == predictor_target)

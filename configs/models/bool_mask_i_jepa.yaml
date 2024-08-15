@@ -31,7 +31,7 @@ i_jepa_predictor:
   default_device: ${devices.0}
   has_inference: False
   model:
-    _target_: ami.models.bool_mask_i_jepa.BoolMaskIJEPAPredictor
+    _target_: ami.models.bool_mask_i_jepa.BoolTargetIJEPAPredictor
     n_patches:
       - ${python.eval:"${shared.image_height} // ${models.i_jepa_target_encoder.model.patch_size}"}
       - ${python.eval:"${shared.image_width} // ${models.i_jepa_target_encoder.model.patch_size}"}
