@@ -142,7 +142,7 @@ class IJEPATrainer(BaseTrainer):
                     latent_from_target_encoder,
                     reduction="mean",
                 )
-                self.logger.log("i-jepa/batch-wise-target-encoder-latent-std", latent_from_predictor.std(0).mean())
+                self.logger.log("i-jepa/target-encoder-latent-std", latent_from_predictor.std(0).mean())
                 self.logger.log("i-jepa/loss", loss)
                 optimizer.zero_grad()
                 loss.backward()
@@ -152,8 +152,8 @@ class IJEPATrainer(BaseTrainer):
                     for p in itertools.chain(self.context_encoder.parameters(), self.predictor.parameters())
                     if p.grad is not None
                 ]
-                grad_norm = torch.cat(flatten_grads).norm(1)
-                self.logger.log("i-jepa/l1gradnorm", grad_norm)
+                grad_mean = torch.cat(flatten_grads).mean()
+                self.logger.log("i-jepa/l1-grad-mean-value", grad_mean)
                 optimizer.step()
                 # target_encoder updates weights by moving average from context_encoder
                 with torch.no_grad():
