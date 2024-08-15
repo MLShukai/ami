@@ -98,7 +98,7 @@ class TestBoolIJEPAMultiBlockMaskCollator:
         # check that encoder masks and predictor targets are not identical
         assert not torch.all(
             collated_encoder_masks == collated_predictor_targets
-        ), "encoder masks and predictor targets are identical"
+        ), "encoder masks and predictor targets must be different"
 
     def test_sample_masks_and_target(self):
         image_size, patch_size = 224, 16
