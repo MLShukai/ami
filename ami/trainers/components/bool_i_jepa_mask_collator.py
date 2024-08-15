@@ -12,7 +12,7 @@ from ami.models.utils import size_2d, size_2d_to_int_tuple
 class BoolIJEPAMultiBlockMaskCollator:
     """I-JEPA collator function for providing boolean mask tensors.
 
-    This collator creates boolean masks for both the context encoder and predictor.
+    This collator creates boolean masks for both the context encoder and predictor target.
     It's designed to work with the I-JEPA (Image Joint Embedding Predictive Architecture) model.
 
     The masks are boolean tensors where:
@@ -31,7 +31,7 @@ class BoolIJEPAMultiBlockMaskCollator:
         aspect_ratio: tuple[float, float] = (0.75, 1.5),
         min_keep: int = 10,
     ) -> None:
-        """Initialize the IJEPABoolMaskCollator.
+        """Initialize the BoolIJEPAMultiBlockMaskCollator.
 
         Args:
             input_size (size_2d): Size of the input image.
@@ -124,14 +124,17 @@ class BoolIJEPAMultiBlockMaskCollator:
         right = left + w
         return top, bottom, left, right
 
-    def sample_masks(self, generator: torch.Generator) -> tuple[Tensor, Tensor]:
-        """Sample boolean masks for the encoder and predictor.
+    def sample_masks_and_target(self, generator: torch.Generator) -> tuple[Tensor, Tensor]:
+        """Sample boolean masks for the encoder and a target mask for the
+        predictor.
 
         Args:
             generator (torch.Generator): Generator for pseudo-random numbers.
 
         Returns:
-            tuple[Tensor, Tensor]: Boolean masks for encoder and predictor.
+            tuple[Tensor, Tensor]:
+                - encoder_mask: Boolean mask for the encoder (True for masked patches)
+                - predictor_target: Boolean mask representing the target for the predictor (True for masked patches)
         """
         sampled_masks = []
         for _ in range(self.n_masks):
@@ -143,15 +146,21 @@ class BoolIJEPAMultiBlockMaskCollator:
         # Create encoder mask by combining all sampled masks
         encoder_mask = torch.stack(sampled_masks).sum(0).type(torch.bool)
         # Randomly select one mask as the predictor target
-        predictor_target_mask = torch.logical_not(
-            sampled_masks[int(torch.randint(high=len(sampled_masks), size=(1,), generator=generator).item())]
-        )
+        predictor_target = sampled_masks[
+            int(torch.randint(high=len(sampled_masks), size=(1,), generator=generator).item())
+        ]
 
-        return encoder_mask, predictor_target_mask
+        # Apply min keep
+        if encoder_mask.logical_not().sum() < self.min_keep:
+            indices = torch.randperm(self.n_patches, generator=generator)[: self.min_keep]
+            encoder_mask[indices] = False
+            predictor_target[indices] = True
+
+        return encoder_mask, predictor_target
 
     def __call__(self, images: list[tuple[Tensor]]) -> tuple[Tensor, Tensor, Tensor]:
         """Collate input images and create boolean masks for context encoder
-        and predictor.
+        and predictor target.
 
         Args:
             images (list[tuple[Tensor]]): List of image tensors. Each image is shape [3, height, width].
@@ -159,8 +168,8 @@ class BoolIJEPAMultiBlockMaskCollator:
         Returns:
             tuple[Tensor, Tensor, Tensor]:
                 - collated_images: Collated images (shape: [batch_size, 3, height, width])
-                - collated_masks_for_context_encoder: Boolean mask for context encoder (shape: [batch_size, n_patches])
-                - collated_masks_for_predictor: Boolean mask for predictor (shape: [batch_size, n_patches])
+                - collated_encoder_masks: Boolean masks for context encoder (shape: [batch_size, n_patches])
+                - collated_predictor_targets: Boolean masks representing predictor targets (shape: [batch_size, n_patches])
         """
         collated_images: Tensor = default_collate(images)[0]
 
@@ -168,17 +177,17 @@ class BoolIJEPAMultiBlockMaskCollator:
         g = torch.Generator()
         g.manual_seed(seed)
 
-        masks_for_encoder, masks_for_predictor = [], []
+        encoder_masks, predictor_targets = [], []
         for _ in range(len(images)):
-            enc_mask, pred_mask = self.sample_masks(g)
-            masks_for_encoder.append(enc_mask)
-            masks_for_predictor.append(pred_mask)
+            enc_mask, pred_target = self.sample_masks_and_target(g)
+            encoder_masks.append(enc_mask)
+            predictor_targets.append(pred_target)
 
-        collated_masks_for_context_encoder = torch.stack(masks_for_encoder)
-        collated_masks_for_predictor = torch.stack(masks_for_predictor)
+        collated_encoder_masks = torch.stack(encoder_masks)
+        collated_predictor_targets = torch.stack(predictor_targets)
 
         return (
             collated_images,
-            collated_masks_for_context_encoder,
-            collated_masks_for_predictor,
+            collated_encoder_masks,
+            collated_predictor_targets,
         )

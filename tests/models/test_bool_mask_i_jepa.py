@@ -3,7 +3,7 @@ import torch
 
 from ami.models.bool_mask_i_jepa import (
     BoolMaskIJEPAEncoder,
-    BoolMaskIJEPAPredictor,
+    BoolTargetIJEPAPredictor,
     ModelWrapper,
     i_jepa_encoder_infer,
 )
@@ -87,7 +87,7 @@ class TestBoolMaskIEPAEncoder:
         assert latent.size(2) == out_dim, "out_dim mismatch"
 
 
-class TestBoolMaskIEPAPredictor:
+class TestBoolTargetIJEPAPredictor:
     # model params
     @pytest.mark.parametrize("image_size", [224])
     @pytest.mark.parametrize("patch_size", [16])
@@ -97,7 +97,7 @@ class TestBoolMaskIEPAPredictor:
     @pytest.mark.parametrize("num_heads", [2, 4])
     # test input params
     @pytest.mark.parametrize("batch_size", [1, 4])
-    def test_bool_mask_vision_transformer_predictor(
+    def test_bool_target_vision_transformer_predictor(
         self,
         image_size: int,
         patch_size: int,
@@ -112,7 +112,7 @@ class TestBoolMaskIEPAPredictor:
         n_patch_horizontal = image_size // patch_size
         n_patches = n_patch_vertical * n_patch_horizontal
         # define predictor made of ViT
-        predictor = BoolMaskIJEPAPredictor(
+        predictor = BoolTargetIJEPAPredictor(
             n_patches=(n_patch_vertical, n_patch_horizontal),
             context_encoder_out_dim=context_encoder_out_dim,
             hidden_dim=hidden_dim,
@@ -121,11 +121,11 @@ class TestBoolMaskIEPAPredictor:
         )
         # define sample inputs
         latents = torch.randn([batch_size, n_patches, context_encoder_out_dim])
-        masks_for_predictor = make_bool_masks_randomly(batch_size, n_patches)
+        predictor_targets = ~make_bool_masks_randomly(batch_size, n_patches)
         # get predictions
         predictions = predictor(
             latents=latents,
-            masks_for_predictor=masks_for_predictor,
+            predictor_targets=predictor_targets,
         )
         # check size of output predictions
         assert predictions.size(0) == batch_size, "batch_size mismatch"

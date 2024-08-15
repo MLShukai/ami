@@ -147,8 +147,8 @@ class BoolMaskIJEPAEncoder(nn.Module):
         return x
 
 
-class BoolMaskIJEPAPredictor(nn.Module):
-    """Used as I-JEPA predictor with boolean mask support."""
+class BoolTargetIJEPAPredictor(nn.Module):
+    """Used as I-JEPA predictor with boolean target support."""
 
     def __init__(
         self,
@@ -165,7 +165,7 @@ class BoolMaskIJEPAPredictor(nn.Module):
         drop_path_rate: float = 0.0,
         init_std: float = 0.02,
     ) -> None:
-        """Initialize the BoolMaskIJEPAPredictor.
+        """Initialize the BoolTargetIJEPAPredictor.
 
         Args:
             n_patches (size_2d): Number of patches along vertical and horizontal axes.
@@ -189,8 +189,8 @@ class BoolMaskIJEPAPredictor(nn.Module):
         # prepare tokens representing patches to be predicted
         self.prediction_token_vector = nn.Parameter(torch.empty(hidden_dim))
 
-        # prepare token representing patches to be masked.
-        self.mask_token_vector = nn.Parameter(torch.empty(hidden_dim))
+        # prepare token representing patches that are not prediction targets
+        self.non_target_token_vector = nn.Parameter(torch.empty(hidden_dim))
 
         # stochastic depth decay rule
         dpr = np.linspace(0, drop_path_rate, depth).tolist()
@@ -227,26 +227,26 @@ class BoolMaskIJEPAPredictor(nn.Module):
         # initialize
         self.init_std = init_std
         nn.init.trunc_normal_(self.prediction_token_vector, std=self.init_std)
-        nn.init.trunc_normal_(self.mask_token_vector, std=self.init_std)
+        nn.init.trunc_normal_(self.non_target_token_vector, std=self.init_std)
         self.apply(partial(_init_weights, init_std=init_std))
         fix_init_weight(self.vit_layers)
 
     def forward(
         self,
         latents: Tensor,
-        masks_for_predictor: Tensor,
+        predictor_targets: Tensor,
     ) -> Tensor:
-        """Predict latents of unmasked patches based on input latents and
-        boolean masks.
+        """Predict latents of target patches based on input latents and boolean
+        targets.
 
         Args:
             latents (Tensor): Input latents from context_encoder.
                 Shape: [batch, n_patches, context_encoder_out_dim]
-            masks_for_predictor (Tensor): Boolean masks for patches.
-                Shape: [batch, n_patches]. True values indicate masked patches (not to be predicted).
+            predictor_targets (Tensor): Boolean targets for patches.
+                Shape: [batch, n_patches]. True values indicate target patches to be predicted.
 
         Returns:
-            Tensor: Prediction results for unmasked patches.
+            Tensor: Prediction results for target patches.
                     Shape: [batch, n_patches, context_encoder_out_dim]
         """
         # Map from encoder-dim to predictor-dim
@@ -255,10 +255,10 @@ class BoolMaskIJEPAPredictor(nn.Module):
         # Create prediction tensor
         prediction = self.prediction_token_vector.expand_as(x)
         # Shape: [batch, n_patches, hidden_dim]
-        # Apply mask: replace unmasked (False) patches with prediction tokens,
-        # and masked (True) patches with mask tokens
+        # Apply targets: replace target (True) patches with prediction tokens,
+        # and non-target (False) patches with non-target tokens
         prediction = prediction.clone()  # Avoiding breaking gradient graph.
-        prediction[masks_for_predictor] = self.mask_token_vector
+        prediction[~predictor_targets] = self.non_target_token_vector
 
         x = x + self.positional_encodings
         prediction = prediction + self.positional_encodings
@@ -271,7 +271,7 @@ class BoolMaskIJEPAPredictor(nn.Module):
             x = vit_layer(x)
         x = self.predictor_norm(x)
 
-        # return predictions for patches correspond to indices in patch_selections_for_predictor
+        # return predictions for patches corresponding to target patches
         x = x[:, boundary:]
         x = self.predictor_proj(x)
 

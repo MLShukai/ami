@@ -10,7 +10,7 @@ from ami.data.buffers.buffer_names import BufferNames
 from ami.data.buffers.random_data_buffer import RandomDataBuffer
 from ami.data.step_data import DataKeys, StepData
 from ami.data.utils import DataCollectorsDict
-from ami.models.bool_mask_i_jepa import BoolMaskIJEPAEncoder, BoolMaskIJEPAPredictor
+from ami.models.bool_mask_i_jepa import BoolMaskIJEPAEncoder, BoolTargetIJEPAPredictor
 from ami.models.model_names import ModelNames
 from ami.models.model_wrapper import ModelWrapper
 from ami.models.utils import ModelWrappersDict
@@ -70,8 +70,8 @@ class TestBoolMaskIJEPATrainer:
         )
 
     @pytest.fixture
-    def bool_mask_i_jepa_predictor(self):
-        return BoolMaskIJEPAPredictor(
+    def bool_target_i_jepa_predictor(self):
+        return BoolTargetIJEPAPredictor(
             n_patches=(IMAGE_SIZE // PATCH_SIZE, IMAGE_SIZE // PATCH_SIZE),
             context_encoder_out_dim=ENCODER_EMBEDDING_DIM,
             hidden_dim=PREDICTOR_HIDDEN_DIM,
@@ -100,12 +100,12 @@ class TestBoolMaskIJEPATrainer:
         self,
         device: torch.device,
         bool_mask_i_jepa_encoder: BoolMaskIJEPAEncoder,
-        bool_mask_i_jepa_predictor: BoolMaskIJEPAPredictor,
+        bool_target_i_jepa_predictor: BoolTargetIJEPAPredictor,
     ) -> ModelWrappersDict:
         d = ModelWrappersDict(
             {
                 ModelNames.I_JEPA_CONTEXT_ENCODER: ModelWrapper(bool_mask_i_jepa_encoder, device, has_inference=False),
-                ModelNames.I_JEPA_PREDICTOR: ModelWrapper(bool_mask_i_jepa_predictor, device, has_inference=False),
+                ModelNames.I_JEPA_PREDICTOR: ModelWrapper(bool_target_i_jepa_predictor, device, has_inference=False),
                 ModelNames.I_JEPA_TARGET_ENCODER: ModelWrapper(
                     copy.deepcopy(bool_mask_i_jepa_encoder), device, has_inference=True
                 ),
