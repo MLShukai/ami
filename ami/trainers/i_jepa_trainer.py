@@ -131,7 +131,7 @@ class IJEPATrainer(BaseTrainer):
                     images=image_batch, patch_selections_for_context_encoder=masks_for_context_encoder
                 )
                 # predictor
-                latent_from_predictor: torch.Tensor = self.predictor(
+                latent_from_predictor = self.predictor(
                     latents=latent_from_context_encoder,
                     patch_selections_for_context_encoder=masks_for_context_encoder,
                     patch_selections_for_predictor=masks_for_predictor,
@@ -142,7 +142,7 @@ class IJEPATrainer(BaseTrainer):
                     latent_from_target_encoder,
                     reduction="mean",
                 )
-                self.logger.log("i-jepa/target-encoder-latent-std", latent_from_predictor.std(0).mean())
+                self.logger.log("i-jepa/target-encoder-latent-std", latent_from_target_encoder.std(0).mean())
                 self.logger.log("i-jepa/loss", loss)
                 optimizer.zero_grad()
                 loss.backward()
