@@ -36,6 +36,7 @@ class IJEPATrainer(BaseTrainer):
         max_epochs: int = 1,
         minimum_dataset_size: int = 1,
         minimum_new_data_count: int = 0,
+        target_encoder_update_moving_average: float = 0.996,  # based on the original I-JEPA initinal setting.
     ) -> None:
         """Initializes an IJEPATrainer object.
 
@@ -53,6 +54,7 @@ class IJEPATrainer(BaseTrainer):
         self.max_epochs = max_epochs
         self.minimum_dataset_size = minimum_dataset_size
         self.minimum_new_data_count = minimum_new_data_count
+        self.target_encoder_update_moving_average = target_encoder_update_moving_average
 
     def on_data_users_dict_attached(self) -> None:
         self.image_data_user: ThreadSafeDataUser[RandomDataBuffer] = self.get_data_user(BufferNames.IMAGE)
@@ -106,7 +108,6 @@ class IJEPATrainer(BaseTrainer):
                 image_batch = image_batch.to(self.device)
                 masks_for_context_encoder = [masks.to(self.device) for masks in masks_for_context_encoder]
                 masks_for_predictor = [masks.to(self.device) for masks in masks_for_predictor]
-                optimizer.zero_grad()
 
                 # target encoder
                 with torch.no_grad():
@@ -141,19 +142,30 @@ class IJEPATrainer(BaseTrainer):
                     latent_from_target_encoder,
                     reduction="mean",
                 )
+                self.logger.log("i-jepa/target-encoder-latent-std", latent_from_predictor.std())
                 self.logger.log("i-jepa/loss", loss)
+                optimizer.zero_grad()
                 loss.backward()
+                # log grad
+                flatten_grads = [
+                    p.grad.flatten()
+                    for p in itertools.chain(self.context_encoder.parameters(), self.predictor.parameters())
+                    if p.grad is not None
+                ]
+                grad_norm = torch.cat(flatten_grads).norm(1)
+                self.logger.log("i-jepa/l1gradnorm", grad_norm)
                 optimizer.step()
-                self.logger.update()
                 # target_encoder updates weights by moving average from context_encoder
                 with torch.no_grad():
                     # In the original I-JEPA, m changes through training process.
                     # But in ami-q, since assuming Semi-permanent training, m is set as fixed value.
-                    m = 0.996  # based on the original I-JEPA initinal setting.
+                    m = self.target_encoder_update_moving_average
                     for target_encoder_param, context_encoder_param in zip(
                         self.target_encoder.parameters(), self.context_encoder.parameters()
                     ):
                         target_encoder_param.data.mul_(m).add_((1.0 - m) * context_encoder_param.detach().data)
+
+                self.logger.update()
 
         self.optimizer_state = optimizer.state_dict()
         self.logger_state = self.logger.state_dict()
