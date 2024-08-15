@@ -152,7 +152,7 @@ class IJEPATrainer(BaseTrainer):
                     for p in itertools.chain(self.context_encoder.parameters(), self.predictor.parameters())
                     if p.grad is not None
                 ]
-                grad_mean = torch.cat(flatten_grads).mean()
+                grad_mean = torch.cat(flatten_grads).abs().mean()
                 self.logger.log("i-jepa/l1-grad-mean-value", grad_mean)
                 optimizer.step()
                 # target_encoder updates weights by moving average from context_encoder
