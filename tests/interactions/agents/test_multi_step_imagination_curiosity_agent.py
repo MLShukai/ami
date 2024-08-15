@@ -88,9 +88,9 @@ class TestMultiStepImaginationCuriosityImageAgent:
         return TimeIntervalLogger(f"{tmp_path}/tensorboard", 0)
 
     @pytest.fixture
-    def agent(self, inference_models, data_collectors, logger) -> MultiStepImaginationCuriosityImageAgent:
+    def agent(self, inference_models, data_collectors, logger, device) -> MultiStepImaginationCuriosityImageAgent:
         curiosity_agent = MultiStepImaginationCuriosityImageAgent(
-            torch.zeros(DEPTH, SIOCONV_DIM),
+            torch.zeros(DEPTH, SIOCONV_DIM, device=device),
             logger,
             max_imagination_steps=3,
             reward_average_method=partial(average_exponentially, decay=0.3),

@@ -146,7 +146,8 @@ class MultiStepImaginationCuriosityImageAgent(BaseAgent[Tensor, Tensor]):
     @override
     def load_state(self, path: Path) -> None:
         self.exact_forward_dynamics_hidden_state = torch.load(
-            path / "exact_forward_dynamics_hidden_state.pt", map_location="cpu"
+            path / "exact_forward_dynamics_hidden_state.pt",
+            map_location=self.exact_forward_dynamics_hidden_state.device,
         )
 
 
