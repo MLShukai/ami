@@ -3,6 +3,8 @@ import torch.nn as nn
 from torch import Tensor
 from torch.distributions import Distribution
 
+from .components.stacked_features import LerpStackedFeatures
+
 
 class PolicyValueCommonNet(nn.Module):
     """Module with shared models for policy and value functions."""
@@ -72,7 +74,7 @@ class ConcatFlattenedObservationAndStackedHidden(nn.Module):
         return out
 
 
-class LerpStackedHidden(nn.Module):
+class LerpStackedHidden(LerpStackedFeatures):
     """Linear interpolation along depth of stacked hidden.
 
     Shape:
@@ -82,34 +84,7 @@ class LerpStackedHidden(nn.Module):
     """
 
     def __init__(self, dim: int, depth: int, num_head: int) -> None:
-        super().__init__()
-        self.hidden_linear_weight = nn.Parameter(torch.randn(depth, dim, dim) * (dim**-0.5))
-        self.hidden_linear_bias = nn.Parameter(torch.randn(depth, dim) * (dim**-0.5))
-        self.logit_coef_proj = nn.Linear(depth * dim, depth)
-        self.num_head = num_head
-        self.norm = nn.InstanceNorm1d(num_head)
-
-    def forward(self, stacked_hidden: Tensor) -> Tensor:
-        is_batch = len(stacked_hidden.shape) == 3
-        if not is_batch:
-            stacked_hidden = stacked_hidden.unsqueeze(0)
-
-        batch, depth, dim = stacked_hidden.shape
-        stacked_hidden = self.norm(stacked_hidden.reshape(batch * depth, self.num_head, dim // self.num_head)).reshape(
-            batch, depth, dim
-        )
-
-        logit_coef = self.logit_coef_proj(stacked_hidden.reshape(batch, depth * dim))
-
-        hidden_linear = torch.einsum(
-            "dij,bdj->bdi", self.hidden_linear_weight, stacked_hidden
-        ) + self.hidden_linear_bias.unsqueeze(0)
-
-        out = torch.einsum("bd,bdi->bi", nn.functional.softmax(logit_coef, dim=-1), hidden_linear)
-
-        if not is_batch:
-            out = out.squeeze(0)
-        return out
+        super().__init__(dim, dim, depth, num_head)
 
 
 class ConcatFlattenedObservationAndLerpedHidden(nn.Module):

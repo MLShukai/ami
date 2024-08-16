@@ -43,11 +43,11 @@ class LerpStackedFeatures(nn.Module):
             stacked_features = stacked_features.unsqueeze(0)
 
         batch, n_stack, dim = stacked_features.shape
-        stacked_features = self.norm(stacked_features.view(batch * n_stack, self.num_head, dim // self.num_head)).view(
-            batch, n_stack, dim
-        )
+        stacked_features = self.norm(
+            stacked_features.reshape(batch * n_stack, self.num_head, dim // self.num_head)
+        ).view(batch, n_stack, dim)
 
-        logit_coef = self.logit_coef_proj(stacked_features.view(batch, n_stack * dim))
+        logit_coef = self.logit_coef_proj(stacked_features.reshape(batch, n_stack * dim))
 
         feature_linear = torch.einsum(
             "dio,bsi->bso", self.feature_linear_weight, stacked_features
