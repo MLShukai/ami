@@ -105,7 +105,7 @@ class AttentionBlock(nn.Module):
         self.proj_out = nn.Conv1d(channels, channels, 1)
         # initialize as zeros
         self.proj_out.weight.detach().zero_()
-        self.proj_out.bias.detach().zero_() # type: ignore
+        self.proj_out.bias.detach().zero_()  # type: ignore
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         b, c, *spatial = x.shape
