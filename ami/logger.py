@@ -1,4 +1,5 @@
 import logging
+from typing import Any, Mapping, MutableSequence
 
 from .threads.thread_types import ThreadTypes, get_thread_name_from_type
 
@@ -42,3 +43,26 @@ def get_training_thread_logger(name: str) -> logging.Logger:
 
 def get_inference_thread_logger(name: str) -> logging.Logger:
     return get_thread_logger(ThreadTypes.INFERENCE, name)
+
+
+def _create_tree(data: Mapping[str, Any] | MutableSequence[Any], indent: str = "") -> str:
+    result = ""
+    if isinstance(data, MutableSequence):
+        for index, value in enumerate(data):
+            if isinstance(value, (Mapping | MutableSequence)):
+                result += f"{indent}{index}:\n"
+                result += _create_tree(value, indent + "  ")
+            else:
+                result += f"{indent}{index}: {value}\n"
+    elif isinstance(data, Mapping):
+        for key, value in data.items():
+            if isinstance(value, (Mapping | MutableSequence)):
+                result += f"{indent}{key}:\n"
+                result += _create_tree(value, indent + "  ")
+            else:
+                result += f"{indent}{key}: {value}\n"
+    return result
+
+
+def display_nested_config(data: Mapping[str, Any] | MutableSequence[Any]) -> str:
+    return _create_tree(data)

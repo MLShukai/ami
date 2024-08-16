@@ -3,7 +3,7 @@ import os
 
 import hydra
 import rootutils
-from omegaconf import DictConfig
+from omegaconf import DictConfig, open_dict
 
 from ami.checkpointing.checkpoint_schedulers import BaseCheckpointScheduler
 from ami.checkpointing.checkpointing import Checkpointing
@@ -14,7 +14,7 @@ from ami.hydra_instantiators import (
     instantiate_trainers,
 )
 from ami.interactions.interaction import Interaction
-from ami.logger import get_main_thread_logger
+from ami.logger import display_nested_config, get_main_thread_logger
 from ami.models.utils import ModelWrappersDict, create_model_parameter_count_dict
 from ami.omegaconf_resolvers import register_custom_resolvers
 from ami.tensorboard_loggers import TensorBoardLogger
@@ -81,14 +81,20 @@ def main(cfg: DictConfig) -> None:
             "__main__",
         )
     )
+    param_count = create_model_parameter_count_dict(models)
     hparams_dict = {
         "interaction": cfg.interaction,
         "data": cfg.data_collectors,
         "models": cfg.models,
         "trainers": cfg.trainers,
-        "param_count": create_model_parameter_count_dict(models),
+        "param_count": param_count,
     }
     tensorboard_logger.log_hyperparameters(hparams_dict)
+
+    with open_dict(cfg) as c:
+        c["param_count"] = param_count
+
+    logger.info(f"Displaying configs..\n{display_nested_config(cfg)}")
 
     logger.info("Sharing objects...")
     attach_shared_objects_pool_to_threads(main_thread, inference_thread, training_thread)
