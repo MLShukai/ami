@@ -14,6 +14,8 @@ class ResBlock(nn.Module):
         in_channels: int,
         emb_channels: int,
         out_channels: int,
+        num_norm_groups_in_input_layer: int = 32,
+        num_norm_groups_in_output_layer: int = 32,
     ) -> None:
         """A residual block for Unet Components.
 
@@ -24,10 +26,18 @@ class ResBlock(nn.Module):
                 Input embedding num of channels.
             out_channels (int):
                 Output num of channels.
+            num_norm_groups_in_input_layer (int):
+                num of groups in nn.GroupNorm in self.in_layers.
+                Default to 32.
+            num_norm_groups_in_output_layer (int):
+                num of groups in nn.GroupNorm in self.out_layers.
+                Default to 32.
         """
         super().__init__()
+        assert in_channels%num_norm_groups_in_input_layer == 0
+        assert out_channels%num_norm_groups_in_output_layer == 0
         self.in_layers = nn.Sequential(
-            nn.GroupNorm(num_groups=num_norm_groups, num_channels=in_channels),
+            nn.GroupNorm(num_groups=num_norm_groups_in_input_layer, num_channels=in_channels),
             nn.SiLU(),
             nn.Conv2d(in_channels, out_channels, 3, padding=1),
         )
@@ -39,7 +49,7 @@ class ResBlock(nn.Module):
             ),
         )
         self.out_layers = nn.Sequential(
-            nn.GroupNorm(num_groups=32, num_channels=out_channels),
+            nn.GroupNorm(num_groups=num_norm_groups_in_output_layer, num_channels=out_channels),
             nn.SiLU(),
             nn.Conv2d(out_channels, out_channels, 3, padding=1),
         )
