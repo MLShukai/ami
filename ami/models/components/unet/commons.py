@@ -103,6 +103,7 @@ class AttentionBlock(nn.Module):
         self,
         channels: int,
         num_heads: int,
+        num_groups: int = 32,
     ) -> None:
         super().__init__()
         self.channels = channels
