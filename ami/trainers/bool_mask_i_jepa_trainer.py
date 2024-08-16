@@ -127,6 +127,7 @@ class BoolMaskIJEPATrainer(BaseTrainer):
                 losses = torch.masked_fill(losses, ~targets_for_predictor, 0.0)
                 loss = losses.sum() / targets_for_predictor.sum()
 
+                self.logger.log("i-jepa/target-encoder-latent-std", latent_from_target_encoder.std(0).mean())
                 self.logger.log("i-jepa/loss", loss)
                 loss.backward()
                 optimizer.step()
