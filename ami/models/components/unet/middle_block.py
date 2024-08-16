@@ -28,17 +28,13 @@ class UnetMiddleBlock(nn.Module):
         """
         super().__init__()
 
-        self.resnet_blocks = nn.ModuleList(
-            [
-                ResBlock(
+        self.resblock_in = ResBlock(
                     in_channels=in_and_out_channels, emb_channels=timestep_embed_dim, out_channels=in_and_out_channels
-                ),
-                ResBlock(
+                )
+        self.resblock_out = ResBlock(
                     in_channels=in_and_out_channels, emb_channels=timestep_embed_dim, out_channels=in_and_out_channels
-                ),
-            ]
-        )
-        self.attentions = nn.ModuleList([AttentionBlock(in_and_out_channels, num_heads=num_heads)])
+                )
+        self.attention = AttentionBlock(in_and_out_channels, num_heads=num_heads)]
 
     def forward(self, x: torch.Tensor, timestep_emb: torch.Tensor) -> torch.Tensor:
         """apply this Middle block.
@@ -56,8 +52,7 @@ class UnetMiddleBlock(nn.Module):
                 (shape: [batch_size, in_and_out_channels, height, width])
         """
         assert len(self.resnet_blocks) == len(self.attentions) + 1
-        for resnet, attention in zip(self.resnet_blocks[:-1], self.attentions):
-            x = resnet(x, timestep_emb)
-            x = attention(x)
-        x = self.resnet_blocks[-1](x, timestep_emb)
+    x = self.resblock_in(x, timestep_emb)
+    x = self.attention(x)
+    x = self.resblock_out(x, timestep_emb)
         return x

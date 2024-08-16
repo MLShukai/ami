@@ -27,7 +27,7 @@ class ResBlock(nn.Module):
         """
         super().__init__()
         self.in_layers = nn.Sequential(
-            nn.GroupNorm(num_groups=32, num_channels=in_channels),
+            nn.GroupNorm(num_groups=num_norm_groups, num_channels=in_channels),
             nn.SiLU(),
             nn.Conv2d(in_channels, out_channels, 3, padding=1),
         )
@@ -97,7 +97,7 @@ class AttentionBlock(nn.Module):
         super().__init__()
         self.channels = channels
         self.num_heads = num_heads
-        self.norm = nn.GroupNorm(num_groups=32, num_channels=channels)
+        self.norm = nn.GroupNorm(num_groups=num_groups, num_channels=channels)
         self.qkv = nn.Conv1d(channels, channels * 3, 1)
         # split heads before split qkv
         self.attention = QKVAttentionLegacy(self.num_heads)
