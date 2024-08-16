@@ -84,7 +84,25 @@ class LerpStackedHidden(LerpStackedFeatures):
     """
 
     def __init__(self, dim: int, depth: int, num_head: int) -> None:
-        super().__init__(dim, dim, depth, num_head)
+        super().__init__(dim, dim, depth)
+        assert dim % num_head == 0
+        self.norm = nn.InstanceNorm1d(num_head)
+        self.num_head = num_head
+
+    def forward(self, stacked_features: Tensor) -> Tensor:
+        is_batch = len(stacked_features.shape) == 3
+        if not is_batch:
+            stacked_features = stacked_features.unsqueeze(0)
+        batch, n_stack, dim = stacked_features.shape
+        stacked_features = self.norm(
+            stacked_features.reshape(batch * n_stack, self.num_head, dim // self.num_head)
+        ).view(batch, n_stack, dim)
+
+        out = super().forward(stacked_features)
+
+        if not is_batch:
+            out = out.squeeze(0)
+        return out
 
 
 class ConcatFlattenedObservationAndLerpedHidden(nn.Module):
