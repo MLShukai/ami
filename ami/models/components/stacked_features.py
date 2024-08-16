@@ -54,7 +54,7 @@ class ToStackedFeatures(nn.Module):
         super().__init__()
 
         self.weight = nn.Parameter(torch.randn(dim_in, num_stack, dim_out) * (dim_out**-0.5))
-        self.bias = nn.Parameter(torch.randn(num_stack, dim_out) * (dim_out**-0.5))
+        self.bias = nn.Parameter(torch.randn(1, num_stack, dim_out) * (dim_out**-0.5))
 
     def forward(self, feature: Tensor) -> Tensor:
         no_batch = feature.ndim == 1
