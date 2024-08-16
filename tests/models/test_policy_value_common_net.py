@@ -61,6 +61,10 @@ class TestLerpedStackedHidden:
         out = mod.forward(hidden)
         assert out.shape == (4, 128)
 
+        hidden = torch.randn(8, 128)
+        out = mod.forward(hidden)
+        assert out.shape == (128,)
+
 
 class TestConcatFlattenedObservationAndLerpedHidden:
     def test_forward(self):
