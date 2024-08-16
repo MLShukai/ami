@@ -18,24 +18,11 @@ class LerpStackedFeatures(nn.Module):
         super().__init__()
         assert dim_in % num_head == 0
 
-        self.feature_linear_weight = nn.Parameter(torch.randn(num_stack, dim_in, dim_out))
-        self.feature_linear_bias = nn.Parameter(torch.randn(num_stack, dim_out))
+        self.feature_linear_weight = nn.Parameter(torch.randn(num_stack, dim_in, dim_out) * (dim_out**-0.5))
+        self.feature_linear_bias = nn.Parameter(torch.randn(num_stack, dim_out) * (dim_out**-0.5))
         self.logit_coef_proj = nn.Linear(num_stack * dim_in, num_stack)
         self.num_head = num_head
         self.norm = nn.InstanceNorm1d(num_head)
-        self.reset_parameters()
-
-    def reset_parameters(self) -> None:
-        # From `nn.Linear` implementation.
-
-        # Setting a=sqrt(5) in kaiming_uniform is the same as initializing with
-        # uniform(-1/sqrt(in_features), 1/sqrt(in_features)). For details, see
-        # https://github.com/pytorch/pytorch/issues/57109
-        nn.init.kaiming_uniform_(self.feature_linear_weight, a=math.sqrt(5))
-
-        fan_in, _ = nn.init._calculate_fan_in_and_fan_out(self.feature_linear_weight)
-        bound = 1 / math.sqrt(fan_in) if fan_in > 0 else 0
-        nn.init.uniform_(self.feature_linear_bias, -bound, bound)
 
     def forward(self, stacked_features: Tensor) -> Tensor:
         is_batch = len(stacked_features.shape) == 3

@@ -1,6 +1,6 @@
 import torch
 
-from ami.models.components.stacked_features import LerpStackedFeatures, ToStackedFeatures
+from ami.models.components.stacked_features import LerpStackedFeatures
 
 
 class TestLerpedStackedFeatures:
