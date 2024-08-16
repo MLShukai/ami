@@ -50,7 +50,7 @@ class LerpStackedFeatures(nn.Module):
         logit_coef = self.logit_coef_proj(stacked_features.reshape(batch, n_stack * dim))
 
         feature_linear = torch.einsum(
-            "dio,bsi->bso", self.feature_linear_weight, stacked_features
+            "sio,bsi->bso", self.feature_linear_weight, stacked_features
         ) + self.feature_linear_bias.unsqueeze(0)
 
         out = torch.einsum("bs,bsi->bi", torch.softmax(logit_coef, dim=-1), feature_linear)
