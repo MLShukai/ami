@@ -34,8 +34,9 @@ class ResBlock(nn.Module):
                 Default to 32.
         """
         super().__init__()
-        assert in_channels%num_norm_groups_in_input_layer == 0
-        assert out_channels%num_norm_groups_in_output_layer == 0
+        assert in_channels % num_norm_groups_in_input_layer == 0
+        assert out_channels % num_norm_groups_in_output_layer == 0
+        # input layers
         self.in_layers = nn.Sequential(
             nn.GroupNorm(num_groups=num_norm_groups_in_input_layer, num_channels=in_channels),
             nn.SiLU(),
@@ -48,8 +49,10 @@ class ResBlock(nn.Module):
                 2 * out_channels,
             ),
         )
+
+        # output layers
+        self.out_group_norm = nn.GroupNorm(num_groups=num_norm_groups_in_output_layer, num_channels=out_channels)
         self.out_layers = nn.Sequential(
-            nn.GroupNorm(num_groups=num_norm_groups_in_output_layer, num_channels=out_channels),
             nn.SiLU(),
             nn.Conv2d(out_channels, out_channels, 3, padding=1),
         )
@@ -81,10 +84,9 @@ class ResBlock(nn.Module):
         while len(emb_out.shape) < len(h.shape):
             emb_out = emb_out[..., None]
         # FiLM
-        out_norm, out_rest = self.out_layers[0], self.out_layers[1:]
         scale, shift = torch.chunk(emb_out, 2, dim=1)
-        h = out_norm(h) * (1 + scale) + shift
-        h = out_rest(h)
+        h = self.out_group_norm(h) * (1 + scale) + shift
+        h = self.out_layers[1:](h)
         return self.skip_connection(x) + h
 
 
