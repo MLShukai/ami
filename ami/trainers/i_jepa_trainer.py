@@ -142,8 +142,8 @@ class IJEPATrainer(BaseTrainer):
                     latent_from_target_encoder,
                     reduction="mean",
                 )
-                self.logger.log("i-jepa/target-encoder-latent-std", latent_from_target_encoder.std(0).mean())
-                self.logger.log("i-jepa/loss", loss)
+                self.logger.log("i-jepa/metrics/target-encoder-latent-std", latent_from_target_encoder.std(0).mean())
+                self.logger.log("i-jepa/losses/smooth-l1", loss)
                 optimizer.zero_grad()
                 loss.backward()
                 # log grad
