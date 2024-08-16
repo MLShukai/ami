@@ -39,3 +39,30 @@ class LerpStackedFeatures(nn.Module):
         if not is_batch:
             out = out.squeeze(0)
         return out
+
+
+class ToStackedFeatures(nn.Module):
+    """Convert input features to the stacked features.
+
+    Shape:
+        - input_features: (N_in, ) | (B, N_in)
+
+        Return shape: (S, N_out) | (B, S, N_out)
+    """
+
+    def __init__(self, dim_in: int, dim_out: int, num_stack: int) -> None:
+        super().__init__()
+
+        self.weight = nn.Parameter(torch.randn(dim_in, num_stack, dim_out) * (dim_out**-0.5))
+        self.bias = nn.Parameter(torch.randn(num_stack, dim_out) * (dim_out**-0.5))
+
+    def forward(self, feature: Tensor) -> Tensor:
+        no_batch = feature.ndim == 1
+        if no_batch:
+            feature = feature.unsqueeze(0)
+
+        out = torch.einsum("bi,isj->bsj", feature, self.weight) + self.bias
+
+        if no_batch:
+            out = out.squeeze(0)
+        return out
