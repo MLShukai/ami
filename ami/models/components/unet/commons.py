@@ -86,7 +86,7 @@ class ResBlock(nn.Module):
         # FiLM
         scale, shift = torch.chunk(emb_out, 2, dim=1)
         h = self.out_group_norm(h) * (1 + scale) + shift
-        h = self.out_layers[1:](h)
+        h = self.out_layers(h)
         return self.skip_connection(x) + h
 
 
