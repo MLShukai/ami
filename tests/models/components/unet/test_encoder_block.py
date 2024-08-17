@@ -59,7 +59,7 @@ class TestUnetEncoderBlock:
         # check elements from resblocks
         for i in range(n_res_blocks):
             features = output_features_for_skip_connections[i]
-           assert isinstance(features, torch.Tensor)
+            assert isinstance(features, torch.Tensor)
             assert features.size() == (batch_size, out_channels, height, width)
         # check element from downsample
         if use_downsample:
