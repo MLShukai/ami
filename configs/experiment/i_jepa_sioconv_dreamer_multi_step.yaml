@@ -1,0 +1,35 @@
+# @package _global_
+
+defaults:
+  - override /interaction: vrchat_with_curiosity_image_ppo_agent
+  - override /interaction/agent: curiosity_image_multi_step_imagination
+  - override /models: i_jepa_sioconv_dreamer
+  - override /data_collectors: image_dynamics_dreaming
+  - override /trainers: i_jepa_forward_dynamics_dreaming
+
+interaction:
+  observation_wrappers:
+    - _target_: ami.interactions.io_wrappers.function_wrapper.FunctionIOWrapper
+      wrap_function:
+        _target_: ami.interactions.io_wrappers.function_wrapper.normalize_tensor
+        _partial_: True
+        eps: 1e-6
+
+  action_wrappers:
+    - _target_: ami.interactions.io_wrappers.function_wrapper.FunctionIOWrapper
+      wrap_function:
+        _target_: torch.argmax
+        _partial_: true
+        dim: -1
+
+data_collectors:
+  dreaming_initial_states:
+    max_len: ${python.eval:"1 * ${trainers.dreaming_policy_value.partial_dataloader.batch_size}"}
+
+trainers:
+  i_jepa:
+    max_epochs: 1
+  forward_dynamics:
+    max_epochs: 1
+
+task_name: i_jepa_sioconv_dreamer_multi_step
