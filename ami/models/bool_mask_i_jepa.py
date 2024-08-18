@@ -9,6 +9,7 @@ from torch import Tensor
 from .components.patch_embedding import PatchEmbedding
 from .components.positional_embeddings import get_2d_positional_embeddings
 from .components.vision_transformer_layer import VisionTransformerLayer
+from .i_jepa import i_jepa_encoder_infer  # Alias
 from .model_wrapper import ModelWrapper
 from .utils import size_2d, size_2d_to_int_tuple
 
@@ -288,35 +289,3 @@ def _init_weights(m: nn.Module, init_std: float) -> None:
             nn.init.trunc_normal_(m.weight, std=init_std)
             if m.bias is not None:
                 nn.init.constant_(m.bias, 0)
-
-
-def i_jepa_encoder_infer(wrapper: ModelWrapper[BoolMaskIJEPAEncoder], image: torch.Tensor) -> torch.Tensor:
-    """Customizes the inference flow in the agent.
-
-    Please specify to `ModelWrapper(inference_forward=<this>)`.
-    Adding batch axis if image does not have it, and flatten (n_patch, dim) to (n_patch * dim).
-
-    Args:
-        wrapper: ModelWrapper instance that wraps IJEPAEncoder.
-        image: Input for IJEPAEncoder.
-            shape (channel, height, width) or (batch, channel, height, width)
-
-    Returns:
-        torch.Tensor: Output of IJEPAEncoder.
-            shape (patch * dim) or (batch, patch * dim)
-    """
-    device = wrapper.device
-    assert image.ndim in {3, 4}, "Input image dim must be 3 (non batched) or 4 (batched)!"
-    no_batch = image.ndim == 3
-
-    if no_batch:
-        image = image.unsqueeze(0)  # batched
-
-    image = image.to(device)
-
-    out: Tensor = wrapper(image)
-    out = out.flatten(-2)
-    if no_batch:
-        out = out.squeeze(0)
-
-    return out

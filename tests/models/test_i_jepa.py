@@ -190,10 +190,8 @@ def test_i_jepa_encoder_infer(device):
     wrapper.to_default_device()
 
     out: torch.Tensor = wrapper.infer(torch.randn(3, 128, 128))
-    assert out.ndim == 1
-    assert out.shape == (64 * (128 // 16) ** 2,)
+    assert out.shape == ((128 // 16) ** 2, 64)
     assert out.device == device
 
     out: torch.Tensor = wrapper.infer(torch.randn(8, 3, 128, 128))
-    assert out.ndim == 2
-    assert out.shape == (8, 64 * (128 // 16) ** 2)
+    assert out.shape == (8, (128 // 16) ** 2, 64)

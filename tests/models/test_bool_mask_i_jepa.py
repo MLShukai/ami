@@ -4,7 +4,6 @@ import torch
 from ami.models.bool_mask_i_jepa import (
     BoolMaskIJEPAEncoder,
     BoolTargetIJEPAPredictor,
-    ModelWrapper,
     i_jepa_encoder_infer,
 )
 
@@ -131,43 +130,3 @@ class TestBoolTargetIJEPAPredictor:
         assert predictions.size(0) == batch_size, "batch_size mismatch"
         assert predictions.size(1) == n_patches, "num of patch mismatch"
         assert predictions.size(2) == context_encoder_out_dim, "out_dim mismatch"
-
-
-# model params
-@pytest.mark.parametrize("image_size", [128])
-@pytest.mark.parametrize("patch_size", [16])
-@pytest.mark.parametrize("out_dim", [32])
-# test input params
-@pytest.mark.parametrize("batch_size", [1, 4])
-def test_bool_mask_i_jepa_encoder_infer(
-    image_size,
-    patch_size,
-    device,
-    out_dim,
-    batch_size,
-):
-    wrapper = ModelWrapper(
-        BoolMaskIJEPAEncoder(
-            img_size=image_size,
-            patch_size=patch_size,
-            in_channels=3,
-            embed_dim=64,
-            out_dim=out_dim,
-            depth=4,
-            num_heads=2,
-        ),
-        device,
-        inference_forward=i_jepa_encoder_infer,
-    )
-    wrapper.to_default_device()
-
-    out: torch.Tensor = wrapper.infer(torch.randn(3, image_size, image_size))
-    assert out.ndim == 1
-    expected_total_n_patches = (image_size // patch_size) ** 2
-    assert out.shape == (expected_total_n_patches * out_dim,)
-    assert out.device == device
-
-    out: torch.Tensor = wrapper.infer(torch.randn(batch_size, 3, image_size, image_size))
-    assert out.ndim == 2
-    assert out.shape == (batch_size, expected_total_n_patches * out_dim)
-    assert out.device == device

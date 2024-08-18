@@ -418,7 +418,7 @@ def i_jepa_encoder_infer(wrapper: ModelWrapper[IJEPAEncoder], image: torch.Tenso
     """Customizes the inference flow in the agent.
 
     Please specify to `ModelWrapper(inference_forward=<this>)`.
-    Adding batch axis if image does not have it, and flatten (n_patch, dim) to (n_patch * dim).
+    Adding batch axis if image does not have it.
 
     Args:
         wrapper: ModelWrapper instance that wraps IJEPAEncoder.
@@ -427,7 +427,7 @@ def i_jepa_encoder_infer(wrapper: ModelWrapper[IJEPAEncoder], image: torch.Tenso
 
     Returns:
         torch.Tensor: Output of IJEPAEncoder.
-            shape (patch * dim) or (batch, patch * dim)
+            shape (patch, dim) or (batch, patch, dim)
     """
     device = wrapper.device
     no_batch = image.ndim == 3
@@ -438,7 +438,6 @@ def i_jepa_encoder_infer(wrapper: ModelWrapper[IJEPAEncoder], image: torch.Tenso
     image = image.to(device)
 
     out: torch.Tensor = wrapper(image)
-    out = out.flatten(-2)
     if no_batch:
         out = out.squeeze(0)
 
