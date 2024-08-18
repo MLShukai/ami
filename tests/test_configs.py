@@ -25,6 +25,7 @@ IGNORE_EXPERIMENT_CONFIGS = {
     "dreamer_unity.yaml",
     "i_jepa_with_dataset.yaml",
     "bool_mask_i_jepa_with_dataset.yaml",
+    "world_models_sioconv_lerp_hidden_unity.yaml",
 }
 EXPERIMENT_CONFIG_OVERRIDES = [
     [f"experiment={file.name.rsplit('.', 1)[0]}"]

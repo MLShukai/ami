@@ -157,6 +157,10 @@ class PPOPolicyTrainer(BaseTrainer):
 
                 optimizer.zero_grad()
                 out["loss"].backward()
+                grad_norm = torch.cat(
+                    [p.grad.flatten() for p in self.policy_value.parameters() if p.grad is not None]
+                ).norm()
+                self.logger.log("ppo_policy/grad_norm", grad_norm)
                 optimizer.step()
                 self.logger.update()
 

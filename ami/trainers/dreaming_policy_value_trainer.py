@@ -167,6 +167,7 @@ class DreamingPolicyValueTrainer(BaseTrainer):
         dataset = self.initial_states_data_user.get_dataset()
         dataloader = self.partial_data_loader(dataset=dataset)
 
+        prefix = "dreaming_policy_value/"
         # Training.
         for _ in range(self.max_epochs):
             for batch in dataloader:
@@ -190,6 +191,9 @@ class DreamingPolicyValueTrainer(BaseTrainer):
                 return_loss = returns.mean()
                 policy_loss = -(return_loss + entropy_loss * self.entropy_coef)  # maximize.
                 policy_loss.backward()
+                policy_grad_norm = torch.cat(
+                    [p.grad.flatten() for p in self.policy_net.parameters() if p.grad is not None]
+                ).norm()
                 policy_optimizer.step()
 
                 # Stop gradient for learning value network.
@@ -206,19 +210,25 @@ class DreamingPolicyValueTrainer(BaseTrainer):
                     value_losses.append(-value_dist.log_prob(returns[i]).mean())
                 value_loss = torch.mean(torch.stack(value_losses))
                 value_loss.backward()
+                value_grad_norm = torch.cat(
+                    [p.grad.flatten() for p in self.value_net.parameters() if p.grad is not None]
+                ).norm()
                 value_optimizer.step()
 
                 # Logging
-                prefix = "dreaming_policy_value/"
                 self.logger.log(prefix + "return", return_loss)
                 self.logger.log(prefix + "entropy", entropy_loss)
                 self.logger.log(prefix + "policy_loss", policy_loss)
                 self.logger.log(prefix + "value_loss", value_loss)
+                self.logger.log(prefix + "policy_grad_norm", policy_grad_norm)
+                self.logger.log(prefix + "value_grad_norm", value_grad_norm)
                 self.logger.update()
 
             # Updating LR Schedulers
             policy_lr_scheduler.step()
             value_lr_scheduler.step()
+            self.logger.log(prefix + "policy_lr", policy_lr_scheduler.get_last_lr()[0])
+            self.logger.log(prefix + "value_lr", value_lr_scheduler.get_last_lr()[0])
 
         self.policy_optimizer_state = policy_optimizer.state_dict()
         self.value_optimizer_state = value_optimizer.state_dict()
