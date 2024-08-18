@@ -68,7 +68,7 @@ class UNet(nn.Module):
             n_res_blocks (int):
                 num of resblocks in each encoder block.
             attention_start_depth (int):
-                Append attention layers for blocks deeper than attention_start_depth.
+                Append attention layers for blocks deeper than attention_start_depth. 0 origin.
             num_heads (int):
                 num_head when adding attention layers.
             ssl_latent_dim (int):
