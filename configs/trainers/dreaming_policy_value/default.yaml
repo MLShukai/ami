@@ -35,7 +35,7 @@ partial_value_lr_scheduler:
 
 logger:
   _target_: ami.tensorboard_loggers.StepIntervalLogger
-  log_dir: ${paths.tensorboard_dir}/forward_dynamics
+  log_dir: ${paths.tensorboard_dir}/dreaming_policy_value
   log_every_n_steps: 1
 
 device: ${devices.0}
