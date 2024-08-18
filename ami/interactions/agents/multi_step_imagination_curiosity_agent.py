@@ -80,8 +80,8 @@ class MultiStepImaginationCuriosityImageAgent(BaseAgent[Tensor, Tensor]):
             )
             reward = self.reward_average_method(reward_imaginations)
             self.logger.log("agent/reward", reward)
-            for i, r in enumerate(reward_imaginations, start=1):
-                self.logger.log(f"agent/reward_{i}step", r)
+            # for i, r in enumerate(reward_imaginations, start=1):
+            #     self.logger.log(f"agent/reward_{i}step", r)
 
             # ステップの冒頭でデータコレクトすることで前ステップのデータを収集する。
             self.step_data[DataKeys.REWARD] = reward
