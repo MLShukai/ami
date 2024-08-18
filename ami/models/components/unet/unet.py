@@ -131,6 +131,8 @@ class UNet(nn.Module):
         for layer_depth, (blocks_in_channels, blocks_out_channels) in zip(
             reversed(range(len(decoder_blocks_in_and_out_channels))), decoder_blocks_in_and_out_channels
         ):
+            # layer_depth is [len(decoder_blocks_in_and_out_channels), len(decoder_blocks_in_and_out_channels) - 1, ..., 0]
+            is_last_layer = layer_depth == 0
             self.decoder_blocks.append(
                 UnetDecoderBlock(
                     in_channels=blocks_in_channels,
@@ -142,7 +144,7 @@ class UNet(nn.Module):
                     n_res_blocks=self.n_decoder_block_resblocks,
                     use_attention=(layer_depth >= attention_start_depth),
                     num_heads=num_heads,
-                    use_upsample=(not layer_depth == 0),
+                    use_upsample=(not is_last_layer),
                 )
             )
             in_channels_for_skip_connections = in_channels_for_skip_connections[: -self.n_decoder_block_resblocks]
