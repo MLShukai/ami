@@ -93,6 +93,7 @@ class UNet(nn.Module):
         in_channels_for_skip_connections: list[int] = [input_ch]
         self.encoder_blocks = nn.ModuleList([])
         for layer_depth, (blocks_in_channels, blocks_out_channels) in enumerate(encoder_blocks_in_and_out_channels):
+            is_last_layer = layer_depth == len(encoder_blocks_in_and_out_channels) - 1
             self.encoder_blocks.append(
                 UnetEncoderBlock(
                     in_channels=blocks_in_channels,
@@ -101,7 +102,7 @@ class UNet(nn.Module):
                     n_res_blocks=n_res_blocks,
                     use_attention=(layer_depth >= attention_start_depth),
                     num_heads=num_heads,
-                    use_downsample=(layer_depth <= len(encoder_blocks_in_and_out_channels) - 2),
+                    use_downsample=(not is_last_layer),
                 )
             )
             in_channels_for_skip_connections += [
