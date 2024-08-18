@@ -172,6 +172,7 @@ class TestDreamingPolicyValueTrainer:
         assert (trainer_path / "policy_lr_scheduler.pt").exists()
         assert (trainer_path / "value_lr_scheduler.pt").exists()
         assert (trainer_path / "logger.pt").exists()
+        assert (trainer_path / "current_train_count.pt").exists()
         logger_state = trainer.logger.state_dict()
 
         mocked_logger_load_state_dict = mocker.spy(trainer.logger, "load_state_dict")
@@ -179,16 +180,19 @@ class TestDreamingPolicyValueTrainer:
         trainer.value_optimizer_state.clear()
         trainer.policy_lr_scheduler_state.clear()
         trainer.value_lr_scheduler_state.clear()
+        trainer._current_train_count = -1
         assert trainer.policy_optimizer_state == {}
         assert trainer.value_optimizer_state == {}
         assert trainer.policy_lr_scheduler_state == {}
         assert trainer.value_lr_scheduler_state == {}
+        assert trainer._current_train_count == -1
         trainer.load_state(trainer_path)
         assert trainer.policy_optimizer_state != {}
         assert trainer.value_optimizer_state != {}
         assert trainer.policy_lr_scheduler_state != {}
         assert trainer.value_lr_scheduler_state != {}
         mocked_logger_load_state_dict.assert_called_once_with(logger_state)
+        assert trainer._current_train_count == 0
 
 
 class TestInitialMultiplicationLRScheduler:
