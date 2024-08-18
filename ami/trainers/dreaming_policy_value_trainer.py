@@ -202,7 +202,8 @@ class DreamingPolicyValueTrainer(BaseTrainer):
                 # Update policy network
                 policy_optimizer.zero_grad()
                 entropy_loss = trajectory["action_entropies"].mean()
-                return_loss = returns.mean()
+                return_loss = returns.sum(0).mean()
+                mean_return = returns.mean()
                 policy_loss = -(return_loss + entropy_loss * self.entropy_coef)  # maximize.
                 policy_loss.backward()
                 policy_grad_norm = torch.cat(
@@ -231,6 +232,7 @@ class DreamingPolicyValueTrainer(BaseTrainer):
 
                 # Logging
                 self.logger.log(prefix + "return", return_loss)
+                self.logger.log(prefix + "mean_return", mean_return)
                 self.logger.log(prefix + "entropy", entropy_loss)
                 self.logger.log(prefix + "policy_loss", policy_loss)
                 self.logger.log(prefix + "value_loss", value_loss)
