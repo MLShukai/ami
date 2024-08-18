@@ -86,7 +86,7 @@ class UNet(nn.Module):
         # embedding for ssl latents
         self.ssl_emb = nn.Linear(ssl_latent_dim, timestep_embed_dim)
 
-        # create input blocks
+        # create encoder blocks
         self.n_res_blocks = n_res_blocks
         input_ch = encoder_blocks_in_and_out_channels[0][0]
         self.input_layer = nn.Conv2d(in_channels, input_ch, 3, padding=1)
@@ -115,10 +115,17 @@ class UNet(nn.Module):
             num_heads=num_heads,
         )
 
-        # create output blocks
-        decoder_blocks_in_and_out_channels: list[tuple[int, int]] = [(middle_block_channels, middle_block_channels)] + [
-            channels[::-1] for channels in encoder_blocks_in_and_out_channels[::-1][:-1]
-        ]
+        # create decoder blocks in contrast to encoder blocks
+        decoder_blocks_in_and_out_channels: list[tuple[int, int]] = []
+        # channels of first UnetDecoderBlock are same as middle block
+        decoder_blocks_in_and_out_channels.append((middle_block_channels, middle_block_channels))
+        # check channels from last to second encoder block
+        for (encoder_block_in_channel, encoder_block_out_channel) in encoder_blocks_in_and_out_channels[::-1][:-1]:
+            # reverse in and out channels between encoder and decoder
+            decoder_block_in_channel = encoder_block_out_channel
+            decoder_block_out_channel = encoder_block_in_channel
+            decoder_blocks_in_and_out_channels.append((decoder_block_in_channel, decoder_block_out_channel))
+
         self.n_decoder_block_resblocks = n_res_blocks + 1
         self.decoder_blocks = nn.ModuleList([])
         for layer_depth, (blocks_in_channels, blocks_out_channels) in zip(
