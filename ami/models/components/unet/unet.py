@@ -105,10 +105,7 @@ class UNet(nn.Module):
                     use_downsample=(not is_last_layer),
                 )
             )
-            in_channels_for_skip_connections += [
-                blocks_out_channels
-                for _ in range(n_res_blocks + (layer_depth <= len(encoder_blocks_in_and_out_channels) - 2))
-            ]
+            in_channels_for_skip_connections += [blocks_out_channels for _ in range(n_res_blocks + (not is_last_layer))]
 
         # create middle blocks
         middle_block_channels = encoder_blocks_in_and_out_channels[-1][-1]
