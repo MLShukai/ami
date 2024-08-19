@@ -26,6 +26,7 @@ class MainThread(BaseThread):
         address: AddressType = ("0.0.0.0", 8391),
         timeout_for_all_threads_pause: float = 60.0,
         max_attempts_to_pause_all_threads: int = 3,
+        max_uptime: float = float("inf"),
     ) -> None:
         """Constructs the main thread object.
 
@@ -34,6 +35,7 @@ class MainThread(BaseThread):
             address: The tuple of host and port number for web api handler.
             timeout_for_all_threads_pause: Timeout seconds to wait for all threads pause. (for saving checkpoint.)
             max_attempts_to_pause_all_threads: Number of trials for failed attempts to pause all threads.
+            max_uptime: Maximum system uptime. When this time is reached, the system will terminate.
         """
         super().__init__()
 
@@ -44,12 +46,15 @@ class MainThread(BaseThread):
         self.web_api_handler = WebApiHandler(ThreadControllerStatus(self.thread_controller), self._host, self._port)
         self._timeout_for_all_threads_pause = timeout_for_all_threads_pause
         self._max_attempts_to_pause_all_threads = max_attempts_to_pause_all_threads
+        self._max_uptime = max_uptime
 
         self.share_object(SharedObjectNames.THREAD_COMMAND_HANDLERS, self.thread_controller.handlers)
 
     def worker(self) -> None:
         self.logger.info("Start main thread.")
+        self.logger.info(f"Maxmum uptime is set to {self._max_uptime}.")
         self.thread_controller.activate()
+        start_time = time.time()
 
         self.web_api_handler.run_in_background()
 
@@ -63,6 +68,10 @@ class MainThread(BaseThread):
 
                 if self.checkpoint_scheduler.is_available():
                     self.save_checkpoint()
+
+                if self._max_uptime < (time.time() - start_time):
+                    self.logger.info("Shutting down by reaching maximum uptime.")
+                    break
 
                 time.sleep(0.001)
 
