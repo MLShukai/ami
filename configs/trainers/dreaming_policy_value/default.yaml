@@ -10,13 +10,13 @@ partial_dataloader:
 partial_policy_optimizer:
   _target_: torch.optim.Adam
   _partial_: true
-  lr: 1e-4
+  lr: 1e-5
   betas: [0.9, 0.999]
 
 partial_value_optimizer:
   _target_: torch.optim.Adam
   _partial_: true
-  lr: 1e-4
+  lr: 1e-5
   betas: [0.9, 0.999]
 
 update_start_train_count: 50
