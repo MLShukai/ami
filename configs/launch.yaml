@@ -32,3 +32,5 @@ log_level: INFO
 
 # You can specify the time scale for the experiment.
 time_scale: 1.0
+
+max_uptime: inf # This value will scale by `time_scale`.

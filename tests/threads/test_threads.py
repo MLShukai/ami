@@ -34,3 +34,21 @@ def test_run_threads(thread_objects: tuple[MainThread, InferenceThread, Training
 
     it.join()
     tt.join()
+
+
+def test_shutdown_by_max_uptime(
+    thread_objects: tuple[MainThread, InferenceThread, TrainingThread],
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    caplog.set_level("INFO")
+    mt, it, tt = thread_objects
+
+    it.start()
+    tt.start()
+    mt._max_uptime = 0.5
+    mt.run()
+
+    it.join()
+    tt.join()
+
+    assert "Shutting down by reaching maximum uptime." in caplog.messages
