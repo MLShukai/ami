@@ -13,6 +13,7 @@ from typing_extensions import override
 from ami.data.buffers.buffer_names import BufferNames
 from ami.data.buffers.random_data_buffer import RandomDataBuffer
 from ami.data.interfaces import ThreadSafeDataUser
+from ami.logger import get_training_thread_logger
 from ami.models.components.mixture_desity_network import NormalMixture
 from ami.models.forward_dynamics import ForwardDynamcisWithActionReward
 from ami.models.model_names import ModelNames
@@ -65,6 +66,7 @@ class DreamingPolicyValueTrainer(BaseTrainer):
         imagination_temperature: float = 1.0,
         minimum_dataset_size: int = 1,
         minimum_new_data_count: int = 0,
+        update_start_train_count: int = 0,
     ) -> None:
         """Initializes an Dreaming PolicyValueTrainer object.
 
@@ -84,6 +86,7 @@ class DreamingPolicyValueTrainer(BaseTrainer):
             imagination_temperature: The sampling uncertainty for forward dynamics prediction (mixture density network only.)
             minimum_dataset_size: Minimum size of the dataset required to start training.
             minimum_new_data_count: Minimum number of new data count required to run the training.
+            update_start_train_count: Actual traning procedure will be start from the training count larger then this value.
         """
         super().__init__()
         self.partial_data_loader = partial_dataloader
@@ -109,6 +112,10 @@ class DreamingPolicyValueTrainer(BaseTrainer):
         self.imagination_temperature = imagination_temperature
         self.minimum_dataset_size = minimum_dataset_size
         self.minimum_new_data_count = minimum_new_data_count
+        self.update_start_train_count = update_start_train_count
+        self._current_train_count = 0
+
+        self.console_logger = get_training_thread_logger(self.__class__.__name__)
 
     @override
     def on_data_users_dict_attached(self) -> None:
@@ -168,6 +175,14 @@ class DreamingPolicyValueTrainer(BaseTrainer):
         dataloader = self.partial_data_loader(dataset=dataset)
 
         # Training.
+        self._current_train_count += 1
+        if self._current_train_count <= self.update_start_train_count:
+            self.console_logger.info(
+                f"Training is skipped because training count {self._current_train_count-1} (start: {self.update_start_train_count})"
+            )
+            return
+
+        prefix = "dreaming_policy_value/"
         for _ in range(self.max_epochs):
             for batch in dataloader:
                 # Initial states setup.
@@ -187,9 +202,13 @@ class DreamingPolicyValueTrainer(BaseTrainer):
                 # Update policy network
                 policy_optimizer.zero_grad()
                 entropy_loss = trajectory["action_entropies"].mean()
-                return_loss = returns.mean()
+                return_loss = returns.sum(0).mean()
+                mean_return = returns.mean()
                 policy_loss = -(return_loss + entropy_loss * self.entropy_coef)  # maximize.
                 policy_loss.backward()
+                policy_grad_norm = torch.cat(
+                    [p.grad.flatten() for p in self.policy_net.parameters() if p.grad is not None]
+                ).norm()
                 policy_optimizer.step()
 
                 # Stop gradient for learning value network.
@@ -206,19 +225,26 @@ class DreamingPolicyValueTrainer(BaseTrainer):
                     value_losses.append(-value_dist.log_prob(returns[i]).mean())
                 value_loss = torch.mean(torch.stack(value_losses))
                 value_loss.backward()
+                value_grad_norm = torch.cat(
+                    [p.grad.flatten() for p in self.value_net.parameters() if p.grad is not None]
+                ).norm()
                 value_optimizer.step()
 
                 # Logging
-                prefix = "dreaming_policy_value/"
                 self.logger.log(prefix + "return", return_loss)
+                self.logger.log(prefix + "mean_return", mean_return)
                 self.logger.log(prefix + "entropy", entropy_loss)
                 self.logger.log(prefix + "policy_loss", policy_loss)
                 self.logger.log(prefix + "value_loss", value_loss)
+                self.logger.log(prefix + "policy_grad_norm", policy_grad_norm)
+                self.logger.log(prefix + "value_grad_norm", value_grad_norm)
                 self.logger.update()
 
             # Updating LR Schedulers
             policy_lr_scheduler.step()
             value_lr_scheduler.step()
+            self.logger.log(prefix + "policy_lr", policy_lr_scheduler.get_last_lr()[0])
+            self.logger.log(prefix + "value_lr", value_lr_scheduler.get_last_lr()[0])
 
         self.policy_optimizer_state = policy_optimizer.state_dict()
         self.value_optimizer_state = value_optimizer.state_dict()
@@ -306,6 +332,7 @@ class DreamingPolicyValueTrainer(BaseTrainer):
         torch.save(self.policy_lr_scheduler_state, path / "policy_lr_scheduler.pt")
         torch.save(self.value_lr_scheduler_state, path / "value_lr_scheduler.pt")
         torch.save(self.logger.state_dict(), path / "logger.pt")
+        torch.save(self._current_train_count, path / "current_train_count.pt")
 
     @override
     def load_state(self, path: Path) -> None:
@@ -314,6 +341,7 @@ class DreamingPolicyValueTrainer(BaseTrainer):
         self.policy_lr_scheduler_state = torch.load(path / "policy_lr_scheduler.pt")
         self.value_lr_scheduler_state = torch.load(path / "value_lr_scheduler.pt")
         self.logger.load_state_dict(torch.load(path / "logger.pt"))
+        self._current_train_count = torch.load(path / "current_train_count.pt")
 
 
 def compute_lambda_return(

@@ -10,28 +10,16 @@ partial_dataloader:
 partial_policy_optimizer:
   _target_: torch.optim.Adam
   _partial_: true
-  lr: 1e-4
+  lr: 1e-5
   betas: [0.9, 0.999]
 
 partial_value_optimizer:
   _target_: torch.optim.Adam
   _partial_: true
-  lr: 1e-4
+  lr: 1e-5
   betas: [0.9, 0.999]
 
-partial_policy_lr_scheduler:
-  _target_: ami.trainers.dreaming_policy_value_trainer.InitialMultiplicationLRScheduler
-  _partial_: true
-  multiplication_factor: 0.0
-  initial_epochs: ${python.eval:"50 * ${..max_epochs}"} # 大体10分くらい。
-  verbose: true
-
-partial_value_lr_scheduler:
-  _target_: ami.trainers.dreaming_policy_value_trainer.InitialMultiplicationLRScheduler
-  _partial_: true
-  multiplication_factor: 0.0
-  initial_epochs: ${python.eval:"50 * ${..max_epochs}"} # 大体10分くらい。
-  verbose: true
+update_start_train_count: 50
 
 logger:
   _target_: ami.tensorboard_loggers.StepIntervalLogger

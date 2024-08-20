@@ -130,7 +130,10 @@ value:
       dim_hidden: 1024
       depth: 4
     dist_head:
-      _target_: ami.models.components.fully_connected_normal.FullyConnectedNormal
+      _target_: ami.models.components.fully_connected_fixed_std_normal.FullyConnectedFixedStdNormal
       dim_in: ${..observation_hidden_projection.dim_out}
       dim_out: 1
       squeeze_feature_dim: True
+      normal_cls:
+        _target_: hydra.utils.get_class
+        path: ami.models.components.fully_connected_fixed_std_normal.DeterministicNormal
