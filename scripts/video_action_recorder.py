@@ -3,13 +3,13 @@
 This script records video and keyboard actions, sending them as OSC messages.
 
 Installation:
-    pip install opencv-python pygame numpy python-osc
+    pip install opencv-python keyboard numpy python-osc
 
 Usage:
     python video_action_recorder.py [--fps FPS] [--width WIDTH] [--height HEIGHT] [--osc-ip OSC_IP] [--osc-port OSC_PORT] [--device DEVICE]
 
     Optional arguments:
-    --fps FPS           Frames per second for video recording (default: 30)
+    --fps FPS           Frames per second for video recording (default: 10)
     --width WIDTH       Width of the video frame (default: 1280)
     --height HEIGHT     Height of the video frame (default: 720)
     --osc-ip OSC_IP     IP address for OSC server (default: 127.0.0.1)
@@ -27,10 +27,10 @@ import argparse
 import csv
 import time
 from datetime import datetime
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, List, Optional, Tuple
 
 import cv2
-import pygame
+import keyboard
 from numpy.typing import NDArray
 from pythonosc import udp_client
 
@@ -67,26 +67,21 @@ class VideoRecorder:
 
 
 class KeyboardActionHandler:
-    def __init__(
-        self, key_map: Optional[Dict[int, Tuple[str, int]]] = None, osc_ip: str = "127.0.0.1", osc_port: int = 12345
-    ):
-        pygame.init()
+    def __init__(self, osc_ip: str = "127.0.0.1", osc_port: int = 12345):
         self.initial_actions = {"MoveVertical": 0, "MoveHorizontal": 0, "LookHorizontal": 0, "Jump": 0, "Run": 0}
         self.actions = self.initial_actions.copy()
 
-        # Default key map
-        default_key_map = {
-            pygame.K_w: ("MoveVertical", 1),
-            pygame.K_s: ("MoveVertical", 2),
-            pygame.K_d: ("MoveHorizontal", 1),
-            pygame.K_a: ("MoveHorizontal", 2),
-            pygame.K_PERIOD: ("LookHorizontal", 1),
-            pygame.K_COMMA: ("LookHorizontal", 2),
-            pygame.K_SPACE: ("Jump", 1),
-            pygame.K_LSHIFT: ("Run", 1),
+        self.key_map = {
+            "w": ("MoveVertical", 1),
+            "s": ("MoveVertical", 2),
+            "d": ("MoveHorizontal", 1),
+            "a": ("MoveHorizontal", 2),
+            ".": ("LookHorizontal", 1),
+            ",": ("LookHorizontal", 2),
+            "space": ("Jump", 1),
+            "shift": ("Run", 1),
         }
 
-        self.key_map = key_map if key_map is not None else default_key_map
         self.osc_client = udp_client.SimpleUDPClient(osc_ip, osc_port)
         self.osc_addresses = {
             "MoveForward": "/input/MoveForward",
@@ -100,19 +95,14 @@ class KeyboardActionHandler:
         }
 
     def update(self) -> bool:
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                return False
-
-        keys = pygame.key.get_pressed()
         self.actions = self.initial_actions.copy()
 
         for key, (action, value) in self.key_map.items():
-            if keys[key]:
+            if keyboard.is_pressed(key):
                 self.actions[action] = value
 
         self.send_osc_messages()
-        return True
+        return not keyboard.is_pressed("q")  # Return False if 'q' is pressed to quit
 
     def send_osc_messages(self) -> None:
         self.osc_client.send_message(self.osc_addresses["MoveForward"], int(self.actions["MoveVertical"] == 1))
@@ -219,7 +209,6 @@ def main() -> None:
     # Cleanup
     video_recorder.stop_recording()
     cv2.destroyAllWindows()
-    pygame.quit()
 
     print(f"Recording finished. Video saved as {video_output}, actions logged in {action_log}")
 
