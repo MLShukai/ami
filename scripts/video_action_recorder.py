@@ -18,6 +18,14 @@ Usage:
 
     Press 'q' to stop recording.
 
+NOTE: Linux User
+    You need to run this script as root user.
+    Because keyboard module requires root user to access keyboard device.
+    So run the following command in the project root directory.
+    ```sh
+    PYTHON_PATH=$(which python3) && sudo $PYTHON_PATH ./scripts/video_action_recorder.py
+    ```
+
 Output:
     - Video file: output_YYYY-MM-DD_HH-MM-SS.mp4
     - Action log: action_log_YYYY-MM-DD_HH-MM-SS.csv
