@@ -13,8 +13,12 @@ from .trainers.utils import BaseTrainer, TrainersList
 logger = get_main_thread_logger(__name__)
 
 
-def instantiate_data_collectors(data_collectors_cfg: DictConfig) -> DataCollectorsDict:
+def instantiate_data_collectors(data_collectors_cfg: DictConfig | None) -> DataCollectorsDict:
     d = DataCollectorsDict()
+    if data_collectors_cfg is None:
+        logger.info("No data collector configs are provided.")
+        return d
+
     for name, cfg in data_collectors_cfg.items():
         logger.info(f"Instantiating <{cfg._target_}>")
         collector: BaseDataBuffer | ThreadSafeDataCollector[Any] = hydra.utils.instantiate(cfg)
@@ -28,8 +32,12 @@ def instantiate_data_collectors(data_collectors_cfg: DictConfig) -> DataCollecto
     return d
 
 
-def instantiate_models(models_cfg: DictConfig) -> ModelWrappersDict:
+def instantiate_models(models_cfg: DictConfig | None) -> ModelWrappersDict:
     d = ModelWrappersDict()
+    if models_cfg is None:
+        logger.info("No model configs are provided.")
+        return d
+
     aliases = []
     for name, cfg_or_alias_target in models_cfg.items():
         match cfg_or_alias_target:
@@ -49,8 +57,13 @@ def instantiate_models(models_cfg: DictConfig) -> ModelWrappersDict:
     return d
 
 
-def instantiate_trainers(trainers_cfg: DictConfig) -> TrainersList:
+def instantiate_trainers(trainers_cfg: DictConfig | None) -> TrainersList:
     tl = TrainersList()
+
+    if trainers_cfg is None:
+        logger.info("No trainer configs are provided.")
+        return tl
+
     for i, (name, cfg) in enumerate(trainers_cfg.items()):
         logger.info(f"Instatiating Trainer[{i}] {name!r}: <{cfg._target_}>")
         trainer: BaseTrainer = hydra.utils.instantiate(cfg)

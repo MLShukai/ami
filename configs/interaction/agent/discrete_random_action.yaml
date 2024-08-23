@@ -1,0 +1,7 @@
+_target_: ami.interactions.agents.discrete_random_action_agent.DiscreteRandomActionAgent
+
+action_choices_per_category:
+  _target_: hydra.utils.get_object
+  path: ami.interactions.environments.actuators.vrchat_osc_discrete_actuator.ACTION_CHOICES_PER_CATEGORY
+
+max_action_repeat: 10
