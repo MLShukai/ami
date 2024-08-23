@@ -14,7 +14,9 @@ from ...models.forward_dynamics import ForwardDynamcisWithActionReward
 from ...models.model_names import ModelNames
 from ...models.model_wrapper import ThreadSafeInferenceWrapper
 from ...models.policy_or_value_network import PolicyOrValueNetwork
+from ...models.policy_value_common_net import PolicyValueCommonNet
 from .base_agent import BaseAgent
+from .utils import PolicyValueCommonProxy
 
 
 class MultiStepImaginationCuriosityImageAgent(BaseAgent[Tensor, Tensor]):
@@ -51,8 +53,14 @@ class MultiStepImaginationCuriosityImageAgent(BaseAgent[Tensor, Tensor]):
         self.forward_dynamics: ThreadSafeInferenceWrapper[ForwardDynamcisWithActionReward] = self.get_inference_model(
             ModelNames.FORWARD_DYNAMICS
         )
-        self.policy_net: ThreadSafeInferenceWrapper[PolicyOrValueNetwork] = self.get_inference_model(ModelNames.POLICY)
-        self.value_net: ThreadSafeInferenceWrapper[PolicyOrValueNetwork] = self.get_inference_model(ModelNames.VALUE)
+
+        self.policy_value_net: ThreadSafeInferenceWrapper[PolicyValueCommonNet] | PolicyValueCommonProxy
+        if self.check_model_exists(ModelNames.POLICY_VALUE):
+            self.policy_value_net = self.get_inference_model(ModelNames.POLICY_VALUE)
+        else:
+            policy_net: ThreadSafeInferenceWrapper[PolicyOrValueNetwork] = self.get_inference_model(ModelNames.POLICY)
+            value_net: ThreadSafeInferenceWrapper[PolicyOrValueNetwork] = self.get_inference_model(ModelNames.VALUE)
+            self.policy_value_net = PolicyValueCommonProxy(policy_net, value_net)
 
     # ------ Interaction Process ------
     exact_forward_dynamics_hidden_state: Tensor  # (depth, dim)
@@ -99,9 +107,12 @@ class MultiStepImaginationCuriosityImageAgent(BaseAgent[Tensor, Tensor]):
             : self.max_imagination_steps
         ]  # (imaginations, depth, dim)
 
-        action_dist_imaginations: Distribution = self.policy_net(embed_obs_imaginations, hidden_imaginations)
-        value_dist_imaginations: Distribution = self.value_net(embed_obs_imaginations, hidden_imaginations)
-        action_imaginations, value_imaginations = action_dist_imaginations.sample(), value_dist_imaginations.sample()
+        action_dist_imaginations: Distribution
+        value_imaginations: Tensor
+        action_dist_imaginations, value_imaginations = self.policy_value_net(
+            embed_obs_imaginations, hidden_imaginations
+        )
+        action_imaginations = action_dist_imaginations.sample()
         action_log_prob_imaginations = action_dist_imaginations.log_prob(action_imaginations)
 
         pred_obs_dist_imaginations, _, _, next_hidden_imaginations = self.forward_dynamics(
