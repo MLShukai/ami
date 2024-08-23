@@ -1,0 +1,29 @@
+_target_: ami.trainers.ppo_dreaming_policy_trainer.PPODreamingPolicyTrainer
+
+partial_dataloader:
+  _target_: torch.utils.data.DataLoader
+  _partial_: true
+  batch_size: 128
+  shuffle: false
+  drop_last: true
+
+partial_optimizer:
+  _target_: torch.optim.Adam
+  _partial_: true
+  lr: 1e-4
+  betas: [0.9, 0.999]
+
+update_start_train_count: 50
+
+logger:
+  _target_: ami.tensorboard_loggers.StepIntervalLogger
+  log_dir: ${paths.tensorboard_dir}/ppo_dreaming
+  log_every_n_steps: 1
+
+device: ${devices.0}
+max_epochs: 1
+entropy_coef: 0.001
+imagination_trajectory_length: 25
+imagination_temperature: 1.3
+minimum_dataset_size: ${.partial_dataloader.batch_size}
+minimum_new_data_count: ${.partial_dataloader.batch_size}
