@@ -17,7 +17,7 @@ from ami.models.components.mixture_desity_network import NormalMixture
 from ami.models.forward_dynamics import ForwardDynamcisWithActionReward
 from ami.models.model_names import ModelNames
 from ami.models.model_wrapper import ModelWrapper
-from ami.models.policy_or_value_network import PolicyOrValueNetwork
+from ami.models.policy_value_common_net import PolicyValueCommonNet
 from ami.tensorboard_loggers import StepIntervalLogger
 
 from .base_trainer import BaseTrainer
@@ -26,39 +26,43 @@ from .base_trainer import BaseTrainer
 class ImaginationTrajectory(TypedDict):
     """TypedDict which contains the outputs of imagination."""
 
-    observations: Tensor  # o_0:H+1
-    hiddens: Tensor  # h_0:H+1
+    observations: Tensor  # o_0:H
+    hiddens: Tensor  # h_0:H
     actions: Tensor  # a_0:H
-    action_log_probs: Tensor # log pi 0:H
+    action_log_probs: Tensor  # log pi 0:H
     rewards: Tensor  # r_1:H+1
     values: Tensor  # v_0:H
-    advantages: Tensor # A_0:H
-    returns: Tensor # g_0:H
+    advantages: Tensor  # A_0:H
+    returns: Tensor  # g_0:H
 
-class PPODreamingPolicyValueTrainer(BaseTrainer):
+
+class PPODreamingPolicyTrainer(BaseTrainer):
     """Training the policy and value model by Dreamer and PPO method.
+
+    This class combines elements from Dreamer (for world model learning and imagination)
+    and PPO (for policy optimization) to train a policy and value network. It uses the
+    world model to generate imagined trajectories, which are then used to update the
+    policy using PPO's objective.
 
     References:
         Dreamer V1
         "Dream to Control: Learning Behaviors by Latent Imagination",
         arXiv:1912.01603, 2019.
-        
+
         Dreamer V3
         "Mastering Diverse Domains through World Models",
         arXiv:2301.04104, 2023.
-        
+
         PPO
         "Proximal Policy Optimization Algorithms",
         arXiv:1707.06347, 2017.
     """
 
-
     @override
     def __init__(
         self,
         partial_dataloader: partial[DataLoader[Tensor]],
-        partial_policy_optimizer: partial[Optimizer],
-        partial_value_optimizer: partial[Optimizer],
+        partial_optimizer: partial[Optimizer],
         device: torch.device,
         logger: StepIntervalLogger,
         max_epochs: int = 1,
@@ -79,15 +83,18 @@ class PPODreamingPolicyValueTrainer(BaseTrainer):
 
         Args:
             partial_dataloader: A partially instantiated dataloader lacking a provided dataset.
-            partial_policy_optimizer: A partially instantiated optimizer for policy lacking provided parameters.
-            partial_value_optimizer: A partially instantiated optimizer for value lacking provided parameters.
+            partial_optimizer: A partially instantiated optimizer for policy and value networks lacking provided parameters.
             device: The accelerator device (e.g., CPU, GPU) utilized for training the model.
             logger: A StepIntervalLogger object for logging training progress.
             max_epochs: Maximum number of epochs for training.
             imagination_trajectory_length: The length of dreaming steps.
             discount_factor: Discount factor (gamma) for reinforcement learning.
             eligibility_trace_decay: Decay factor (lambda) for eligibility trace in generalized advantage esitimation.
+            normalize_advantage: Whether to normalize the advantage.
+            clip_coef: Clipping parameter for PPO.
+            clip_value_loss: Whether to clip the value loss.
             entropy_coef: Coefficient for entropy regularization in policy loss.
+            value_func_coef: Coefficient for value function loss.
             imagination_temperature: The sampling uncertainty for forward dynamics prediction (mixture density network only.)
             minimum_dataset_size: Minimum size of the dataset required to start training.
             minimum_new_data_count: Minimum number of new data count required to run the training.
@@ -95,8 +102,7 @@ class PPODreamingPolicyValueTrainer(BaseTrainer):
         """
         super().__init__()
         self.partial_data_loader = partial_dataloader
-        self.partial_policy_optimizer = partial_policy_optimizer
-        self.partial_value_optimizer = partial_value_optimizer
+        self.partial_optimizer = partial_optimizer
         self.device = device
         self.logger = logger
         self.max_epochs = max_epochs
@@ -116,7 +122,6 @@ class PPODreamingPolicyValueTrainer(BaseTrainer):
 
         self.console_logger = get_training_thread_logger(self.__class__.__name__)
 
-
     @override
     def on_data_users_dict_attached(self) -> None:
         self.initial_states_data_user: ThreadSafeDataUser[RandomDataBuffer] = self.get_data_user(
@@ -129,13 +134,8 @@ class PPODreamingPolicyValueTrainer(BaseTrainer):
             ModelNames.FORWARD_DYNAMICS
         )
 
-        self.policy_net: ModelWrapper[PolicyOrValueNetwork] = self.get_training_model(ModelNames.POLICY)
-        self.value_net: ModelWrapper[PolicyOrValueNetwork] = self.get_training_model(ModelNames.VALUE)
-
-        policy_optim = self.partial_policy_optimizer(self.policy_net.parameters())
-        value_optim = self.partial_value_optimizer(self.value_net.parameters())
-        self.policy_optimizer_state = policy_optim.state_dict()
-        self.value_optimizer_state = value_optim.state_dict()
+        self.policy_value_net: ModelWrapper[PolicyValueCommonNet] = self.get_training_model(ModelNames.POLICY_VALUE)
+        self.optimizer_state = self.partial_optimizer(self.policy_value_net.parameters()).state_dict()
 
     @override
     def is_trainable(self) -> bool:
@@ -152,14 +152,11 @@ class PPODreamingPolicyValueTrainer(BaseTrainer):
     def train(self) -> None:
         # Setup model device.
         self.forward_dynamics.to(self.device)
-        self.policy_net.to(self.device)
-        self.value_net.to(self.device)
+        self.policy_value_net.to(self.device)
 
         # Setup optimizers.
-        policy_optimizer = self.partial_policy_optimizer(self.policy_net.parameters())
-        policy_optimizer.load_state_dict(self.policy_optimizer_state)
-        value_optimizer = self.partial_value_optimizer(self.value_net.parameters())
-        value_optimizer.load_state_dict(self.value_optimizer_state)
+        optimizer = self.partial_optimizer(self.policy_value_net.parameters())
+        optimizer.load_state_dict(self.optimizer_state)
 
         # Setup dataset
         dataset = self.initial_states_data_user.get_dataset()
@@ -187,23 +184,20 @@ class PPODreamingPolicyValueTrainer(BaseTrainer):
 
                 # Compute losses.
                 output = self.ppo_step(trajectory)
-                
+
                 # Update
-                policy_optimizer.zero_grad()
-                value_optimizer.zero_grad()
+                optimizer.zero_grad()
                 output["loss"].backward()
-                policy_optimizer.step()
-                value_optimizer.step()
-                
+                optimizer.step()
+
                 # Logging
                 for name, value in output.items():
                     self.logger.log(prefix + name, value)
                 self.logger.log(prefix + "mean_return", trajectory["returns"].mean())
-                
+
                 self.logger.update()
 
-        self.policy_optimizer_state = policy_optimizer.state_dict()
-        self.value_optimizer_state = value_optimizer.state_dict()
+        self.optimizer_state = optimizer.state_dict()
 
     @torch.no_grad()
     def imagine_trajectory(self, initial_state: tuple[Tensor, Tensor]) -> ImaginationTrajectory:
@@ -221,7 +215,7 @@ class PPODreamingPolicyValueTrainer(BaseTrainer):
 
         Returns:
             ImaginationTrajectory: A dict containing the following tensors, each with the first dimension
-            equal to the imagination trajectory length.
+            equal to the `imagination_trajectory_length * batch_size`.
         """
         observation, hidden = initial_state
 
@@ -236,12 +230,12 @@ class PPODreamingPolicyValueTrainer(BaseTrainer):
         for _ in range(self.imagination_trajectory_length):  # H step
 
             # Take one step.
-            action_dist: Distribution = self.policy_net(observation, hidden)
+            action_dist: Distribution
+            value: Tensor
+
+            action_dist, value = self.policy_value_net(observation, hidden)
             action = action_dist.sample()
             action_log_prob = action_dist.log_prob(action)
-
-            value_dist: Distribution = self.value_net(observation, hidden)
-            value = value_dist.sample()
 
             # Add to list
             actions.append(action)
@@ -270,25 +264,25 @@ class PPODreamingPolicyValueTrainer(BaseTrainer):
             rewards.append(reward)
 
         rewards_tensor = torch.stack(rewards)
-        values_tensor=torch.stack(values)
-        advantages=compute_advantage(
-            rewards_tensor, 
-            values_tensor, 
-            self.value_net(observation, hidden).sample(),
+        values_tensor = torch.stack(values)
+        advantages = compute_advantage(
+            rewards_tensor,
+            values_tensor,
+            self.policy_value_net(observation, hidden)[1],
             self.discount_factor,
             self.eligibility_trace_decay,
-            )
-        returns = advantages + values
+        )
+        returns = advantages + values_tensor
 
         return ImaginationTrajectory(
-            observations=torch.stack(observations),
-            hiddens=torch.stack(hiddens),
-            actions=torch.stack(actions),
-            action_log_probs=torch.stack(action_log_probs),
-            rewards=rewards_tensor,
-            values=values_tensor,
-            advantages=advantages,
-            returns=returns,
+            observations=torch.stack(observations).flatten(end_dim=1),
+            hiddens=torch.stack(hiddens).flatten(end_dim=1),
+            actions=torch.stack(actions).flatten(end_dim=1),
+            action_log_probs=torch.stack(action_log_probs).flatten(end_dim=1),
+            rewards=rewards_tensor.flatten(end_dim=1),
+            values=values_tensor.flatten(end_dim=1),
+            advantages=advantages.flatten(end_dim=1),
+            returns=returns.flatten(end_dim=1),
         )
 
     def ppo_step(self, trajectory: ImaginationTrajectory) -> dict[str, Tensor]:
@@ -300,14 +294,14 @@ class PPODreamingPolicyValueTrainer(BaseTrainer):
             trajectory["action_log_probs"],
             trajectory["advantages"],
             trajectory["returns"],
-            trajectory["values"]
+            trajectory["values"],
         )
 
-        new_action_dist: Distribution = self.policy_net(obses, hiddens)
+        new_action_dist: Distribution
+        new_values: Tensor
+        new_action_dist, new_values = self.policy_value_net(obses, hiddens)
         new_logprobs = new_action_dist.log_prob(actions)
         entropy = new_action_dist.entropy()
-        new_value_dist: Distribution = self.value_net(obses, hiddens)
-        new_values = new_value_dist.rsample()
 
         logratio = new_logprobs - logprobs
         ratio = logratio.exp()
@@ -349,24 +343,21 @@ class PPODreamingPolicyValueTrainer(BaseTrainer):
             "approx_kl": approx_kl,
             "clipfrac": clipfracs,
         }
-        return output
 
+        return output
 
     @override
     def save_state(self, path: Path) -> None:
         path.mkdir()
-        torch.save(self.policy_optimizer_state, path / "policy_optimizer.pt")
-        torch.save(self.value_optimizer_state, path / "value_optimizer.pt")
+        torch.save(self.optimizer_state, path / "optimizer.pt")
         torch.save(self.logger.state_dict(), path / "logger.pt")
         torch.save(self._current_train_count, path / "current_train_count.pt")
 
     @override
     def load_state(self, path: Path) -> None:
-        self.policy_optimizer_state = torch.load(path / "policy_optimizer.pt")
-        self.value_optimizer_state = torch.load(path / "value_optimizer.pt")
+        self.optimizer_state = torch.load(path / "optimizer.pt")
         self.logger.load_state_dict(torch.load(path / "logger.pt"))
         self._current_train_count = torch.load(path / "current_train_count.pt")
-
 
 
 def compute_advantage(
