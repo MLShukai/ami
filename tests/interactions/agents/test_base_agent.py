@@ -7,6 +7,10 @@ class TestBaseAgent:
         agent.attach_inference_models(inference_wrappers_dict)
 
         assert agent.model1
+        assert agent.check_model_exists("model1")
+        assert agent.check_model_exists("model2")
+        assert agent.check_model_exists("model_device")
+        assert not agent.check_model_exists("model_no_inference")
 
     def test_attach_data_collectors(self, data_collectors_dict):
         agent = AgentImpl()
