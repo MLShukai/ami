@@ -8,12 +8,6 @@ sensor:
   base_fps: 60
 
 actuator:
-  _target_: ami.interactions.environments.actuators.tensor_action_hdf5_recorder.TensorActionHDF5Recorder
-  actuator:
-    _target_: ami.interactions.environments.actuators.vrchat_osc_discrete_actuator.VRChatOSCDiscreteActuator
-    osc_address: "127.0.0.1"
-    osc_sender_port: 9000
-
-  file_path: ${paths.io_log_dir}/osc_discrete_actuator.h5
-  flush_batch_size: 1000
-  recording_dtype: ${torch.dtype:uint8}
+  _target_: ami.interactions.environments.actuators.vrchat_osc_discrete_actuator.VRChatOSCDiscreteActuator
+  osc_address: "127.0.0.1"
+  osc_sender_port: 9000
