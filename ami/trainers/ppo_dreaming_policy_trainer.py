@@ -313,7 +313,8 @@ class PPODreamingPolicyTrainer(BaseTrainer):
         if self.normalize_advantage:
             advantanges = (advantanges - advantanges.mean()) / (advantanges.std() + 1e-8)
 
-        if advantanges.ndim == 2:
+        # expanding advantages for broadcasting.
+        for _ in range(ratio.ndim - advantanges.ndim):
             advantanges = advantanges.unsqueeze(-1)
 
         # Policy loss
