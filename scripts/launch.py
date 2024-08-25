@@ -3,6 +3,7 @@ import os
 
 import hydra
 import rootutils
+import torch
 from omegaconf import DictConfig, open_dict
 
 from ami.checkpointing.checkpoint_schedulers import BaseCheckpointScheduler
@@ -39,6 +40,8 @@ register_custom_resolvers()
 @hydra.main(config_path="../configs", config_name="launch", version_base="1.3")
 def main(cfg: DictConfig) -> None:
     logger.info("Launch AMI.")
+    if precision := cfg.get("torch_float32_matmul_precision"):
+        torch.set_float32_matmul_precision(precision)
 
     logger.info(f"Instantiating Interaction <{cfg.interaction._target_}>")
     interaction: Interaction = hydra.utils.instantiate(cfg.interaction)
