@@ -131,3 +131,4 @@ policy_value:
     value_head:
       _target_: ami.models.components.fully_connected_value_head.FullyConnectedValueHead
       dim_in: ${..observation_hidden_projection.dim_out}
+      squeeze_value_dim: True
