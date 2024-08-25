@@ -4,6 +4,7 @@ import math
 
 import torch
 import torch.nn as nn
+from .utils import size_2d, size_2d_to_int_tuple
 
 from .components.unet.commons import AttentionBlock
 
@@ -79,8 +80,6 @@ class DecoderBlock(nn.Module):
         in_channels: int,
         out_channels: int,
         n_res_blocks: int,
-        use_attention: bool,
-        num_heads: int,
         use_upsample: bool,
     ) -> None:
         """A block for Unet decoder.
@@ -92,17 +91,12 @@ class DecoderBlock(nn.Module):
                 Output num of channels.
             n_res_blocks (int):
                 Num of resblocks in this block.
-            use_attention (bool):
-                Whether or not an attention is added after each resblock
-            num_heads (int):
-                num_head when adding attention layers.
             use_upsample (bool):
                 Whether upsample at the end in self.forward.
         """
         super().__init__()
 
         self.n_res_blocks = n_res_blocks
-        self.use_attention = use_attention
         # define resblocks
         self.resnet_layers = nn.ModuleList([])
         self.attention_layers = nn.ModuleList([])
@@ -113,8 +107,6 @@ class DecoderBlock(nn.Module):
                     out_channels=out_channels,
                 )
             )
-            if use_attention:
-                self.attention_layers.append(AttentionBlock(out_channels, num_heads=num_heads))
 
         # prepare upsample layer if needed
         self.conv_for_upsample = nn.Conv2d(out_channels, out_channels, 3, padding=1) if use_upsample else None
@@ -140,8 +132,6 @@ class DecoderBlock(nn.Module):
         feature = x
         for i in range(self.n_res_blocks):
             feature = self.resnet_layers[i](feature)
-            if self.use_attention:
-                feature = self.attention_layers[i](feature)
         # upsamples features if needed
         if self.conv_for_upsample is not None:
             feature = nn.functional.interpolate(feature, scale_factor=2, mode="nearest")
@@ -150,92 +140,63 @@ class DecoderBlock(nn.Module):
 
 
 class LatentVisualizationDecoder(nn.Module):
-    """Unet architecture for noise prediction from input images."""
+    """Decoder for visualizing latents as image."""
 
     def __init__(
         self,
-        in_channels: int,
-        out_channels: int,
-        encoder_blocks_in_and_out_channels: list[tuple[int, int]],
+        input_n_patches: size_2d,
+        input_latents_dim: int,
+        decoder_blocks_in_and_out_channels: list[tuple[int, int]],
         n_res_blocks: int,
-        attention_start_depth: int,
         num_heads: int,
-        ssl_latent_dim: int,
     ) -> None:
-        """Unet architecture for noise prediction from input images.
+        """Decoder for visualizing latents as image.
 
         Args:
-            in_channels (int):
-                Input images num of channels.
-            out_channels (int):
-                Output images num of channels.
-            encoder_blocks_in_and_out_channels (list[tuple[int, int]]):
-                Specify (in_channels, out_channels) of each encoder block,
-                in order from the shallowest block to the deepest block.
+            input_n_patches (size_2d):
+                Input latents num of patches (height, width).
+            input_latents_dim (int):
+                Input latents dim.
+            decoder_blocks_in_and_out_channels (list[tuple[int, int]]):
+                Specify (in_channels, out_channels) of each decoder block,
+                in order from input block to output block.
             n_res_blocks (int):
-                num of resblocks in each encoder block.
-            attention_start_depth (int):
-                Append attention layers for blocks deeper than attention_start_depth. 0 origin.
+                Num of resblocks in each decoder block.
             num_heads (int):
                 num_head when adding attention layers.
-            ssl_latent_dim (int):
-                Dims of latents from ssl model.
         """
         super().__init__()
+        
+        self.input_n_patches = size_2d_to_int_tuple(input_n_patches)
+        self.input_latents_dim = input_latents_dim
+        
+        decoder_blocks_first_n_channels = decoder_blocks_in_and_out_channels[0][0]
+        self.input_layer = nn.Sequential(
+            ResBlock(
+                in_channels=input_latents_dim,
+                out_channels=decoder_blocks_first_n_channels,
+            ),
+            AttentionBlock(decoder_blocks_first_n_channels, num_heads=num_heads),
+            ResBlock(
+                in_channels=decoder_blocks_first_n_channels,
+                out_channels=decoder_blocks_first_n_channels,
+            ),
+        )
 
-        # create encoder blocks
-        self.n_res_blocks = n_res_blocks
-        input_ch = encoder_blocks_in_and_out_channels[0][0]
-        self.input_layer = nn.Conv2d(in_channels, input_ch, 3, padding=1)
-        in_channels_for_skip_connections: list[int] = [input_ch]
-        self.encoder_blocks = nn.ModuleList([])
-        for layer_depth, (blocks_in_channels, blocks_out_channels) in enumerate(encoder_blocks_in_and_out_channels):
-            is_last_layer = layer_depth == len(encoder_blocks_in_and_out_channels) - 1
-            self.encoder_blocks.append(
-                UnetEncoderBlock(
-                    in_channels=blocks_in_channels,
-                    out_channels=blocks_out_channels,
-                    n_res_blocks=n_res_blocks,
-                    use_attention=(layer_depth >= attention_start_depth),
-                    num_heads=num_heads,
-                    use_downsample=(not is_last_layer),
-                )
-            )
-            in_channels_for_skip_connections += [blocks_out_channels for _ in range(n_res_blocks + (not is_last_layer))]
-
-        # create decoder blocks in contrast to encoder blocks
-        decoder_blocks_in_and_out_channels: list[tuple[int, int]] = []
-        # channels of first UnetDecoderBlock are same as middle block
-        decoder_blocks_in_and_out_channels.append((middle_block_channels, middle_block_channels))
-        # check channels from last to second encoder block
-        for (encoder_block_in_channel, encoder_block_out_channel) in encoder_blocks_in_and_out_channels[::-1][:-1]:
-            # reverse in and out channels between encoder and decoder
-            decoder_block_in_channel = encoder_block_out_channel
-            decoder_block_out_channel = encoder_block_in_channel
-            decoder_blocks_in_and_out_channels.append((decoder_block_in_channel, decoder_block_out_channel))
-
-        self.n_decoder_block_resblocks = n_res_blocks + 1
-        self.decoder_blocks = nn.ModuleList([])
-        for layer_depth, (blocks_in_channels, blocks_out_channels) in zip(
-            reversed(range(len(decoder_blocks_in_and_out_channels))), decoder_blocks_in_and_out_channels
-        ):
-            # layer_depth is [len(decoder_blocks_in_and_out_channels), len(decoder_blocks_in_and_out_channels) - 1, ..., 0]
-            is_last_layer = layer_depth == 0
-            self.decoder_blocks.append(
-                DecoderBlock(
-                    in_channels=blocks_in_channels,
-                    out_channels=blocks_out_channels,
-                    n_res_blocks=self.n_decoder_block_resblocks,
-                    use_attention=(layer_depth >= attention_start_depth),
-                    num_heads=num_heads,
-                    use_upsample=(not is_last_layer),
-                )
-            )
-
+        self.decoder_blocks = nn.Sequential(*[
+            DecoderBlock(
+                in_channels=blocks_in_channels,
+                out_channels=blocks_out_channels,
+                n_res_blocks=n_res_blocks,
+                use_upsample=(not (i==(len(decoder_blocks_in_and_out_channels)-1))),
+            ) for i, (blocks_in_channels, blocks_out_channels) in enumerate(decoder_blocks_in_and_out_channels)
+        ])
+        
+        decoder_blocks_last_n_channels = decoder_blocks_in_and_out_channels[-1][-1]
         self.output_layer = nn.Sequential(
-            nn.GroupNorm(num_groups=32, num_channels=input_ch),
+            nn.GroupNorm(num_groups=32, num_channels=decoder_blocks_last_n_channels),
             nn.SiLU(),
-            nn.Conv2d(input_ch, out_channels, 3, padding=1),
+            nn.Conv2d(decoder_blocks_last_n_channels, 3, kernel_size=3, padding=1),
         )
         # initialize conv layer as zeros
         for p in self.output_layer[-1].parameters():
@@ -245,47 +206,31 @@ class LatentVisualizationDecoder(nn.Module):
         self,
         input_latents: torch.Tensor,
     ) -> torch.Tensor:
-        """Predict noise components from input images, depending on timesteps,
-        conditioned with latents_from_ssl.
+        """Generate images from input latents.
 
         Args:
-            input_images (torch.Tensor):
-                Input noisy images.
-                (shape: [batch_size, in_channels, height, width])
-            timesteps (torch.Tensor):
-                Timesteps for noise reduction.
-                (shape: [batch_size])
-            latents_from_ssl (torch.Tensor):
-                Latents from another ssl model.
-                (shape: [batch_size, n_patches, ssl_latent_dim])
+            input_latents (torch.Tensor):
+                latents from other decoder model.
+                (shape: [batch_size, n_patches_height * n_patches_width, latents_dim])
         Returns:
             torch.Tensor:
-                Predicted noise.
-                (shape: [batch_size, out_channels, height, width])
+                Generated images.
+                (shape: 
+                    [
+                        batch_size, 
+                        3, 
+                        n_patches_height * (2**(len(decoder_blocks_in_and_out_channels)-1)), 
+                        n_patches_width * (2**(len(decoder_blocks_in_and_out_channels)-1)), 
+                    ]
+                )
         """
-
-        # Embed timestep
-        emb = self.timestep_emb(timestep_embedding(timesteps, self.timestep_hidden_dim))
-        # Embed latents from ssl model.
-        latents_from_ssl = self.ssl_emb(latents_from_ssl)
-        latents_from_ssl = latents_from_ssl.mean(dim=1)
-        emb = emb + latents_from_ssl
-
-        features_for_skip_connections: list[torch.Tensor] = []
-        # Input Conv
-        feature = self.input_layer(input_images)
-        features_for_skip_connections.append(feature)
-        # Unet Encoder
-        for encoder_block in self.encoder_blocks:
-            feature, _features_for_skip_connections = encoder_block(feature, emb)
-            features_for_skip_connections += _features_for_skip_connections
-        # Unet Middle Block
-        feature = self.middle_block(feature, emb)
-        # Unet Decoder
-        features_for_skip_connections = features_for_skip_connections[::-1]
-        for decoder_block in self.decoder_blocks:
-            feature = decoder_block(feature, emb, features_for_skip_connections[: self.n_decoder_block_resblocks])
-            features_for_skip_connections = features_for_skip_connections[self.n_decoder_block_resblocks :]
-        # Output Conv
+        
+        # reshape input latents
+        batch_size = input_latents.size(0)
+        height, width = self.input_n_patches
+        input_latents = torch.reshape(input_latents, (batch_size, self.input_latents_dim, height, width))
+        # apply layers
+        feature = self.input_layer(input_latents)
+        feature = self.decoder_blocks(feature)
         output = self.output_layer(feature)
         return output
