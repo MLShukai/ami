@@ -49,8 +49,11 @@ class BaseAgent(ABC, Generic[ObsType, ActType], SaveAndLoadStateMixin, PauseResu
         agent."""
         pass
 
+    def check_model_exists(self, name: str) -> bool:
+        return name in self._inference_models
+
     def get_inference_model(self, name: str) -> ThreadSafeInferenceWrapper[Any]:
-        if name not in self._inference_models:
+        if not self.check_model_exists(name):
             raise KeyError(f"The specified model name '{name}' does not exist.")
         return self._inference_models[name]
 
