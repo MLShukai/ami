@@ -9,7 +9,7 @@ from .utils import size_2d, size_2d_to_int_tuple
 from .components.unet.commons import AttentionBlock
 
 class ResBlock(nn.Module):
-    """A residual block for Unet Components."""
+    """A residual block for LatentVisualizationDecoder Components."""
 
     def __init__(
         self,
@@ -18,7 +18,7 @@ class ResBlock(nn.Module):
         num_norm_groups_in_input_layer: int = 32,
         num_norm_groups_in_output_layer: int = 32,
     ) -> None:
-        """A residual block for Unet Components.
+        """A residual block for LatentVisualizationDecoder Components.
 
         Args:
             in_channels (int):
@@ -82,7 +82,7 @@ class DecoderBlock(nn.Module):
         n_res_blocks: int,
         use_upsample: bool,
     ) -> None:
-        """A block for Unet decoder.
+        """A block for LatentVisualizationDecoderr.
 
         Args:
             in_channels (int):
