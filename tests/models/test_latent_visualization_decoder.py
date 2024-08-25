@@ -5,7 +5,9 @@ import pytest
 import torch
 
 from ami.models.latent_visualization_decoder import (
-    ResBlock, DecoderBlock, LatentVisualizationDecoder
+    DecoderBlock,
+    LatentVisualizationDecoder,
+    ResBlock,
 )
 
 
@@ -42,7 +44,7 @@ class TestLatentVisualizationDecoder:
         outputs = resblock(x=inputs)
         # check size of output latent
         assert outputs.shape == (batch_size, out_channels, height, width)
-    
+
     # model params
     @pytest.mark.parametrize("in_channels", [32, 128])
     @pytest.mark.parametrize("out_channels", [32, 128])
@@ -76,7 +78,7 @@ class TestLatentVisualizationDecoder:
         # check size of output latents
         expected_height, expected_width = (height * 2, width * 2) if use_upsample else (height, width)
         assert outputs.size() == (batch_size, out_channels, expected_height, expected_width)
-    
+
     # model params
     @pytest.mark.parametrize("input_n_patches_height", [1, 12])
     @pytest.mark.parametrize("input_n_patches_width", [1, 12])
@@ -104,20 +106,19 @@ class TestLatentVisualizationDecoder:
     ):
         # define resblock
         latent_visualization_decoder = LatentVisualizationDecoder(
-            input_n_patches = (input_n_patches_height, input_n_patches_width),
-            input_latents_dim = input_latents_dim,
+            input_n_patches=(input_n_patches_height, input_n_patches_width),
+            input_latents_dim=input_latents_dim,
             decoder_blocks_in_and_out_channels=decoder_blocks_in_and_out_channels,
             n_res_blocks=n_res_blocks,
             num_heads=num_heads,
         )
         # define sample inputs
-        n_patches = input_n_patches_height*input_n_patches_width
+        n_patches = input_n_patches_height * input_n_patches_width
         latents = torch.randn([batch_size, n_patches, input_latents_dim])
         # get output images
         out_images = latent_visualization_decoder(latents)
         # check size of output latents
-        magnification = 2**(len(decoder_blocks_in_and_out_channels)-1)
-        expected_height = input_n_patches_height*magnification
-        expected_width = input_n_patches_width*magnification
+        magnification = 2 ** (len(decoder_blocks_in_and_out_channels) - 1)
+        expected_height = input_n_patches_height * magnification
+        expected_width = input_n_patches_width * magnification
         assert out_images.size() == (batch_size, 3, expected_height, expected_width)
-

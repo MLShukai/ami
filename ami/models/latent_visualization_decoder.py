@@ -4,9 +4,10 @@ import math
 
 import torch
 import torch.nn as nn
-from .utils import size_2d, size_2d_to_int_tuple
 
 from .components.unet.commons import AttentionBlock
+from .utils import size_2d, size_2d_to_int_tuple
+
 
 class ResBlock(nn.Module):
     """A residual block for LatentVisualizationDecoder Components."""
@@ -71,6 +72,7 @@ class ResBlock(nn.Module):
         h = self.out_group_norm(h)
         h = self.out_layers(h)
         return self.skip_connection(x) + h
+
 
 class DecoderBlock(nn.Module):
     """A block for decoder."""
@@ -166,32 +168,36 @@ class LatentVisualizationDecoder(nn.Module):
                 num_head when adding attention layers.
         """
         super().__init__()
-        
+
         self.input_n_patches = size_2d_to_int_tuple(input_n_patches)
         self.input_latents_dim = input_latents_dim
-        
+
+        # define input blocks
         decoder_blocks_first_n_channels = decoder_blocks_in_and_out_channels[0][0]
-        self.input_layer = nn.Sequential(
-            ResBlock(
-                in_channels=input_latents_dim,
-                out_channels=decoder_blocks_first_n_channels,
-            ),
-            AttentionBlock(decoder_blocks_first_n_channels, num_heads=num_heads),
-            ResBlock(
-                in_channels=decoder_blocks_first_n_channels,
-                out_channels=decoder_blocks_first_n_channels,
-            ),
+        self.input_resblock_1 = ResBlock(
+            in_channels=input_latents_dim,
+            out_channels=decoder_blocks_first_n_channels,
+        )
+        self.input_attention = AttentionBlock(decoder_blocks_first_n_channels, num_heads=num_heads)
+        self.input_resblock_2 = ResBlock(
+            in_channels=decoder_blocks_first_n_channels,
+            out_channels=decoder_blocks_first_n_channels,
         )
 
-        self.decoder_blocks = nn.Sequential(*[
-            DecoderBlock(
-                in_channels=blocks_in_channels,
-                out_channels=blocks_out_channels,
-                n_res_blocks=n_res_blocks,
-                use_upsample=(not (i==(len(decoder_blocks_in_and_out_channels)-1))),
-            ) for i, (blocks_in_channels, blocks_out_channels) in enumerate(decoder_blocks_in_and_out_channels)
-        ])
-        
+        # define decoder blocks
+        self.decoder_blocks = nn.Sequential(
+            *[
+                DecoderBlock(
+                    in_channels=blocks_in_channels,
+                    out_channels=blocks_out_channels,
+                    n_res_blocks=n_res_blocks,
+                    use_upsample=(not (i == (len(decoder_blocks_in_and_out_channels) - 1))),
+                )
+                for i, (blocks_in_channels, blocks_out_channels) in enumerate(decoder_blocks_in_and_out_channels)
+            ]
+        )
+
+        # define output blocks
         decoder_blocks_last_n_channels = decoder_blocks_in_and_out_channels[-1][-1]
         self.output_layer = nn.Sequential(
             nn.GroupNorm(num_groups=32, num_channels=decoder_blocks_last_n_channels),
@@ -215,22 +221,26 @@ class LatentVisualizationDecoder(nn.Module):
         Returns:
             torch.Tensor:
                 Generated images.
-                (shape: 
+                (shape:
                     [
-                        batch_size, 
-                        3, 
-                        n_patches_height * (2**(len(decoder_blocks_in_and_out_channels)-1)), 
-                        n_patches_width * (2**(len(decoder_blocks_in_and_out_channels)-1)), 
+                        batch_size,
+                        3,
+                        n_patches_height * (2**(len(decoder_blocks_in_and_out_channels)-1)),
+                        n_patches_width * (2**(len(decoder_blocks_in_and_out_channels)-1)),
                     ]
                 )
         """
-        
+
         # reshape input latents
         batch_size = input_latents.size(0)
         height, width = self.input_n_patches
         input_latents = torch.reshape(input_latents, (batch_size, self.input_latents_dim, height, width))
-        # apply layers
-        feature = self.input_layer(input_latents)
+        # apply input layers
+        feature = self.input_resblock_1(input_latents)
+        feature = self.input_attention(feature)
+        feature = self.input_resblock_2(feature)
+        # apply decoder layers
         feature = self.decoder_blocks(feature)
+        # apply output layers
         output = self.output_layer(feature)
         return output
