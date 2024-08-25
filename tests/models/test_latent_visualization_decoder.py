@@ -91,7 +91,7 @@ class TestLatentVisualizationDecoder:
         ],
     )
     @pytest.mark.parametrize("n_res_blocks", [3])
-    @pytest.mark.parametrize("num_heads", [2])
+    @pytest.mark.parametrize("num_heads", [4])
     # test input params
     @pytest.mark.parametrize("batch_size", [1, 4])
     def test_latent_visualization_decoder(

@@ -5,7 +5,6 @@ import math
 import torch
 import torch.nn as nn
 
-from .components.unet.commons import AttentionBlock
 from .utils import size_2d, size_2d_to_int_tuple
 
 
@@ -178,7 +177,11 @@ class LatentVisualizationDecoder(nn.Module):
             in_channels=input_latents_dim,
             out_channels=decoder_blocks_first_n_channels,
         )
-        self.input_attention = AttentionBlock(decoder_blocks_first_n_channels, num_heads=num_heads)
+        self.input_attention = nn.MultiheadAttention(
+            embed_dim=decoder_blocks_first_n_channels, 
+            num_heads=num_heads, 
+            batch_first=True,
+        )
         self.input_resblock_2 = ResBlock(
             in_channels=decoder_blocks_first_n_channels,
             out_channels=decoder_blocks_first_n_channels,
@@ -237,7 +240,10 @@ class LatentVisualizationDecoder(nn.Module):
         input_latents = torch.reshape(input_latents, (batch_size, self.input_latents_dim, height, width))
         # apply input layers
         feature = self.input_resblock_1(input_latents)
-        feature = self.input_attention(feature)
+        batch_size, channels, height, width = feature.size()
+        feature = torch.reshape(feature, (batch_size, height*width, channels))
+        feature, _ = self.input_attention(query=feature, key=feature, value=feature)
+        feature = torch.reshape(feature, (batch_size, channels, height, width))
         feature = self.input_resblock_2(feature)
         # apply decoder layers
         feature = self.decoder_blocks(feature)
