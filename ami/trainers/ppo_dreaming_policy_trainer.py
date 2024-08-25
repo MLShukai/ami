@@ -377,7 +377,7 @@ def compute_advantage(
     """
     advantages = torch.empty_like(values)
 
-    lastgaelam = torch.Tensor([0.0])
+    lastgaelam = torch.tensor(0.0, device=values.device, dtype=values.dtype)
 
     for t in reversed(range(values.size(0))):
         if t == values.size(0) - 1:
