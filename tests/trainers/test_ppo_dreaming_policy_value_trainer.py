@@ -16,13 +16,13 @@ from ami.models.policy_value_common_net import (
     LerpStackedHidden,
 )
 from ami.models.utils import ModelWrappersDict
-from ami.trainers.ppo_dreaming_policy_trainer import (
+from ami.trainers.ppo_dreaming_policy_value_trainer import (
     BufferNames,
     ForwardDynamcisWithActionReward,
     ModelNames,
     ModelWrapper,
     PolicyValueCommonNet,
-    PPODreamingPolicyTrainer,
+    PPODreamingPolicyValueTrainer,
     RandomDataBuffer,
     StepIntervalLogger,
 )
@@ -39,7 +39,7 @@ CHUNK_SIZE = 16
 NUM_HEAD = 4
 
 
-class TestPPODreamingPolicyTrainer:
+class TestPPODreamingPolicyValueTrainer:
     @pytest.fixture
     def forward_dynamics(self):
         return ForwardDynamcisWithActionReward(
@@ -117,7 +117,7 @@ class TestPPODreamingPolicyTrainer:
         data_users_dict,
         logger,
     ):
-        trainer = PPODreamingPolicyTrainer(
+        trainer = PPODreamingPolicyValueTrainer(
             partial_dataloader,
             partial_optimizer,
             device,
@@ -129,21 +129,21 @@ class TestPPODreamingPolicyTrainer:
         trainer.attach_data_users_dict(data_users_dict)
         return trainer
 
-    def test_run(self, trainer: PPODreamingPolicyTrainer):
+    def test_run(self, trainer: PPODreamingPolicyValueTrainer):
         trainer.run()
 
-    def test_is_trainable(self, trainer: PPODreamingPolicyTrainer) -> None:
+    def test_is_trainable(self, trainer: PPODreamingPolicyValueTrainer) -> None:
         assert trainer.is_trainable() is True
         trainer.initial_states_data_user.clear()
         assert trainer.is_trainable() is False
 
-    def test_is_new_data_available(self, trainer: PPODreamingPolicyTrainer):
+    def test_is_new_data_available(self, trainer: PPODreamingPolicyValueTrainer):
         trainer.initial_states_data_user.update()
         assert trainer._is_new_data_available() is True
         trainer.run()
         assert trainer._is_new_data_available() is False
 
-    def test_save_and_load_state(self, trainer: PPODreamingPolicyTrainer, tmp_path, mocker) -> None:
+    def test_save_and_load_state(self, trainer: PPODreamingPolicyValueTrainer, tmp_path, mocker) -> None:
         trainer_path = tmp_path / "ppo_dreamer"
         trainer.save_state(trainer_path)
         assert trainer_path.exists()
@@ -162,7 +162,7 @@ class TestPPODreamingPolicyTrainer:
         mocked_logger_load_state_dict.assert_called_once_with(logger_state)
         assert trainer._current_train_count == 0
 
-    def test_imagine_trajectory(self, trainer: PPODreamingPolicyTrainer, device):
+    def test_imagine_trajectory(self, trainer: PPODreamingPolicyValueTrainer, device):
         batch_size = 8
         observation = torch.randn(batch_size, DIM_OBS, device=device)
         hidden = torch.randn(batch_size, DEPTH, DIM, device=device)
@@ -189,7 +189,7 @@ class TestPPODreamingPolicyTrainer:
         assert trajectory["advantages"].shape[0] == expected_trajectory_length
         assert trajectory["returns"].shape[0] == expected_trajectory_length
 
-    def test_ppo_step(self, trainer: PPODreamingPolicyTrainer, device):
+    def test_ppo_step(self, trainer: PPODreamingPolicyValueTrainer, device):
         observation = torch.randn(8, DIM_OBS, device=device)
         hidden = torch.randn(8, DEPTH, DIM, device=device)
         trajectory = trainer.imagine_trajectory((observation, hidden))

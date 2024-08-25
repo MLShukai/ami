@@ -1,4 +1,4 @@
-_target_: ami.trainers.ppo_dreaming_policy_trainer.PPODreamingPolicyTrainer
+_target_: ami.trainers.ppo_dreaming_policy_value_trainer.PPODreamingPolicyValueTrainer
 
 partial_dataloader:
   _target_: torch.utils.data.DataLoader

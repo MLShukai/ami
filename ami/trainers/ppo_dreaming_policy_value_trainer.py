@@ -36,7 +36,7 @@ class ImaginationTrajectory(TypedDict):
     returns: Tensor  # g_0:H
 
 
-class PPODreamingPolicyTrainer(BaseTrainer):
+class PPODreamingPolicyValueTrainer(BaseTrainer):
     """Training the policy and value model by Dreamer and PPO method.
 
     This class combines elements from Dreamer (for world model learning and imagination)
