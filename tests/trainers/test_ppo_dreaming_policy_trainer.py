@@ -162,10 +162,10 @@ class TestPPODreamingPolicyTrainer:
         mocked_logger_load_state_dict.assert_called_once_with(logger_state)
         assert trainer._current_train_count == 0
 
-    def test_imagine_trajectory(self, trainer: PPODreamingPolicyTrainer):
-        batch_size = 2
-        observation = torch.randn(batch_size, DIM_OBS)
-        hidden = torch.randn(batch_size, DEPTH, DIM)
+    def test_imagine_trajectory(self, trainer: PPODreamingPolicyTrainer, device):
+        batch_size = 8
+        observation = torch.randn(batch_size, DIM_OBS, device=device)
+        hidden = torch.randn(batch_size, DEPTH, DIM, device=device)
         trajectory = trainer.imagine_trajectory((observation, hidden))
 
         expected_trajectory_length = trainer.imagination_trajectory_length * batch_size
@@ -189,9 +189,9 @@ class TestPPODreamingPolicyTrainer:
         assert trajectory["advantages"].shape[0] == expected_trajectory_length
         assert trajectory["returns"].shape[0] == expected_trajectory_length
 
-    def test_ppo_step(self, trainer: PPODreamingPolicyTrainer):
-        observation = torch.randn(1, DIM_OBS)
-        hidden = torch.randn(1, DEPTH, DIM)
+    def test_ppo_step(self, trainer: PPODreamingPolicyTrainer, device):
+        observation = torch.randn(8, DIM_OBS, device=device)
+        hidden = torch.randn(8, DEPTH, DIM, device=device)
         trajectory = trainer.imagine_trajectory((observation, hidden))
 
         ppo_output = trainer.ppo_step(trajectory)
