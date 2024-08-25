@@ -23,7 +23,7 @@ logger:
 device: ${devices.0}
 max_epochs: 1
 entropy_coef: 0.001
-imagination_trajectory_length: 25
-imagination_temperature: 1.3
+imagination_trajectory_length: 15 # From Dreamer V3
+imagination_temperature: 1.0
 minimum_dataset_size: ${.partial_dataloader.batch_size}
 minimum_new_data_count: ${.partial_dataloader.batch_size}
