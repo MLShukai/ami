@@ -34,3 +34,5 @@ log_level: INFO
 time_scale: 1.0
 
 max_uptime: inf # This value will scale by `time_scale`.
+
+torch_float32_matmul_precision: "high" # Using tensor core.

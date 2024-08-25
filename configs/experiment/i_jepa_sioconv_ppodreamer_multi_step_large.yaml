@@ -1,0 +1,80 @@
+# @package _global_
+
+# ここに記述されるハイパーパラメータは、 RTX 4090を最大限使用する設定です。
+# 制約条件
+# - VRAM 24GB
+# - 1度のTraining Timeの合計時間が 12.8秒以下
+# - 10 FPSで推論動作
+
+defaults:
+  - i_jepa_sioconv_ppodreamer_multi_step
+
+shared:
+  image_height: 144
+  image_width: 144
+
+interaction:
+  agent:
+    max_imagination_steps: 50 # 5 sec
+
+models:
+  i_jepa_target_encoder:
+    model:
+      patch_size: 12
+      embed_dim: 648
+      out_dim: 32
+      depth: 12
+      num_heads: 9
+  i_jepa_predictor:
+    model:
+      hidden_dim: 324
+      depth: 12
+      num_heads: 4
+  forward_dynamics:
+    model:
+      observation_flatten:
+        dim_out: 2048
+      core_model:
+        depth: 12
+        dim: 2048
+        dim_ff_hidden: ${python.eval:"${.dim} * 2"}
+  policy_value:
+    model:
+      observation_projection:
+        dim_out: 1024
+      observation_hidden_projection:
+        dim_out: 1024
+      core_model:
+        dim_hidden: 1024
+        depth: 8
+
+data_collectors:
+  image:
+    max_len: ${python.eval:"24 * ${trainers.i_jepa.partial_dataloader.batch_size}"}
+  forward_dynamics_trajectory:
+    max_len: ${python.eval:"20 * ${trainers.forward_dynamics.partial_dataloader.batch_size}"}
+  dreaming_initial_states:
+    max_len: ${python.eval:"16 * ${trainers.dreaming_policy_value.partial_dataloader.batch_size}"}
+
+trainers:
+  i_jepa:
+    max_epochs: 1
+    partial_dataloader:
+      batch_size: 32
+    minimum_new_data_count: 128
+
+  forward_dynamics:
+    max_epochs: 1
+    partial_dataloader:
+      batch_size: ${python.eval:"256 + 1"}
+    minimum_new_data_count: 128
+
+  dreaming_policy_value:
+    update_start_train_count: 50
+    max_epochs: 1
+    partial_dataloader:
+      batch_size: 64
+    minimum_new_data_count: 128
+    imagination_temperature: 1.0
+
+task_name: i_jepa_sioconv_ppodreamer_multi_step_large
