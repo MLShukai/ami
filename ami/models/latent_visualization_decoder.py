@@ -178,8 +178,8 @@ class LatentVisualizationDecoder(nn.Module):
             out_channels=decoder_blocks_first_n_channels,
         )
         self.input_attention = nn.MultiheadAttention(
-            embed_dim=decoder_blocks_first_n_channels, 
-            num_heads=num_heads, 
+            embed_dim=decoder_blocks_first_n_channels,
+            num_heads=num_heads,
             batch_first=True,
         )
         self.input_resblock_2 = ResBlock(
@@ -241,7 +241,7 @@ class LatentVisualizationDecoder(nn.Module):
         # apply input layers
         feature = self.input_resblock_1(input_latents)
         batch_size, channels, height, width = feature.size()
-        feature = torch.reshape(feature, (batch_size, height*width, channels))
+        feature = torch.reshape(feature, (batch_size, height * width, channels))
         feature, _ = self.input_attention(query=feature, key=feature, value=feature)
         feature = torch.reshape(feature, (batch_size, channels, height, width))
         feature = self.input_resblock_2(feature)
