@@ -1,0 +1,37 @@
+# @package _global_
+
+# ここに記述されるハイパーパラメータは、 RTX 4090のVRAMを1/2 使用する設定です。 (~11GiB)
+
+defaults:
+  - i_jepa_sioconv_ppodreamer_multi_step_large
+
+models:
+  i_jepa_target_encoder:
+    model:
+      embed_dim: 432
+      depth: 9
+      num_heads: 6
+  i_jepa_predictor:
+    model:
+      hidden_dim: 216
+      depth: 9
+      num_heads: 3
+  forward_dynamics:
+    model:
+      observation_flatten:
+        dim_out: 1536
+      core_model:
+        depth: 9
+        dim: 1536
+        dim_ff_hidden: ${python.eval:"${.dim} * 2"}
+  policy_value:
+    model:
+      observation_projection:
+        dim_out: 768
+      observation_hidden_projection:
+        dim_out: 768
+      core_model:
+        dim_hidden: 768
+        depth: 6
+
+task_name: i_jepa_sioconv_ppodreamer_multi_step_medium
