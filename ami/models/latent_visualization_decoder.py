@@ -1,4 +1,3 @@
-
 import math
 
 import torch
@@ -188,13 +187,15 @@ class LatentVisualizationDecoder(nn.Module):
 
         # define decoder blocks
         self.decoder_blocks = nn.Sequential(
-            DecoderBlock(
-                in_channels=blocks_in_channels,
-                out_channels=blocks_out_channels,
-                n_res_blocks=n_res_blocks,
-                use_upsample=(not (i == (len(decoder_blocks_in_and_out_channels) - 1))),
-            )
-            for i, (blocks_in_channels, blocks_out_channels) in enumerate(decoder_blocks_in_and_out_channels)
+            *[
+                DecoderBlock(
+                    in_channels=blocks_in_channels,
+                    out_channels=blocks_out_channels,
+                    n_res_blocks=n_res_blocks,
+                    use_upsample=(not (i == (len(decoder_blocks_in_and_out_channels) - 1))),
+                )
+                for i, (blocks_in_channels, blocks_out_channels) in enumerate(decoder_blocks_in_and_out_channels)
+            ]
         )
 
         # define output blocks
