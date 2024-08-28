@@ -1,0 +1,20 @@
+# @package _global_
+
+defaults:
+  - bool_mask_i_jepa
+  - override /interaction/environment: video_folders
+  - override /models: bool_mask_i_jepa_medium
+
+interaction:
+  environment:
+    observation_generator:
+      video_frames_per_videos: ${python.eval:"int(10 * ${cvt_time_str:4h})"} # 10FPS, 4時間分. 6本の動画で24時間分
+      folders:
+        - ${paths.data_dir}/random_observation_action_log/2024-08-26_12-55-45/io/video_recordings
+        - ${paths.data_dir}/random_observation_action_log/2024-08-26_13-00-14/io/video_recordings
+        - ${paths.data_dir}/random_observation_action_log/2024-08-26_13-04-15/io/video_recordings
+        - ${paths.data_dir}/random_observation_action_log/2024-08-26_13-08-31/io/video_recordings
+        - ${paths.data_dir}/random_observation_action_log/2024-08-27_09-28-27/io/video_recordings
+        - ${paths.data_dir}/random_observation_action_log/2024-08-27_09-31-50/io/video_recordings
+
+task_name: bool_mask_i_jepa_with_videos
