@@ -22,3 +22,6 @@ checkpoints_dir: ${.output_dir}/checkpoints
 
 # path to the ami input/output (observation/action) logging directory
 io_log_dir: ${.output_dir}/io
+
+# path to the data directory.
+data_dir: ${.root_dir}/data
