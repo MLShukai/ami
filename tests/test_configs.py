@@ -45,7 +45,7 @@ HYDRA_OVERRIDES = [[]] + EXPERIMENT_CONFIG_OVERRIDES
 
 @pytest.mark.parametrize("overrides", HYDRA_OVERRIDES)
 def test_instantiate(overrides: list[str], mocker: MockerFixture, tmp_path):
-    mocker.patch("cv2.VideoCapture")
+    conditional_video_capture_mock(mocker)
     mocker.patch("pythonosc.udp_client.SimpleUDPClient")
     with hydra.initialize_config_dir(str(CONFIG_DIR)):
         cfg = hydra.compose(LAUNCH_CONFIG, overrides=overrides + ["devices=cpu"], return_hydra_config=True)
@@ -64,7 +64,7 @@ def test_instantiate(overrides: list[str], mocker: MockerFixture, tmp_path):
 
 
 def conditional_video_capture_mock(mocker: MockerFixture):
-    original_video_capture = cv2.VideoCapture
+    original_video_capture = cv2.VideoCapture  # avoid mock reference.
 
     def mock_video_capture(*args, **kwargs):
         if len(args) > 0 and isinstance(args[0], str):
@@ -72,9 +72,10 @@ def conditional_video_capture_mock(mocker: MockerFixture):
             return original_video_capture(*args, **kwargs)
         else:
             # For other cases (e.g., camera index), return a mock object
-            mock = mocker.Mock()
+            mock = mocker.Mock(spec=original_video_capture)
             mock.isOpened.return_value = True
             mock.read.return_value = (True, np.zeros((480, 640, 3), dtype=np.uint8))
+            mock.get.return_value = 1.0
             return mock
 
     return mocker.patch("cv2.VideoCapture", side_effect=mock_video_capture)
