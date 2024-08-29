@@ -3,6 +3,7 @@ from typing import Iterator
 
 import cv2
 import torch
+from torchvision.transforms import v2
 
 
 class FolderAsVideo:
@@ -140,3 +141,91 @@ class FolderAsVideo:
         if self.is_finished:
             raise StopIteration
         return self.read()
+
+
+class VideoFoldersImageObservationGenerator:
+    """Generates image observations from multiple video folders.
+
+    This class processes video files from specified folders
+    sequentially, yielding image tensors as observations. It supports
+    various video formats, custom starting frames, and frame limits for
+    each video folder.
+    """
+
+    def __init__(
+        self,
+        folder_paths: list[str | Path],
+        image_size: tuple[int, int],
+        video_extensions: tuple[str, ...] = ("mp4",),
+        folder_start_frames: int | list[int] = 0,
+        folder_frame_limits: int | None | list[int | None] = None,
+    ):
+        """Initialize the VideoFoldersImageObservationGenerator.
+
+        Args:
+            folder_paths: List of paths to folders containing video files.
+            image_size: Desired size for output images (height, width).
+            video_extensions: Tuple of video file extensions to process.
+            folder_start_frames: Starting frame(s) for each video folder.
+            folder_frame_limits: Maximum number of frames to use from each folder.
+                                 None means use all available frames.
+
+        Raises:
+            ValueError: If the length of folder_start_frames or folder_frame_limits
+                        doesn't match the number of folders when provided as lists.
+        """
+        self.folder_paths = [Path(folder) for folder in folder_paths]
+        self.image_size = image_size
+
+        # Process start frames
+        if isinstance(folder_start_frames, int):
+            self.folder_start_frames = [folder_start_frames] * len(self.folder_paths)
+        else:
+            if len(folder_start_frames) != len(self.folder_paths):
+                raise ValueError("Length of folder_start_frames must match the number of folders")
+            self.folder_start_frames = folder_start_frames
+
+        # Process frame limits
+        if folder_frame_limits is None or isinstance(folder_frame_limits, int):
+            self.folder_frame_limits = [folder_frame_limits] * len(self.folder_paths)
+        else:
+            if len(folder_frame_limits) != len(self.folder_paths):
+                raise ValueError("Length of folder_frame_limits must match the number of folders")
+            self.folder_frame_limits = folder_frame_limits
+
+        # Initialize FolderAsVideo objects for each folder
+        self.folder_videos = [
+            FolderAsVideo(folder, video_extensions, True, start_frame, max_frames)
+            for folder, start_frame, max_frames in zip(
+                self.folder_paths, self.folder_start_frames, self.folder_frame_limits
+            )
+        ]
+
+        self.current_folder_index = 0
+
+    def __call__(self) -> torch.Tensor:
+        """Generate the next image observation.
+
+        Returns:
+            A tensor representing the next video frame.
+
+        Raises:
+            StopIteration: When all videos in all folders have been processed.
+        """
+        while self.current_folder_index < len(self.folder_videos):
+            current_video = self.folder_videos[self.current_folder_index]
+            if not current_video.is_finished:
+                frame = current_video.read()
+                # Resize the frame to the target size
+                return v2.functional.resize(frame, self.image_size)
+            else:
+                # Move to the next folder
+                self.current_folder_index += 1
+
+        raise StopIteration("All videos have been processed")
+
+    def __iter__(self) -> Iterator[torch.Tensor]:
+        return self
+
+    def __next__(self) -> torch.Tensor:
+        return self.__call__()
