@@ -3,7 +3,6 @@ defaults:
 
 i_jepa_target_encoder:
   model:
-    patch_size: 12
     embed_dim: 648
     out_dim: 32
     depth: 12

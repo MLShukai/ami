@@ -13,7 +13,7 @@ i_jepa_target_encoder:
       - ${shared.image_height}
       - ${shared.image_width}
     in_channels: ${shared.image_channels}
-    patch_size: 16
+    patch_size: 12
     embed_dim: 768
     out_dim: 384
     depth: 12
