@@ -2,7 +2,7 @@ _target_: ami.interactions.environments.dummy_environment.DummyEnvironment
 
 observation_generator:
   _target_: ami.interactions.environments.video_folders_image_observation_generator.VideoFoldersImageObservationGenerator
-  folders: ??? # Please specify video folders.
+  folder_paths: ??? # Please specify video folders.
   image_size:
     - ${shared.image_height}
     - ${shared.image_width}
