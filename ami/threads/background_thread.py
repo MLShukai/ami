@@ -35,6 +35,13 @@ class BackgroundThread(BaseThread):
         self.logger.info("Starts background thread.")
         self._thread.start()
 
+    def run(self) -> None:
+        try:
+            return super().run()
+        except Exception:
+            self.thread_command_handler.set_exception_flag()
+            raise
+
     def is_alive(self) -> bool:
         return self._thread.is_alive()
 

@@ -140,6 +140,7 @@ class ThreadCommandHandler:
         self._controller = controller
         self.check_resume_interval = check_resume_interval
         self._loop_pause_event = threading.Event()
+        self._exception_event = threading.Event()
 
     def is_active(self) -> bool:
         """Checks if the managed thread should continue running."""
@@ -208,6 +209,14 @@ class ThreadCommandHandler:
             bool: Whethers the loop is paused or not.
         """
         return self._loop_pause_event.wait(timeout)
+
+    def set_exception_flag(self) -> None:
+        """Sets the exception flag."""
+        self._exception_event.set()
+
+    def is_exception_raised(self) -> bool:
+        """Returns the exception flag."""
+        return self._exception_event.is_set()
 
 
 class ThreadControllerStatus:

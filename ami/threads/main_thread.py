@@ -5,7 +5,7 @@ from ..checkpointing.checkpoint_schedulers import BaseCheckpointScheduler
 from .base_thread import BaseThread
 from .shared_object_names import SharedObjectNames
 from .thread_control import ThreadController, ThreadControllerStatus
-from .thread_types import ThreadTypes
+from .thread_types import ThreadTypes, get_thread_name_from_type
 from .web_api_handler import ControlCommands, WebApiHandler
 
 AddressType: TypeAlias = tuple[str, int]  # host, port
@@ -73,6 +73,10 @@ class MainThread(BaseThread):
                     self.logger.info("Shutting down by reaching maximum uptime.")
                     break
 
+                if self.check_background_threads_exception():
+                    self.logger.error("An exception occurred. The system will terminate immediately.")
+                    break
+
                 time.sleep(0.001)
 
         except KeyboardInterrupt:
@@ -125,3 +129,13 @@ class MainThread(BaseThread):
         self.logger.info(f"Saved a checkpoint to '{ckpt_path}'")
 
         self.thread_controller.resume()
+
+    def check_background_threads_exception(self) -> bool:
+        """Checks the some exceptions has occurred in the background
+        threads."""
+        flag = False
+        for thread_type, handler in self.thread_controller.handlers.items():
+            if handler.is_exception_raised():
+                self.logger.error(f"The exception has occurred in the {get_thread_name_from_type(thread_type)} thread.")
+                flag = True
+        return flag

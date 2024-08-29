@@ -4,6 +4,7 @@ from typing import Generator
 import bottle
 import pytest
 import requests
+from pytest import LogCaptureFixture
 from webtest import TestApp
 
 from ami.threads.inference_thread import InferenceThread
@@ -52,3 +53,28 @@ def test_shutdown_by_max_uptime(
     tt.join()
 
     assert "Shutting down by reaching maximum uptime." in caplog.messages
+
+
+def test_setting_exception_flag(caplog: LogCaptureFixture, thread_objects, mocker) -> None:
+    caplog.set_level("INFO")
+    mt, it, tt = thread_objects
+    mt: MainThread
+    it: InferenceThread
+    tt: TrainingThread
+
+    def exception_worker():
+        raise Exception
+
+    it.worker = exception_worker
+    tt.worker = exception_worker
+    mt.save_checkpoint = mocker.Mock()  # For avoid pausing after exception.
+
+    it.start()
+    tt.start()
+
+    mt.run()
+
+    assert it.thread_command_handler.is_exception_raised()
+    assert tt.thread_command_handler.is_exception_raised()
+
+    assert "An exception occurred. The system will terminate immediately." in caplog.messages
