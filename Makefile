@@ -62,3 +62,11 @@ docker-run-unity: ## Run the built Docker image with Unity executables
 	--mount type=bind,source=`pwd`/logs,target=/workspace/logs \
 	--mount type=bind,source=`pwd`/unity_executables,target=/workspace/unity_executables \
 	ami-vconf24:$(NAME)
+
+DATA_DIR := `pwd`/data
+docker-run-with-data:
+	docker run -it $(DOCKER_GPU_OPTION) \
+	--mount type=volume,source=ami-vconf24_$(NAME),target=/workspace \
+	--mount type=bind,source=`pwd`/logs,target=/workspace/logs \
+	--mount type=bind,source=$(DATA_DIR),target=/workspace/data,readonly \
+	ami-vconf24:$(NAME)

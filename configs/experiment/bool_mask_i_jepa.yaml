@@ -6,7 +6,18 @@ defaults:
   - override /shared: default
 
 shared:
-  image_width: 224
-  image_height: 224
+  image_width: 144
+  image_height: 144
+
+data_collectors:
+  image:
+    max_len: ${python.eval:"24 * ${trainers.i_jepa.partial_dataloader.batch_size}"}
+
+trainers:
+  i_jepa:
+    max_epochs: 1
+    partial_dataloader:
+      batch_size: 32
+    minimum_new_data_count: 128
 
 task_name: bool_mask_i_jepa
