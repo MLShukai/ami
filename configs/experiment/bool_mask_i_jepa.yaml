@@ -20,5 +20,4 @@ trainers:
       batch_size: 32
     minimum_new_data_count: 128
 
-
 task_name: bool_mask_i_jepa
