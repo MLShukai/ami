@@ -51,12 +51,12 @@ class FolderAsVideo:
 
         self.current_video_index = 0
         self.current_frame = 0
-        self.current_video = None
+        self.current_video: cv2.VideoCapture
         self._initialize_video()
 
     def _get_video_files(self, sort_by_name: bool) -> list[Path]:
         """Get a list of video files in the folder."""
-        video_files = []
+        video_files: list[Path] = []
         for ext in self.extensions:
             video_files.extend(self.folder.glob(f"*.{ext}"))
         return sorted(video_files) if sort_by_name else video_files
@@ -93,20 +93,17 @@ class FolderAsVideo:
             remaining_frames -= frames_in_video
             cap.release()
 
-        self.current_video = None
-
-    def read(self) -> torch.Tensor | None:
-        """Read one frame from the video. Returns None if all frames have been
-        read.
+    def read(self) -> torch.Tensor:
+        """Read one frame from the video.
 
         Returns:
-            torch.Tensor | None: The read frame as a torch.Tensor, or None if no more frames.
+            torch.Tensor: The read frame as a torch.Tensor.
 
         Raises:
-            RuntimeError: If there's an error reading the video file.
+            RuntimeError: If there's an error reading the video file or if all frames have been read.
         """
-        if self.is_finished or self.current_video is None:
-            return None
+        if self.is_finished:
+            raise RuntimeError("All frames have been read")
 
         ret, frame = self.current_video.read()
         if not ret:
@@ -125,8 +122,7 @@ class FolderAsVideo:
                 self.current_video = self._open_video_file(self.video_files[self.current_video_index])
                 return self.read()
             else:
-                self.current_video = None
-                return None
+                raise RuntimeError("All frames have been read")
 
         self.current_frame += 1
         frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
@@ -141,7 +137,6 @@ class FolderAsVideo:
         return self
 
     def __next__(self) -> torch.Tensor:
-        frame = self.read()
-        if frame is None:
+        if self.is_finished:
             raise StopIteration
-        return frame
+        return self.read()

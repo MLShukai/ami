@@ -19,7 +19,7 @@ class TestFolderAsVideo:
 
     @staticmethod
     def create_test_video(file_path, num_frames=10, width=64, height=64):
-        fourcc = cv2.VideoWriter_fourcc(*"mp4v")
+        fourcc = cv2.VideoWriter.fourcc(*"mp4v")
         out = cv2.VideoWriter(str(file_path), fourcc, 30, (width, height))
 
         for _ in range(num_frames):
@@ -63,3 +63,12 @@ class TestFolderAsVideo:
 
         with pytest.raises(ValueError):
             FolderAsVideo(video_folder, max_frames=999999)
+
+    def test_overread_error(self, video_folder):
+        folder_video = FolderAsVideo(video_folder, start_frame=0, max_frames=5)
+        for _ in range(5):
+            folder_video.read()
+
+        assert folder_video.is_finished
+        with pytest.raises(RuntimeError):
+            folder_video.read()
