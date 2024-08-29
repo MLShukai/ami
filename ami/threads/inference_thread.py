@@ -46,33 +46,34 @@ class InferenceThread(BackgroundThread):
     def worker(self) -> None:
         self.logger.info("Start inference thread.")
 
-        self.interaction.setup()
+        try:
+            self.interaction.setup()
 
-        self.logger.debug("Start the interaction loop.")
+            self.logger.debug("Start the interaction loop.")
 
-        elapsed_times: list[float] = []
-        previous_logged_time = time.perf_counter()
+            elapsed_times: list[float] = []
+            previous_logged_time = time.perf_counter()
 
-        while self.thread_command_handler.manage_loop():
-            start = time.perf_counter()
+            while self.thread_command_handler.manage_loop():
+                start = time.perf_counter()
 
-            self.interaction.step()
-            time.sleep(1e-9)  # GILのコンテキストスイッチングを意図的に呼び出す。
+                self.interaction.step()
+                time.sleep(1e-9)  # GILのコンテキストスイッチングを意図的に呼び出す。
 
-            elapsed_times.append(time.perf_counter() - start)
+                elapsed_times.append(time.perf_counter() - start)
 
-            if time.perf_counter() - previous_logged_time > self.log_step_time_interval:
-                mean_elapsed_time = np.mean(elapsed_times)
-                std_elapsed_time = np.std(elapsed_times)
-                self.logger.info(
-                    f"Step time: {mean_elapsed_time:.3e} ± {std_elapsed_time:.3e} [s] in {len(elapsed_times)} steps."
-                )
-                elapsed_times.clear()
-                previous_logged_time = time.perf_counter()
+                if time.perf_counter() - previous_logged_time > self.log_step_time_interval:
+                    mean_elapsed_time = np.mean(elapsed_times)
+                    std_elapsed_time = np.std(elapsed_times)
+                    self.logger.info(
+                        f"Step time: {mean_elapsed_time:.3e} ± {std_elapsed_time:.3e} [s] in {len(elapsed_times)} steps."
+                    )
+                    elapsed_times.clear()
+                    previous_logged_time = time.perf_counter()
 
-        self.logger.debug("End the interaction loop.")
-
-        self.interaction.teardown()
+            self.logger.debug("End the interaction loop.")
+        finally:
+            self.interaction.teardown()
 
         self.logger.info("End the inference thread.")
 
