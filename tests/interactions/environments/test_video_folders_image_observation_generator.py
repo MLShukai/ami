@@ -144,7 +144,7 @@ class TestVideoFoldersImageObservationGenerator:
             folder_frame_limits=[5, None],
         )
 
-        frames = list(iter(generator))
+        frames = list(generator)
         assert len(frames) == 10  # 5 from first folder, 5 from second folder
 
     def test_stop_iteration(self, video_folder):
