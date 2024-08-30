@@ -26,7 +26,7 @@ class BoolIJEPAMultiBlockMaskCollator:
         self,
         input_size: size_2d,
         patch_size: size_2d,
-        mask_scale: tuple[float, float] = (0.10, 0.25),  # masking 1/9 ~ 1/4 region
+        mask_scale: tuple[float, float] = (0.10, 0.25),  # masking 1/10 ~ 1/4 region
         n_masks: int = 4,
         aspect_ratio: tuple[float, float] = (0.75, 1.5),
         min_keep: int = 10,
