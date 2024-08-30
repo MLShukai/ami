@@ -128,6 +128,7 @@ class BoolMaskIJEPATrainer(BaseTrainer):
                 loss = losses.sum() / targets_for_predictor.sum()
 
                 self.logger.log("i-jepa/metrics/target-encoder-latent-std", latent_from_target_encoder.std(0).mean())
+                self.logger.log("i-jepa/metrics/context-encoder-latent-std", latent_from_context_encoder.std(0).mean())
                 self.logger.log("i-jepa/losses/smooth-l1", loss)
                 loss.backward()
                 optimizer.step()
