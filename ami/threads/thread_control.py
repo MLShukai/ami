@@ -210,6 +210,7 @@ class ThreadCommandHandler:
         """
         return self._loop_pause_event.wait(timeout)
 
+    # TODO: https://github.com/MLShukai/ami-vconf24/issues/93
     def set_exception_flag(self) -> None:
         """Sets the exception flag."""
         self._exception_event.set()
