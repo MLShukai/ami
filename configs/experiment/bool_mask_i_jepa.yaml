@@ -9,6 +9,14 @@ shared:
   image_width: 144
   image_height: 144
 
+interaction:
+  observation_wrappers:
+    - _target_: ami.interactions.io_wrappers.function_wrapper.FunctionIOWrapper
+      wrap_function:
+        _target_: ami.interactions.io_wrappers.function_wrapper.normalize_tensor
+        _partial_: True
+        eps: 1e-6
+
 data_collectors:
   image:
     max_len: ${python.eval:"24 * ${trainers.i_jepa.partial_dataloader.batch_size}"}
