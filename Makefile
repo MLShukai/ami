@@ -28,9 +28,10 @@ type:
 run: format test-full type
 
 NAME := $(shell whoami)
+DOCKER_IMAGE_NAME := ami-vconf24:$(NAME)
 
 docker-build: ## Build docker image.
-	docker build -t ami-vconf24:$(NAME) --no-cache .
+	docker build -t $(DOCKER_IMAGE_NAME) --no-cache .
 
 # Docker GPU Option.
 USING_GPU_DEVICES := all # Index 0,1,2, ... or device UUID.
@@ -46,7 +47,7 @@ endif
 docker-run: ## Run built docker image.
 	docker run -it $(DOCKER_GPU_OPTION) \
 	--mount type=volume,source=ami-vconf24_$(NAME),target=/workspace \
-	ami-vconf24:$(NAME)
+	$(DOCKER_IMAGE_NAME)
 
 docker-run-host: ## Run the built Docker image along with network, camera, and other host OS device access
 	docker run -it $(DOCKER_GPU_OPTION) \
@@ -54,14 +55,14 @@ docker-run-host: ## Run the built Docker image along with network, camera, and o
 	--mount type=bind,source=`pwd`/logs,target=/workspace/logs \
 	--device `v4l2-ctl --list-devices | grep -A 1 'OBS Virtual Camera' | grep -oP '\t\K/dev.*'`:/dev/video0:mwr \
 	--net host \
-	ami-vconf24:$(NAME)
+	$(DOCKER_IMAGE_NAME)
 
 docker-run-unity: ## Run the built Docker image with Unity executables
 	docker run -it $(DOCKER_GPU_OPTION) \
 	--mount type=volume,source=ami-vconf24_$(NAME),target=/workspace \
 	--mount type=bind,source=`pwd`/logs,target=/workspace/logs \
 	--mount type=bind,source=`pwd`/unity_executables,target=/workspace/unity_executables \
-	ami-vconf24:$(NAME)
+	$(DOCKER_IMAGE_NAME)
 
 DATA_DIR := `pwd`/data
 docker-run-with-data:
@@ -69,4 +70,13 @@ docker-run-with-data:
 	--mount type=volume,source=ami-vconf24_$(NAME),target=/workspace \
 	--mount type=bind,source=`pwd`/logs,target=/workspace/logs \
 	--mount type=bind,source=$(DATA_DIR),target=/workspace/data,readonly \
-	ami-vconf24:$(NAME)
+	$(DOCKER_IMAGE_NAME)
+
+docker-attach: # 一番最後に起動したコンテナにアタッチする。
+	@container_id=$$(docker ps --filter "ancestor=$(DOCKER_IMAGE_NAME)" --latest --quiet); \
+	if [ -n "$$container_id" ]; then \
+		echo "Attaching to container $$container_id"; \
+		docker exec -it $$container_id bash; \
+	else \
+		echo "No running container with image '$(DOCKER_IMAGE_NAME)' found."; \
+	fi
