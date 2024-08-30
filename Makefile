@@ -51,6 +51,7 @@ docker-run: ## Run built docker image.
 	docker run -itd $(DOCKER_GPU_OPTION) \
 	$(DOCKER_PORT_OPTION) \
 	--mount type=volume,source=ami-vconf24_$(NAME),target=/workspace \
+	--mount type=bind,source=`pwd`/logs,target=/workspace/logs \
 	$(DOCKER_IMAGE_NAME)
 
 docker-run-host: ## Run the built Docker image along with network, camera, and other host OS device access
