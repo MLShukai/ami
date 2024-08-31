@@ -29,6 +29,7 @@ class TestRandomDataBuffer:
         for _ in range(32):
             mod.add(self.step_data)
         assert len(mod) == self.max_len
+        assert mod.count_data_added_since(float("-inf")) == self.max_len
 
     def test_concatenate(self):
         mod1 = RandomDataBuffer.reconstructable_init(self.max_len, self.key_list)
@@ -62,10 +63,6 @@ class TestRandomDataBuffer:
         assert mod.count_data_added_since(previous_get_time) == 2
         assert mod.count_data_added_since(time.time()) == 0
 
-        # test overflow
-        for _ in range(32):
-            mod.add(self.step_data)
-        assert mod.count_data_added_since(previous_get_time) == self.max_len
 
     def test_save_and_load_state(self, tmp_path):
         mod = RandomDataBuffer.reconstructable_init(self.max_len, self.key_list)
