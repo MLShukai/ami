@@ -4,14 +4,14 @@ from typing import Optional
 import pytest
 import torch
 
-from ami.models.latent_visualization_decoder import (
+from ami.models.i_jepa_latent_visualization_decoder import (
     DecoderBlock,
-    LatentVisualizationDecoder,
+    IJEPALatentVisualizationDecoder,
     ResBlock,
 )
 
 
-class TestLatentVisualizationDecoder:
+class TestIJEPALatentVisualizationDecoder:
     # model params
     @pytest.mark.parametrize("in_channels", [32, 128])
     @pytest.mark.parametrize("out_channels", [32, 128])
@@ -94,7 +94,7 @@ class TestLatentVisualizationDecoder:
     @pytest.mark.parametrize("num_heads", [4])
     # test input params
     @pytest.mark.parametrize("batch_size", [1, 4])
-    def test_latent_visualization_decoder(
+    def test_i_jepa_latent_visualization_decoder(
         self,
         input_n_patches_height: int,
         input_n_patches_width: int,
@@ -105,7 +105,7 @@ class TestLatentVisualizationDecoder:
         batch_size: int,
     ):
         # define resblock
-        latent_visualization_decoder = LatentVisualizationDecoder(
+        i_jepa_latent_visualization_decoder = IJEPALatentVisualizationDecoder(
             input_n_patches=(input_n_patches_height, input_n_patches_width),
             input_latents_dim=input_latents_dim,
             decoder_blocks_in_and_out_channels=decoder_blocks_in_and_out_channels,
@@ -116,7 +116,7 @@ class TestLatentVisualizationDecoder:
         n_patches = input_n_patches_height * input_n_patches_width
         latents = torch.randn([batch_size, n_patches, input_latents_dim])
         # get output images
-        out_images = latent_visualization_decoder(latents)
+        out_images = i_jepa_latent_visualization_decoder(latents)
         # check size of output latents
         magnification = 2 ** (len(decoder_blocks_in_and_out_channels) - 1)
         expected_height = input_n_patches_height * magnification

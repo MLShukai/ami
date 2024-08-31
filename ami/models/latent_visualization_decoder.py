@@ -7,7 +7,7 @@ from .utils import size_2d, size_2d_to_int_tuple
 
 
 class ResBlock(nn.Module):
-    """A residual block for LatentVisualizationDecoder Components."""
+    """A residual block for IJEPALatentVisualizationDecoder Components."""
 
     def __init__(
         self,
@@ -16,7 +16,7 @@ class ResBlock(nn.Module):
         num_norm_groups_in_input_layer: int = 32,
         num_norm_groups_in_output_layer: int = 32,
     ) -> None:
-        """A residual block for LatentVisualizationDecoder Components.
+        """A residual block for IJEPALatentVisualizationDecoder Components.
 
         Args:
             in_channels (int):
@@ -81,7 +81,7 @@ class DecoderBlock(nn.Module):
         n_res_blocks: int,
         use_upsample: bool,
     ) -> None:
-        """A block for LatentVisualizationDecoderr.
+        """A block for IJEPALatentVisualizationDecoderr.
 
         Args:
             in_channels (int):
@@ -138,7 +138,7 @@ class DecoderBlock(nn.Module):
         return feature
 
 
-class LatentVisualizationDecoder(nn.Module):
+class IJEPALatentVisualizationDecoder(nn.Module):
     """Decoder for visualizing latents as image."""
 
     def __init__(
