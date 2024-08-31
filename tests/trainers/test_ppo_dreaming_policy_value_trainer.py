@@ -150,17 +150,21 @@ class TestPPODreamingPolicyValueTrainer:
         assert (trainer_path / "optimizer.pt").exists()
         assert (trainer_path / "logger.pt").exists()
         assert (trainer_path / "current_train_count.pt").exists()
+        assert (trainer_path / "dataset_previous_get_time.pt").exists()
         logger_state = trainer.logger.state_dict()
+        dataset_previous_get_time = trainer.dataset_previous_get_time
 
         mocked_logger_load_state_dict = mocker.spy(trainer.logger, "load_state_dict")
         trainer.optimizer_state.clear()
         trainer._current_train_count = -1
+        trainer.dataset_previous_get_time = None
         assert trainer.optimizer_state == {}
         assert trainer._current_train_count == -1
         trainer.load_state(trainer_path)
         assert trainer.optimizer_state != {}
         mocked_logger_load_state_dict.assert_called_once_with(logger_state)
         assert trainer._current_train_count == 0
+        assert trainer.dataset_previous_get_time == dataset_previous_get_time
 
     def test_imagine_trajectory(self, trainer: PPODreamingPolicyValueTrainer, device):
         batch_size = 8

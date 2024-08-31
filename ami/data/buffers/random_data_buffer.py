@@ -1,5 +1,6 @@
-import json
 import pickle
+import time
+from collections import deque
 from pathlib import Path
 
 import numpy as np
@@ -13,8 +14,6 @@ from .base_data_buffer import BaseDataBuffer
 
 class RandomDataBuffer(BaseDataBuffer):
     """A data buffer which does not preserve data order."""
-
-    new_data_count: int  # Count of new data added since the last `make_dataset`.
 
     def __init__(self, max_len: int, key_list: list[DataKeys | str]) -> None:
         """Initializes data buffer.
@@ -31,7 +30,7 @@ class RandomDataBuffer(BaseDataBuffer):
         for key in self.__key_list:
             self.__buffer_dict[key] = []
 
-        self.new_data_count = 0
+        self._added_times: deque[float] = deque(maxlen=max_len)
 
     def __len__(self) -> int:
         """Returns current data length.
@@ -47,7 +46,6 @@ class RandomDataBuffer(BaseDataBuffer):
         Args:
             step_data: A single step of data.
         """
-        self.new_data_count = min(self.new_data_count + 1, self.__max_len)
         if len(self) < self.__max_len:
             for key in self.__key_list:
                 self.__buffer_dict[key].append(torch.Tensor(step_data[key]).cpu())
@@ -55,6 +53,7 @@ class RandomDataBuffer(BaseDataBuffer):
             replace_index = np.random.randint(0, self.__max_len)
             for key in self.__key_list:
                 self.__buffer_dict[key][replace_index] = torch.Tensor(step_data[key]).cpu()
+        self._added_times.append(time.time())
 
     @property
     def buffer_dict(self) -> dict[DataKeys, list[torch.Tensor]]:
@@ -78,11 +77,24 @@ class RandomDataBuffer(BaseDataBuffer):
         Returns:
             TensorDataset: a TensorDataset created from current buffer.
         """
-        self.new_data_count = 0
         tensor_list = []
         for key in self.__key_list:
             tensor_list.append(torch.stack(self.__buffer_dict[key]))
         return TensorDataset(*tensor_list)
+
+    def count_data_added_since(self, previous_get_time: float) -> int:
+        """Counts the number of data points added since a specified time.
+
+        Args:
+            previous_get_time: The reference time to count from.
+
+        Returns:
+            int: The number of data points added since the specified time.
+        """
+        for i, t in enumerate(reversed(self._added_times)):
+            if t < previous_get_time:
+                return i
+        return len(self._added_times)
 
     @override
     def save_state(self, path: Path) -> None:
@@ -92,8 +104,8 @@ class RandomDataBuffer(BaseDataBuffer):
             with open(file_name, "wb") as f:
                 pickle.dump(value, f)
 
-        with open(path / "state.json", "w", encoding="utf-8") as f:
-            json.dump({"new_data_count": self.new_data_count}, f, indent=2)
+        with open(path / "_added_times.pkl", "wb") as f:
+            pickle.dump(self._added_times, f)
 
     @override
     def load_state(self, path: Path) -> None:
@@ -102,6 +114,5 @@ class RandomDataBuffer(BaseDataBuffer):
             with open(file_name, "rb") as f:
                 self.__buffer_dict[key] = pickle.load(f)[: self.__max_len]
 
-        with open(path / "state.json", encoding="utf-8") as f:
-            state = json.load(f)
-            self.new_data_count = min(self.__max_len, state["new_data_count"])
+        with open(path / "_added_times.pkl", "rb") as f:
+            self._added_times = deque(pickle.load(f), maxlen=self.__max_len)
