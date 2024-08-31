@@ -63,7 +63,6 @@ class TestRandomDataBuffer:
         assert mod.count_data_added_since(previous_get_time) == 2
         assert mod.count_data_added_since(time.time()) == 0
 
-
     def test_save_and_load_state(self, tmp_path):
         mod = RandomDataBuffer.reconstructable_init(self.max_len, self.key_list)
         previous_get_time = float("-inf")
