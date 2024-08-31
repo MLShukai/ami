@@ -1,3 +1,4 @@
+import time
 from functools import partial
 from pathlib import Path
 from typing import TypedDict
@@ -6,7 +7,7 @@ import torch
 from torch import Tensor
 from torch.distributions import Distribution
 from torch.optim import Optimizer
-from torch.utils.data import DataLoader
+from torch.utils.data import DataLoader, Dataset
 from typing_extensions import override
 
 from ami.data.buffers.buffer_names import BufferNames
@@ -121,6 +122,7 @@ class PPODreamingPolicyValueTrainer(BaseTrainer):
         self._current_train_count = 0
 
         self.console_logger = get_training_thread_logger(self.__class__.__name__)
+        self.dataset_previous_get_time = float("-inf")
 
     @override
     def on_data_users_dict_attached(self) -> None:
@@ -146,7 +148,15 @@ class PPODreamingPolicyValueTrainer(BaseTrainer):
         return len(self.initial_states_data_user.buffer) >= self.minimum_dataset_size
 
     def _is_new_data_available(self) -> bool:
-        return self.initial_states_data_user.buffer.new_data_count >= self.minimum_new_data_count
+        return (
+            self.initial_states_data_user.buffer.count_data_added_since(self.dataset_previous_get_time)
+            >= self.minimum_new_data_count
+        )
+
+    def get_dataset(self) -> Dataset[Tensor]:
+        dataset = self.initial_states_data_user.get_dataset()
+        self.dataset_previous_get_time = time.time()
+        return dataset
 
     @override
     def train(self) -> None:
@@ -159,8 +169,7 @@ class PPODreamingPolicyValueTrainer(BaseTrainer):
         optimizer.load_state_dict(self.optimizer_state)
 
         # Setup dataset
-        dataset = self.initial_states_data_user.get_dataset()
-        dataloader = self.partial_data_loader(dataset=dataset)
+        dataloader = self.partial_data_loader(dataset=self.get_dataset())
 
         # Training.
         self._current_train_count += 1
@@ -353,12 +362,14 @@ class PPODreamingPolicyValueTrainer(BaseTrainer):
         torch.save(self.optimizer_state, path / "optimizer.pt")
         torch.save(self.logger.state_dict(), path / "logger.pt")
         torch.save(self._current_train_count, path / "current_train_count.pt")
+        torch.save(self.dataset_previous_get_time, path / "dataset_previous_get_time.pt")
 
     @override
     def load_state(self, path: Path) -> None:
         self.optimizer_state = torch.load(path / "optimizer.pt")
         self.logger.load_state_dict(torch.load(path / "logger.pt"))
         self._current_train_count = torch.load(path / "current_train_count.pt")
+        self.dataset_previous_get_time = torch.load(path / "dataset_previous_get_time.pt")
 
 
 def compute_advantage(

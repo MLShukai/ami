@@ -1,3 +1,4 @@
+import time
 from functools import partial
 from pathlib import Path
 
@@ -6,7 +7,7 @@ from torch.distributions import kl_divergence
 from torch.distributions.normal import Normal
 from torch.nn.functional import mse_loss
 from torch.optim import Optimizer
-from torch.utils.data import DataLoader
+from torch.utils.data import DataLoader, Dataset
 from typing_extensions import override
 
 from ami.data.buffers.buffer_names import BufferNames
@@ -50,6 +51,7 @@ class ImageVAETrainer(BaseTrainer):
         self.max_epochs = max_epochs
         self.minimum_dataset_size = minimum_dataset_size
         self.minimum_new_data_count = minimum_new_data_count
+        self.dataset_previous_get_time = float("-inf")
 
     def on_data_users_dict_attached(self) -> None:
         self.image_data_user: ThreadSafeDataUser[RandomDataBuffer] = self.get_data_user(BufferNames.IMAGE)
@@ -68,7 +70,15 @@ class ImageVAETrainer(BaseTrainer):
         return len(self.image_data_user.buffer) >= self.minimum_dataset_size and self._is_new_data_available()
 
     def _is_new_data_available(self) -> bool:
-        return self.image_data_user.buffer.new_data_count >= self.minimum_new_data_count
+        return (
+            self.image_data_user.buffer.count_data_added_since(self.dataset_previous_get_time)
+            >= self.minimum_new_data_count
+        )
+
+    def get_dataset(self) -> Dataset[torch.Tensor]:
+        dataset = self.image_data_user.get_dataset()
+        self.dataset_previous_get_time = time.time()
+        return dataset
 
     def train(self) -> None:
         vae = VAE(self.encoder.model, self.decoder.model)
@@ -76,8 +86,8 @@ class ImageVAETrainer(BaseTrainer):
 
         optimizer = self.partial_optimizer(vae.parameters())
         optimizer.load_state_dict(self.optimizer_state)
-        dataset = self.image_data_user.get_dataset()
-        dataloader = self.partial_dataloader(dataset=dataset)
+
+        dataloader = self.partial_dataloader(dataset=self.get_dataset())
 
         for _ in range(self.max_epochs):
             for batch in dataloader:
@@ -105,8 +115,10 @@ class ImageVAETrainer(BaseTrainer):
         path.mkdir()
         torch.save(self.optimizer_state, path / "optimizer.pt")
         torch.save(self.logger.state_dict(), path / "logger.pt")
+        torch.save(self.dataset_previous_get_time, path / "dataset_previous_get_time.pt")
 
     @override
     def load_state(self, path: Path) -> None:
         self.optimizer_state = torch.load(path / "optimizer.pt")
         self.logger.load_state_dict(torch.load(path / "logger.pt"))
+        self.dataset_previous_get_time = torch.load(path / "dataset_previous_get_time.pt")

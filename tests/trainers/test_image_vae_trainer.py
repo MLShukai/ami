@@ -107,11 +107,15 @@ class TestImageVAETrainer:
         assert trainer_path.exists()
         assert (trainer_path / "optimizer.pt").exists()
         assert (trainer_path / "logger.pt").exists()
+        assert (trainer_path / "dataset_previous_get_time.pt").exists()
         logger_state = trainer.logger.state_dict()
+        dataset_previous_get_time = trainer.dataset_previous_get_time
 
         mocked_logger_load_state_dict = mocker.spy(trainer.logger, "load_state_dict")
         trainer.optimizer_state.clear()
         assert trainer.optimizer_state == {}
+        trainer.dataset_previous_get_time = None
         trainer.load_state(trainer_path)
         assert trainer.optimizer_state != {}
         mocked_logger_load_state_dict.assert_called_once_with(logger_state)
+        assert trainer.dataset_previous_get_time == dataset_previous_get_time
