@@ -51,8 +51,14 @@ class IJEPALatentVisualizationTrainer(BaseTrainer):
             partial_dataloader: A partially instantiated dataloader lacking a provided dataset.
             partial_optimizer: A partially instantiated optimizer lacking provided parameters.
             device: The accelerator device (e.g., CPU, GPU) utilized for training the model.
-            encoder_type: Encoder to be visualized.
-            minimum_new_data_count: Minimum number of new data count required to run the training.
+            logger: The logger object for recording training metrics and visualizations.
+            encoder_name: Name of the encoder (context or target) whose latent space will be visualized.
+            decoder_name: Name of the decoder (context or target) to be trained for visualization.
+            max_epochs: Maximum number of epochs to train the decoder. Default is 1.
+            minimum_dataset_size: Minimum number of samples required in the dataset to start training. Default is 1.
+            minimum_new_data_count: Minimum number of new data samples required to run the training. Default is 0.
+            num_visualize_images: Number of images to use for visualization. Default is 64.
+            visualize_grid_row: Number of images per row in the visualization grid. Default is 8.
         """
         super().__init__()
 
@@ -65,10 +71,14 @@ class IJEPALatentVisualizationTrainer(BaseTrainer):
         # Checks the decoder name correspond to encoder name.
         match encoder_name:
             case ModelNames.I_JEPA_CONTEXT_ENCODER:
-                assert decoder_name == ModelNames.I_JEPA_CONTEXT_DECODER, "<message>"
+                assert (
+                    decoder_name == ModelNames.I_JEPA_CONTEXT_DECODER
+                ), "Context encoder must be paired with context decoder"
                 self.log_prefix += " (context)"
             case ModelNames.I_JEPA_TARGET_ENCODER:
-                assert decoder_name == ModelNames.I_JEPA_TARGET_DECODER, "<message>"
+                assert (
+                    decoder_name == ModelNames.I_JEPA_TARGET_DECODER
+                ), "Target encoder must be paired with target decoder"
                 self.log_prefix += " (target)"
         self.encoder_name = encoder_name
         self.decoder_name = decoder_name
@@ -108,7 +118,14 @@ class IJEPALatentVisualizationTrainer(BaseTrainer):
 
     @torch.no_grad()
     def make_reconstruction_image_grid(self, dataloader: DataLoader[Tensor]) -> Tensor:
-        """Makes the reconstruction image grid."""
+        """Create a grid of reconstructed images for visualization.
+
+        Args:
+            dataloader (DataLoader[Tensor]): DataLoader containing the image batches.
+
+        Returns:
+            Tensor: A grid of reconstructed images.
+        """
         reconstruction_image_batches = []
         batch: tuple[Tensor]
         num_remaining = self.num_visualize_images
@@ -136,8 +153,6 @@ class IJEPALatentVisualizationTrainer(BaseTrainer):
 
         # prepare about dataset
         dataloader = self.partial_dataloader(dataset=self.get_dataset())
-
-        # for logging
 
         for _ in range(self.max_epochs):
             batch: tuple[
