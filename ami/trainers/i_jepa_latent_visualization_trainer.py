@@ -5,7 +5,7 @@ from typing import Literal
 
 import torch
 import torch.nn.functional as F
-import torchvision.transforms.v2.functional as torchvisF
+import torchvision.transforms.v2.functional
 import torchvision.utils
 from torch import Tensor
 from torch.optim import Optimizer
@@ -179,7 +179,7 @@ class IJEPALatentVisualizationDecoderTrainer(BaseTrainer):
                 image_out: Tensor = self.decoder(latents)
                 image_size = image_out.size()[-2:]
 
-                image_batch_resized = torchvisF.resize(image_batch, image_size)
+                image_batch_resized = torchvision.transforms.v2.functional.resize(image_batch, image_size)
 
                 # calc loss
                 loss = F.mse_loss(
