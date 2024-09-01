@@ -117,30 +117,41 @@ class IJEPALatentVisualizationTrainer(BaseTrainer):
         return dataset
 
     @torch.no_grad()
-    def make_reconstruction_image_grid(self, dataloader: DataLoader[Tensor]) -> Tensor:
-        """Create a grid of reconstructed images for visualization.
+    def log_visualization(self, dataloader: DataLoader[Tensor]) -> None:
+        """logs grid of input and reconstructed images for visualization.
 
         Args:
             dataloader (DataLoader[Tensor]): DataLoader containing the image batches.
-
-        Returns:
-            Tensor: A grid of reconstructed images.
         """
+        image_batches = []
         reconstruction_image_batches = []
-        batch: tuple[Tensor]
         num_remaining = self.num_visualize_images
+
+        batch: tuple[Tensor]
         for batch in dataloader:
             (image_batch,) = batch
-            image_batch = image_batch.to(self.device)[:num_remaining]
+            image_batch = image_batch[:num_remaining]
+            image_batches.append(image_batch)
+            image_batch = image_batch.to(self.device)
 
             latents = self.encoder(image_batch)
             reconstruction: Tensor = self.decoder(latents)
+
             reconstruction_image_batches.append(reconstruction.cpu())
+
             num_remaining -= reconstruction.size(0)
             if num_remaining <= 0:
                 break
-        reconstruction_images = torch.cat(reconstruction_image_batches)
-        return torchvision.utils.make_grid(reconstruction_images, self.visualize_grid_row)
+
+        grid_input_image = torchvision.utils.make_grid(torch.cat(image_batches), self.visualize_grid_row)
+        grid_reconstruction_image = torchvision.utils.make_grid(
+            torch.cat(reconstruction_image_batches), self.visualize_grid_row
+        )
+
+        self.logger.tensorboard.add_image(self.log_prefix + "metrics/input", grid_input_image, self.logger.global_step)
+        self.logger.tensorboard.add_image(
+            self.log_prefix + "metrics/reconstruction", grid_reconstruction_image, self.logger.global_step
+        )
 
     @override
     def train(self) -> None:
@@ -186,10 +197,7 @@ class IJEPALatentVisualizationTrainer(BaseTrainer):
 
                 self.logger.update()
 
-        reconstruction = self.make_reconstruction_image_grid(dataloader)
-        self.logger.tensorboard.add_image(
-            self.log_prefix + "metrics/reconstruction", reconstruction, self.logger.global_step
-        )
+        self.log_visualization(dataloader)
 
         self.optimizer_state = optimizer.state_dict()
         self.logger_state = self.logger.state_dict()
