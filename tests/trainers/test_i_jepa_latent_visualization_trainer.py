@@ -34,11 +34,8 @@ ENCODER_OUT_DIM = 32
 
 
 @pytest.mark.parametrize(
-    "encoder_name,decoder_name",
-    [
-        (ModelNames.I_JEPA_TARGET_ENCODER, ModelNames.I_JEPA_TARGET_DECODER),
-        (ModelNames.I_JEPA_CONTEXT_ENCODER, ModelNames.I_JEPA_CONTEXT_DECODER),
-    ],
+    "decoder_name",
+    [ModelNames.I_JEPA_CONTEXT_DECODER, ModelNames.I_JEPA_TARGET_DECODER],
 )
 class TestIJEPALatentVisualizationTrainer:
     @pytest.fixture
@@ -108,7 +105,6 @@ class TestIJEPALatentVisualizationTrainer:
         image_buffer_dict: DataCollectorsDict,
         device,
         logger,
-        encoder_name,
         decoder_name,
     ):
         trainer = IJEPALatentVisualizationDecoderTrainer(
@@ -116,41 +112,12 @@ class TestIJEPALatentVisualizationTrainer:
             partial_optimizer=partial_optimizer,
             device=device,
             logger=logger,
-            encoder_name=encoder_name,
             decoder_name=decoder_name,
             minimum_new_data_count=1,
         )
         trainer.attach_model_wrappers_dict(model_wrappers_dict)
         trainer.attach_data_users_dict(image_buffer_dict.get_data_users())
         return trainer
-
-    def test_encoder_decoder_correspondence(
-        self,
-        partial_dataloader,
-        partial_optimizer,
-        device,
-        logger,
-        encoder_name,
-        decoder_name,
-    ) -> None:
-        match decoder_name:
-            case ModelNames.I_JEPA_CONTEXT_DECODER:
-                invalid_name = ModelNames.I_JEPA_TARGET_DECODER
-            case ModelNames.I_JEPA_TARGET_DECODER:
-                invalid_name = ModelNames.I_JEPA_CONTEXT_DECODER
-            case _:
-                raise Exception
-
-        with pytest.raises(AssertionError):
-            IJEPALatentVisualizationDecoderTrainer(
-                partial_dataloader=partial_dataloader,
-                partial_optimizer=partial_optimizer,
-                device=device,
-                logger=logger,
-                encoder_name=encoder_name,
-                decoder_name=invalid_name,
-                minimum_new_data_count=1,
-            )
 
     def test_run(self, trainer: IJEPALatentVisualizationDecoderTrainer) -> None:
         trainer.run()

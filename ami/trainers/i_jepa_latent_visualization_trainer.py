@@ -37,7 +37,6 @@ class IJEPALatentVisualizationDecoderTrainer(BaseTrainer):
         partial_optimizer: partial[Optimizer],
         device: torch.device,
         logger: StepIntervalLogger,
-        encoder_name: Literal[ModelNames.I_JEPA_CONTEXT_ENCODER, ModelNames.I_JEPA_TARGET_ENCODER],
         decoder_name: Literal[ModelNames.I_JEPA_CONTEXT_DECODER, ModelNames.I_JEPA_TARGET_DECODER],
         max_epochs: int = 1,
         minimum_dataset_size: int = 1,
@@ -52,7 +51,6 @@ class IJEPALatentVisualizationDecoderTrainer(BaseTrainer):
             partial_optimizer: A partially instantiated optimizer lacking provided parameters.
             device: The accelerator device (e.g., CPU, GPU) utilized for training the model.
             logger: The logger object for recording training metrics and visualizations.
-            encoder_name: Name of the encoder (context or target) whose latent space will be visualized.
             decoder_name: Name of the decoder (context or target) to be trained for visualization.
             max_epochs: Maximum number of epochs to train the decoder. Default is 1.
             minimum_dataset_size: Minimum number of samples required in the dataset to start training. Default is 1.
@@ -68,18 +66,16 @@ class IJEPALatentVisualizationDecoderTrainer(BaseTrainer):
         self.logger = logger
         self.log_prefix = "i-jepa-latent-visualization/"
 
-        # Checks the decoder name correspond to encoder name.
-        match encoder_name:
-            case ModelNames.I_JEPA_CONTEXT_ENCODER:
-                assert (
-                    decoder_name == ModelNames.I_JEPA_CONTEXT_DECODER
-                ), "Context encoder must be paired with context decoder"
+        # Prepare self.log_prefix correspond to decoder name.
+        match decoder_name:
+            case ModelNames.I_JEPA_CONTEXT_DECODER:
+                encoder_name = ModelNames.I_JEPA_CONTEXT_ENCODER
                 self.log_prefix += "context/"
-            case ModelNames.I_JEPA_TARGET_ENCODER:
-                assert (
-                    decoder_name == ModelNames.I_JEPA_TARGET_DECODER
-                ), "Target encoder must be paired with target decoder"
+            case ModelNames.I_JEPA_TARGET_DECODER:
+                encoder_name = ModelNames.I_JEPA_TARGET_ENCODER
                 self.log_prefix += "target/"
+            case _:
+                raise ValueError(f"Unexpected decoder_name: {decoder_name}")
 
         self.encoder_name = encoder_name
         self.decoder_name = decoder_name
