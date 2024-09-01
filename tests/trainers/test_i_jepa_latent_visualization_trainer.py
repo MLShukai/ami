@@ -35,7 +35,7 @@ ENCODER_OUT_DIM = 32
 
 @pytest.mark.parametrize(
     "decoder_name",
-    [ModelNames.I_JEPA_CONTEXT_DECODER, ModelNames.I_JEPA_TARGET_DECODER],
+    [ModelNames.I_JEPA_CONTEXT_VISUALIZATION_DECODER, ModelNames.I_JEPA_TARGET_VISUALIZATION_DECODER],
 )
 class TestIJEPALatentVisualizationTrainer:
     @pytest.fixture
@@ -85,8 +85,8 @@ class TestIJEPALatentVisualizationTrainer:
             {
                 ModelNames.I_JEPA_CONTEXT_ENCODER: ModelWrapper(encoder, device, True),
                 ModelNames.I_JEPA_TARGET_ENCODER: ModelWrapper(copy.deepcopy(encoder), device, False),
-                ModelNames.I_JEPA_CONTEXT_DECODER: ModelWrapper(decoder, device, False),
-                ModelNames.I_JEPA_TARGET_DECODER: ModelWrapper(decoder, device, False),
+                ModelNames.I_JEPA_CONTEXT_VISUALIZATION_DECODER: ModelWrapper(decoder, device, False),
+                ModelNames.I_JEPA_TARGET_VISUALIZATION_DECODER: ModelWrapper(decoder, device, False),
             }
         )
         d.send_to_default_device()

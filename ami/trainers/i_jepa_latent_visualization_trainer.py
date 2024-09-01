@@ -37,7 +37,9 @@ class IJEPALatentVisualizationDecoderTrainer(BaseTrainer):
         partial_optimizer: partial[Optimizer],
         device: torch.device,
         logger: StepIntervalLogger,
-        decoder_name: Literal[ModelNames.I_JEPA_CONTEXT_DECODER, ModelNames.I_JEPA_TARGET_DECODER],
+        decoder_name: Literal[
+            ModelNames.I_JEPA_CONTEXT_VISUALIZATION_DECODER, ModelNames.I_JEPA_TARGET_VISUALIZATION_DECODER
+        ],
         max_epochs: int = 1,
         minimum_dataset_size: int = 1,
         minimum_new_data_count: int = 0,
@@ -68,10 +70,10 @@ class IJEPALatentVisualizationDecoderTrainer(BaseTrainer):
 
         # Prepare self.log_prefix correspond to decoder name.
         match decoder_name:
-            case ModelNames.I_JEPA_CONTEXT_DECODER:
+            case ModelNames.I_JEPA_CONTEXT_VISUALIZATION_DECODER:
                 encoder_name = ModelNames.I_JEPA_CONTEXT_ENCODER
                 self.log_prefix += "context/"
-            case ModelNames.I_JEPA_TARGET_DECODER:
+            case ModelNames.I_JEPA_TARGET_VISUALIZATION_DECODER:
                 encoder_name = ModelNames.I_JEPA_TARGET_ENCODER
                 self.log_prefix += "target/"
             case _:
