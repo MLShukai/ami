@@ -175,10 +175,8 @@ class IJEPALatentVisualizationDecoderTrainer(BaseTrainer):
                 image_batch = image_batch.to(self.device)
 
                 with torch.no_grad():
-                    latents = self.encoder(image_batch)
+                    latents = self.encoder.infer(image_batch)
                     # latents: [batch_size, n_patches_height * n_patches_width, latents_dim]
-                    if self.encoder_name == ModelNames.I_JEPA_TARGET_ENCODER:
-                        latents = torch.nn.functional.layer_norm(latents, (latents.size(-1),))
 
                 image_out: Tensor = self.decoder(latents)
                 image_size = image_out.size()[-2:]
