@@ -40,7 +40,7 @@ ENCODER_OUT_DIM = 32
         (ModelNames.I_JEPA_CONTEXT_ENCODER, ModelNames.I_JEPA_CONTEXT_DECODER),
     ],
 )
-class TestIJEPALatentVisualizationDecoderTrainer:
+class TestIJEPALatentVisualizationTrainer:
     @pytest.fixture
     def partial_dataloader(self):
         partial_dataloader = partial(DataLoader, batch_size=2, shuffle=True)
