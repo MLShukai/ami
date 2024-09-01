@@ -6,6 +6,7 @@ from typing import Literal
 import torch
 import torch.nn.functional as F
 import torchvision.transforms.v2.functional as torchvisF
+import torchvision.utils
 from torch import Tensor
 from torch.optim import Optimizer
 from torch.utils.data import DataLoader, Dataset
@@ -41,6 +42,8 @@ class IJEPALatentVisualizationTrainer(BaseTrainer):
         max_epochs: int = 1,
         minimum_dataset_size: int = 1,
         minimum_new_data_count: int = 0,
+        num_visualize_images: int = 64,
+        visualize_grid_row: int = 8,
     ) -> None:
         """Initializes an IJEPALatentVisualizationDecoderTrainer object.
 
@@ -57,20 +60,24 @@ class IJEPALatentVisualizationTrainer(BaseTrainer):
         self.partial_dataloader = partial_dataloader
         self.device = device
         self.logger = logger
+        self.log_prefix = "i-jepa-latent-visualization"
 
         # Checks the decoder name correspond to encoder name.
         match encoder_name:
             case ModelNames.I_JEPA_CONTEXT_ENCODER:
                 assert decoder_name == ModelNames.I_JEPA_CONTEXT_DECODER, "<message>"
+                self.log_prefix += " (context)"
             case ModelNames.I_JEPA_TARGET_ENCODER:
                 assert decoder_name == ModelNames.I_JEPA_TARGET_DECODER, "<message>"
-
+                self.log_prefix += " (target)"
         self.encoder_name = encoder_name
         self.decoder_name = decoder_name
 
         self.max_epochs = max_epochs
         self.minimum_dataset_size = minimum_dataset_size
         self.minimum_new_data_count = minimum_new_data_count
+        self.num_visualize_images = num_visualize_images
+        self.visualize_grid_row = visualize_grid_row
 
         self.dataset_previous_get_time = float("-inf")
 
@@ -99,6 +106,25 @@ class IJEPALatentVisualizationTrainer(BaseTrainer):
         self.dataset_previous_get_time = time.time()
         return dataset
 
+    @torch.no_grad()
+    def make_reconstruction_image_grid(self, dataloader: DataLoader[Tensor]) -> Tensor:
+        """Makes the reconstruction image grid."""
+        reconstruction_image_batches = []
+        batch: tuple[Tensor]
+        num_remaining = self.num_visualize_images
+        for batch in dataloader:
+            (image_batch,) = batch
+            image_batch = image_batch.to(self.device)[:num_remaining]
+
+            latents = self.encoder(image_batch)
+            reconstruction: Tensor = self.decoder(latents)
+            reconstruction_image_batches.append(reconstruction.cpu())
+            num_remaining -= reconstruction.size(0)
+            if num_remaining <= 0:
+                break
+        reconstruction_images = torch.cat(reconstruction_image_batches)
+        return torchvision.utils.make_grid(reconstruction_images, self.visualize_grid_row)
+
     @override
     def train(self) -> None:
         # move to device
@@ -112,7 +138,6 @@ class IJEPALatentVisualizationTrainer(BaseTrainer):
         dataloader = self.partial_dataloader(dataset=self.get_dataset())
 
         # for logging
-        prefix = "i-jepa-latent-visuzalization/"
 
         for _ in range(self.max_epochs):
             batch: tuple[
@@ -142,9 +167,14 @@ class IJEPALatentVisualizationTrainer(BaseTrainer):
                 loss.backward()
                 optimizer.step()
 
-                self.logger.log(prefix + "losses/reconstruction", loss)
+                self.logger.log(self.log_prefix + "losses/reconstruction", loss)
 
                 self.logger.update()
+
+        reconstruction = self.make_reconstruction_image_grid(dataloader)
+        self.logger.tensorboard.add_image(
+            self.log_prefix + "metrics/reconstruction", reconstruction, self.logger.global_step
+        )
 
         self.optimizer_state = optimizer.state_dict()
         self.logger_state = self.logger.state_dict()
