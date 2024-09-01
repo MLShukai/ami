@@ -17,7 +17,7 @@ from ami.tensorboard_loggers import StepIntervalLogger
 from ami.trainers.i_jepa_latent_visualization_trainer import (
     BoolMaskIJEPAEncoder,
     IJEPALatentVisualizationDecoder,
-    IJEPALatentVisualizationTrainer,
+    IJEPALatentVisualizationDecoderTrainer,
 )
 
 # input data params
@@ -111,7 +111,7 @@ class TestIJEPALatentVisualizationTrainer:
         encoder_name,
         decoder_name,
     ):
-        trainer = IJEPALatentVisualizationTrainer(
+        trainer = IJEPALatentVisualizationDecoderTrainer(
             partial_dataloader=partial_dataloader,
             partial_optimizer=partial_optimizer,
             device=device,
@@ -142,7 +142,7 @@ class TestIJEPALatentVisualizationTrainer:
                 raise Exception
 
         with pytest.raises(AssertionError):
-            IJEPALatentVisualizationTrainer(
+            IJEPALatentVisualizationDecoderTrainer(
                 partial_dataloader=partial_dataloader,
                 partial_optimizer=partial_optimizer,
                 device=device,
@@ -152,21 +152,21 @@ class TestIJEPALatentVisualizationTrainer:
                 minimum_new_data_count=1,
             )
 
-    def test_run(self, trainer: IJEPALatentVisualizationTrainer) -> None:
+    def test_run(self, trainer: IJEPALatentVisualizationDecoderTrainer) -> None:
         trainer.run()
 
-    def test_is_trainable(self, trainer: IJEPALatentVisualizationTrainer) -> None:
+    def test_is_trainable(self, trainer: IJEPALatentVisualizationDecoderTrainer) -> None:
         assert trainer.is_trainable() is True
         trainer.image_data_user.clear()
         assert trainer.is_trainable() is False
 
-    def test_is_new_data_available(self, trainer: IJEPALatentVisualizationTrainer):
+    def test_is_new_data_available(self, trainer: IJEPALatentVisualizationDecoderTrainer):
         trainer.image_data_user.update()
         assert trainer._is_new_data_available() is True
         trainer.run()
         assert trainer._is_new_data_available() is False
 
-    def test_save_and_load_state(self, trainer: IJEPALatentVisualizationTrainer, tmp_path, mocker) -> None:
+    def test_save_and_load_state(self, trainer: IJEPALatentVisualizationDecoderTrainer, tmp_path, mocker) -> None:
         trainer_path = tmp_path / "bool_mask_i_jepa"
         trainer.save_state(trainer_path)
         assert trainer_path.exists()

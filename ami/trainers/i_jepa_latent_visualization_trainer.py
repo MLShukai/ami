@@ -27,7 +27,7 @@ from ami.tensorboard_loggers import StepIntervalLogger
 from .base_trainer import BaseTrainer
 
 
-class IJEPALatentVisualizationTrainer(BaseTrainer):
+class IJEPALatentVisualizationDecoderTrainer(BaseTrainer):
     """Trainer for IJEPA Decoder."""
 
     @override
