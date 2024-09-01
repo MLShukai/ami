@@ -66,7 +66,7 @@ class IJEPALatentVisualizationTrainer(BaseTrainer):
         self.partial_dataloader = partial_dataloader
         self.device = device
         self.logger = logger
-        self.log_prefix = "i-jepa-latent-visualization"
+        self.log_prefix = "i-jepa-latent-visualization/"
 
         # Checks the decoder name correspond to encoder name.
         match encoder_name:
@@ -74,12 +74,13 @@ class IJEPALatentVisualizationTrainer(BaseTrainer):
                 assert (
                     decoder_name == ModelNames.I_JEPA_CONTEXT_DECODER
                 ), "Context encoder must be paired with context decoder"
-                self.log_prefix += " (context)"
+                self.log_prefix += "context/"
             case ModelNames.I_JEPA_TARGET_ENCODER:
                 assert (
                     decoder_name == ModelNames.I_JEPA_TARGET_DECODER
                 ), "Target encoder must be paired with target decoder"
-                self.log_prefix += " (target)"
+                self.log_prefix += "target/"
+
         self.encoder_name = encoder_name
         self.decoder_name = decoder_name
 
