@@ -72,6 +72,8 @@ class BaseTrainer(ABC, SaveAndLoadStateMixin, PauseResumeEventMixin):
         self._training_model_names: set[str] = set()
         self._frozen_model_names: set[str] = set()
 
+        self.name = self.__class__.__name__  # for logging.
+
     def attach_model_wrappers_dict(
         self,
         model_wrappers_dict: ModelWrappersDict,
