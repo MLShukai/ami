@@ -89,6 +89,10 @@ class TestVideoFoldersImageObservationGenerator:
             assert isinstance(frame, torch.Tensor)
             assert frame.shape == (3, 32, 32)
 
+    def test_max_frames(self, video_folder):
+        generator = VideoFoldersImageObservationGenerator(folder_paths=[video_folder], image_size=(32, 32))
+        assert generator.max_frames == 20
+
     def test_multiple_folders(self, tmp_path):
         folder1 = tmp_path / "folder1"
         folder2 = tmp_path / "folder2"
