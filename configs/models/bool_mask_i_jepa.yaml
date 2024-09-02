@@ -54,7 +54,7 @@ i_jepa_context_visualization_decoder:
       - [512, 512]
       - [512, 256]
       - [256, 128]
-      - [128, 64]
+      - [128, 128]
     n_res_blocks: 3
     num_heads: 4
 
