@@ -39,3 +39,23 @@ i_jepa_predictor:
     hidden_dim: 384
     depth: 6
     num_heads: 12
+
+i_jepa_context_visualization_decoder:
+  _target_: ami.models.model_wrapper.ModelWrapper
+  default_device: ${devices.0}
+  has_inference: False
+  model:
+    _target_: ami.models.i_jepa_latent_visualization_decoder.IJEPALatentVisualizationDecoder
+    input_n_patches:
+      - ${python.eval:"${shared.image_height} // ${models.i_jepa_target_encoder.model.patch_size}"}
+      - ${python.eval:"${shared.image_width} // ${models.i_jepa_target_encoder.model.patch_size}"}
+    input_latents_dim: ${models.i_jepa_target_encoder.model.out_dim}
+    decoder_blocks_in_and_out_channels:
+      - [512, 512]
+      - [512, 256]
+      - [256, 128]
+      - [128, 128]
+    n_res_blocks: 3
+    num_heads: 4
+
+i_jepa_target_visualization_decoder: ${.i_jepa_context_visualization_decoder}
