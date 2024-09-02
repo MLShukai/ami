@@ -28,6 +28,11 @@ class TestTrainer:
         trainer.attach_data_users_dict(data_users_dict)
         return trainer
 
+    def test_init(self, trainer: TrainerImpl) -> None:
+        assert trainer.name == "TrainerImpl"
+        trainer.name = "other trainer"
+        assert trainer.name == "other trainer"
+
     def test_run(self, trainer: TrainerImpl) -> None:
         trainer.run()
 

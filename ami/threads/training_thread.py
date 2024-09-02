@@ -47,7 +47,7 @@ class TrainingThread(BackgroundThread):
 
             trainer = self.trainers.get_next_trainer()
             if trainer.is_trainable():
-                self.logger.info(f"Running: {type(trainer).__name__} ...")
+                self.logger.info(f"Running a trainer: {trainer.name!r}")
                 start = time.perf_counter()
                 trainer.run()
                 self.logger.info(f"Training time: {time.perf_counter() - start:.2f} [s].")
