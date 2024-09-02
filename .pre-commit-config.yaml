@@ -73,7 +73,7 @@ repos:
         args: ["--number"]
         additional_dependencies:
           - mdformat-gfm
-          # - mdformat-tables
+          - mdformat-tables
           - mdformat_frontmatter
           # - mdformat-toc
           # - mdformat-black
