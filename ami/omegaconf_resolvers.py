@@ -2,6 +2,7 @@
 
 See: https://omegaconf.readthedocs.io/en/latest/custom_resolvers.html
 """
+import glob
 import os
 import re
 
@@ -22,6 +23,7 @@ def register_custom_resolvers() -> None:
         )  # Usage: ${torch.dtype: float32}
         OmegaConf.register_new_resolver("cvt_time_str", time_string_to_seconds)  # Usage: ${cvt_time_str:"1h"}
         OmegaConf.register_new_resolver("os.cpu_count", os.cpu_count)
+        OmegaConf.register_new_resolver("glob", glob.glob)
 
         _registered = True
 
