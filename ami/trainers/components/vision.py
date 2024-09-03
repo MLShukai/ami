@@ -97,6 +97,7 @@ class NormalizeToMean0Std1(v2.Transform):
     """Normalize input tensor to mean 0 and std 1."""
 
     def _transform(self, inpt: torch.Tensor, params: dict[str, Any]) -> torch.Tensor:
+        inpt = inpt.float()
         mean = inpt.mean()
         std = inpt.std()
         return (inpt - mean) / (std + 1e-6)
