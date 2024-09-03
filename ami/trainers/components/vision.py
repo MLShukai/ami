@@ -38,7 +38,7 @@ class IntervalSamplingImageDataset(Dataset[tuple[torch.Tensor]]):
         image_dir: str | Path,
         transform: v2.Transform,
         num_sample: int,
-        extensions: tuple[str, ...] = ("jpeg", "jpg", "png"),
+        extensions: tuple[str, ...] = ("jpeg", "JPEG", "jpg", "JPG", "png", "PNG"),
         pre_loading: bool = True,
     ) -> None:
         """Initializes the IntervalSamplingImageDataset.
