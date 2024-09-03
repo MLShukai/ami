@@ -118,6 +118,7 @@ class IJEPALatentVisualizationDecoderTrainer(BaseTrainer):
         self.dataset_previous_get_time = time.time()
         return dataset
 
+    @torch.inference_mode()
     def validation(self, dataloader: DataLoader[tuple[Tensor]]) -> None:
         """Compute the reconstruction loss and log visualization grid image."""
 
