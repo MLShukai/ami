@@ -29,8 +29,8 @@ class TensorBoardLogger:
         """Updates current step."""
         self.global_step += 1
 
-    def log(self, tag: str, scalar: LoggableTypes) -> None:
-        if self.log_available:
+    def log(self, tag: str, scalar: LoggableTypes, force_log: bool = False) -> None:
+        if self.log_available or force_log:
             self.tensorboard.add_scalar(tag, scalar, self.global_step)
 
     def _union_dicts(self, list_of_dict: list[dict[str, Any]]) -> dict[str, Any]:
