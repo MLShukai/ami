@@ -1,4 +1,5 @@
 from pathlib import Path
+from typing import Any
 
 import torch
 import torchvision.io as io
@@ -90,3 +91,12 @@ class IntervalSamplingImageDataset(Dataset[tuple[torch.Tensor]]):
         else:
             image = self.image_data[index]
         return (image,)  # for adjusting batch format to `TensorDataset`.
+
+
+class NormalizeToMean0Std1(v2.Transform):
+    """Normalize input tensor to mean 0 and std 1."""
+
+    def _transform(self, inpt: torch.Tensor, params: dict[str, Any]) -> torch.Tensor:
+        mean = inpt.mean()
+        std = inpt.std()
+        return (inpt - mean) / (std + 1e-6)
