@@ -122,13 +122,13 @@ class IJEPALatentVisualizationDecoderTrainer(BaseTrainer):
     def validation(self, dataloader: DataLoader[tuple[Tensor]]) -> None:
         """Compute the reconstruction loss and log visualization grid image."""
 
-        input_image_batches = []
-        reconstruction_image_batches = []
+        input_image_batch_list = []
+        reconstruction_image_batch_list = []
         losses = []
         batch: tuple[Tensor]
         for batch in dataloader:
             (image_batch,) = batch
-            input_image_batches.append(image_batch)
+            input_image_batch_list.append(image_batch)
             image_batch = image_batch.to(self.device)
 
             latents = self.encoder.infer(image_batch)
@@ -137,10 +137,10 @@ class IJEPALatentVisualizationDecoderTrainer(BaseTrainer):
             resized_image_batch = torchvision.transforms.v2.functional.resize(image_batch, rec_img_size)
             losses.append(F.mse_loss(resized_image_batch, reconstructions, reduction="none").flatten(1).mean(1))
 
-            reconstruction_image_batches.append(reconstructions.cpu())
+            reconstruction_image_batch_list.append(reconstructions.cpu())
 
-        input_image_batches = torch.cat(input_image_batches)
-        reconstruction_image_batches = torch.cat(reconstruction_image_batches)
+        input_image_batches = torch.cat(input_image_batch_list)
+        reconstruction_image_batches = torch.cat(reconstruction_image_batch_list)
         visualize_indices = torch.randperm(input_image_batches.size(0))[: self.num_visualize_images].sort().values
 
         grid_input_image = torchvision.utils.make_grid(input_image_batches[visualize_indices], self.visualize_grid_row)

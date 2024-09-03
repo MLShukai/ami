@@ -109,8 +109,8 @@ class TimeIntervalLogger(TensorBoardLogger):
             self.logged = False
 
     @override
-    def log(self, tag: str, scalar: LoggableTypes) -> None:
-        super().log(tag, scalar)
+    def log(self, tag: str, scalar: LoggableTypes, force_log: bool = False) -> None:
+        super().log(tag, scalar, force_log)
         if self.log_available:
             self.logged = True
 
