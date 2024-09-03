@@ -3,6 +3,7 @@ from functools import partial
 from pathlib import Path
 from typing import Literal
 
+import matplotlib.pyplot as plt
 import torch
 import torch.nn.functional as F
 import torchvision.transforms.v2.functional
@@ -124,7 +125,7 @@ class IJEPALatentVisualizationDecoderTrainer(BaseTrainer):
 
         input_image_batch_list = []
         reconstruction_image_batch_list = []
-        losses = []
+        loss_list = []
         batch: tuple[Tensor]
         for batch in dataloader:
             (image_batch,) = batch
@@ -135,7 +136,7 @@ class IJEPALatentVisualizationDecoderTrainer(BaseTrainer):
             reconstructions: Tensor = self.decoder(latents)
             rec_img_size = reconstructions.shape[-2:]
             resized_image_batch = torchvision.transforms.v2.functional.resize(image_batch, rec_img_size)
-            losses.append(F.mse_loss(resized_image_batch, reconstructions, reduction="none").flatten(1).mean(1))
+            loss_list.append(F.mse_loss(resized_image_batch, reconstructions, reduction="none").flatten(1).mean(1))
 
             reconstruction_image_batch_list.append(reconstructions.cpu())
 
@@ -147,12 +148,23 @@ class IJEPALatentVisualizationDecoderTrainer(BaseTrainer):
         grid_reconstruction_image = torchvision.utils.make_grid(
             reconstruction_image_batches[visualize_indices], self.visualize_grid_row
         )
-        loss = torch.mean(torch.cat(losses))
+        losses = torch.cat(loss_list)
+        loss = torch.mean(losses)
 
         self.logger.log(self.log_prefix + "losses/validation-reconstruction", loss, force_log=True)
         self.logger.tensorboard.add_image(self.log_prefix + "metrics/input", grid_input_image, self.logger.global_step)
         self.logger.tensorboard.add_image(
             self.log_prefix + "metrics/reconstruction", grid_reconstruction_image, self.logger.global_step
+        )
+
+        fig = plt.figure(figsize=(6.4, 3.6))
+        ax = fig.subplots()
+        ax.plot(loss_list)
+        ax.set_xlabel("time")
+        ax.set_ylabel("loss")
+        ax.set_title("losses past to future")
+        self.logger.tensorboard.add_figure(
+            self.log_prefix + "metrics/losses-past-to-future", fig, self.logger.global_step
         )
 
     @override
