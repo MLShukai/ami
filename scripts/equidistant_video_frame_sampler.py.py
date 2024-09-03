@@ -76,7 +76,7 @@ def main() -> None:
         if i % frame_write_interval == 0:
             sample_count += 1
             name = str(i).zfill(len(str(generator.max_frames)))
-            write_jpeg(frame, str(args.output_dir / f"{name}.jpeg"))
+            write_jpeg(frame, str(args.output_dir / f"{name}.jpg"))
             print(f"\r{sample_count / args.num_sample * 100:.2f}%", end="", flush=True)
 
     print("\nDone!")
