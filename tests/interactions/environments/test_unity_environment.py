@@ -36,7 +36,7 @@ class TestUnityEnvironment:
         action = torch.tensor([1.0, 2.0, 3.0])
         unity_env.affect(action)
         time.sleep(0.01)
-        mock_unity_env.step.assert_called_once()
+        mock_unity_env.step.assert_called()
         np.testing.assert_equal(unity_env.observe(), np.ones(10))
 
     def test_observe(self, unity_env):

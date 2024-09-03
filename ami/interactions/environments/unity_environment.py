@@ -1,4 +1,5 @@
 import threading
+import time
 from enum import Enum
 from queue import Queue
 from typing import Any
@@ -112,12 +113,18 @@ class UnityEnvironment(BaseEnvironment[Tensor, Tensor]):
 
     def _affect_action_in_background(self) -> None:
         """Affects the action in background thread."""
+        action_or_cmd = None
         while True:
-            action_or_cmd = self._action_queue.get()
+            if not self._action_queue.empty():
+                action_or_cmd = self._action_queue.get_nowait()
             if action_or_cmd is Command.TEARDOWN:
                 break
-            observation, _, _, _ = self._env.step(action_or_cmd.detach().cpu().numpy())
-            self._observation_queue.put(observation)
+            if action_or_cmd is not None:
+                observation, _, _, _ = self._env.step(action_or_cmd.detach().cpu().numpy())
+                self._observation_queue.put(observation)
+                time.sleep(0.0001)
+            else:
+                time.sleep(0.001)
 
     def _clear_action_queue(self) -> None:
         while not self._action_queue.empty():
@@ -146,6 +153,7 @@ class UnityEnvironment(BaseEnvironment[Tensor, Tensor]):
     @override
     def teardown(self) -> None:
         super().teardown()
+        self._clear_action_queue()
         self._action_queue.put(Command.TEARDOWN)
         self._interaction_thread.join()
         self._env.close()
