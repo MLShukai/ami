@@ -93,7 +93,7 @@ class IntervalSamplingImageDataset(Dataset[tuple[torch.Tensor]]):
         return (image,)  # for adjusting batch format to `TensorDataset`.
 
 
-class NormalizeToMean0Std1(v2.Transform):
+class Standardization(v2.Transform):
     """Normalize input tensor to mean 0 and std 1."""
 
     def _transform(self, inpt: torch.Tensor, params: dict[str, Any]) -> torch.Tensor:

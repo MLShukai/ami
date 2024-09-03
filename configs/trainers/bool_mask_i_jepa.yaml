@@ -39,7 +39,7 @@ i_jepa_latent_visualization_context:
             size:
               - ${shared.image_height}
               - ${shared.image_width}
-          - _target_: ami.trainers.components.vision.NormalizeToMean0Std1
+          - _target_: ami.trainers.components.vision.Standardization
 
   device: ${devices.0}
   max_epochs: ${trainers.i_jepa.max_epochs}
