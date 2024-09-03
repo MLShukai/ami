@@ -438,6 +438,7 @@ def i_jepa_encoder_infer(wrapper: ModelWrapper[IJEPAEncoder], image: torch.Tenso
     image = image.to(device)
 
     out: torch.Tensor = wrapper(image)
+    out = torch.nn.functional.layer_norm(out, (out.size(-1),))
     if no_batch:
         out = out.squeeze(0)
 

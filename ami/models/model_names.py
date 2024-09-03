@@ -11,3 +11,5 @@ class ModelNames(str, Enum):
     I_JEPA_PREDICTOR = "i_jepa_predictor"
     I_JEPA_CONTEXT_ENCODER = "i_jepa_context_encoder"
     I_JEPA_TARGET_ENCODER = "i_jepa_target_encoder"  # Always alias to other key: `IMAGE_ENCODDER`.
+    I_JEPA_CONTEXT_VISUALIZATION_DECODER = "i_jepa_context_visualization_decoder"
+    I_JEPA_TARGET_VISUALIZATION_DECODER = "i_jepa_target_visualization_decoder"
