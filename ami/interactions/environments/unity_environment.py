@@ -1,3 +1,6 @@
+import threading
+from enum import Enum
+from queue import Queue
 from typing import Any
 from uuid import UUID
 
@@ -13,6 +16,10 @@ from torch import Tensor
 from typing_extensions import override
 
 from .base_environment import BaseEnvironment
+
+
+class Command(Enum):
+    TEARDOWN = 0
 
 
 class TransformLogChannel(SideChannel):
@@ -89,6 +96,10 @@ class UnityEnvironment(BaseEnvironment[Tensor, Tensor]):
             time_scale=time_scale, target_frame_rate=target_frame_rate
         )
 
+        self._action_queue: Queue[Tensor | Command] = Queue()
+        self._observation_queue: Queue[NDArray[Any]] = Queue()
+        self._interaction_thread = threading.Thread(target=self._affect_action_in_background)
+
     @property
     def gym_unity_environment(self) -> UnityToGymWrapper:
         return self._env
@@ -99,20 +110,42 @@ class UnityEnvironment(BaseEnvironment[Tensor, Tensor]):
 
     observation: NDArray[Any]
 
+    def _affect_action_in_background(self) -> None:
+        """Affects the action in background thread."""
+        while True:
+            action_or_cmd = self._action_queue.get()
+            if action_or_cmd is Command.TEARDOWN:
+                break
+            observation, _, _, _ = self._env.step(action_or_cmd.detach().cpu().numpy())
+            self._observation_queue.put(observation)
+
+    def _clear_action_queue(self) -> None:
+        while not self._action_queue.empty():
+            self._action_queue.get_nowait()
+
+    def _update_to_latest_observation(self) -> None:
+        while not self._observation_queue.empty():
+            self.observation = self._observation_queue.get_nowait()
+
     @override
     def setup(self) -> None:
         super().setup()
         self.observation = self._env.reset()
+        self._interaction_thread.start()
+
+    @override
+    def affect(self, action: Tensor) -> None:
+        self._clear_action_queue()
+        self._action_queue.put(action)
+
+    @override
+    def observe(self) -> Tensor:
+        self._update_to_latest_observation()
+        return torch.from_numpy(self.observation)
 
     @override
     def teardown(self) -> None:
         super().teardown()
+        self._action_queue.put(Command.TEARDOWN)
+        self._interaction_thread.join()
         self._env.close()
-
-    @override
-    def affect(self, action: Tensor) -> None:
-        self.observation, _, _, _ = self._env.step(action.detach().cpu().numpy())
-
-    @override
-    def observe(self) -> Tensor:
-        return torch.from_numpy(self.observation)

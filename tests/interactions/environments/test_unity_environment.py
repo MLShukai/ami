@@ -1,3 +1,5 @@
+import time
+
 import numpy as np
 import pytest
 import torch
@@ -16,11 +18,14 @@ class TestUnityEnvironment:
 
     @pytest.fixture
     def unity_env(self, mock_unity_env):
-        return UnityEnvironment("dummy_path", worker_id=0, base_port=5005, seed=42)
+        mock_unity_env.reset.return_value = np.zeros(10)
+        mock_unity_env.step.return_value = (np.ones(10), 0, False, {})
+        env = UnityEnvironment("dummy_path", worker_id=0, base_port=5005, seed=42)
+        env.setup()
+        yield env
+        env.teardown()
 
     def test_setup(self, unity_env, mock_unity_env):
-        mock_unity_env.reset.return_value = np.zeros(10)
-        unity_env.setup()
         np.testing.assert_equal(unity_env.observation, np.zeros(10))
 
     def test_teardown(self, unity_env, mock_unity_env):
@@ -29,13 +34,16 @@ class TestUnityEnvironment:
 
     def test_affect(self, unity_env, mock_unity_env):
         action = torch.tensor([1.0, 2.0, 3.0])
-        mock_unity_env.step.return_value = (np.ones(10), 0, False, {})
         unity_env.affect(action)
+        time.sleep(0.01)
         mock_unity_env.step.assert_called_once()
-        np.testing.assert_equal(unity_env.observation, np.ones(10))
+        np.testing.assert_equal(unity_env.observe(), np.ones(10))
 
     def test_observe(self, unity_env):
-        unity_env.observation = np.ones(10)
+        unity_env.observation = np.zeros(10)
+        action = torch.tensor([1.0, 2.0, 3.0])
+        unity_env.affect(action)
+        time.sleep(0.01)
         observation = unity_env.observe()
         assert torch.equal(observation, torch.ones(10))
 
