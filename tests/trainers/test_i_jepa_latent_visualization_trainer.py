@@ -4,7 +4,7 @@ from functools import partial
 import pytest
 import torch
 from torch.optim import AdamW
-from torch.utils.data import DataLoader
+from torch.utils.data import DataLoader, TensorDataset
 
 from ami.data.buffers.buffer_names import BufferNames
 from ami.data.buffers.random_data_buffer import RandomDataBuffer
@@ -97,6 +97,10 @@ class TestIJEPALatentVisualizationTrainer:
         return StepIntervalLogger(f"{tmp_path}/tensorboard", 1)
 
     @pytest.fixture
+    def validation_dataloader(self):
+        return DataLoader(TensorDataset(torch.randn(16, 3, IMAGE_SIZE, IMAGE_SIZE)), 8)
+
+    @pytest.fixture
     def trainer(
         self,
         partial_dataloader,
@@ -106,6 +110,7 @@ class TestIJEPALatentVisualizationTrainer:
         device,
         logger,
         decoder_name,
+        validation_dataloader,
     ):
         trainer = IJEPALatentVisualizationDecoderTrainer(
             partial_dataloader=partial_dataloader,
@@ -114,6 +119,8 @@ class TestIJEPALatentVisualizationTrainer:
             logger=logger,
             decoder_name=decoder_name,
             minimum_new_data_count=1,
+            validation_dataloader=validation_dataloader,
+            num_visualize_images=8,
         )
         trainer.attach_model_wrappers_dict(model_wrappers_dict)
         trainer.attach_data_users_dict(image_buffer_dict.get_data_users())
