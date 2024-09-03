@@ -159,7 +159,8 @@ class IJEPALatentVisualizationDecoderTrainer(BaseTrainer):
 
         fig = plt.figure(figsize=(6.4, 3.6))
         ax = fig.subplots()
-        ax.plot(losses.cpu().numpy())
+        losses = losses.cpu()
+        ax.plot(losses.numpy())
         ax.set_ylim(min(0, losses.min()), losses.max())
         ax.set_xlabel("time")
         ax.set_ylabel("loss")
