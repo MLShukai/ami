@@ -159,7 +159,7 @@ class IJEPALatentVisualizationDecoderTrainer(BaseTrainer):
 
         fig = plt.figure(figsize=(6.4, 3.6))
         ax = fig.subplots()
-        ax.plot(loss_list)
+        ax.plot(losses.cpu().numpy())
         ax.set_xlabel("time")
         ax.set_ylabel("loss")
         ax.set_title("losses past to future")
