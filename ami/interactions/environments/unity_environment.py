@@ -1,7 +1,5 @@
 import threading
 import time
-from enum import Enum
-from queue import Queue
 from typing import Any
 from uuid import UUID
 
@@ -17,10 +15,6 @@ from torch import Tensor
 from typing_extensions import override
 
 from .base_environment import BaseEnvironment
-
-
-class Command(Enum):
-    TEARDOWN = 0
 
 
 class TransformLogChannel(SideChannel):
@@ -97,9 +91,11 @@ class UnityEnvironment(BaseEnvironment[Tensor, Tensor]):
             time_scale=time_scale, target_frame_rate=target_frame_rate
         )
 
-        self._action_queue: Queue[Tensor | Command] = Queue()
-        self._observation_queue: Queue[NDArray[Any]] = Queue()
-        self._interaction_thread = threading.Thread(target=self._affect_action_in_background)
+        self._action: Tensor | None = None
+        self._observation: NDArray[Any]
+        self._lock = threading.RLock()
+        self._teardown_flag = threading.Event()
+        self._interaction_thread = threading.Thread(target=self._interaction)
 
     @property
     def gym_unity_environment(self) -> UnityToGymWrapper:
@@ -109,30 +105,35 @@ class UnityEnvironment(BaseEnvironment[Tensor, Tensor]):
     def raw_unity_environment(self) -> RawUnityEnv:
         return self._env._env
 
-    observation: NDArray[Any]
+    @property
+    def action(self) -> Tensor | None:
+        with self._lock:
+            if self._action is None:
+                return None
+            return self._action.clone()
 
-    def _affect_action_in_background(self) -> None:
-        """Affects the action in background thread."""
-        action_or_cmd = None
-        while True:
-            if not self._action_queue.empty():
-                action_or_cmd = self._action_queue.get_nowait()
-            if action_or_cmd is Command.TEARDOWN:
-                break
-            if action_or_cmd is not None:
-                observation, _, _, _ = self._env.step(action_or_cmd.detach().cpu().numpy())
-                self._observation_queue.put(observation)
-                time.sleep(0.0001)
+    @action.setter
+    def action(self, v: Tensor) -> None:
+        with self._lock:
+            self._action = v
+
+    @property
+    def observation(self) -> NDArray[Any]:
+        with self._lock:
+            return self._observation.copy()
+
+    @observation.setter
+    def observation(self, v: NDArray[Any]) -> None:
+        with self._lock:
+            self._observation = v
+
+    def _interaction(self) -> None:
+        """Affects the action and gets observation in background thread."""
+        while not self._teardown_flag.is_set():
+            if (action := self.action) is not None:
+                self.observation, _, _, _ = self._env.step(action.detach().cpu().numpy())
             else:
                 time.sleep(0.001)
-
-    def _clear_action_queue(self) -> None:
-        while not self._action_queue.empty():
-            self._action_queue.get_nowait()
-
-    def _update_to_latest_observation(self) -> None:
-        while not self._observation_queue.empty():
-            self.observation = self._observation_queue.get_nowait()
 
     @override
     def setup(self) -> None:
@@ -142,18 +143,15 @@ class UnityEnvironment(BaseEnvironment[Tensor, Tensor]):
 
     @override
     def affect(self, action: Tensor) -> None:
-        self._clear_action_queue()
-        self._action_queue.put(action)
+        self.action = action
 
     @override
     def observe(self) -> Tensor:
-        self._update_to_latest_observation()
         return torch.from_numpy(self.observation)
 
     @override
     def teardown(self) -> None:
         super().teardown()
-        self._clear_action_queue()
-        self._action_queue.put(Command.TEARDOWN)
+        self._teardown_flag.set()
         self._interaction_thread.join()
         self._env.close()
