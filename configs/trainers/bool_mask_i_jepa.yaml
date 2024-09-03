@@ -22,6 +22,25 @@ i_jepa_latent_visualization_context:
     log_dir: ${paths.tensorboard_dir}/i_jepa_latent_visualization_context
     log_every_n_steps: 1
 
+  validation_dataloader:
+    _target_: torch.utils.data.DataLoader
+    batch_size: 128
+    shuffle: false
+    drop_last: false
+    dataset:
+      _target_: ami.trainers.components.vision.IntervalSamplingImageDataset
+      image_dir: ${paths.data_dir}/random_observation_action_log/validation
+      num_sample: 512
+      pre_loading: true
+      transform:
+        _target_: torchvision.transforms.v2.Compose
+        transforms:
+          - _target_: torchvision.transforms.v2.Resize
+            size:
+              - ${shared.image_height}
+              - ${shared.image_width}
+          - _target_: ami.trainers.components.vision.NormalizeToMean0Std1
+
   device: ${devices.0}
   max_epochs: ${trainers.i_jepa.max_epochs}
   minimum_dataset_size: ${.partial_dataloader.batch_size}
@@ -37,24 +56,7 @@ i_jepa_latent_visualization_target:
     shuffle: true
     drop_last: true
 
-  validation_dataloader:
-    _target_: torch.utils.data.DataLoader
-    batch_size: 2048
-    shuffle: false
-    drop_last: false
-    dataset:
-      _target_: ami.trainers.components.vision.IntervalSamplingImageDataset
-      image_dir: ${paths.data_dir}/random_observation_action_log/validation
-      num_sample: 2048
-      pre_loading: true
-      transform:
-        _target_: torchvision.transforms.v2.Compose
-        transforms:
-          - _target_: torchvision.transforms.v2.Resize
-            size:
-              - ${shared.image_height}
-              - ${shared.image_width}
-          - _target_: ami.trainers.components.vision.NormalizeToMean0Std1
+  validation_dataloader: ${trainers.i_jepa_latent_visualization_context.validation_dataloader}
 
   partial_optimizer:
     _target_: torch.optim.AdamW
