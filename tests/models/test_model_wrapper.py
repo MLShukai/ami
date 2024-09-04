@@ -78,3 +78,13 @@ class TestWrappers:
         mw.unfreeze_model()
         assert mw.model.p.requires_grad is True
         assert mw.model.training is True
+
+    def test_load_parameter_file(self, tmp_path) -> None:
+        param_file = tmp_path / "param.pt"
+
+        m = ModelMultiplyP()
+        torch.save(m.state_dict(), param_file)
+
+        mw = ModelWrapper(ModelMultiplyP(), "cpu", True, parameter_file=param_file)
+
+        assert torch.equal(mw.model.p, m.p)
