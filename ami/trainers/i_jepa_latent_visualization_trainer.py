@@ -161,7 +161,7 @@ class IJEPALatentVisualizationDecoderTrainer(BaseTrainer):
         ax = fig.subplots()
         losses = losses.cpu()
         ax.plot(losses.numpy())
-        ax.set_ylim(min(0, losses.min()), max(losses.max(), 10))
+        ax.set_ylim(min(0, losses.min().item()), max(losses.max().item(), 10))
         ax.set_yscale("log")
         ax.set_xlabel("past to future")
         ax.set_ylabel("loss")
