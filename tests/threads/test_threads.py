@@ -74,7 +74,7 @@ def test_setting_exception_flag(caplog: LogCaptureFixture, thread_objects, mocke
 
     mt.run()
 
-    assert it.thread_command_handler.is_exception_raised()
-    assert tt.thread_command_handler.is_exception_raised()
+    assert it.exception_flag.is_raised()
+    assert tt.exception_flag.is_raised()
 
     assert "An exception occurred. The system will terminate immediately." in caplog.messages

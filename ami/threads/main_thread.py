@@ -4,8 +4,12 @@ from typing import TypeAlias
 from ..checkpointing.checkpoint_schedulers import BaseCheckpointScheduler
 from .base_thread import BaseThread
 from .shared_object_names import SharedObjectNames
-from .thread_control import ThreadController, ThreadControllerStatus
-from .thread_types import ThreadTypes, get_thread_name_from_type
+from .thread_control import ExceptionNotifier, ThreadController, ThreadControllerStatus
+from .thread_types import (
+    BACKGROUND_THREAD_TYPES,
+    ThreadTypes,
+    get_thread_name_from_type,
+)
 from .web_api_handler import ControlCommands, WebApiHandler
 
 AddressType: TypeAlias = tuple[str, int]  # host, port
@@ -49,6 +53,12 @@ class MainThread(BaseThread):
         self._max_uptime = max_uptime
 
         self.share_object(SharedObjectNames.THREAD_COMMAND_HANDLERS, self.thread_controller.handlers)
+
+    def on_shared_objects_pool_attached(self) -> None:
+        self.exception_notifiers: dict[ThreadTypes, ExceptionNotifier] = {
+            thread_type: self.get_shared_object(thread_type, SharedObjectNames.EXCEPTION_NOTIFIER)
+            for thread_type in BACKGROUND_THREAD_TYPES
+        }
 
     def worker(self) -> None:
         self.logger.info("Start main thread.")
@@ -134,8 +144,8 @@ class MainThread(BaseThread):
         """Checks the some exceptions has occurred in the background
         threads."""
         flag = False
-        for thread_type, handler in self.thread_controller.handlers.items():
-            if handler.is_exception_raised():
+        for thread_type, notififer in self.exception_notifiers.items():
+            if notififer.is_raised():
                 self.logger.error(f"The exception has occurred in the {get_thread_name_from_type(thread_type)} thread.")
                 flag = True
         return flag
