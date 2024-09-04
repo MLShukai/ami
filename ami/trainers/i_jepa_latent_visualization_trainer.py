@@ -161,8 +161,9 @@ class IJEPALatentVisualizationDecoderTrainer(BaseTrainer):
         ax = fig.subplots()
         losses = losses.cpu()
         ax.plot(losses.numpy())
-        ax.set_ylim(min(0, losses.min()), losses.max())
-        ax.set_xlabel("time")
+        ax.set_ylim(min(0, losses.min()), max(losses.max(), 10))
+        ax.set_yscale("log")
+        ax.set_xlabel("past to future")
         ax.set_ylabel("loss")
         ax.set_title("losses past to future")
         self.logger.tensorboard.add_figure(
