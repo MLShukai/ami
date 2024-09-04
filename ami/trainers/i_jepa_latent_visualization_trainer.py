@@ -3,7 +3,7 @@ from functools import partial
 from pathlib import Path
 from typing import Literal
 
-import matplotlib.pyplot as plt
+# import matplotlib.pyplot as plt
 import torch
 import torch.nn.functional as F
 import torchvision.transforms.v2.functional
@@ -157,17 +157,17 @@ class IJEPALatentVisualizationDecoderTrainer(BaseTrainer):
             self.log_prefix + "metrics/reconstruction", grid_reconstruction_image, self.logger.global_step
         )
 
-        fig = plt.figure(figsize=(6.4, 3.6))
-        ax = fig.subplots()
-        losses = losses.cpu()
-        ax.plot(losses.numpy())
-        ax.set_ylim(min(0, losses.min().item()))
-        ax.set_xlabel("past to future")
-        ax.set_ylabel("loss")
-        ax.set_title("losses past to future")
-        self.logger.tensorboard.add_figure(
-            self.log_prefix + "metrics/losses-past-to-future", fig, self.logger.global_step
-        )
+        # fig = plt.figure(figsize=(6.4, 3.6))
+        # ax = fig.subplots()
+        # losses = losses.cpu()
+        # ax.plot(losses.numpy())
+        # ax.set_ylim(min(0, losses.min().item()))
+        # ax.set_xlabel("past to future")
+        # ax.set_ylabel("loss")
+        # ax.set_title("losses past to future")
+        # self.logger.tensorboard.add_figure(
+        #     self.log_prefix + "metrics/losses-past-to-future", fig, self.logger.global_step
+        # )
 
     @override
     def train(self) -> None:
