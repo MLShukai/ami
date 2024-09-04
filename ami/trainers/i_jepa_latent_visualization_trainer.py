@@ -3,6 +3,7 @@ from functools import partial
 from pathlib import Path
 from typing import Literal
 
+# import matplotlib.pyplot as plt
 import torch
 import torch.nn.functional as F
 import torchvision.transforms.v2.functional
@@ -43,6 +44,7 @@ class IJEPALatentVisualizationDecoderTrainer(BaseTrainer):
         max_epochs: int = 1,
         minimum_dataset_size: int = 1,
         minimum_new_data_count: int = 0,
+        validation_dataloader: DataLoader[tuple[Tensor]] | None = None,
         num_visualize_images: int = 64,
         visualize_grid_row: int = 8,
     ) -> None:
@@ -57,6 +59,7 @@ class IJEPALatentVisualizationDecoderTrainer(BaseTrainer):
             max_epochs: Maximum number of epochs to train the decoder. Default is 1.
             minimum_dataset_size: Minimum number of samples required in the dataset to start training. Default is 1.
             minimum_new_data_count: Minimum number of new data samples required to run the training. Default is 0.
+            validation_dataloader DataLoader instance for validation.
             num_visualize_images: Number of images to use for visualization. Default is 64.
             visualize_grid_row: Number of images per row in the visualization grid. Default is 8.
         """
@@ -85,6 +88,7 @@ class IJEPALatentVisualizationDecoderTrainer(BaseTrainer):
         self.max_epochs = max_epochs
         self.minimum_dataset_size = minimum_dataset_size
         self.minimum_new_data_count = minimum_new_data_count
+        self.validation_dataloader = validation_dataloader
         self.num_visualize_images = num_visualize_images
         self.visualize_grid_row = visualize_grid_row
 
@@ -115,44 +119,55 @@ class IJEPALatentVisualizationDecoderTrainer(BaseTrainer):
         self.dataset_previous_get_time = time.time()
         return dataset
 
-    @torch.no_grad()
-    def log_visualization(self, dataloader: DataLoader[Tensor]) -> None:
-        """logs grid of input and reconstructed images for visualization.
+    @torch.inference_mode()
+    def validation(self, dataloader: DataLoader[tuple[Tensor]]) -> None:
+        """Compute the reconstruction loss and log visualization grid image."""
 
-        Args:
-            dataloader (DataLoader[Tensor]): DataLoader containing the image batches.
-        """
-        image_batches = []
-        reconstruction_image_batches = []
-        num_remaining = self.num_visualize_images
-
+        input_image_batch_list = []
+        reconstruction_image_batch_list = []
+        loss_list = []
         batch: tuple[Tensor]
         for batch in dataloader:
             (image_batch,) = batch
-            image_batch = image_batch[:num_remaining]
-            image_batches.append(image_batch)
+            input_image_batch_list.append(image_batch)
             image_batch = image_batch.to(self.device)
 
-            latents = self.encoder(image_batch)
-            if self.encoder_name == ModelNames.I_JEPA_TARGET_ENCODER:
-                latents = torch.nn.functional.layer_norm(latents, (latents.size(-1),))
-            reconstruction: Tensor = self.decoder(latents)
+            latents = self.encoder.infer(image_batch)
+            reconstructions: Tensor = self.decoder(latents)
+            rec_img_size = reconstructions.shape[-2:]
+            resized_image_batch = torchvision.transforms.v2.functional.resize(image_batch, rec_img_size)
+            loss_list.append(F.mse_loss(resized_image_batch, reconstructions, reduction="none").flatten(1).mean(1))
 
-            reconstruction_image_batches.append(reconstruction.cpu())
+            reconstruction_image_batch_list.append(reconstructions.cpu())
 
-            num_remaining -= reconstruction.size(0)
-            if num_remaining <= 0:
-                break
+        input_image_batches = torch.cat(input_image_batch_list)
+        reconstruction_image_batches = torch.cat(reconstruction_image_batch_list)
+        visualize_indices = torch.randperm(input_image_batches.size(0))[: self.num_visualize_images].sort().values
 
-        grid_input_image = torchvision.utils.make_grid(torch.cat(image_batches), self.visualize_grid_row)
+        grid_input_image = torchvision.utils.make_grid(input_image_batches[visualize_indices], self.visualize_grid_row)
         grid_reconstruction_image = torchvision.utils.make_grid(
-            torch.cat(reconstruction_image_batches), self.visualize_grid_row
+            reconstruction_image_batches[visualize_indices], self.visualize_grid_row
         )
+        losses = torch.cat(loss_list)
+        loss = torch.mean(losses)
 
+        self.logger.log(self.log_prefix + "losses/validation-reconstruction", loss, force_log=True)
         self.logger.tensorboard.add_image(self.log_prefix + "metrics/input", grid_input_image, self.logger.global_step)
         self.logger.tensorboard.add_image(
             self.log_prefix + "metrics/reconstruction", grid_reconstruction_image, self.logger.global_step
         )
+
+        # fig = plt.figure(figsize=(6.4, 3.6))
+        # ax = fig.subplots()
+        # losses = losses.cpu()
+        # ax.plot(losses.numpy())
+        # ax.set_ylim(min(0, losses.min().item()))
+        # ax.set_xlabel("past to future")
+        # ax.set_ylabel("loss")
+        # ax.set_title("losses past to future")
+        # self.logger.tensorboard.add_figure(
+        #     self.log_prefix + "metrics/losses-past-to-future", fig, self.logger.global_step
+        # )
 
     @override
     def train(self) -> None:
@@ -198,7 +213,8 @@ class IJEPALatentVisualizationDecoderTrainer(BaseTrainer):
 
                 self.logger.update()
 
-        self.log_visualization(dataloader)
+        if self.validation_dataloader is not None:
+            self.validation(self.validation_dataloader)
 
         self.optimizer_state = optimizer.state_dict()
         self.logger_state = self.logger.state_dict()

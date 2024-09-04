@@ -21,6 +21,7 @@ einops = "^0.8.0"
 h5py = "^3.11.0"
 mlagents-envs = {git = "https://github.com/MLShukai/ml-agents.git", subdirectory = "ml-agents-envs", rev = "develop"}
 hydra-joblib-launcher = "^1.2.0"
+# matplotlib = "^3.9.2"
 
 
 [tool.poetry.group.dev.dependencies]

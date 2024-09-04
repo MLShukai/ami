@@ -17,6 +17,7 @@ class FolderAsVideo:
         sort_by_name: bool = True,
         start_frame: int = 0,
         max_frames: int | None = None,
+        normalize: bool = True,
     ) -> None:
         """Initialize the FolderAsVideo object.
 
@@ -26,6 +27,7 @@ class FolderAsVideo:
             sort_by_name (bool): Whether to sort video files by name.
             start_frame (int): The frame number to start reading from.
             max_frames (int | None): Maximum number of frames to read. If None, read all available frames.
+            normalize (bool): Whether to normalize the value range to [0,1].
 
         Raises:
             ValueError: If start_frame is greater than or equal to total frames,
@@ -34,6 +36,7 @@ class FolderAsVideo:
         self.folder = Path(folder)
         self.extensions = extensions
         self.start_frame = start_frame
+        self.normalize = normalize
 
         self.video_files = self._get_video_files(sort_by_name)
         self.total_frames = self._count_total_frames()
@@ -126,8 +129,11 @@ class FolderAsVideo:
                 raise RuntimeError("All frames have been read")
 
         self.current_frame += 1
-        frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-        return torch.from_numpy(frame_rgb).permute(2, 0, 1).float() / 255.0
+        frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+        frame_tensor = torch.from_numpy(frame).permute(2, 0, 1)
+        if self.normalize:
+            frame_tensor = frame_tensor.float() / 255.0
+        return frame_tensor
 
     @property
     def is_finished(self) -> bool:
@@ -159,6 +165,7 @@ class VideoFoldersImageObservationGenerator:
         video_extensions: tuple[str, ...] = ("mp4",),
         folder_start_frames: int | list[int] = 0,
         folder_frame_limits: int | None | list[int | None] = None,
+        normalize: bool = True,
     ):
         """Initialize the VideoFoldersImageObservationGenerator.
 
@@ -169,6 +176,7 @@ class VideoFoldersImageObservationGenerator:
             folder_start_frames: Starting frame(s) for each video folder.
             folder_frame_limits: Maximum number of frames to use from each folder.
                                  None means use all available frames.
+            normalize (bool): Whether to normalize the value range to [0,1].
 
         Raises:
             ValueError: If the length of folder_start_frames or folder_frame_limits
@@ -195,13 +203,17 @@ class VideoFoldersImageObservationGenerator:
 
         # Initialize FolderAsVideo objects for each folder
         self.folder_videos = [
-            FolderAsVideo(folder, video_extensions, True, start_frame, max_frames)
+            FolderAsVideo(folder, video_extensions, True, start_frame, max_frames, normalize)
             for folder, start_frame, max_frames in zip(
                 self.folder_paths, self.folder_start_frames, self.folder_frame_limits
             )
         ]
 
         self.current_folder_index = 0
+
+    @property
+    def max_frames(self) -> int:
+        return sum(f.max_frames for f in self.folder_videos)
 
     def __call__(self) -> torch.Tensor:
         """Generate the next image observation.
