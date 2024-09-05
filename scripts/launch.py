@@ -97,7 +97,10 @@ def main(cfg: DictConfig) -> None:
     with open_dict(cfg) as c:
         c["param_count"] = param_count
 
-    logger.info(f"Displaying configs..\n{display_nested_config(cfg)}")
+    display_cfg = display_nested_config(cfg)
+    logger.info(f"Displaying configs..\n{display_cfg}")
+    with open(os.path.join(cfg.paths.output_dir, "launch-configuration.yaml"), "w") as f:
+        f.write(display_cfg)
 
     logger.info("Sharing objects...")
     attach_shared_objects_pool_to_threads(main_thread, inference_thread, training_thread)
