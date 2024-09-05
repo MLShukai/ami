@@ -1,6 +1,11 @@
+from collections import deque
 from pathlib import Path
-from typing import Callable
+from typing import Any, Callable
 
+import matplotlib.pyplot as plt
+import numpy as np
+import numpy.typing as npt
+import seaborn
 import torch
 import torch.nn as nn
 from torch import Tensor
@@ -28,6 +33,9 @@ class MultiStepImaginationCuriosityImageAgent(BaseAgent[Tensor, Tensor]):
         max_imagination_steps: int = 1,
         reward_scale: float = 1.0,
         reward_shift: float = 0.0,
+        log_reward_imaginations_every_n_steps: int = 1,
+        log_reward_imaginations_max_history_size: int = 1,
+        log_reward_imaginations_append_interval: int = 1,
     ) -> None:
         """Constructs Agent.
 
@@ -36,6 +44,9 @@ class MultiStepImaginationCuriosityImageAgent(BaseAgent[Tensor, Tensor]):
             reward_average_method: The method for averaging rewards that predicted through multi imaginations.
                 Input is reward (imagination, ), and return value must be scalar.
             max_imagination_steps: Max step for imagination.
+            log_reward_imaginations_every_n_steps: Number of steps between each logging of reward imaginations.
+            log_reward_imaginations_max_history_size: Maximum number of reward imagination entries to keep in the log history.
+            log_reward_imaginations_append_interval: Number of steps between each append to the reward imaginations log.
         """
         super().__init__()
         assert max_imagination_steps > 0
@@ -46,6 +57,11 @@ class MultiStepImaginationCuriosityImageAgent(BaseAgent[Tensor, Tensor]):
         self.reward_scale = reward_scale
         self.reward_shift = reward_shift
         self.max_imagination_steps = max_imagination_steps
+
+        self.log_reward_imaginations_every_n_steps = log_reward_imaginations_every_n_steps
+        self.reward_imaginations_deque: deque[npt.NDArray[Any]] = deque(maxlen=log_reward_imaginations_max_history_size)
+        self.reward_imaginations_global_step_deque: deque[int] = deque(maxlen=log_reward_imaginations_max_history_size)
+        self.log_reward_imaginations_append_interval = log_reward_imaginations_append_interval
 
     def on_inference_models_attached(self) -> None:
         super().on_inference_models_attached()
@@ -94,6 +110,21 @@ class MultiStepImaginationCuriosityImageAgent(BaseAgent[Tensor, Tensor]):
             # ステップの冒頭でデータコレクトすることで前ステップのデータを収集する。
             self.step_data[DataKeys.REWARD] = reward
             self.data_collectors.collect(self.step_data)
+
+            # 長期的予測の誤差値とそのステップの格納
+            if (
+                reward_imaginations.size(0) == self.max_imagination_steps
+                and self.logger.global_step % self.log_reward_imaginations_append_interval == 0
+            ):
+                self.reward_imaginations_deque.append(reward_imaginations.cpu().numpy())
+                self.reward_imaginations_global_step_deque.append(self.logger.global_step)
+
+            # 長期的予測の誤差の可視化
+            if (
+                self.logger.global_step % self.log_reward_imaginations_every_n_steps == 0
+                and len(self.reward_imaginations_deque) > 0
+            ):
+                self.visualize_reward_imaginations()
 
         self.step_data[DataKeys.OBSERVATION] = observation  # o_t
         self.step_data[DataKeys.EMBED_OBSERVATION] = embed_obs  # z_t
@@ -160,6 +191,48 @@ class MultiStepImaginationCuriosityImageAgent(BaseAgent[Tensor, Tensor]):
             path / "exact_forward_dynamics_hidden_state.pt",
             map_location=self.exact_forward_dynamics_hidden_state.device,
         )
+
+    BASE_FIG_SIZE = 0.6
+    ADJUST_FIG_WIDTH = 5
+    COLOR_MAP = "plasma"
+
+    def visualize_reward_imaginations(self) -> None:
+        """Creates and logs a heatmap visualization of reward imaginations.
+
+        This method generates a heatmap using the collected reward imagination data,
+        where each row represents a different global step and each column represents
+        an imagination step. The heatmap is then logged to TensorBoard for visual analysis.
+
+        The heatmap provides insights into how the predicted rewards change over time
+        and across different imagination steps, helping to track the agent's
+        performance and the accuracy of its reward predictions.
+        """
+
+        imaginations_history_size = len(self.reward_imaginations_deque)
+        figsize = (
+            self.BASE_FIG_SIZE * self.max_imagination_steps + self.ADJUST_FIG_WIDTH,
+            self.BASE_FIG_SIZE * imaginations_history_size,
+        )
+
+        data = np.stack(self.reward_imaginations_deque)[::-1]
+        xticklabels = np.arange(self.max_imagination_steps) + 1
+        yticklabels = list(reversed(self.reward_imaginations_global_step_deque))
+
+        fig = plt.figure(figsize=figsize)
+        ax = fig.subplots()
+        seaborn.heatmap(
+            data=data,
+            ax=ax,
+            annot=True,
+            cmap=self.COLOR_MAP,
+            linewidths=0.5,
+            xticklabels=xticklabels,
+            yticklabels=yticklabels,
+        )
+        ax.set_xlabel("imagination steps")
+        ax.set_ylabel("global steps")
+
+        self.logger.tensorboard.add_figure("agent/multistep-imagination-errors", fig, self.logger.global_step)
 
 
 def average_exponentially(rewards: Tensor, decay: float) -> Tensor:
