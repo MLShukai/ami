@@ -14,8 +14,9 @@ logger:
   log_every_n_seconds: 0
 
 max_imagination_steps: 50
-log_reward_imaginations_every_n_steps: ${.max_imagination_steps}
 log_reward_imaginations_max_history_size: ${.max_imagination_steps}
+log_reward_imaginations_append_interval: 10
+log_reward_imaginations_every_n_steps: ${python.eval:"${.max_imagination_steps} * ${.log_reward_imaginations_append_interval}"}
 
 reward_average_method:
   _target_: ami.interactions.agents.multi_step_imagination_curiosity_agent.average_exponentially
