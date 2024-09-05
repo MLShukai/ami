@@ -1,7 +1,8 @@
 import csv
 import time
-from typing import Any
+from typing import Any, Callable, Generic, TypeVar
 
+import torch
 from torch import Tensor
 from typing_extensions import override
 
@@ -51,3 +52,98 @@ class TensorCSVRecorder(BaseIOWrapper[Tensor, Tensor]):
         with open(self.filename, "a", newline="") as csvfile:
             writer = csv.writer(csvfile)
             writer.writerow(row)
+
+
+ValueType = TypeVar("ValueType")
+
+
+class TensorCSVReader(Generic[ValueType]):
+    """Read CSV file and convert selected columns to a tensor.
+
+    This class provides functionality to read data from a CSV file and convert
+    selected columns into a PyTorch tensor. It allows for selective reading of
+    columns and conversion of string values to a specified type.
+
+    The class supports reading a specified number of rows and handles CSV files
+    with a header row. It's designed to work with CSV files that have been created
+    by TensorCSVRecorder or follow a similar format.
+
+    Args:
+        file_path (str): The path to the CSV file to read from.
+        column_headers (list[str]): List of column headers to select from the CSV.
+        value_converter (Callable[[str], ValueType]): A function to convert string values to the desired type.
+        max_rows (int | None, optional): Maximum number of rows to read. If None, read all available rows. Defaults to None.
+
+    Raises:
+        ValueError: If the CSV file is empty, contains only a header, or if requested headers are not found.
+    """
+
+    def __init__(
+        self,
+        file_path: str,
+        column_headers: list[str],
+        value_converter: Callable[[str], ValueType],
+        max_rows: int | None = None,
+    ) -> None:
+        super().__init__()
+
+        self.file_path = file_path
+        self.csv_file = open(file_path)
+        self.csv_reader = csv.reader(self.csv_file)
+        self.value_converter = value_converter
+
+        total_rows = self._count_data_rows()
+
+        if total_rows < 0:
+            raise ValueError("CSV file is empty.")
+
+        if max_rows is not None:
+            if max_rows > total_rows:
+                raise ValueError(f"Requested max_rows ({max_rows}) exceeds available data rows ({total_rows}).")
+            self.max_rows = max_rows
+        else:
+            self.max_rows = total_rows
+
+        file_headers = next(self.csv_reader)
+        self.column_indices = self._get_column_indices(file_headers, column_headers)
+
+    def _count_data_rows(self) -> int:
+        with open(self.file_path) as f:
+            return sum(1 for _ in f) - 1  # Subtract 1 to exclude header
+
+    def _get_column_indices(self, file_headers: list[str], requested_headers: list[str]) -> list[int]:
+        indices = []
+        for h in requested_headers:
+            if h in file_headers:
+                indices.append(file_headers.index(h))
+            else:
+                raise ValueError(f"Requested header {h!r} not found in CSV.")
+        return indices
+
+    @property
+    def current_row(self) -> int:
+        return self.csv_reader.line_num - 1
+
+    @property
+    def is_finished(self) -> bool:
+        return self.current_row >= self.max_rows
+
+    def read(self) -> Tensor:
+        """Read the next row from the CSV and return it as a tensor.
+
+        Returns:
+            Tensor: A tensor containing the converted values from the selected columns.
+
+        Raises:
+            StopIteration: When all rows have been read.
+        """
+        if self.is_finished:
+            raise StopIteration("All rows have been read.")
+
+        row_data = next(self.csv_reader)
+        selected_data = [row_data[i] for i in self.column_indices]
+        converted_data = [self.value_converter(d) for d in selected_data]
+        return torch.tensor(converted_data)
+
+    def __del__(self) -> None:
+        self.csv_file.close()
