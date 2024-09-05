@@ -208,15 +208,15 @@ class MultiStepImaginationCuriosityImageAgent(BaseAgent[Tensor, Tensor]):
         performance and the accuracy of its reward predictions.
         """
 
-        imaginations_size = len(self.reward_imaginations_deque)
+        imaginations_history_size = len(self.reward_imaginations_deque)
         figsize = (
             self.BASE_FIG_SIZE * self.max_imagination_steps + self.ADJUST_FIG_WIDTH,
-            self.BASE_FIG_SIZE + imaginations_size,
+            self.BASE_FIG_SIZE * imaginations_history_size,
         )
 
         data = np.stack(self.reward_imaginations_deque)
         xticklabels = np.arange(self.max_imagination_steps) + 1
-        yticklabels = list(self.reward_imaginations_global_step_deque)
+        yticklabels = list(reversed(self.reward_imaginations_global_step_deque))
 
         fig = plt.figure(figsize=figsize)
         ax = fig.subplots()
