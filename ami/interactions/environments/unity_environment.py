@@ -1,3 +1,5 @@
+import threading
+import time
 from typing import Any
 from uuid import UUID
 
@@ -89,6 +91,12 @@ class UnityEnvironment(BaseEnvironment[Tensor, Tensor]):
             time_scale=time_scale, target_frame_rate=target_frame_rate
         )
 
+        self._action: Tensor | None = None
+        self._observation: NDArray[Any]
+        self._lock = threading.RLock()
+        self._teardown_flag = threading.Event()
+        self._interaction_thread = threading.Thread(target=self._interaction)
+
     @property
     def gym_unity_environment(self) -> UnityToGymWrapper:
         return self._env
@@ -97,22 +105,53 @@ class UnityEnvironment(BaseEnvironment[Tensor, Tensor]):
     def raw_unity_environment(self) -> RawUnityEnv:
         return self._env._env
 
-    observation: NDArray[Any]
+    @property
+    def action(self) -> Tensor | None:
+        with self._lock:
+            if self._action is None:
+                return None
+            return self._action.clone()
+
+    @action.setter
+    def action(self, v: Tensor) -> None:
+        with self._lock:
+            self._action = v
+
+    @property
+    def observation(self) -> NDArray[Any]:
+        with self._lock:
+            return self._observation.copy()
+
+    @observation.setter
+    def observation(self, v: NDArray[Any]) -> None:
+        with self._lock:
+            self._observation = v
+
+    def _interaction(self) -> None:
+        """Affects the action and gets observation in background thread."""
+        while not self._teardown_flag.is_set():
+            if (action := self.action) is not None:
+                self.observation, _, _, _ = self._env.step(action.detach().cpu().numpy())
+            else:
+                time.sleep(0.001)
 
     @override
     def setup(self) -> None:
         super().setup()
         self.observation = self._env.reset()
-
-    @override
-    def teardown(self) -> None:
-        super().teardown()
-        self._env.close()
+        self._interaction_thread.start()
 
     @override
     def affect(self, action: Tensor) -> None:
-        self.observation, _, _, _ = self._env.step(action.detach().cpu().numpy())
+        self.action = action
 
     @override
     def observe(self) -> Tensor:
         return torch.from_numpy(self.observation)
+
+    @override
+    def teardown(self) -> None:
+        super().teardown()
+        self._teardown_flag.set()
+        self._interaction_thread.join()
+        self._env.close()
