@@ -34,7 +34,7 @@ class MultiStepImaginationCuriosityImageAgent(BaseAgent[Tensor, Tensor]):
         reward_scale: float = 1.0,
         reward_shift: float = 0.0,
         log_reward_imaginations_every_n_steps: int = 1,
-        log_reward_imaginations_max_history_length: int = 1,
+        log_reward_imaginations_max_history_size: int = 1,
         log_reward_imaginations_append_interval: int = 1,
     ) -> None:
         """Constructs Agent.
@@ -45,7 +45,7 @@ class MultiStepImaginationCuriosityImageAgent(BaseAgent[Tensor, Tensor]):
                 Input is reward (imagination, ), and return value must be scalar.
             max_imagination_steps: Max step for imagination.
             log_reward_imaginations_every_n_steps: Number of steps between each logging of reward imaginations.
-            log_reward_imaginations_max_history_length: Maximum number of reward imagination entries to keep in the log history.
+            log_reward_imaginations_max_history_size: Maximum number of reward imagination entries to keep in the log history.
             log_reward_imaginations_append_interval: Number of steps between each append to the reward imaginations log.
         """
         super().__init__()
@@ -59,12 +59,8 @@ class MultiStepImaginationCuriosityImageAgent(BaseAgent[Tensor, Tensor]):
         self.max_imagination_steps = max_imagination_steps
 
         self.log_reward_imaginations_every_n_steps = log_reward_imaginations_every_n_steps
-        self.reward_imaginations_deque: deque[npt.NDArray[Any]] = deque(
-            maxlen=log_reward_imaginations_max_history_length
-        )
-        self.reward_imaginations_global_step_deque: deque[int] = deque(
-            maxlen=log_reward_imaginations_max_history_length
-        )
+        self.reward_imaginations_deque: deque[npt.NDArray[Any]] = deque(maxlen=log_reward_imaginations_max_history_size)
+        self.reward_imaginations_global_step_deque: deque[int] = deque(maxlen=log_reward_imaginations_max_history_size)
         self.log_reward_imaginations_append_interval = log_reward_imaginations_append_interval
 
     def on_inference_models_attached(self) -> None:
