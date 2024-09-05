@@ -15,7 +15,7 @@ logger:
 
 max_imagination_steps: 50
 log_reward_imaginations_max_history_size: ${.max_imagination_steps}
-log_reward_imaginations_append_interval: 10
+log_reward_imaginations_append_interval: 100
 log_reward_imaginations_every_n_steps: ${python.eval:"${.max_imagination_steps} * ${.log_reward_imaginations_append_interval}"}
 
 reward_average_method:
