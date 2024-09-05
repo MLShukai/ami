@@ -48,12 +48,12 @@ def get_inference_thread_logger(name: str) -> logging.Logger:
 def _create_tree(data: Mapping[str, Any] | MutableSequence[Any], indent: str = "") -> str:
     result = ""
     if isinstance(data, MutableSequence):
-        for index, value in enumerate(data):
+        for value in data:
             if isinstance(value, (Mapping | MutableSequence)):
-                result += f"{indent}{index}:\n"
+                result += f"{indent}- "
                 result += _create_tree(value, indent + "  ")
             else:
-                result += f"{indent}{index}: {value}\n"
+                result += f"{indent}- {value}\n"
     elif isinstance(data, Mapping):
         for key, value in data.items():
             if isinstance(value, (Mapping | MutableSequence)):
