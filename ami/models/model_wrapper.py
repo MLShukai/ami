@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import copy
 import threading
+from pathlib import Path
 from typing import Any, Generic, Protocol, TypeVar
 
 import torch
@@ -55,6 +56,7 @@ class ModelWrapper(nn.Module, Generic[ModuleType]):
         default_device: torch.device = torch.device("cpu"),
         has_inference: bool = True,
         inference_forward: InferenceForwardCallable = default_infer,
+        parameter_file: str | Path | None = None,
     ) -> None:
         """Constructs the model wrapper.
 
@@ -63,6 +65,7 @@ class ModelWrapper(nn.Module, Generic[ModuleType]):
             default_device: The default device for model creation. This is used to determine the `device` property if the model lacks parameters or buffers.
             has_inference: Specifies whether the wrapper contains an inference component.
             inference_forward: The inference forward flow for the wrapped model.
+            parameter_file: The path to the parameter file for wrapping model.
         """
 
         super().__init__()
@@ -70,6 +73,9 @@ class ModelWrapper(nn.Module, Generic[ModuleType]):
         self._default_device = torch.device(default_device)
         self.has_inference = has_inference
         self._inference_forward = inference_forward
+
+        if parameter_file is not None:
+            self.model.load_state_dict(torch.load(parameter_file, map_location=self.device))
 
     def forward(self, *args: Any, **kwds: Any) -> Any:
         """Executes the forward path for the training."""
