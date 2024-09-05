@@ -216,7 +216,7 @@ class MultiStepImaginationCuriosityImageAgent(BaseAgent[Tensor, Tensor]):
 
         data = np.stack(self.reward_imaginations_deque)
         xticklabels = np.arange(self.max_imagination_steps) + 1
-        yticklabels = list(reversed(self.reward_imaginations_global_step_deque))
+        yticklabels = list(self.reward_imaginations_global_step_deque)
 
         fig = plt.figure(figsize=figsize)
         ax = fig.subplots()
