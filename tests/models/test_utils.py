@@ -83,6 +83,16 @@ class TestWrappersDict:
 
         mwd.load_state(models_path)
 
+    def test_remove_inference_thread_only_models(self):
+        mwd = ModelWrappersDict(
+            a=ModelWrapper(ModelMultiplyP(), "cpu", True),
+            b=ModelWrapper(ModelMultiplyP(), "cpu", True, inference_thread_only=True),
+        )
+        removed_names = mwd.remove_inference_thread_only_models()
+        assert removed_names == ["b"]
+        assert "b" not in mwd
+        assert "b" in mwd.inference_wrappers_dict
+
 
 class DummyModel(torch.nn.Module):
     def __init__(self, *args, **kwargs) -> None:
