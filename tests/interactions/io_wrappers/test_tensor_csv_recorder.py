@@ -1,4 +1,5 @@
 import os
+import pickle
 
 import pytest
 import torch
@@ -119,3 +120,12 @@ class TestTensorCSVReader:
             TensorCSVReader(
                 file_path=str(empty_csv), column_headers=["value1", "value2", "value3"], value_converter=float
             )
+
+    def test_pickling(self, csv_reader: TensorCSVReader):
+        assert torch.equal(csv_reader.read(), torch.tensor([1.0, 2.0, 3.0]))
+        assert csv_reader.current_row == 1
+
+        csv_reader = pickle.loads(pickle.dumps(csv_reader))
+        assert csv_reader.current_row == 1
+        assert torch.equal(csv_reader.read(), torch.tensor([4.0, 5.0, 6.0]))
+        assert csv_reader.current_row == 2
