@@ -88,3 +88,20 @@ class TestWrappers:
         mw = ModelWrapper(ModelMultiplyP(), "cpu", True, parameter_file=param_file)
 
         assert torch.equal(mw.model.p, m.p)
+
+    def test_inference_thread_only(self):
+        m = ModelWrapper(ModelMultiplyP(), has_inference=True, inference_thread_only=True)
+        iw = m.inference_wrapper
+
+        assert m.inference_thread_only
+        assert iw._wrapper is m
+
+        # default false.
+        m = ModelWrapper(ModelMultiplyP(), has_inference=True)
+        iw = m.inference_wrapper
+        assert not m.inference_thread_only
+        assert iw._wrapper is not m
+
+        # test consistency between `has_inference` and `inference_thread_only`
+        with pytest.raises(ValueError):
+            ModelWrapper(ModelMultiplyP(), has_inference=False, inference_thread_only=True)

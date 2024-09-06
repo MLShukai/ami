@@ -57,6 +57,7 @@ class ModelWrapper(nn.Module, Generic[ModuleType]):
         has_inference: bool = True,
         inference_forward: InferenceForwardCallable = default_infer,
         parameter_file: str | Path | None = None,
+        inference_thread_only: bool = False,
     ) -> None:
         """Constructs the model wrapper.
 
@@ -66,12 +67,16 @@ class ModelWrapper(nn.Module, Generic[ModuleType]):
             has_inference: Specifies whether the wrapper contains an inference component.
             inference_forward: The inference forward flow for the wrapped model.
             parameter_file: The path to the parameter file for wrapping model.
+            inference_thread_only: Whether the model should be used in inference thread only.
         """
 
         super().__init__()
         self.model = model
         self._default_device = torch.device(default_device)
         self.has_inference = has_inference
+        if inference_thread_only and not has_inference:
+            raise ValueError("`has_inference` is False but model is inference thread only!")
+        self.inference_thread_only = inference_thread_only
         self._inference_forward = inference_forward
 
         if parameter_file is not None:
@@ -137,7 +142,10 @@ class ModelWrapper(nn.Module, Generic[ModuleType]):
             RuntimeError: When `has_inference` is set to False.
         """
         if self.has_inference:
-            copied_self = copy.deepcopy(self)
+            if self.inference_thread_only:
+                copied_self = self  # Not copied because not be used in the training thread.
+            else:
+                copied_self = copy.deepcopy(self)
             copied_self.freeze_model()
             return ThreadSafeInferenceWrapper(copied_self)
 
