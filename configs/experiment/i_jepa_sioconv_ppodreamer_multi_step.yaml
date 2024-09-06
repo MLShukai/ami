@@ -15,13 +15,6 @@ interaction:
         _partial_: True
         eps: 1e-6
 
-  action_wrappers:
-    - _target_: ami.interactions.io_wrappers.function_wrapper.FunctionIOWrapper
-      wrap_function:
-        _target_: torch.argmax
-        _partial_: true
-        dim: -1
-
 trainers:
   i_jepa:
     max_epochs: 1
