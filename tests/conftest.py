@@ -45,6 +45,7 @@ def model_wrappers_dict(gpu_device: torch.device | None) -> ModelWrappersDict:
             "model2": ModelWrapper(ModelMultiplyP(), "cpu", True),
             "model_device": ModelWrapper(ModelMultiplyP(), device, True),
             "model_no_inference": ModelWrapper(ModelMultiplyP(), "cpu", False),
+            "model_inference_thread_only": ModelWrapper(ModelMultiplyP(), "cpu", True, inference_thread_only=True),
         }
     )
     d.send_to_default_device()

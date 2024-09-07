@@ -94,6 +94,22 @@ class ModelWrappersDict(UserDict[str, ModelWrapper[nn.Module]], SaveAndLoadState
     def __delitem__(self, key: str) -> None:
         raise RuntimeError(f"Deleting item is prohibited! Key:{key!r}")
 
+    def remove_inference_thread_only_models(self) -> list[str]:
+        """Removes the model that is used for inference thread only from
+        ModelWrappersDict.
+
+        Returns:
+            list[str]: Removed model names.
+        """
+        self.inference_wrappers_dict  # Create inference wrappers dict when not created.
+
+        removed_names = []
+        for name, wrapper in list(self.data.items()):
+            if wrapper.inference_thread_only:
+                del self.data[name]
+                removed_names.append(name)
+        return removed_names
+
 
 def count_model_parameters(model: nn.Module) -> tuple[int, int, int]:
     """Counts the number of model parameters.
