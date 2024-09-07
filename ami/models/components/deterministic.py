@@ -30,7 +30,10 @@ class Deterministic(Distribution):
 
         The entropy of a deterministic distribution is always zero.
         """
-        return torch.zeros_like(self.data)
+        ent = torch.zeros_like(self.data)
+        if not torch.is_floating_point(ent):
+            ent = ent.float()
+        return ent
 
     def log_prob(self, value: Tensor) -> Tensor:
         """Computes the log probability of the given value.
@@ -40,5 +43,7 @@ class Deterministic(Distribution):
         negative infinity (probability 0) otherwise.
         """
         prob = torch.zeros_like(value)
+        if not torch.is_floating_point(prob):
+            prob = prob.float()
         prob[self.data != value] = -torch.inf
         return prob
