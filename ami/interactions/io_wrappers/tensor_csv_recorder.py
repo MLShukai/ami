@@ -145,24 +145,24 @@ class TensorCSVReader(Generic[ValueType]):
         converted_data = [self.value_converter(d) for d in selected_data]
         return torch.tensor(converted_data)
 
-    def __getstate__(self) -> dict[str, Any]:
-        """Prepare the object for pickling."""
-        state = self.__dict__.copy()
-        state["_reader_line_num"] = self.csv_reader.line_num
-        del state["csv_file"]
-        del state["csv_reader"]
-        return state
+    # def __getstate__(self) -> dict[str, Any]:
+    #     """Prepare the object for pickling."""
+    #     state = self.__dict__.copy()
+    #     state["_reader_line_num"] = self.csv_reader.line_num
+    #     del state["csv_file"]
+    #     del state["csv_reader"]
+    #     return state
 
-    def __setstate__(self, state: dict[str, Any]) -> None:
-        """Restore the object from its pickled state."""
-        reader_line_num = state.pop("_reader_line_num")
-        self.__dict__.update(state)
-        csv_file = open(self.file_path)
-        csv_reader = csv.reader(csv_file)
-        for _ in range(reader_line_num):
-            next(csv_reader)
-        self.csv_file = csv_file
-        self.csv_reader = csv_reader
+    # def __setstate__(self, state: dict[str, Any]) -> None:
+    #     """Restore the object from its pickled state."""
+    #     reader_line_num = state.pop("_reader_line_num")
+    #     self.__dict__.update(state)
+    #     csv_file = open(self.file_path)
+    #     csv_reader = csv.reader(csv_file)
+    #     for _ in range(reader_line_num):
+    #         next(csv_reader)
+    #     self.csv_file = csv_file
+    #     self.csv_reader = csv_reader
 
     def __del__(self) -> None:
         if hasattr(self, "csv_file"):
