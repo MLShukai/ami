@@ -34,7 +34,7 @@ IGNORE_EXPERIMENT_CONFIGS = {
 DATA_DIR = PROJECT_ROOT / "data"
 if not (DATA_DIR / "random_observation_action_log").exists():
     IGNORE_EXPERIMENT_CONFIGS.add("bool_mask_i_jepa_with_videos.yaml")
-    IGNORE_EXPERIMENT_CONFIGS.add("learn_only_sioconve.yaml")
+    IGNORE_EXPERIMENT_CONFIGS.add("learn_only_sioconv.yaml")
 
 EXPERIMENT_CONFIG_OVERRIDES = [
     [f"experiment={file.name.rsplit('.', 1)[0]}"]
