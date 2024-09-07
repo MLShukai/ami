@@ -4,7 +4,6 @@ i_jepa_target_encoder:
   _target_: ami.models.model_wrapper.ModelWrapper
   default_device: ${devices.0}
   has_inference: True
-  inference_thread_only: True
   parameter_file: ???
   inference_forward:
     _target_: hydra.utils.get_method
