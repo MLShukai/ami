@@ -60,7 +60,7 @@ trainers:
   forward_dynamics:
     max_epochs: 1
     partial_dataloader:
-      batch_size: ${python.eval:"256 + 1"}
+      batch_size: ${python.eval:"256 + 1"} # 学習する系列長. +1することでバッチから1ステップ先の予測対象データを抜き出す。
     minimum_new_data_count: 128
 
 task_name: "learn_only_sioconv_large"
