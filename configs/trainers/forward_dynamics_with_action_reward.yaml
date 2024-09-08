@@ -1,0 +1,2 @@
+defaults:
+  - forward_dynamics: with_action_reward
