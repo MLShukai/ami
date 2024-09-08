@@ -28,6 +28,7 @@ interaction:
 
 models:
   i_jepa_target_encoder:
+    inference_thread_only: True
     parameter_file: null # 学習済モデルをセットする。
     model:
       patch_size: 12
@@ -55,9 +56,15 @@ models:
 data_collectors:
   forward_dynamics_trajectory:
     max_len: ${python.eval:"20 * ${trainers.forward_dynamics.partial_dataloader.batch_size}"}
+    key_list:
+      - "embed_observation" # 学習済Observation Encoderの出力を使う
+      - "hidden"
+      - "action"
+      - "reward"
 
 trainers:
   forward_dynamics:
+    observation_encoder_name: null # embed observationを直接使う
     max_epochs: 1
     partial_dataloader:
       batch_size: ${python.eval:"256 + 1"} # 学習する系列長. +1することでバッチから1ステップ先の予測対象データを抜き出す。
