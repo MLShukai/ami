@@ -52,6 +52,7 @@ def main(cfg: DictConfig) -> None:
     logger.info("Instantiating Models...")
     models: ModelWrappersDict = instantiate_models(cfg.models)
     models.send_to_default_device()
+    param_count = create_model_parameter_count_dict(models)
 
     logger.info("Instantiating Trainers...")
     trainers: TrainersList = instantiate_trainers(cfg.trainers)
@@ -84,7 +85,6 @@ def main(cfg: DictConfig) -> None:
             "__main__",
         )
     )
-    param_count = create_model_parameter_count_dict(models)
     hparams_dict = {
         "interaction": cfg.interaction,
         "data": cfg.data_collectors,
