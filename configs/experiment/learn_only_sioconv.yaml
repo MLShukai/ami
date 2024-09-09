@@ -36,6 +36,9 @@ models:
       out_dim: 32
       depth: 12
       num_heads: 9
+  i_jepa_target_visualization_decoder:
+    inference_thread_only: True
+    parameter_file: null # 学習済モデルをセットする
   policy:
     model:
       file_max_rows: ${shared.frame_limit}
