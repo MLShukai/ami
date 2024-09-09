@@ -8,6 +8,8 @@ import numpy.typing as npt
 import seaborn
 import torch
 import torch.nn as nn
+import torchvision
+import torchvision.transforms.v2.functional
 from torch import Tensor
 from torch.distributions import Distribution
 from typing_extensions import override
@@ -36,6 +38,10 @@ class MultiStepImaginationCuriosityImageAgent(BaseAgent[Tensor, Tensor]):
         log_reward_imaginations_every_n_steps: int = 1,
         log_reward_imaginations_max_history_size: int = 1,
         log_reward_imaginations_append_interval: int = 1,
+        # 再構成画像の可視化ログについて
+        log_reconstruction_imaginations_every_n_steps: int = 1,
+        log_reconstruction_imaginations_max_history_size: int = 1,
+        log_reconstruction_imaginations_append_interval: int = 1,
     ) -> None:
         """Constructs Agent.
 
@@ -63,6 +69,16 @@ class MultiStepImaginationCuriosityImageAgent(BaseAgent[Tensor, Tensor]):
         self.reward_imaginations_global_step_deque: deque[int] = deque(maxlen=log_reward_imaginations_max_history_size)
         self.log_reward_imaginations_append_interval = log_reward_imaginations_append_interval
 
+        # 観測の再構成画像ログについて
+        self.log_reconstruction_imaginations_every_n_steps = log_reconstruction_imaginations_every_n_steps
+        self.log_reconstruction_imaginations_append_interval = log_reconstruction_imaginations_append_interval
+        self.reconstruction_imaginations_deque: deque[Tensor] = deque(
+            maxlen=log_reconstruction_imaginations_max_history_size
+        )
+        self.reconstruction_imaginations_ground_truth_deque: deque[Tensor] = deque(
+            maxlen=log_reconstruction_imaginations_max_history_size
+        )
+
     @property
     def global_step(self) -> int:
         return self.logger.global_step
@@ -81,6 +97,10 @@ class MultiStepImaginationCuriosityImageAgent(BaseAgent[Tensor, Tensor]):
             policy_net: ThreadSafeInferenceWrapper[PolicyOrValueNetwork] = self.get_inference_model(ModelNames.POLICY)
             value_net: ThreadSafeInferenceWrapper[PolicyOrValueNetwork] = self.get_inference_model(ModelNames.VALUE)
             self.policy_value_net = PolicyValueCommonProxy(policy_net, value_net)
+
+        self.image_decoder: ThreadSafeInferenceWrapper[nn.Module] | None = None
+        if self.check_model_exists(ModelNames.IMAGE_DECODER):
+            self.image_decoder = self.get_inference_model(ModelNames.IMAGE_DECODER)
 
     # ------ Interaction Process ------
     exact_forward_dynamics_hidden_state: Tensor  # (depth, dim)
@@ -129,6 +149,23 @@ class MultiStepImaginationCuriosityImageAgent(BaseAgent[Tensor, Tensor]):
                 and len(self.reward_imaginations_deque) > 0
             ):
                 self.visualize_reward_imaginations()
+
+            # 長期的予測の再構成画像とそのGround Truthの格納
+            if (
+                self.image_decoder is not None
+                and self.predicted_embed_obs_imaginations.size(0) == self.max_imagination_steps
+                and self.global_step % self.log_reconstruction_imaginations_append_interval == 0
+            ):
+                self.reconstruction_imaginations_ground_truth_deque.append(observation.cpu())
+                reconstructions: Tensor = self.image_decoder(self.predicted_embed_obs_imaginations)
+                self.reconstruction_imaginations_deque.append(reconstructions.cpu())
+
+            # 長期予測の再構成画像の可視化
+            if (
+                self.global_step % self.log_reconstruction_imaginations_every_n_steps == 0
+                and len(self.reconstruction_imaginations_deque) > 0
+            ):
+                self.visualize_reconstruction_imaginations()
 
         self.step_data[DataKeys.OBSERVATION] = observation  # o_t
         self.step_data[DataKeys.EMBED_OBSERVATION] = embed_obs  # z_t
@@ -237,6 +274,18 @@ class MultiStepImaginationCuriosityImageAgent(BaseAgent[Tensor, Tensor]):
         ax.set_ylabel("global steps")
 
         self.logger.tensorboard.add_figure("agent/multistep-imagination-errors", fig, self.global_step)
+
+    def visualize_reconstruction_imaginations(self) -> None:
+        reconstructions = torch.stack(list(self.reconstruction_imaginations_deque))  # (H, T, C, H, W)
+        image_size = reconstructions.size()[-2:]
+        ground_truth = torch.stack(list(self.reconstruction_imaginations_ground_truth_deque))  # (H, C, H, W)
+        ground_truth = torchvision.transforms.v2.functional.resize(ground_truth, image_size)
+
+        log_images = torch.cat([ground_truth.unsqueeze(1), reconstructions], dim=1)  # (H, T+1, C, H, W)
+        log_images = log_images.flatten(0, 1)  # # ((H * T+1), C, H, W)
+        grid_image = torchvision.utils.make_grid(log_images, self.max_imagination_steps + 1)
+
+        self.logger.tensorboard.add_image("agent/multistep-imagination-recontructions", grid_image, self.global_step)
 
 
 def average_exponentially(rewards: Tensor, decay: float) -> Tensor:

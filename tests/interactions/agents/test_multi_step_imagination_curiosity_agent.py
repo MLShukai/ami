@@ -19,6 +19,7 @@ from ami.interactions.agents.multi_step_imagination_curiosity_agent import (
 from ami.models.components.fully_connected_normal import FullyConnectedNormal
 from ami.models.components.sioconv import SioConv
 from ami.models.components.small_conv_net import SmallConvNet
+from ami.models.components.small_deconv_net import SmallDeconvNet
 from ami.models.policy_value_common_net import SelectObservation
 from ami.models.utils import InferenceWrappersDict, ModelWrapper, ModelWrappersDict
 from ami.tensorboard_loggers import TimeIntervalLogger
@@ -35,6 +36,7 @@ class TestMultiStepImaginationCuriosityImageAgent:
     @pytest.fixture
     def inference_models(self, device) -> InferenceWrappersDict:
         image_encoder = SmallConvNet(WIDTH, HEIGHT, CHANNELS, EMBED_OBS_DIM)
+        image_decoder = SmallDeconvNet(HEIGHT, WIDTH, CHANNELS, EMBED_OBS_DIM)
         forward_dynamics = ForwardDynamcisWithActionReward(
             nn.Identity(),
             nn.Identity(),
@@ -64,6 +66,7 @@ class TestMultiStepImaginationCuriosityImageAgent:
         mwd = ModelWrappersDict(
             {
                 ModelNames.IMAGE_ENCODER: ModelWrapper(image_encoder, device, True),
+                ModelNames.IMAGE_DECODER: ModelWrapper(image_decoder, device, True),
                 ModelNames.FORWARD_DYNAMICS: ModelWrapper(forward_dynamics, device, True),
                 ModelNames.POLICY: ModelWrapper(policy_net, device, True),
                 ModelNames.VALUE: ModelWrapper(value_net, device, True),
