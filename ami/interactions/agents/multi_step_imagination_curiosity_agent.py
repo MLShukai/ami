@@ -53,6 +53,9 @@ class MultiStepImaginationCuriosityImageAgent(BaseAgent[Tensor, Tensor]):
             log_reward_imaginations_every_n_steps: Number of steps between each logging of reward imaginations.
             log_reward_imaginations_max_history_size: Maximum number of reward imagination entries to keep in the log history.
             log_reward_imaginations_append_interval: Number of steps between each append to the reward imaginations log.
+            log_reconstruction_imaginations_every_n_steps: Number of steps between each logging of reconstruction imaginations.
+            log_reconstruction_imaginations_max_history_size: Maximum number of reconstruction imagination entries to keep in the log history.
+            log_reconstruction_imaginations_append_interval: Number of steps between each append to the reconstruction imaginations log.
         """
         super().__init__()
         assert max_imagination_steps > 0
@@ -276,6 +279,17 @@ class MultiStepImaginationCuriosityImageAgent(BaseAgent[Tensor, Tensor]):
         self.logger.tensorboard.add_figure("agent/multistep-imagination-errors", fig, self.global_step)
 
     def visualize_reconstruction_imaginations(self) -> None:
+        """Visualizes the reconstruction imaginations.
+
+        This method creates a grid of images showing the ground truth observations
+        alongside the reconstructed observations for each imagination step. The grid
+        is then logged to TensorBoard for visual analysis.
+
+        The visualization helps in understanding how well the agent's imagination
+        process is reconstructing observations over multiple steps, providing insights
+        into the quality of the agent's internal world model.
+        """
+
         reconstructions = torch.stack(list(self.reconstruction_imaginations_deque))  # (H, T, C, H, W)
         image_size = reconstructions.size()[-2:]
         ground_truth = torch.stack(list(self.reconstruction_imaginations_ground_truth_deque))  # (H, C, H, W)
