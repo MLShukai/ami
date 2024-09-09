@@ -63,6 +63,10 @@ class MultiStepImaginationCuriosityImageAgent(BaseAgent[Tensor, Tensor]):
         self.reward_imaginations_global_step_deque: deque[int] = deque(maxlen=log_reward_imaginations_max_history_size)
         self.log_reward_imaginations_append_interval = log_reward_imaginations_append_interval
 
+    @property
+    def global_step(self) -> int:
+        return self.logger.global_step
+
     def on_inference_models_attached(self) -> None:
         super().on_inference_models_attached()
         self.image_encoder: ThreadSafeInferenceWrapper[nn.Module] = self.get_inference_model(ModelNames.IMAGE_ENCODER)
@@ -114,14 +118,14 @@ class MultiStepImaginationCuriosityImageAgent(BaseAgent[Tensor, Tensor]):
             # 長期的予測の誤差値とそのステップの格納
             if (
                 reward_imaginations.size(0) == self.max_imagination_steps
-                and self.logger.global_step % self.log_reward_imaginations_append_interval == 0
+                and self.global_step % self.log_reward_imaginations_append_interval == 0
             ):
                 self.reward_imaginations_deque.append(reward_imaginations.cpu().numpy())
-                self.reward_imaginations_global_step_deque.append(self.logger.global_step)
+                self.reward_imaginations_global_step_deque.append(self.global_step)
 
             # 長期的予測の誤差の可視化
             if (
-                self.logger.global_step % self.log_reward_imaginations_every_n_steps == 0
+                self.global_step % self.log_reward_imaginations_every_n_steps == 0
                 and len(self.reward_imaginations_deque) > 0
             ):
                 self.visualize_reward_imaginations()
@@ -232,7 +236,7 @@ class MultiStepImaginationCuriosityImageAgent(BaseAgent[Tensor, Tensor]):
         ax.set_xlabel("imagination steps")
         ax.set_ylabel("global steps")
 
-        self.logger.tensorboard.add_figure("agent/multistep-imagination-errors", fig, self.logger.global_step)
+        self.logger.tensorboard.add_figure("agent/multistep-imagination-errors", fig, self.global_step)
 
 
 def average_exponentially(rewards: Tensor, decay: float) -> Tensor:

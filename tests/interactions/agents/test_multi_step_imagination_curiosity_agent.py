@@ -108,6 +108,7 @@ class TestMultiStepImaginationCuriosityImageAgent:
         for _ in range(10):
             action = agent.step(observation)
             assert action.shape == (ACTION_DIM,)
+            assert agent.global_step == agent.logger.global_step
 
         assert agent.step_data[DataKeys.OBSERVATION].shape == observation.shape
         assert agent.step_data[DataKeys.EMBED_OBSERVATION].shape == (EMBED_OBS_DIM,)
