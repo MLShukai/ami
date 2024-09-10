@@ -27,6 +27,13 @@ interaction:
         - ${paths.data_dir}/random_observation_action_log/2024-08-27_09-28-27/io/video_recordings
         - ${paths.data_dir}/random_observation_action_log/2024-08-27_09-31-50/io/video_recordings
 
+  observation_wrappers:
+    - _target_: ami.interactions.io_wrappers.function_wrapper.FunctionIOWrapper
+      wrap_function:
+        _target_: ami.interactions.io_wrappers.function_wrapper.normalize_tensor
+        _partial_: True
+        eps: 1e-6
+
 models:
   i_jepa_target_encoder:
     inference_thread_only: True
