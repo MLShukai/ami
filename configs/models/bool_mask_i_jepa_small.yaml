@@ -1,0 +1,15 @@
+defaults:
+  - bool_mask_i_jepa
+
+i_jepa_target_encoder:
+  model:
+    patch_size: 12
+    embed_dim: 216
+    out_dim: 32
+    depth: 6
+    num_heads: 3
+i_jepa_predictor:
+  model:
+    hidden_dim: 108
+    depth: 6
+    num_heads: 2
