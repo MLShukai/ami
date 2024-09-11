@@ -65,8 +65,9 @@ class NormalMixture(Distribution):
         sample_sigma = self.sigma.expand(shape).gather(-1, samples).squeeze(-1)
         return torch.randn_like(sample_mu) * sample_sigma + sample_mu
 
+    @torch.no_grad()
     def sample(self, sample_shape: Size = Size(), temperature: float = 1.0) -> Tensor:
-        return self.rsample(sample_shape, temperature).detach()
+        return self.rsample(sample_shape, temperature)
 
     def log_prob(self, value: Tensor) -> Tensor:
         shape = *value.shape, self.num_components
