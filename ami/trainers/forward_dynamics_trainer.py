@@ -229,7 +229,7 @@ class ForwardDynamicsWithActionRewardTrainer(BaseTrainer):
                     observations[:, :-1],  # o_0:T-1
                     hiddens[:, 0],  # h_0
                     actions[:, :-1],  # a_0:T-1
-                    observations[1:],  # o_1:T
+                    observations[:, 1:],  # o_1:T
                     actions[:, 1:],  # a_1:T
                     rewards[:, :-1],  # r_1:T because rewards are always t+1.
                 )
