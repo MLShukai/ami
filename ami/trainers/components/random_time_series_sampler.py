@@ -13,7 +13,7 @@ class RandomTimeSeriesSampler(Sampler[list[int]]):
     dataset.
     """
 
-    def __init__(self, dataset: Dataset[Any], sequence_length: int, max_samples: int | None) -> None:
+    def __init__(self, dataset: Dataset[Any], sequence_length: int, max_samples: int | None = None) -> None:
         """
         Args:
             dataset (Dataset): The dataset to sample from
