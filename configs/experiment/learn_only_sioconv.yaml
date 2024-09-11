@@ -1,4 +1,5 @@
 # @package _global_
+# 学習済パラメータ: https://drive.google.com/file/d/1j6AS8rs6jXZKD5vguKwqS4RsPj68Kdjp/view?usp=share_link
 
 defaults:
   - override /data_collectors: dynamics
@@ -26,10 +27,17 @@ interaction:
         - ${paths.data_dir}/random_observation_action_log/2024-08-27_09-28-27/io/video_recordings
         - ${paths.data_dir}/random_observation_action_log/2024-08-27_09-31-50/io/video_recordings
 
+  observation_wrappers:
+    - _target_: ami.interactions.io_wrappers.function_wrapper.FunctionIOWrapper
+      wrap_function:
+        _target_: ami.interactions.io_wrappers.function_wrapper.normalize_tensor
+        _partial_: True
+        eps: 1e-6
+
 models:
   i_jepa_target_encoder:
     inference_thread_only: True
-    parameter_file: null # 学習済モデルをセットする。
+    parameter_file: ${paths.data_dir}/2024-09-07_03-24-12,323203.ckpt/i_jepa_target_encoder.pt # 学習済モデルをセットする。
     model:
       patch_size: 12
       embed_dim: 648
@@ -38,7 +46,7 @@ models:
       num_heads: 9
   i_jepa_target_visualization_decoder:
     inference_thread_only: True
-    parameter_file: null # 学習済モデルをセットする
+    parameter_file: ${paths.data_dir}/2024-09-07_03-24-12,323203.ckpt/i_jepa_target_visualization_decoder.pt # 学習済モデルをセットする
   policy:
     model:
       file_max_rows: ${shared.frame_limit}
