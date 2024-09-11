@@ -134,7 +134,7 @@ class ForwardDynamicsWithActionRewardTrainer(BaseTrainer):
     def __init__(
         self,
         partial_dataloader: partial[DataLoader[torch.Tensor]],
-        parital_sampler: partial[RandomTimeSeriesSampler],
+        partial_sampler: partial[RandomTimeSeriesSampler],
         partial_optimizer: partial[Optimizer],
         device: torch.device,
         logger: StepIntervalLogger,
@@ -158,7 +158,7 @@ class ForwardDynamicsWithActionRewardTrainer(BaseTrainer):
         super().__init__()
         self.partial_optimizer = partial_optimizer
         self.partial_dataloader = partial_dataloader
-        self.partial_sampler = parital_sampler
+        self.partial_sampler = partial_sampler
         self.device = device
         self.logger = logger
         self.observation_encoder_name = observation_encoder_name
