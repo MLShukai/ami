@@ -29,7 +29,7 @@ class TestRandomTimeSeriesSampler:
 
         # Test when dataset length is the limiting factor
         sampler2 = RandomTimeSeriesSampler(sample_dataset, sequence_length=10, max_samples=1000)
-        assert len(sampler2) == 90  # 100 - 10 = 90
+        assert len(sampler2) == 91  # 100 - 10 + 1 = 90
 
     def test_iter(self, sample_dataset):
         sampler = RandomTimeSeriesSampler(sample_dataset, sequence_length=5, max_samples=10)
