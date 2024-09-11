@@ -117,6 +117,23 @@ class NormalMixtureDensityNetwork(nn.Module):
         self.squeeze_feature_dim = squeeze_feature_dim
         self.eps = eps
 
+        self._init_weights()
+
+    def _init_weights(self) -> None:
+        """Initialize the weights.
+
+        The sigma layer will output to 1, and logits layer will output
+        uniform distribution.
+        """
+        layer: nn.Linear
+        for layer in self.sigma_layers:
+            nn.init.zeros_(layer.weight)
+            nn.init.ones_(layer.bias)
+
+        for layer in self.logits_layers:
+            nn.init.zeros_(layer.weight)
+            nn.init.zeros_(layer.bias)
+
     def forward(self, x: Tensor) -> NormalMixture:
         mu = torch.stack([lyr(x) for lyr in self.mu_layers], dim=-1)
         sigma = torch.stack([F.softplus(lyr(x)) for lyr in self.sigma_layers], dim=-1) + self.eps

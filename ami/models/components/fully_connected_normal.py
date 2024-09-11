@@ -16,6 +16,9 @@ class FullyConnectedNormal(nn.Module):
         self.eps = eps
         self.squeeze_feature_dim = squeeze_feature_dim
 
+        nn.init.zeros_(self.fc_std.weight)
+        nn.init.ones_(self.fc_std.bias)
+
     def forward(self, x: Tensor) -> Normal:
         mean: Tensor = self.fc_mean(x)
         std: Tensor = nn.functional.softplus(self.fc_std(x)) + self.eps

@@ -12,6 +12,7 @@ class TestFullyConnectedNormal:
         out = m(data)
         assert isinstance(out, Normal)
         assert out.rsample().shape == (batch_size, dim_out)
+        assert torch.allclose(out.stddev, torch.nn.functional.softplus(torch.ones_like(out.stddev)))
 
     def test_squeeze_feature_dim(self):
         with pytest.raises(AssertionError):
