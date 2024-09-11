@@ -18,6 +18,7 @@ from ami.models.model_wrapper import ModelWrapper
 from ami.tensorboard_loggers import StepIntervalLogger
 
 from .base_trainer import BaseTrainer
+from .components.random_time_series_sampler import RandomTimeSeriesSampler
 
 
 class ForwardDynamicsTrainer(BaseTrainer):
@@ -91,7 +92,6 @@ class ForwardDynamicsTrainer(BaseTrainer):
         for _ in range(self.max_epochs):
             for batch in dataloader:
                 observations, hiddens, actions = batch
-
                 if self.observation_encoder is not None:
                     with torch.no_grad():
                         observations = self.observation_encoder.infer(observations)
@@ -134,6 +134,7 @@ class ForwardDynamicsWithActionRewardTrainer(BaseTrainer):
     def __init__(
         self,
         partial_dataloader: partial[DataLoader[torch.Tensor]],
+        parital_sampler: partial[RandomTimeSeriesSampler],
         partial_optimizer: partial[Optimizer],
         device: torch.device,
         logger: StepIntervalLogger,
@@ -149,6 +150,7 @@ class ForwardDynamicsWithActionRewardTrainer(BaseTrainer):
 
         Args:
             partial_dataloader: A partially instantiated dataloader lacking a provided dataset.
+            partial_sampler: A partially instantiated sampler lacking a provided dataset.
             partial_optimizer: A partially instantiated optimizer lacking provided parameters.
             device: The accelerator device (e.g., CPU, GPU) utilized for training the model.
             minimum_new_data_count: Minimum number of new data count required to run the training.
@@ -156,6 +158,7 @@ class ForwardDynamicsWithActionRewardTrainer(BaseTrainer):
         super().__init__()
         self.partial_optimizer = partial_optimizer
         self.partial_dataloader = partial_dataloader
+        self.partial_sampler = parital_sampler
         self.device = device
         self.logger = logger
         self.observation_encoder_name = observation_encoder_name
@@ -206,26 +209,29 @@ class ForwardDynamicsWithActionRewardTrainer(BaseTrainer):
         optimizer = self.partial_optimizer(self.forward_dynamics.parameters())
         optimizer.load_state_dict(self.optimizer_state)
 
-        dataloader = self.partial_dataloader(dataset=self.get_dataset())
+        dataset = self.get_dataset()
+        sampler = self.partial_sampler(dataset)
+        dataloader = self.partial_dataloader(dataset=dataset, sampler=sampler)
 
         for _ in range(self.max_epochs):
             for batch in dataloader:
                 observations, hiddens, actions, rewards = batch
-
                 if self.observation_encoder is not None:
                     with torch.no_grad():
-                        observations = self.observation_encoder.infer(observations)
-
+                        batch_time_shape = observations.shape[:2]
+                        observations = self.observation_encoder.infer(observations.flatten(0, 1))
+                        output_shape = batch_time_shape + observations.shape[1:]
+                        observations = observations.reshape(output_shape)
                 observations = observations.to(self.device)
                 actions = actions.to(self.device)
 
                 observations, hidden, actions, observations_next, actions_next, rewards = (
-                    observations[:-1],  # o_0:T-1
-                    hiddens[0],  # h_0
-                    actions[:-1],  # a_0:T-1
+                    observations[:, :-1],  # o_0:T-1
+                    hiddens[:, 0],  # h_0
+                    actions[:, :-1],  # a_0:T-1
                     observations[1:],  # o_1:T
-                    actions[1:],  # a_1:T
-                    rewards[:-1],  # r_1:T because rewards are always t+1.
+                    actions[:, 1:],  # a_1:T
+                    rewards[:, :-1],  # r_1:T because rewards are always t+1.
                 )
 
                 hidden = hidden.to(self.device)
