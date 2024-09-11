@@ -52,7 +52,7 @@ data_collectors:
   image:
     max_len: ${python.eval:"24 * ${trainers.i_jepa.partial_dataloader.batch_size}"}
   forward_dynamics_trajectory:
-    max_len: ${python.eval:"20 * ${trainers.forward_dynamics.partial_dataloader.batch_size}"}
+    max_len: ${python.eval:"${trainers.forward_dynamics.partial_sampler.max_samples} * ${trainers.forward_dynamics.partial_sampler.sequence_length}"}
   dreaming_initial_states:
     max_len: ${python.eval:"16 * ${trainers.dreaming_policy_value.partial_dataloader.batch_size}"}
 
@@ -65,8 +65,9 @@ trainers:
 
   forward_dynamics:
     max_epochs: 1
-    partial_dataloader:
-      batch_size: ${python.eval:"256 + 1"}
+    partial_sampler:
+      sequence_length: ${python.eval:"256 + 1"} # +1 to generate future target data.
+      max_samples: 20 # Iteraction count.
     minimum_new_data_count: 128
 
   dreaming_policy_value:
