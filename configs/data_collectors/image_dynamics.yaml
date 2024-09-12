@@ -1,0 +1,14 @@
+image:
+  _target_: ami.data.buffers.random_data_buffer.RandomDataBuffer.reconstructable_init
+  max_len: 2048 # From Primitive AMI.
+  key_list:
+    - "observation"
+
+forward_dynamics_trajectory:
+  _target_: ami.data.buffers.causal_data_buffer.CausalDataBuffer.reconstructable_init
+  max_len: 2048
+  key_list:
+    - "observation"
+    - "hidden"
+    - "action"
+    - "reward"
