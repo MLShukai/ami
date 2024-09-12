@@ -66,7 +66,7 @@ models:
 
 data_collectors:
   forward_dynamics_trajectory:
-    max_len: ${python.eval:"${trainers.forward_dynamics.partial_sampler.max_samples} * ${trainers.forward_dynamics.partial_sampler.sequence_length}"}
+    max_len: 1000
     key_list:
       - "embed_observation" # 学習済Observation Encoderの出力を使う
       - "hidden"
