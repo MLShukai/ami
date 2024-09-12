@@ -68,7 +68,7 @@ forward_dynamics:
       depth: 8
       dim: 512
       num_head: 8
-      dim_ff_hidden: 512
+      dim_ff_hidden: ${python.eval:"${.dim} * 2"}
       chunk_size: 512
       dropout: 0.1
     obs_hat_dist_head:
