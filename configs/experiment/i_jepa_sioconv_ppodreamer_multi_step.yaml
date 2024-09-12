@@ -35,6 +35,11 @@ data_collectors:
     max_len: ${python.eval:"24 * ${trainers.i_jepa.partial_dataloader.batch_size}"}
   forward_dynamics_trajectory:
     max_len: 1000 # 100 sec
+    key_list:
+      - "embed_observation" # embed observationを直接使う
+      - "hidden"
+      - "action"
+      - "reward"
   dreaming_initial_states:
     max_len: ${python.eval:"16 * ${trainers.dreaming_policy_value.partial_dataloader.batch_size}"}
 
@@ -46,10 +51,11 @@ trainers:
     minimum_new_data_count: 128
 
   forward_dynamics:
+    observation_encoder_name: # embed observationを直接使う
     max_epochs: 1
     partial_sampler:
       sequence_length: ${python.eval:"256 + 1"} # +1 to generate future target data.
-      max_samples: 20 # Iteraction count.
+      max_samples: 64 # Iteraction count.
     minimum_new_data_count: 128
 
   dreaming_policy_value:
