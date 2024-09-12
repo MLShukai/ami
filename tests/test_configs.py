@@ -37,7 +37,7 @@ if not (DATA_DIR / "random_observation_action_log").exists():
     IGNORE_EXPERIMENT_CONFIGS.add("learn_only_sioconv.yaml")
     IGNORE_EXPERIMENT_CONFIGS.add("learn_i_jepa_sioconv.yaml")
 
-if not (DATA_DIR / "2024-09-07_03-24-12,323203.ckpt"):
+if not (DATA_DIR / "2024-09-07_03-24-12,323203.ckpt").exists():
     IGNORE_EXPERIMENT_CONFIGS.add("learn_only_sioconv.yaml")
 
 EXPERIMENT_CONFIG_OVERRIDES = [
