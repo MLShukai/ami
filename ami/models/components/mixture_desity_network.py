@@ -97,7 +97,7 @@ class NormalMixtureDensityNetwork(nn.Module):
         out_features: int,
         num_components: int,
         squeeze_feature_dim: bool = False,
-        eps: float = 1e-5,
+        eps: float = 1e-4,
     ) -> None:
         """
         Args:
@@ -144,4 +144,4 @@ class NormalMixtureDensityNetwork(nn.Module):
             sigma = sigma.squeeze(-2)
             logits = logits.squeeze(-2)
 
-        return NormalMixture(logits, mu, sigma)
+        return NormalMixture(logits, mu, sigma, self.eps)
