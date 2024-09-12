@@ -14,6 +14,10 @@ class TestLerpedStackedFeatures:
         out = mod.forward(feature)
         assert out.shape == (4, 64)
 
+        feature = torch.randn(3, 4, 8, 128)
+        out = mod.forward(feature)
+        assert out.shape == (3, 4, 64)
+
 
 class TestToStackedFeatures:
     def test_forward(self):
@@ -26,3 +30,7 @@ class TestToStackedFeatures:
         feature = torch.randn(64)
         out = mod.forward(feature)
         assert out.shape == (4, 128)
+
+        feature = torch.randn(3, 8, 64)
+        out = mod.forward(feature)
+        assert out.shape == (3, 8, 4, 128)

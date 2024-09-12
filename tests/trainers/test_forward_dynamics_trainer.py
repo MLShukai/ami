@@ -23,6 +23,7 @@ from ami.tensorboard_loggers import StepIntervalLogger
 from ami.trainers.forward_dynamics_trainer import (
     ForwardDynamicsTrainer,
     ForwardDynamicsWithActionRewardTrainer,
+    RandomTimeSeriesSampler,
 )
 
 BATCH = 4
@@ -278,7 +279,7 @@ class TestForwardDynamicsWithActionRewardTrainer:
 
     @pytest.fixture
     def partial_dataloader(self):
-        return partial(DataLoader, batch_size=2, shuffle=True)
+        return partial(DataLoader, batch_size=1, shuffle=False)
 
     @pytest.fixture
     def partial_optimizer(self):
@@ -311,6 +312,7 @@ class TestForwardDynamicsWithActionRewardTrainer:
     ):
         trainer = ForwardDynamicsWithActionRewardTrainer(
             partial_dataloader,
+            partial(RandomTimeSeriesSampler, sequence_length=2),
             partial_optimizer,
             device,
             logger,
