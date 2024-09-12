@@ -82,4 +82,4 @@ trainers:
       max_samples: 20 # Iteraction count.
     minimum_new_data_count: 128
 
-task_name: "learn_only_sioconv_large"
+task_name: "learn_only_sioconv"
