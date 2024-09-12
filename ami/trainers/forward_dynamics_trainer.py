@@ -262,6 +262,10 @@ class ForwardDynamicsWithActionRewardTrainer(BaseTrainer):
                 self.logger.log(prefix + "reward_loss", reward_loss)
 
                 loss.backward()
+                grad_norm = grad_norm = torch.cat(
+                    [p.grad.flatten() for p in self.forward_dynamics.parameters() if p.grad is not None]
+                ).norm()
+                self.logger.log(prefix + "metrics/grad_norm", grad_norm)
                 optimizer.step()
                 self.logger.update()
 
