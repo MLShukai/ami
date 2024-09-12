@@ -92,7 +92,7 @@ class TestNormalMixtureDensityNetwork:
         assert torch.allclose(output.log_pi.exp().sum(dim=-1), torch.ones(batch_size, out_features))
 
         # Check the initial outputs
-        assert torch.allclose(output.sigma, torch.nn.functional.softplus(torch.ones_like(output.sigma)))
+        assert torch.allclose(output.sigma, torch.nn.functional.softplus(torch.ones_like(output.sigma)) + output.eps)
         assert torch.allclose(output.logits, torch.zeros_like(output.logits))
 
     def test_normal_mixture_density_network_gradients(self):
