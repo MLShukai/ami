@@ -52,9 +52,11 @@ class MultiStepImaginationCuriosityImageAgent(BaseAgent[Tensor, Tensor]):
             reward_average_method: The method for averaging rewards that predicted through multi imaginations.
                 Input is reward (imagination, ), and return value must be scalar.
             max_imagination_steps: Max step for imagination.
+            log_reward_imaginations: Flag to enable logging of reward imaginations.
             log_reward_imaginations_every_n_steps: Number of steps between each logging of reward imaginations.
             log_reward_imaginations_max_history_size: Maximum number of reward imagination entries to keep in the log history.
             log_reward_imaginations_append_interval: Number of steps between each append to the reward imaginations log.
+            log_reconstruction_imaginations: Flag to enable logging of reconstruction imaginations.
             log_reconstruction_imaginations_every_n_steps: Number of steps between each logging of reconstruction imaginations.
             log_reconstruction_imaginations_max_history_size: Maximum number of reconstruction imagination entries to keep in the log history.
             log_reconstruction_imaginations_append_interval: Number of steps between each append to the reconstruction imaginations log.
@@ -215,6 +217,12 @@ class MultiStepImaginationCuriosityImageAgent(BaseAgent[Tensor, Tensor]):
         )
 
     def reward_imaginations_logging_step(self, reward_imaginations: Tensor) -> None:
+        """Logs reward imaginations data and visualizes it at specified
+        intervals.
+
+        Args:
+            reward_imaginations: Tensor containing reward imagination values.
+        """
         # 長期的予測の誤差値とそのステップの格納
         if (
             reward_imaginations.size(0) == self.max_imagination_steps
@@ -275,6 +283,13 @@ class MultiStepImaginationCuriosityImageAgent(BaseAgent[Tensor, Tensor]):
     def reconstruction_imaginations_logging_step(
         self, observation: Tensor, image_decoder: ThreadSafeInferenceWrapper[nn.Module]
     ) -> None:
+        """Logs reconstruction imaginations and visualizes them at specified
+        intervals.
+
+        Args:
+            observation: Current observation tensor.
+            image_decoder: Image decoder model for reconstructions.
+        """
         # 長期的予測の再構成画像とそのGround Truthの格納
         if (
             self.predicted_embed_obs_imaginations.size(0) == self.max_imagination_steps
