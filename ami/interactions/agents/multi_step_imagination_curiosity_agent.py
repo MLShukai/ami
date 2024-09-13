@@ -15,6 +15,7 @@ from torch.distributions import Distribution
 from typing_extensions import override
 
 from ami.tensorboard_loggers import TimeIntervalLogger
+from ami.utils import min_max_normalize
 
 from ...data.step_data import DataKeys, StepData
 from ...models.forward_dynamics import ForwardDynamcisWithActionReward
@@ -325,6 +326,7 @@ class MultiStepImaginationCuriosityImageAgent(BaseAgent[Tensor, Tensor]):
 
         log_images = torch.cat([ground_truth.unsqueeze(1), reconstructions], dim=1)  # (H, T+1, C, H, W)
         log_images = log_images.flatten(0, 1)  # # ((H * T+1), C, H, W)
+        log_images = min_max_normalize(log_images.flatten(1), 0, 1, dim=-1).reshape(log_images.shape)
         grid_image = torchvision.utils.make_grid(log_images, self.max_imagination_steps + 1, normalize=True)
 
         self.logger.tensorboard.add_image("agent/multistep-imagination-recontructions", grid_image, self.global_step)
