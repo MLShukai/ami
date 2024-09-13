@@ -145,6 +145,7 @@ class ForwardDynamicsWithActionRewardTrainer(BaseTrainer):
         obs_loss_coef: float = 1.0,
         action_loss_coef: float = 1.0,
         reward_loss_coef: float = 1.0,
+        gradient_clip_norm: float = float("inf"),
     ) -> None:
         """Initialization.
 
@@ -169,6 +170,7 @@ class ForwardDynamicsWithActionRewardTrainer(BaseTrainer):
         self.obs_loss_coef = obs_loss_coef
         self.action_loss_coef = action_loss_coef
         self.reward_loss_coef = reward_loss_coef
+        self.gradient_clip_norm = gradient_clip_norm
         self.dataset_previous_get_time = float("-inf")
 
     def on_data_users_dict_attached(self) -> None:
@@ -262,6 +264,9 @@ class ForwardDynamicsWithActionRewardTrainer(BaseTrainer):
                 self.logger.log(prefix + "reward_loss", reward_loss)
 
                 loss.backward()
+                torch.nn.utils.clip_grad_norm_(
+                    self.forward_dynamics.parameters(), self.gradient_clip_norm, error_if_nonfinite=True
+                )
                 grad_norm = grad_norm = torch.cat(
                     [p.grad.flatten() for p in self.forward_dynamics.parameters() if p.grad is not None]
                 ).norm()
