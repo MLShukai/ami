@@ -366,7 +366,7 @@ class MultiStepImaginationCuriosityImageAgent(BaseAgent[Tensor, Tensor]):
         row = reconstructions.size(0)
 
         log_images = torch.cat([reconstructions, ground_truth])  # (2T, C, H ,W)
-        grid_image = torchvision.utils.make_grid(log_images, row)
+        grid_image = torchvision.utils.make_grid(log_images, row, normalize=True)
 
         self.logger.tensorboard.add_image(
             "agent/imagination-trajectory (below ground truth)", grid_image, self.global_step
