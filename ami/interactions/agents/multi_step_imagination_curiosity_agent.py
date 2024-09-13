@@ -36,10 +36,12 @@ class MultiStepImaginationCuriosityImageAgent(BaseAgent[Tensor, Tensor]):
         max_imagination_steps: int = 1,
         reward_scale: float = 1.0,
         reward_shift: float = 0.0,
+        log_reward_imaginations: bool = True,
         log_reward_imaginations_every_n_steps: int = 1,
         log_reward_imaginations_max_history_size: int = 1,
         log_reward_imaginations_append_interval: int = 1,
         # 再構成画像の可視化ログについて
+        log_reconstruction_imaginations: bool = True,
         log_reconstruction_imaginations_every_n_steps: int = 1,
         log_reconstruction_imaginations_max_history_size: int = 1,
         log_reconstruction_imaginations_append_interval: int = 1,
@@ -54,9 +56,11 @@ class MultiStepImaginationCuriosityImageAgent(BaseAgent[Tensor, Tensor]):
             reward_average_method: The method for averaging rewards that predicted through multi imaginations.
                 Input is reward (imagination, ), and return value must be scalar.
             max_imagination_steps: Max step for imagination.
+            log_reward_imaginations: Flag to enable logging of reward imaginations.
             log_reward_imaginations_every_n_steps: Number of steps between each logging of reward imaginations.
             log_reward_imaginations_max_history_size: Maximum number of reward imagination entries to keep in the log history.
             log_reward_imaginations_append_interval: Number of steps between each append to the reward imaginations log.
+            log_reconstruction_imaginations: Flag to enable logging of reconstruction imaginations.
             log_reconstruction_imaginations_every_n_steps: Number of steps between each logging of reconstruction imaginations.
             log_reconstruction_imaginations_max_history_size: Maximum number of reconstruction imagination entries to keep in the log history.
             log_reconstruction_imaginations_append_interval: Number of steps between each append to the reconstruction imaginations log.
@@ -73,12 +77,14 @@ class MultiStepImaginationCuriosityImageAgent(BaseAgent[Tensor, Tensor]):
         self.reward_shift = reward_shift
         self.max_imagination_steps = max_imagination_steps
 
+        self.log_reward_imaginations = log_reward_imaginations
         self.log_reward_imaginations_every_n_steps = log_reward_imaginations_every_n_steps
         self.reward_imaginations_deque: deque[npt.NDArray[Any]] = deque(maxlen=log_reward_imaginations_max_history_size)
         self.reward_imaginations_global_step_deque: deque[int] = deque(maxlen=log_reward_imaginations_max_history_size)
         self.log_reward_imaginations_append_interval = log_reward_imaginations_append_interval
 
         # 観測の再構成画像ログについて
+        self.log_reconstruction_imaginations = log_reconstruction_imaginations
         self.log_reconstruction_imaginations_every_n_steps = log_reconstruction_imaginations_every_n_steps
         self.log_reconstruction_imaginations_append_interval = log_reconstruction_imaginations_append_interval
         self.reconstruction_imaginations_deque: deque[Tensor] = deque(
@@ -154,37 +160,11 @@ class MultiStepImaginationCuriosityImageAgent(BaseAgent[Tensor, Tensor]):
             self.step_data[DataKeys.REWARD] = reward
             self.data_collectors.collect(self.step_data)
 
-            # 長期的予測の誤差値とそのステップの格納
-            if (
-                reward_imaginations.size(0) == self.max_imagination_steps
-                and self.global_step % self.log_reward_imaginations_append_interval == 0
-            ):
-                self.reward_imaginations_deque.append(reward_imaginations.cpu().numpy())
-                self.reward_imaginations_global_step_deque.append(self.global_step)
+            if self.log_reward_imaginations:
+                self.reward_imaginations_logging_step(reward_imaginations)
 
-            # 長期的予測の誤差の可視化
-            if (
-                self.global_step % self.log_reward_imaginations_every_n_steps == 0
-                and len(self.reward_imaginations_deque) > 0
-            ):
-                self.visualize_reward_imaginations()
-
-            # 長期的予測の再構成画像とそのGround Truthの格納
-            if (
-                self.image_decoder is not None
-                and self.predicted_embed_obs_imaginations.size(0) == self.max_imagination_steps
-                and self.global_step % self.log_reconstruction_imaginations_append_interval == 0
-            ):
-                self.reconstruction_imaginations_ground_truth_deque.append(observation.cpu())
-                reconstructions: Tensor = self.image_decoder(self.predicted_embed_obs_imaginations)
-                self.reconstruction_imaginations_deque.append(reconstructions.cpu())
-
-            # 長期予測の再構成画像の可視化
-            if (
-                self.global_step % self.log_reconstruction_imaginations_every_n_steps == 0
-                and len(self.reconstruction_imaginations_deque) > 0
-            ):
-                self.visualize_reconstruction_imaginations()
+            if self.log_reconstruction_imaginations and self.image_decoder is not None:
+                self.reconstruction_imaginations_logging_step(observation, self.image_decoder)
 
             # -------- 再構成画像（軌道）の可視化 --------
             if self.log_imagination_trajectory and self.image_decoder is not None:
@@ -254,6 +234,28 @@ class MultiStepImaginationCuriosityImageAgent(BaseAgent[Tensor, Tensor]):
             map_location=self.exact_forward_dynamics_hidden_state.device,
         )
 
+    def reward_imaginations_logging_step(self, reward_imaginations: Tensor) -> None:
+        """Logs reward imaginations data and visualizes it at specified
+        intervals.
+
+        Args:
+            reward_imaginations: Tensor containing reward imagination values.
+        """
+        # 長期的予測の誤差値とそのステップの格納
+        if (
+            reward_imaginations.size(0) == self.max_imagination_steps
+            and self.global_step % self.log_reward_imaginations_append_interval == 0
+        ):
+            self.reward_imaginations_deque.append(reward_imaginations.cpu().numpy())
+            self.reward_imaginations_global_step_deque.append(self.global_step)
+
+        # 長期的予測の誤差の可視化
+        if (
+            self.global_step % self.log_reward_imaginations_every_n_steps == 0
+            and len(self.reward_imaginations_deque) > 0
+        ):
+            self.visualize_reward_imaginations()
+
     BASE_FIG_SIZE = 0.6
     ADJUST_FIG_WIDTH = 5
     COLOR_MAP = "plasma"
@@ -296,6 +298,32 @@ class MultiStepImaginationCuriosityImageAgent(BaseAgent[Tensor, Tensor]):
 
         self.logger.tensorboard.add_figure("agent/multistep-imagination-errors", fig, self.global_step)
 
+    def reconstruction_imaginations_logging_step(
+        self, observation: Tensor, image_decoder: ThreadSafeInferenceWrapper[nn.Module]
+    ) -> None:
+        """Logs reconstruction imaginations and visualizes them at specified
+        intervals.
+
+        Args:
+            observation: Current observation tensor.
+            image_decoder: Image decoder model for reconstructions.
+        """
+        # 長期的予測の再構成画像とそのGround Truthの格納
+        if (
+            self.predicted_embed_obs_imaginations.size(0) == self.max_imagination_steps
+            and self.global_step % self.log_reconstruction_imaginations_append_interval == 0
+        ):
+            self.reconstruction_imaginations_ground_truth_deque.append(observation.cpu())
+            reconstructions: Tensor = image_decoder(self.predicted_embed_obs_imaginations)
+            self.reconstruction_imaginations_deque.append(reconstructions.cpu())
+
+        # 長期予測の再構成画像の可視化
+        if (
+            self.global_step % self.log_reconstruction_imaginations_every_n_steps == 0
+            and len(self.reconstruction_imaginations_deque) > 0
+        ):
+            self.visualize_reconstruction_imaginations()
+
     def visualize_reconstruction_imaginations(self) -> None:
         """Visualizes the reconstruction imaginations.
 
@@ -315,7 +343,8 @@ class MultiStepImaginationCuriosityImageAgent(BaseAgent[Tensor, Tensor]):
 
         log_images = torch.cat([ground_truth.unsqueeze(1), reconstructions], dim=1)  # (H, T+1, C, H, W)
         log_images = log_images.flatten(0, 1)  # # ((H * T+1), C, H, W)
-        grid_image = torchvision.utils.make_grid(log_images, self.max_imagination_steps + 1)
+        log_images = min_max_normalize(log_images.flatten(1), 0, 1, dim=-1).reshape(log_images.shape)
+        grid_image = torchvision.utils.make_grid(log_images, self.max_imagination_steps + 1, normalize=True)
 
         self.logger.tensorboard.add_image("agent/multistep-imagination-recontructions", grid_image, self.global_step)
 

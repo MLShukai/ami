@@ -14,9 +14,11 @@ logger:
   log_every_n_seconds: 0
 
 max_imagination_steps: 50
+log_reward_imaginations: True
 log_reward_imaginations_max_history_size: ${.max_imagination_steps}
 log_reward_imaginations_append_interval: 100
 log_reward_imaginations_every_n_steps: ${python.eval:"${.max_imagination_steps} * ${.log_reward_imaginations_append_interval}"}
+log_reconstruction_imaginations: True
 log_reconstruction_imaginations_max_history_size: ${.max_imagination_steps}
 log_reconstruction_imaginations_append_interval: 100
 log_reconstruction_imaginations_every_n_steps: ${python.eval:"${.max_imagination_steps} * ${.log_reconstruction_imaginations_append_interval}"}
