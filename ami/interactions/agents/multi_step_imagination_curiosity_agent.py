@@ -35,10 +35,12 @@ class MultiStepImaginationCuriosityImageAgent(BaseAgent[Tensor, Tensor]):
         max_imagination_steps: int = 1,
         reward_scale: float = 1.0,
         reward_shift: float = 0.0,
+        log_reward_imaginations: bool = True,
         log_reward_imaginations_every_n_steps: int = 1,
         log_reward_imaginations_max_history_size: int = 1,
         log_reward_imaginations_append_interval: int = 1,
         # 再構成画像の可視化ログについて
+        log_reconstruction_imaginations: bool = True,
         log_reconstruction_imaginations_every_n_steps: int = 1,
         log_reconstruction_imaginations_max_history_size: int = 1,
         log_reconstruction_imaginations_append_interval: int = 1,
@@ -67,12 +69,14 @@ class MultiStepImaginationCuriosityImageAgent(BaseAgent[Tensor, Tensor]):
         self.reward_shift = reward_shift
         self.max_imagination_steps = max_imagination_steps
 
+        self.log_reward_imaginations = log_reward_imaginations
         self.log_reward_imaginations_every_n_steps = log_reward_imaginations_every_n_steps
         self.reward_imaginations_deque: deque[npt.NDArray[Any]] = deque(maxlen=log_reward_imaginations_max_history_size)
         self.reward_imaginations_global_step_deque: deque[int] = deque(maxlen=log_reward_imaginations_max_history_size)
         self.log_reward_imaginations_append_interval = log_reward_imaginations_append_interval
 
         # 観測の再構成画像ログについて
+        self.log_reconstruction_imaginations = log_reconstruction_imaginations
         self.log_reconstruction_imaginations_every_n_steps = log_reconstruction_imaginations_every_n_steps
         self.log_reconstruction_imaginations_append_interval = log_reconstruction_imaginations_append_interval
         self.reconstruction_imaginations_deque: deque[Tensor] = deque(
@@ -138,37 +142,11 @@ class MultiStepImaginationCuriosityImageAgent(BaseAgent[Tensor, Tensor]):
             self.step_data[DataKeys.REWARD] = reward
             self.data_collectors.collect(self.step_data)
 
-            # 長期的予測の誤差値とそのステップの格納
-            if (
-                reward_imaginations.size(0) == self.max_imagination_steps
-                and self.global_step % self.log_reward_imaginations_append_interval == 0
-            ):
-                self.reward_imaginations_deque.append(reward_imaginations.cpu().numpy())
-                self.reward_imaginations_global_step_deque.append(self.global_step)
+            if self.log_reward_imaginations:
+                self.reward_imaginations_logging_step(reward_imaginations)
 
-            # 長期的予測の誤差の可視化
-            if (
-                self.global_step % self.log_reward_imaginations_every_n_steps == 0
-                and len(self.reward_imaginations_deque) > 0
-            ):
-                self.visualize_reward_imaginations()
-
-            # 長期的予測の再構成画像とそのGround Truthの格納
-            if (
-                self.image_decoder is not None
-                and self.predicted_embed_obs_imaginations.size(0) == self.max_imagination_steps
-                and self.global_step % self.log_reconstruction_imaginations_append_interval == 0
-            ):
-                self.reconstruction_imaginations_ground_truth_deque.append(observation.cpu())
-                reconstructions: Tensor = self.image_decoder(self.predicted_embed_obs_imaginations)
-                self.reconstruction_imaginations_deque.append(reconstructions.cpu())
-
-            # 長期予測の再構成画像の可視化
-            if (
-                self.global_step % self.log_reconstruction_imaginations_every_n_steps == 0
-                and len(self.reconstruction_imaginations_deque) > 0
-            ):
-                self.visualize_reconstruction_imaginations()
+            if self.log_reconstruction_imaginations and self.image_decoder is not None:
+                self.reconstruction_imaginations_logging_step(observation, self.image_decoder)
 
         self.step_data[DataKeys.OBSERVATION] = observation  # o_t
         self.step_data[DataKeys.EMBED_OBSERVATION] = embed_obs  # z_t
@@ -236,6 +214,22 @@ class MultiStepImaginationCuriosityImageAgent(BaseAgent[Tensor, Tensor]):
             map_location=self.exact_forward_dynamics_hidden_state.device,
         )
 
+    def reward_imaginations_logging_step(self, reward_imaginations: Tensor) -> None:
+        # 長期的予測の誤差値とそのステップの格納
+        if (
+            reward_imaginations.size(0) == self.max_imagination_steps
+            and self.global_step % self.log_reward_imaginations_append_interval == 0
+        ):
+            self.reward_imaginations_deque.append(reward_imaginations.cpu().numpy())
+            self.reward_imaginations_global_step_deque.append(self.global_step)
+
+        # 長期的予測の誤差の可視化
+        if (
+            self.global_step % self.log_reward_imaginations_every_n_steps == 0
+            and len(self.reward_imaginations_deque) > 0
+        ):
+            self.visualize_reward_imaginations()
+
     BASE_FIG_SIZE = 0.6
     ADJUST_FIG_WIDTH = 5
     COLOR_MAP = "plasma"
@@ -277,6 +271,25 @@ class MultiStepImaginationCuriosityImageAgent(BaseAgent[Tensor, Tensor]):
         ax.set_ylabel("global steps")
 
         self.logger.tensorboard.add_figure("agent/multistep-imagination-errors", fig, self.global_step)
+
+    def reconstruction_imaginations_logging_step(
+        self, observation: Tensor, image_decoder: ThreadSafeInferenceWrapper[nn.Module]
+    ) -> None:
+        # 長期的予測の再構成画像とそのGround Truthの格納
+        if (
+            self.predicted_embed_obs_imaginations.size(0) == self.max_imagination_steps
+            and self.global_step % self.log_reconstruction_imaginations_append_interval == 0
+        ):
+            self.reconstruction_imaginations_ground_truth_deque.append(observation.cpu())
+            reconstructions: Tensor = image_decoder(self.predicted_embed_obs_imaginations)
+            self.reconstruction_imaginations_deque.append(reconstructions.cpu())
+
+        # 長期予測の再構成画像の可視化
+        if (
+            self.global_step % self.log_reconstruction_imaginations_every_n_steps == 0
+            and len(self.reconstruction_imaginations_deque) > 0
+        ):
+            self.visualize_reconstruction_imaginations()
 
     def visualize_reconstruction_imaginations(self) -> None:
         """Visualizes the reconstruction imaginations.
