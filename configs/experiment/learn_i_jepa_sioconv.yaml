@@ -77,4 +77,4 @@ trainers:
       max_samples: 64 # Iteraction count.
     minimum_new_data_count: 128
 
-task_name: "lean_i_jepa_sioconv"
+task_name: "learn_i_jepa_sioconv"
