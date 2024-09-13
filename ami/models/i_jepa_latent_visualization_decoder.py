@@ -235,13 +235,14 @@ class IJEPALatentVisualizationDecoder(nn.Module):
         # reshape input latents
         batch_size = input_latents.size(0)
         height, width = self.input_n_patches
-        input_latents = torch.reshape(input_latents, (batch_size, self.input_latents_dim, height, width))
+        input_latents = torch.reshape(input_latents, (batch_size, height, width, self.input_latents_dim))
+        input_latents = input_latents.movedim(-1, 1)  # [batch, latent, height, width]
         # apply input layers
         feature = self.input_resblock_1(input_latents)
         batch_size, channels, height, width = feature.size()
-        feature = torch.reshape(feature, (batch_size, height * width, channels))
+        feature = torch.reshape(feature.movedim(1, -1), (batch_size, height * width, channels))
         feature, _ = self.input_attention(query=feature, key=feature, value=feature)
-        feature = torch.reshape(feature, (batch_size, channels, height, width))
+        feature = torch.reshape(feature.movedim(-1, 1), (batch_size, channels, height, width))
         feature = self.input_resblock_2(feature)
         # apply decoder layers
         feature = self.decoder_blocks(feature)
