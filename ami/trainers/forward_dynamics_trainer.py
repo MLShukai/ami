@@ -264,13 +264,15 @@ class ForwardDynamicsWithActionRewardTrainer(BaseTrainer):
                 self.logger.log(prefix + "reward_loss", reward_loss)
 
                 loss.backward()
-                torch.nn.utils.clip_grad_norm_(
-                    self.forward_dynamics.parameters(), self.gradient_clip_norm, error_if_nonfinite=True
-                )
+
                 grad_norm = grad_norm = torch.cat(
                     [p.grad.flatten() for p in self.forward_dynamics.parameters() if p.grad is not None]
                 ).norm()
                 self.logger.log(prefix + "metrics/grad_norm", grad_norm)
+
+                torch.nn.utils.clip_grad_norm_(
+                    self.forward_dynamics.parameters(), self.gradient_clip_norm, error_if_nonfinite=True
+                )
                 optimizer.step()
                 self.logger.update()
 
