@@ -113,6 +113,9 @@ class SmallDeconvNet(nn.Module):
         )
 
     def forward(self, x: Tensor) -> Tensor:
+        no_batch = x.ndim == 1
+        if no_batch:
+            x = x.unsqueeze(0)
         x = self.fc_init(x)
         x = x.view(-1, 1, self.init_output_size[0], self.init_output_size[1])
         x = self.nl(self.bn1(self.deconv1(x)))
@@ -121,4 +124,6 @@ class SmallDeconvNet(nn.Module):
         x = self.center_crop(x)
         if self.bias is not None:
             x = x + self.bias
+        if no_batch:
+            x = x.squeeze(0)
         return x

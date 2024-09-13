@@ -233,6 +233,9 @@ class IJEPALatentVisualizationDecoder(nn.Module):
         """
 
         # reshape input latents
+        no_batch = input_latents.ndim == 2
+        if no_batch:
+            input_latents = input_latents.unsqueeze(0)
         batch_size = input_latents.size(0)
         height, width = self.input_n_patches
         input_latents = torch.reshape(input_latents, (batch_size, self.input_latents_dim, height, width))
@@ -247,4 +250,6 @@ class IJEPALatentVisualizationDecoder(nn.Module):
         feature = self.decoder_blocks(feature)
         # apply output layers
         output = self.output_layer(feature)
+        if no_batch:
+            output = output.squeeze(0)
         return output
