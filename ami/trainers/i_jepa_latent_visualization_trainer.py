@@ -144,9 +144,11 @@ class IJEPALatentVisualizationDecoderTrainer(BaseTrainer):
         reconstruction_image_batches = torch.cat(reconstruction_image_batch_list)
         visualize_indices = torch.randperm(input_image_batches.size(0))[: self.num_visualize_images].sort().values
 
-        grid_input_image = torchvision.utils.make_grid(input_image_batches[visualize_indices], self.visualize_grid_row)
+        grid_input_image = torchvision.utils.make_grid(
+            input_image_batches[visualize_indices], self.visualize_grid_row, normalize=True
+        )
         grid_reconstruction_image = torchvision.utils.make_grid(
-            reconstruction_image_batches[visualize_indices], self.visualize_grid_row
+            reconstruction_image_batches[visualize_indices], self.visualize_grid_row, normalize=True
         )
         losses = torch.cat(loss_list)
         loss = torch.mean(losses)
