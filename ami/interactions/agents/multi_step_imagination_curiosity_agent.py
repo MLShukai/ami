@@ -42,6 +42,9 @@ class MultiStepImaginationCuriosityImageAgent(BaseAgent[Tensor, Tensor]):
         log_reconstruction_imaginations_every_n_steps: int = 1,
         log_reconstruction_imaginations_max_history_size: int = 1,
         log_reconstruction_imaginations_append_interval: int = 1,
+        # 再構成画像（軌道）の可視化ログについて
+        log_imagination_trajectory: bool = True,
+        log_imagination_trajectory_every_n_steps: int | None = None,
     ) -> None:
         """Constructs Agent.
 
@@ -56,6 +59,8 @@ class MultiStepImaginationCuriosityImageAgent(BaseAgent[Tensor, Tensor]):
             log_reconstruction_imaginations_every_n_steps: Number of steps between each logging of reconstruction imaginations.
             log_reconstruction_imaginations_max_history_size: Maximum number of reconstruction imagination entries to keep in the log history.
             log_reconstruction_imaginations_append_interval: Number of steps between each append to the reconstruction imaginations log.
+            log_imagination_trajectory: Whether or not to log imagination trajectroy.
+            log_imagination_trajectory_every_n_steps: Number of steps between each logging of imagination trajectory.
         """
         super().__init__()
         assert max_imagination_steps > 0
@@ -81,6 +86,16 @@ class MultiStepImaginationCuriosityImageAgent(BaseAgent[Tensor, Tensor]):
         self.reconstruction_imaginations_ground_truth_deque: deque[Tensor] = deque(
             maxlen=log_reconstruction_imaginations_max_history_size
         )
+
+        # 再構成画像（軌道）の可視化ログについて
+        if log_imagination_trajectory_every_n_steps is None:
+            log_imagination_trajectory_every_n_steps = max_imagination_steps
+        else:
+            assert log_imagination_trajectory_every_n_steps >= max_imagination_steps
+
+        self.log_imagination_trajectory = log_imagination_trajectory
+        self.log_imagination_trajectory_every_n_steps = log_imagination_trajectory_every_n_steps
+        self.prepare_log_imagination_trajectory()
 
     @property
     def global_step(self) -> int:
@@ -169,6 +184,10 @@ class MultiStepImaginationCuriosityImageAgent(BaseAgent[Tensor, Tensor]):
                 and len(self.reconstruction_imaginations_deque) > 0
             ):
                 self.visualize_reconstruction_imaginations()
+
+            # -------- 再構成画像（軌道）の可視化 --------
+            if self.log_imagination_trajectory and self.image_decoder is not None:
+                self.imagination_trajectory_logging_step(observation, self.image_decoder)
 
         self.step_data[DataKeys.OBSERVATION] = observation  # o_t
         self.step_data[DataKeys.EMBED_OBSERVATION] = embed_obs  # z_t
@@ -300,6 +319,58 @@ class MultiStepImaginationCuriosityImageAgent(BaseAgent[Tensor, Tensor]):
         grid_image = torchvision.utils.make_grid(log_images, self.max_imagination_steps + 1)
 
         self.logger.tensorboard.add_image("agent/multistep-imagination-recontructions", grid_image, self.global_step)
+
+    def prepare_log_imagination_trajectory(self) -> None:
+        """Initializes variables for logging imagination trajectories."""
+        self.log_imagination_trajectory_current_index = 0
+        self.imagination_trajectory_ground_truth: list[Tensor] = []
+        self.imagination_trajectory_reconstruction: list[Tensor] = []
+        self.log_imagination_trajectory_is_logging = False
+
+    def imagination_trajectory_logging_step(
+        self, observation: Tensor, image_decoder: ThreadSafeInferenceWrapper[nn.Module]
+    ) -> None:
+        """Logs imagination trajectory at specified intervals.
+
+        Args:
+            observation: The current ground truth observation.
+            image_decoder: The image decoder for reconstruction.
+        """
+        if self.global_step % self.log_imagination_trajectory_every_n_steps == 0:
+            self.log_imagination_trajectory_is_logging = True
+
+        if self.log_imagination_trajectory_is_logging:
+            self.imagination_trajectory_ground_truth.append(observation)
+            reconstruction = image_decoder(
+                self.predicted_embed_obs_imaginations[self.log_imagination_trajectory_current_index]
+            )
+            self.imagination_trajectory_reconstruction.append(reconstruction)
+
+            self.log_imagination_trajectory_current_index += 1
+
+            if len(self.imagination_trajectory_ground_truth) == self.max_imagination_steps:
+                self.visualize_imagination_trajectory()
+                # resetting.
+                self.imagination_trajectory_ground_truth.clear()
+                self.imagination_trajectory_reconstruction.clear()
+                self.log_imagination_trajectory_is_logging = False
+                self.log_imagination_trajectory_current_index = 0
+
+    def visualize_imagination_trajectory(self) -> None:
+        """Creates and logs a visualization of the imagination trajectory
+        compared to ground truth observations."""
+        reconstructions = torch.stack(self.imagination_trajectory_reconstruction).cpu()  # (T, C, H, W)
+        image_size = reconstructions.size()[-2:]
+        ground_truth = torch.stack(self.imagination_trajectory_ground_truth).cpu()
+        ground_truth = torchvision.transforms.v2.functional.resize(ground_truth, image_size)  # (T, C, H, W)
+        row = reconstructions.size(0)
+
+        log_images = torch.cat([reconstructions, ground_truth])  # (2T, C, H ,W)
+        grid_image = torchvision.utils.make_grid(log_images, row)
+
+        self.logger.tensorboard.add_image(
+            "agent/imagination-trajectory (below ground truth)", grid_image, self.global_step
+        )
 
 
 def average_exponentially(rewards: Tensor, decay: float) -> Tensor:
