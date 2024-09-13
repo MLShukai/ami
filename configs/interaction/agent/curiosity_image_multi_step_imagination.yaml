@@ -20,6 +20,8 @@ log_reward_imaginations_every_n_steps: ${python.eval:"${.max_imagination_steps} 
 log_reconstruction_imaginations_max_history_size: ${.max_imagination_steps}
 log_reconstruction_imaginations_append_interval: 100
 log_reconstruction_imaginations_every_n_steps: ${python.eval:"${.max_imagination_steps} * ${.log_reconstruction_imaginations_append_interval}"}
+log_imagination_trajectory: True
+log_imagination_trajectory_every_n_steps: ${python.eval:"20 * ${.max_imagination_steps}"} # 100 sec
 
 reward_average_method:
   _target_: ami.interactions.agents.multi_step_imagination_curiosity_agent.average_exponentially
