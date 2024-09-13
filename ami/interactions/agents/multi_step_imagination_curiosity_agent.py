@@ -182,25 +182,22 @@ class MultiStepImaginationCuriosityImageAgent(BaseAgent[Tensor, Tensor]):
             : self.max_imagination_steps
         ]  # (imaginations, depth, dim)
 
-        action_dist_imaginations: Distribution
-        value_imaginations: Tensor
-        action_dist_imaginations, value_imaginations = self.policy_value_net(
-            embed_obs_imaginations, hidden_imaginations
-        )
-        action_imaginations = action_dist_imaginations.sample()
-        action_log_prob_imaginations = action_dist_imaginations.log_prob(action_imaginations)
-        actions = action_imaginations[0].expand_as(action_imaginations)  # 実際に環境に作用させるactionだけを抽出
+        action_dist: Distribution
+        value: Tensor
+        action_dist, value = self.policy_value_net(embed_obs_imaginations[0], hidden_imaginations[0])
+        action = action_dist.sample()
+        action_log_prob = action_dist.log_prob(action)
 
         pred_obs_dist_imaginations, _, _, next_hidden_imaginations = self.forward_dynamics(
-            embed_obs_imaginations, hidden_imaginations, actions  # 実際に環境に作用させるactionだけを使用
+            embed_obs_imaginations, hidden_imaginations, action.expand(len(embed_obs_imaginations), *action.shape)
         )
         pred_obs_imaginations = pred_obs_dist_imaginations.sample()
 
-        self.step_data[DataKeys.ACTION] = actions[0]  # a_t
-        self.step_data[DataKeys.ACTION_LOG_PROBABILITY] = action_log_prob_imaginations[0]  # log \pi(a_t | o_t, h_t)
-        self.step_data[DataKeys.VALUE] = value_imaginations[0]  # v_t
+        self.step_data[DataKeys.ACTION] = action  # a_t
+        self.step_data[DataKeys.ACTION_LOG_PROBABILITY] = action_log_prob  # log \pi(a_t | o_t, h_t)
+        self.step_data[DataKeys.VALUE] = value  # v_t
         self.step_data[DataKeys.HIDDEN] = self.exact_forward_dynamics_hidden_state  # h_t
-        self.logger.log("agent/value", value_imaginations[0])
+        self.logger.log("agent/value", value)
 
         self.predicted_embed_obs_dist_imaginations = pred_obs_dist_imaginations
         self.predicted_embed_obs_imaginations = pred_obs_imaginations
@@ -209,7 +206,7 @@ class MultiStepImaginationCuriosityImageAgent(BaseAgent[Tensor, Tensor]):
 
         self.logger.update()
 
-        return actions[0]
+        return action
 
     def setup(self, observation: Tensor) -> Tensor:
         super().setup(observation)
