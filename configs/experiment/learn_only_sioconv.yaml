@@ -37,7 +37,7 @@ interaction:
 models:
   i_jepa_target_encoder:
     inference_thread_only: True
-    parameter_file: ${paths.data_dir}/2024-09-07_03-24-12,323203.ckpt/i_jepa_target_encoder.pt # 学習済モデルをセットする。
+    parameter_file: ${paths.data_dir}/2024-09-14_09-42-23,678417.ckpt/i_jepa_target_encoder.pt # 学習済モデルをセットする。
     model:
       patch_size: 12
       embed_dim: 648
@@ -46,7 +46,7 @@ models:
       num_heads: 9
   i_jepa_target_visualization_decoder:
     inference_thread_only: True
-    parameter_file: ${paths.data_dir}/2024-09-07_03-24-12,323203.ckpt/i_jepa_target_visualization_decoder.pt # 学習済モデルをセットする
+    parameter_file: ${paths.data_dir}/2024-09-14_09-42-23,678417.ckpt/i_jepa_target_visualization_decoder.pt # 学習済モデルをセットする
   policy:
     model:
       file_max_rows: ${shared.frame_limit}
