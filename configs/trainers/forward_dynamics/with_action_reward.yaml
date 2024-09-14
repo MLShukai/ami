@@ -22,6 +22,9 @@ logger:
   log_dir: ${paths.tensorboard_dir}/forward_dynamics
   log_every_n_steps: 1
 
+obs_loss_coef: 1.0
+action_loss_coef: 1.0
+reward_loss_coef: 1.0
 observation_encoder_name: image_encoder
 device: ${devices.0}
 max_epochs: 3
