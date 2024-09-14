@@ -18,7 +18,7 @@ log_reward_imaginations: True
 log_reward_imaginations_max_history_size: ${.max_imagination_steps}
 log_reward_imaginations_append_interval: 100
 log_reward_imaginations_every_n_steps: ${python.eval:"${.max_imagination_steps} * ${.log_reward_imaginations_append_interval}"}
-log_reconstruction_imaginations: True
+log_reconstruction_imaginations: False # 重いのでデフォルト False.
 log_reconstruction_imaginations_max_history_size: ${.max_imagination_steps}
 log_reconstruction_imaginations_append_interval: 100
 log_reconstruction_imaginations_every_n_steps: ${python.eval:"${.max_imagination_steps} * ${.log_reconstruction_imaginations_append_interval}"}
