@@ -10,45 +10,48 @@ from ami.models.components.mixture_desity_network import (
 
 
 class TestNormalMixture:
-    @pytest.mark.parametrize("batch_shape", [(), (2,), (2, 3)])
+    @pytest.mark.parametrize("batch_shape,event_shape", [[(), (3,)], [(2,), ()], [(2, 3), (4, 5)]])
     @pytest.mark.parametrize("num_components", [2, 3])
-    def test_normal_mixture(self, batch_shape, num_components):
+    def test_normal_mixture(self, batch_shape, event_shape, num_components):
         # Create test data
         logits = torch.randn(*batch_shape, num_components)
-        mu = torch.randn(*batch_shape, num_components)
-        sigma = torch.rand(*batch_shape, num_components).add_(0.1)  # Ensure positive values
-
+        mu = torch.randn(*batch_shape, *event_shape, num_components)
+        sigma = torch.rand(*batch_shape, *event_shape, num_components).add_(0.1)  # Ensure positive values
+        shape = *batch_shape, *event_shape
         # Create NormalMixture instance
         mixture = NormalMixture(logits, mu, sigma)
 
-        # Test batch_shape
+        # Test batch_shape and event_shape
         assert mixture.batch_shape == torch.Size(batch_shape)
+        assert mixture.event_shape == torch.Size(event_shape)
 
         # Test sampling
         sample = mixture.sample()
-        assert sample.shape == torch.Size(batch_shape)
+        assert sample.shape == torch.Size(shape)
 
         # Test log_prob
         log_prob = mixture.log_prob(sample)
-        assert log_prob.shape == torch.Size(batch_shape)
+        assert log_prob.shape == torch.Size(shape)
 
         sample_shape = (10, 5)
         samples = mixture.sample(sample_shape)
-        assert samples.shape == torch.Size(sample_shape + batch_shape)
-        assert mixture.log_prob(samples).shape == sample_shape + batch_shape
+        assert samples.shape == torch.Size(sample_shape + shape)
+        assert mixture.log_prob(samples).shape == sample_shape + shape
 
         # Test rsample
         rsample = mixture.rsample()
-        assert rsample.shape == torch.Size(batch_shape)
+        assert rsample.shape == torch.Size(shape)
 
         # Test temperature sample
-        assert mixture.rsample(temperature=10.0).shape == torch.Size(batch_shape)
-        assert mixture.sample(temperature=0.1).shape == torch.Size(batch_shape)
+        assert mixture.rsample(temperature=10.0).shape == torch.Size(shape)
+        assert mixture.sample(temperature=0.1).shape == torch.Size(shape)
 
         # Test consistency with individual normal components
         components = [Normal(mu[..., i], sigma[..., i]) for i in range(num_components)]
         mixture_log_prob = mixture.log_prob(sample)
         component_log_probs = torch.stack([comp.log_prob(sample) for comp in components], dim=-1)
+        for _ in range(mu.ndim - logits.ndim):
+            logits.unsqueeze_(-2)
         component_log_probs += logits.log_softmax(-1)
         expected_log_prob = torch.logsumexp(component_log_probs, dim=-1)
         assert torch.allclose(mixture_log_prob, expected_log_prob, atol=1e-3)
