@@ -21,7 +21,8 @@ class NormalMixture(Distribution):
         """Constructor for the NormalMixture class.
 
         This constructor initializes the parameters of the mixture normal distribution and calls the parent class constructor.
-        logits, mu, sigma are must be same shape.
+        logits, mu, sigma are must have same components.
+        mu and sigma are must be same shape.
 
         Args:
             logits: Tensor representing the unnormalized log probabilities for each component in the mixture distribution.
