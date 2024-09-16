@@ -72,22 +72,22 @@ forward_dynamics:
       chunk_size: 512
       dropout: 0.1
     obs_hat_dist_head:
-      _target_: ami.models.components.stacked_features.ToStackedFeaturesMDN
-      dim_in: ${..core_model.dim}
-      dim_out: ${models.i_jepa_target_encoder.model.out_dim}
-      num_stack: ${..observation_flatten.num_stack}
-      num_components: 8
-      eps: 0.01
-      # _target_: torch.nn.Sequential
-      # _args_:
-      #   - _target_: ami.models.components.stacked_features.ToStackedFeatures
-      #     dim_in: ${....core_model.dim}
-      #     dim_out: ${models.i_jepa_target_encoder.model.out_dim}
-      #     num_stack: ${....observation_flatten.num_stack}
-      #   - _target_: ami.models.components.mixture_desity_network.NormalMixtureDensityNetwork
-      #     in_features: ${..0.dim_out}
-      #     out_features: ${models.i_jepa_target_encoder.model.out_dim}
-      #     num_components: 8
+      # _target_: ami.models.components.stacked_features.ToStackedFeaturesMDN
+      # dim_in: ${..core_model.dim}
+      # dim_out: ${models.i_jepa_target_encoder.model.out_dim}
+      # num_stack: ${..observation_flatten.num_stack}
+      # num_components: 8
+      # eps: 0.01
+      _target_: torch.nn.Sequential
+      _args_:
+        - _target_: ami.models.components.stacked_features.ToStackedFeatures
+          dim_in: ${....core_model.dim}
+          dim_out: ${models.i_jepa_target_encoder.model.out_dim}
+          num_stack: ${....observation_flatten.num_stack}
+        - _target_: ami.models.components.fully_connected_fixed_std_normal.FullyConnectedFixedStdNormal
+          dim_in: ${..0.dim_out}
+          dim_out: ${models.i_jepa_target_encoder.model.out_dim}
+          normal_cls: Deterministic
     action_hat_dist_head:
       _target_: ami.models.components.discrete_policy_head.DiscretePolicyHead
       dim_in: ${..core_model.dim}
