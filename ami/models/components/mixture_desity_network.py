@@ -30,24 +30,33 @@ class NormalMixture(Distribution):
             eps: A small value for numerical stability.
             validate_args: Whether to validate the arguments.
         Shape:
-            logits, mu, sigma: (*, Components)
+            logits: (*, Components)
+            mu, sigma: (*, *Features, Components)
         """
-        assert logits.shape == mu.shape == sigma.shape
+        assert logits.size(-1) == mu.size(-1) == sigma.size(-1)
+        assert mu.shape == sigma.shape
+        assert logits.ndim <= mu.ndim
         batch_shape = logits.shape[:-1]
+        event_shape = mu.shape[len(batch_shape) : -1]
+        assert logits.shape[:-1] == mu.shape[: -(1 + len(event_shape))]
+
+        for _ in range(mu.ndim - logits.ndim):
+            logits = logits.unsqueeze(-2)  # prepare for expanding. shape: (*, 1, ..., 1, Components)
+
         self.num_components = logits.size(-1)
         self.logits = logits
         self.mu = mu
         self.sigma = sigma
         self.eps = eps
 
-        super().__init__(batch_shape, validate_args=validate_args)
+        super().__init__(batch_shape, event_shape, validate_args=validate_args)
 
     @property
     def log_pi(self) -> Tensor:
         return self.logits.log_softmax(-1)
 
     def _get_expand_shape(self, shape: Size) -> tuple[int, ...]:
-        return *shape, *self.batch_shape, self.num_components
+        return *shape, *self.batch_shape, *self.event_shape, self.num_components
 
     def rsample(self, sample_shape: Size = Size(), temperature: float = 1.0) -> Tensor:
         """
@@ -56,11 +65,12 @@ class NormalMixture(Distribution):
         """
         shape = self._get_expand_shape(sample_shape)
 
-        pi = self.logits.div(temperature).softmax(-1).expand(shape).contiguous()
+        pi = self.logits.div(temperature).softmax(-1)
         samples = torch.multinomial(
             pi.view(-1, pi.size(-1)),
             1,
         ).view(*pi.shape[:-1], 1)
+        samples = samples.expand(*shape[:-1], 1)
         sample_mu = self.mu.expand(shape).gather(-1, samples).squeeze(-1)
         sample_sigma = self.sigma.expand(shape).gather(-1, samples).squeeze(-1)
         return torch.randn_like(sample_mu) * sample_sigma + sample_mu
@@ -112,7 +122,7 @@ class NormalMixtureDensityNetwork(nn.Module):
             assert out_features == 1, "Can not squeeze feature dimension!"
         self.mu_layers = nn.ModuleList(nn.Linear(in_features, out_features) for _ in range(num_components))
         self.logvar_layers = nn.ModuleList(nn.Linear(in_features, out_features) for _ in range(num_components))
-        self.logits_layers = nn.ModuleList(nn.Linear(in_features, out_features) for _ in range(num_components))
+        self.logits_layer = nn.Linear(in_features, num_components)
 
         self.squeeze_feature_dim = squeeze_feature_dim
         self.eps = eps
@@ -130,18 +140,16 @@ class NormalMixtureDensityNetwork(nn.Module):
             nn.init.normal_(layer.weight, 0, 0.01)
             nn.init.zeros_(layer.bias)
 
-        for layer in self.logits_layers:
-            nn.init.zeros_(layer.weight)
-            nn.init.zeros_(layer.bias)
+        nn.init.zeros_(self.logits_layer.weight)
+        nn.init.zeros_(self.logits_layer.bias)
 
     def forward(self, x: Tensor) -> NormalMixture:
         mu = torch.stack([lyr(x) for lyr in self.mu_layers], dim=-1)
         sigma = torch.stack([torch.exp(0.5 * lyr(x)) for lyr in self.logvar_layers], dim=-1) + self.eps
-        logits = torch.stack([lyr(x) for lyr in self.logits_layers], dim=-1)
+        logits = self.logits_layer(x)
 
         if self.squeeze_feature_dim:
             mu = mu.squeeze(-2)
             sigma = sigma.squeeze(-2)
-            logits = logits.squeeze(-2)
 
         return NormalMixture(logits, mu, sigma, self.eps)

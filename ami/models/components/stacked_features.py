@@ -4,6 +4,8 @@ import torch
 import torch.nn as nn
 from torch import Tensor
 
+from .mixture_desity_network import NormalMixture
+
 
 class LerpStackedFeatures(nn.Module):
     """Linear interpolation along stack of features.
@@ -80,3 +82,58 @@ class ToStackedFeatures(nn.Module):
         if no_batch:
             out = out.squeeze(0)
         return out
+
+
+class ToStackedFeaturesMDN(nn.Module):
+    """Convert input features to stacked features using Mixture Density
+    Network.
+
+    This module combines ToStackedFeatures with a Mixture Density Network (MDN)
+    to produce a probabilistic representation of stacked features.
+
+    Shape:
+        - input_features: (*, N_in)
+
+        Return shape: NormalMixture with parameters:
+            - logits: (*, num_components)
+            - mu: (*, S, N_out, num_components)
+            - sigma: (*, S, N_out, num_components)
+    """
+
+    def __init__(
+        self,
+        dim_in: int,
+        dim_out: int,
+        num_stack: int,
+        num_components: int,
+        eps: float = 1e-5,
+        squeeze_feature_dim: bool = False,
+    ) -> None:
+        super().__init__()
+
+        self.to_stacked_features = ToStackedFeatures(dim_in, dim_out, num_stack)
+        self.mu_layers = nn.ModuleList(nn.Linear(dim_out, dim_out) for _ in range(num_components))
+        self.logvar_layers = nn.ModuleList(nn.Linear(dim_out, dim_out) for _ in range(num_components))
+        self.logits_layer = nn.Linear(dim_in, num_components)
+        self.eps = eps
+        self.squeeze_feature_dim = squeeze_feature_dim
+
+        self.init_weights()
+
+    def init_weights(self) -> None:
+        layer: nn.Linear
+        for layer in self.logvar_layers:
+            nn.init.normal_(layer.weight, 0.0, 0.01)
+            nn.init.zeros_(layer.bias)
+
+        nn.init.normal_(self.logits_layer.weight, 0.0, 0.01)
+        nn.init.zeros_(self.logits_layer.bias)
+
+    def forward(self, feature: Tensor) -> NormalMixture:
+        logits = self.logits_layer(feature)
+        out = self.to_stacked_features(feature)
+        mu = torch.stack([lyr(out) for lyr in self.mu_layers], dim=-1)
+        logvar = torch.stack([lyr(out) for lyr in self.logvar_layers], dim=-1)
+        sigma = torch.exp(0.5 * logvar) + self.eps
+
+        return NormalMixture(logits, mu, sigma)
