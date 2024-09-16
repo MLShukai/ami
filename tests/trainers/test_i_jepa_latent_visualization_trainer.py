@@ -37,6 +37,7 @@ ENCODER_OUT_DIM = 32
     "decoder_name",
     [ModelNames.I_JEPA_CONTEXT_VISUALIZATION_DECODER, ModelNames.I_JEPA_TARGET_VISUALIZATION_DECODER],
 )
+@pytest.mark.skipif(not torch.cuda.is_available(), reason="CPU環境だと Segmentation Faultで落ちる。")
 class TestIJEPALatentVisualizationTrainer:
     @pytest.fixture
     def partial_dataloader(self):
