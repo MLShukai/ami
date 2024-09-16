@@ -60,8 +60,8 @@ trainers:
     minimum_new_data_count: 128
   ppo:
     partial_dataloader:
-      batch_size: 16
+      batch_size: 8
     max_epochs: 3
-    # 8 (= buffer size / batch size) * epochs = 24 iteration.
+    # 16 (= buffer size / batch size) * epochs = 48 iteration.
 
 task_name: i_jepa_sioconv_ppo_multi_step
