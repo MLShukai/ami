@@ -24,7 +24,7 @@ logger:
 
 obs_loss_coef: 1.0
 action_loss_coef: 1.0
-reward_loss_coef: 1.0
+reward_loss_coef: 0.0 # 2024/09/16 default false.
 observation_encoder_name: image_encoder
 device: ${devices.0}
 max_epochs: 3
