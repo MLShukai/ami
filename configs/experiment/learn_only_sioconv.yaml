@@ -1,5 +1,5 @@
 # @package _global_
-# 学習済パラメータ: https://drive.google.com/file/d/1j6AS8rs6jXZKD5vguKwqS4RsPj68Kdjp/view?usp=share_link
+# 学習済パラメータ: https://drive.google.com/file/d/1poEqcdDi2NsP9-oyeBlvnu1q9cKBhPFb/view?usp=drive_link
 
 defaults:
   - override /data_collectors: dynamics
