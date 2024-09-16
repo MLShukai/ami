@@ -122,7 +122,7 @@ class NormalMixtureDensityNetwork(nn.Module):
             assert out_features == 1, "Can not squeeze feature dimension!"
         self.mu_layers = nn.ModuleList(nn.Linear(in_features, out_features) for _ in range(num_components))
         self.sigma_layers = nn.ModuleList(nn.Linear(in_features, out_features) for _ in range(num_components))
-        self.logits_layers = nn.ModuleList(nn.Linear(in_features, out_features) for _ in range(num_components))
+        self.logits_layer = nn.Linear(in_features, num_components)
 
         self.squeeze_feature_dim = squeeze_feature_dim
         self.eps = eps
@@ -140,18 +140,16 @@ class NormalMixtureDensityNetwork(nn.Module):
             nn.init.zeros_(layer.weight)
             nn.init.ones_(layer.bias)
 
-        for layer in self.logits_layers:
-            nn.init.zeros_(layer.weight)
-            nn.init.zeros_(layer.bias)
+        nn.init.zeros_(self.logits_layer.weight)
+        nn.init.zeros_(self.logits_layer.bias)
 
     def forward(self, x: Tensor) -> NormalMixture:
         mu = torch.stack([lyr(x) for lyr in self.mu_layers], dim=-1)
         sigma = torch.stack([F.softplus(lyr(x)) for lyr in self.sigma_layers], dim=-1) + self.eps
-        logits = torch.stack([lyr(x) for lyr in self.logits_layers], dim=-1)
+        logits = self.logits_layer(x)
 
         if self.squeeze_feature_dim:
             mu = mu.squeeze(-2)
             sigma = sigma.squeeze(-2)
-            logits = logits.squeeze(-2)
 
         return NormalMixture(logits, mu, sigma, self.eps)

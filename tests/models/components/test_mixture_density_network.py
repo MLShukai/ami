@@ -81,18 +81,15 @@ class TestNormalMixtureDensityNetwork:
         assert isinstance(output, NormalMixture)
 
         # Check output shapes
-        assert output.batch_shape == torch.Size([batch_size, out_features])
-        assert output.event_shape == torch.Size([])
-        assert output.logits.shape == (batch_size, out_features, num_components)
-        assert output.log_pi.shape == (batch_size, out_features, num_components)
-        assert output.mu.shape == (batch_size, out_features, num_components)
-        assert output.sigma.shape == (batch_size, out_features, num_components)
+        assert output.batch_shape == torch.Size([batch_size])
+        assert output.event_shape == torch.Size([out_features])
+        assert output.sample().shape == torch.Size([batch_size, out_features])
 
         # Check that sigma is positive
         assert (output.sigma > 0).all()
 
         # Check that log_pi is a valid log probability
-        assert torch.allclose(output.log_pi.exp().sum(dim=-1), torch.ones(batch_size, out_features))
+        assert torch.allclose(output.log_pi.exp().sum(dim=-1), torch.ones(batch_size))
 
         # Check the initial outputs
         assert torch.allclose(output.sigma, torch.nn.functional.softplus(torch.ones_like(output.sigma)) + output.eps)
