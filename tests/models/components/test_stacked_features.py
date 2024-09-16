@@ -47,6 +47,8 @@ class TestToStackedFeaturesMDN:
         assert isinstance(out, NormalMixture)
         assert out.sample().shape == (8, 4, 128)
         assert out.num_components == 8
+        assert torch.allclose(out.logits, torch.zeros_like(out.logits), atol=0.5)
+        assert torch.allclose(out.sigma, torch.ones_like(out.sigma), atol=0.5)
 
         feature = torch.randn(64)
         out = mod.forward(feature)
