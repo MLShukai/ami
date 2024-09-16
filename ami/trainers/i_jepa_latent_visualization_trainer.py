@@ -24,6 +24,7 @@ from ami.models.i_jepa_latent_visualization_decoder import (
 from ami.models.model_names import ModelNames
 from ami.models.model_wrapper import ModelWrapper
 from ami.tensorboard_loggers import StepIntervalLogger
+from ami.utils import min_max_normalize
 
 from .base_trainer import BaseTrainer
 
@@ -143,10 +144,18 @@ class IJEPALatentVisualizationDecoderTrainer(BaseTrainer):
         input_image_batches = torch.cat(input_image_batch_list)
         reconstruction_image_batches = torch.cat(reconstruction_image_batch_list)
         visualize_indices = torch.randperm(input_image_batches.size(0))[: self.num_visualize_images].sort().values
+        input_image_selected = input_image_batches[visualize_indices]
+        input_image_selected = min_max_normalize(input_image_selected.flatten(1), 0, 1, dim=-1).reshape(
+            input_image_selected.shape
+        )
+        reconstruction_image_selected = reconstruction_image_batches[visualize_indices]
+        reconstruction_image_selected = min_max_normalize(
+            reconstruction_image_selected.flatten(1), 0, 1, dim=-1
+        ).reshape(reconstruction_image_selected.shape)
 
-        grid_input_image = torchvision.utils.make_grid(input_image_batches[visualize_indices], self.visualize_grid_row)
+        grid_input_image = torchvision.utils.make_grid(input_image_selected, self.visualize_grid_row, normalize=True)
         grid_reconstruction_image = torchvision.utils.make_grid(
-            reconstruction_image_batches[visualize_indices], self.visualize_grid_row
+            reconstruction_image_selected, self.visualize_grid_row, normalize=True
         )
         losses = torch.cat(loss_list)
         loss = torch.mean(losses)
