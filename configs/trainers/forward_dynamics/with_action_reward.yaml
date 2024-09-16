@@ -30,4 +30,4 @@ device: ${devices.0}
 max_epochs: 3
 minimum_dataset_size: ${.partial_sampler.sequence_length}
 minimum_new_data_count: 128 # From primitive AMI
-gradient_clip_norm: 5
+gradient_clip_norm: null
