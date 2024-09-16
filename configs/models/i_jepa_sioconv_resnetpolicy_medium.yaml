@@ -1,5 +1,5 @@
 defaults:
-  - i_jepa_sioconv_ppodreamer
+  - i_jepa_sioconv_resnetpolicy
 
 i_jepa_target_encoder:
   model:

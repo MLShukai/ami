@@ -11,7 +11,7 @@
 defaults:
   - override /interaction: vrchat_with_curiosity_image_ppo_agent
   - override /interaction/agent: curiosity_image_multi_step_imagination
-  - override /models: i_jepa_sioconv_ppodreamer_large
+  - override /models: i_jepa_sioconv_resnetpolicy_large
   - override /data_collectors: image_dynamics_dreaming
   - override /trainers: i_jepa_forward_dynamics_ppo_dreaming
 
