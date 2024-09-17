@@ -52,6 +52,7 @@ class IntervalSamplingImageDataset(Dataset[tuple[torch.Tensor]]):
         """
         super().__init__()
         self.image_dir = Path(image_dir)
+        assert self.image_dir.is_dir()
         self.transform = transform
         self.extensions = extensions
         available_image_files = self._list_image_files()
