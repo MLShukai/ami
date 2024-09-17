@@ -66,9 +66,9 @@ class NormalMixture(Distribution):
         """
         shape = self._get_expand_shape(sample_shape)
 
-        pi = self.logits.div(temperature).softmax(-1)
+        pi = self.logits.div(temperature).softmax(-1).expand(*sample_shape, *self.logits.shape)
         samples = torch.multinomial(
-            pi.view(-1, pi.size(-1)),
+            pi.reshape(-1, pi.size(-1)),
             1,
         ).view(*pi.shape[:-1], 1)
         samples = samples.expand(*shape[:-1], 1)
