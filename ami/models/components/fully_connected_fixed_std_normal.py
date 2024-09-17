@@ -1,4 +1,5 @@
 import math
+from typing import Literal
 
 import torch
 import torch.nn as nn
@@ -21,10 +22,18 @@ class FullyConnectedFixedStdNormal(nn.Module):
         dim_in: int,
         dim_out: int,
         std: float = SHIFT_ZERO,
-        normal_cls: type[Normal] = Normal,
+        normal_cls: type[Normal] | Literal["Normal", "Deterministic"] = Normal,
         squeeze_feature_dim: bool = False,
     ) -> None:
         super().__init__()
+        match normal_cls:
+            case "Normal":
+                normal_cls = Normal
+            case "Deterministic":
+                normal_cls = DeterministicNormal
+            case str():
+                raise ValueError("Normal class must be 'Normal' or 'Deterministic'!")
+
         if squeeze_feature_dim:
             assert dim_out == 1, "Can not squeeze feature dimension!"
         self.fc = nn.Linear(dim_in, dim_out)

@@ -22,9 +22,12 @@ logger:
   log_dir: ${paths.tensorboard_dir}/forward_dynamics
   log_every_n_steps: 1
 
+obs_loss_coef: 1.0
+action_loss_coef: 1.0
+reward_loss_coef: 0.0 # 2024/09/16 default false.
 observation_encoder_name: image_encoder
 device: ${devices.0}
 max_epochs: 3
 minimum_dataset_size: ${.partial_sampler.sequence_length}
 minimum_new_data_count: 128 # From primitive AMI
-gradient_clip_norm: 100
+gradient_clip_norm: null
