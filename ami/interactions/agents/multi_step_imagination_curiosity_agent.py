@@ -10,6 +10,8 @@ import torch
 import torch.nn as nn
 import torchvision
 import torchvision.transforms.v2.functional
+from matplotlib.cm import ScalarMappable
+from matplotlib.colors import Normalize
 from torch import Tensor
 from torch.distributions import Distribution
 from typing_extensions import override
@@ -255,6 +257,7 @@ class MultiStepImaginationCuriosityImageAgent(BaseAgent[Tensor, Tensor]):
             and len(self.reward_imaginations_deque) > 0
         ):
             self.visualize_reward_imaginations()
+            self.visualize_reward_imaginations_curves()
 
     def visualize_reward_imaginations(self) -> None:
         """Creates and logs a heatmap visualization of reward imaginations.
@@ -297,6 +300,91 @@ class MultiStepImaginationCuriosityImageAgent(BaseAgent[Tensor, Tensor]):
         ax.set_ylabel("global steps")
 
         self.logger.tensorboard.add_figure("agent/multistep-imagination-errors", fig, self.global_step)
+
+    def visualize_reward_imaginations_curves(self) -> None:
+        """Visualizes the reward imaginations as curves across imagination
+        steps.
+
+        This method creates three different visualizations:
+        1. Original Reward Imaginations: Shows the raw reward values for each imagination step.
+        2. Normalized Reward Imaginations: Displays the reward values normalized between 0 and 1.
+        3. Average Normalized Reward Imaginations: Presents the mean and standard deviation of normalized rewards.
+
+        Each visualization is color-coded based on the global step, allowing for easy tracking of how
+        reward predictions evolve over time. The resulting figures are logged to TensorBoard for analysis.
+
+        The visualizations help in understanding:
+        - How reward predictions change across different imagination steps
+        - The consistency of predictions over global steps
+        - The overall trend and variability in the agent's reward predictions
+
+        Note:
+        - The color of each curve represents its corresponding global step.
+        - A colorbar is included in the first two plots to map colors to global steps.
+        - The third plot shows the mean as a blue line and the standard deviation as a shaded area.
+        """
+
+        global_steps = np.array(self.reward_imaginations_global_step_deque)
+        reward_imaginations = np.array(self.reward_imaginations_deque)
+        normalized_reward_imaginations = reward_imaginations - reward_imaginations.min(-1, keepdims=True)
+        normalized_reward_imaginations = normalized_reward_imaginations / (
+            normalized_reward_imaginations.max(-1, keepdims=True) + 1e-8
+        )
+
+        # グラフセットアップ
+        BASE_FIG_WIDTH = 0.6
+        FIG_HEIGHT = 4.8
+        COLOR_MAP = "viridis"
+        FIG_WIDTH = BASE_FIG_WIDTH * len(global_steps)
+
+        cmap = plt.get_cmap(COLOR_MAP)
+        norm = Normalize(vmin=min(global_steps), vmax=max(global_steps))
+        x_indices = np.arange(self.max_imagination_steps) + 1
+
+        def create_figure(title: str, ylabel: str) -> tuple[plt.Figure, plt.Axes]:
+            fig, ax = plt.subplots(figsize=(FIG_WIDTH, FIG_HEIGHT))
+            ax.set_xlabel("Imagination Steps")
+            ax.set_ylabel(ylabel)
+            ax.set_title(title)
+            return fig, ax
+
+        # オリジナルの曲線プロット
+        fig1, ax1 = create_figure("Original Reward Imaginations", "Reward")
+        for i, curve in enumerate(reward_imaginations):
+            color = cmap(norm(global_steps[i]))
+            ax1.plot(x_indices, curve, color=color)
+        fig1.colorbar(ScalarMappable(cmap=cmap, norm=norm), ax=ax1, label="Global Steps", pad=0.1)
+        self.logger.tensorboard.add_figure("agent/multistep-imaginations-error-curves", fig1, self.global_step)
+
+        # 正規化された曲線プロット
+        fig2, ax2 = create_figure("Normalized Reward Imaginations", "Normalized Reward")
+        for i, curve in enumerate(normalized_reward_imaginations):
+            color = cmap(norm(global_steps[i]))
+            ax2.plot(x_indices, curve, color=color)
+            ax2.set_ylim(top=1.0)
+        fig2.colorbar(ScalarMappable(cmap=cmap, norm=norm), ax=ax2, label="Global Steps", pad=0.1)
+        self.logger.tensorboard.add_figure(
+            "agent/multistep-imaginations-error-curves (normalized)", fig2, self.global_step
+        )
+
+        # 平均化された正規化曲線プロット
+        fig3, ax3 = create_figure("Average Normalized Reward Imaginations", "Normalized Reward")
+        mean_normalized_curve = np.mean(normalized_reward_imaginations, axis=0)
+        std_normalized_curve = np.std(normalized_reward_imaginations, axis=0)
+
+        ax3.plot(x_indices, mean_normalized_curve, color="blue", label="Mean")
+        ax3.fill_between(
+            x_indices,
+            mean_normalized_curve - std_normalized_curve,
+            mean_normalized_curve + std_normalized_curve,
+            color="blue",
+            alpha=0.2,
+            label="Standard Deviation",
+        )
+        ax3.legend()
+        self.logger.tensorboard.add_figure(
+            "agent/multistep-imaginations-error-curves (averaged)", fig3, self.global_step
+        )
 
     def reconstruction_imaginations_logging_step(
         self, observation: Tensor, image_decoder: ThreadSafeInferenceWrapper[nn.Module]
