@@ -1,3 +1,4 @@
+import socket
 import threading
 import time
 from typing import Any
@@ -15,6 +16,17 @@ from torch import Tensor
 from typing_extensions import override
 
 from .base_environment import BaseEnvironment
+
+
+def find_free_port(start_port: int = 5005, max_port: int = 5999) -> int:
+    for port in range(start_port, max_port + 1):
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+            try:
+                s.bind(("", port))
+                return port
+            except OSError:
+                continue
+    raise OSError("No free ports")
 
 
 class TransformLogChannel(SideChannel):
@@ -83,6 +95,10 @@ class UnityEnvironment(BaseEnvironment[Tensor, Tensor]):
         if log_file_path is not None:
             transform_log_channel = TransformLogChannel(UUID("621f0a70-4f87-11ea-a6bf-784f4387d1f7"), log_file_path)
             side_channels.append(transform_log_channel)
+
+        if base_port is None:
+            base_port = find_free_port()
+
         self._env = UnityToGymWrapper(
             RawUnityEnv(file_path, worker_id, base_port, seed=seed, side_channels=side_channels),
             allow_multiple_obs=False,
