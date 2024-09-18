@@ -256,10 +256,6 @@ class MultiStepImaginationCuriosityImageAgent(BaseAgent[Tensor, Tensor]):
         ):
             self.visualize_reward_imaginations()
 
-    BASE_FIG_SIZE = 0.6
-    ADJUST_FIG_WIDTH = 5
-    COLOR_MAP = "plasma"
-
     def visualize_reward_imaginations(self) -> None:
         """Creates and logs a heatmap visualization of reward imaginations.
 
@@ -272,10 +268,14 @@ class MultiStepImaginationCuriosityImageAgent(BaseAgent[Tensor, Tensor]):
         performance and the accuracy of its reward predictions.
         """
 
+        BASE_FIG_SIZE = 0.6
+        ADJUST_FIG_WIDTH = 5
+        COLOR_MAP = "plasma"
+
         imaginations_history_size = len(self.reward_imaginations_deque)
         figsize = (
-            self.BASE_FIG_SIZE * self.max_imagination_steps + self.ADJUST_FIG_WIDTH,
-            self.BASE_FIG_SIZE * imaginations_history_size,
+            BASE_FIG_SIZE * self.max_imagination_steps + ADJUST_FIG_WIDTH,
+            BASE_FIG_SIZE * imaginations_history_size,
         )
 
         data = np.stack(self.reward_imaginations_deque)[::-1]
@@ -288,7 +288,7 @@ class MultiStepImaginationCuriosityImageAgent(BaseAgent[Tensor, Tensor]):
             data=data,
             ax=ax,
             annot=True,
-            cmap=self.COLOR_MAP,
+            cmap=COLOR_MAP,
             linewidths=0.5,
             xticklabels=xticklabels,
             yticklabels=yticklabels,
