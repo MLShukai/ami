@@ -354,7 +354,7 @@ class MultiStepImaginationCuriosityImageAgent(BaseAgent[Tensor, Tensor]):
             color = cmap(norm(global_steps[i]))
             ax1.plot(x_indices, curve, color=color)
         fig1.colorbar(ScalarMappable(cmap=cmap, norm=norm), ax=ax1, label="Global Steps", pad=0.1)
-        self.logger.tensorboard.add_figure("agent/multistep-imaginations-error-curves", fig1, self.global_step)
+        self.logger.tensorboard.add_figure("agent/multistep-reward-imaginations-curves", fig1, self.global_step)
 
         # 正規化された曲線プロット
         fig2, ax2 = create_figure("Normalized Reward Imaginations", "Normalized Reward")
@@ -364,7 +364,7 @@ class MultiStepImaginationCuriosityImageAgent(BaseAgent[Tensor, Tensor]):
             ax2.set_ylim(top=1.0)
         fig2.colorbar(ScalarMappable(cmap=cmap, norm=norm), ax=ax2, label="Global Steps", pad=0.1)
         self.logger.tensorboard.add_figure(
-            "agent/multistep-imaginations-error-curves (normalized)", fig2, self.global_step
+            "agent/multistep-reward-imaginations-curves (normalized)", fig2, self.global_step
         )
 
         # 平均化された正規化曲線プロット
@@ -383,7 +383,7 @@ class MultiStepImaginationCuriosityImageAgent(BaseAgent[Tensor, Tensor]):
         )
         ax3.legend()
         self.logger.tensorboard.add_figure(
-            "agent/multistep-imaginations-error-curves (averaged)", fig3, self.global_step
+            "agent/multistep-reward-imaginations--curves (normalized & averaged)", fig3, self.global_step
         )
 
     def reconstruction_imaginations_logging_step(
