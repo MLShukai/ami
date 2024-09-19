@@ -21,7 +21,7 @@ shared:
 
 interaction:
   agent:
-    max_imagination_steps: 50 # 5 sec
+    max_imagination_steps: 1 # * 0.1 = seconds.
 
   observation_wrappers:
     - _target_: ami.interactions.io_wrappers.tensor_video_recorder.TensorVideoRecorder
