@@ -383,7 +383,7 @@ class MultiStepImaginationCuriosityImageAgent(BaseAgent[Tensor, Tensor]):
         )
         ax3.legend()
         self.logger.tensorboard.add_figure(
-            "agent/multistep-reward-imaginations--curves (normalized & averaged)", fig3, self.global_step
+            "agent/multistep-reward-imaginations-curves (normalized & averaged)", fig3, self.global_step
         )
 
     def reconstruction_imaginations_logging_step(
