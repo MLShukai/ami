@@ -22,6 +22,10 @@ shared:
 interaction:
   agent:
     max_imagination_steps: 1 # * 0.1 = seconds.
+    # 行動に大きなラグが発生するので無効化
+    log_reward_imaginations: False
+    log_reconstruction_imaginations: False
+    log_imagination_trajectory: False
 
   observation_wrappers:
     - _target_: ami.interactions.io_wrappers.tensor_video_recorder.TensorVideoRecorder
