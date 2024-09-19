@@ -21,6 +21,7 @@ shared:
 
 interaction:
   agent:
+    # 旧 AMI の設定と同期
     max_imagination_steps: 1 # * 0.1 = seconds.
     # 行動に大きなラグが発生するので無効化
     log_reward_imaginations: False
