@@ -20,3 +20,4 @@ logger:
 device: ${devices.0}
 max_epochs: 3
 minimum_dataset_size: ${python.eval:"${data_collectors.ppo_trajectory.max_len} - 1"}
+entropy_coef: 0.001
