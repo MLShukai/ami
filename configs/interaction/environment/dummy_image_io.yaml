@@ -1,12 +1,11 @@
 _target_: ami.interactions.environments.dummy_environment.DummyEnvironment
 observation_generator:
-  _target_: ami.interactions.environments.dummy_environment.SameObservationGenerator
-  observation:
-    _target_: torch.zeros
-    _args_:
-      - ${shared.image_channels}
-      - ${shared.image_height}
-      - ${shared.image_width}
+  _partial_: true
+  _target_: torch.zeros
+  _args_:
+    - ${shared.image_channels}
+    - ${shared.image_height}
+    - ${shared.image_width}
 
 action_checker:
   _target_: ami.interactions.environments.dummy_environment.ActionTypeChecker
