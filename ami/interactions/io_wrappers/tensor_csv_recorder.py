@@ -1,4 +1,5 @@
 import csv
+import os
 import time
 from typing import Any, Callable, Generic, TypeVar
 
@@ -30,6 +31,7 @@ class TensorCSVRecorder(BaseIOWrapper[Tensor, Tensor]):
     @override
     def __init__(self, filename: str, headers: list[str], timestamp_header: str = "timestamp") -> None:
         super().__init__()
+        os.makedirs(os.path.dirname(filename), exist_ok=True)
         self.filename = filename
         self.headers = [timestamp_header] + headers
         self._initialize_csv()
