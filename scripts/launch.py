@@ -99,7 +99,7 @@ def main(cfg: DictConfig) -> None:
 
     display_cfg = display_nested_config(cfg)
     logger.info(f"Displaying configs..\n{display_cfg}")
-    with open(os.path.join(cfg.paths.output_dir, "launch-configuration.yaml"), "w") as f:
+    with open(os.path.join(cfg.paths.output_dir, "launch-configuration.txt"), "w") as f:
         f.write(display_cfg)
 
     logger.info("Sharing objects...")
