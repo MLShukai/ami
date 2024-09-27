@@ -289,3 +289,36 @@ def _init_weights(m: nn.Module, init_std: float) -> None:
             nn.init.trunc_normal_(m.weight, std=init_std)
             if m.bias is not None:
                 nn.init.constant_(m.bias, 0)
+
+
+def encoder_infer_mean_patch(wrapper: ModelWrapper[BoolMaskIJEPAEncoder], image: Tensor) -> Tensor:
+    """Customizes the inference flow in the encoder.
+
+    Please specify to `ModelWrapper(inference_forward=<this>)`.
+    Adds batch axis if image does not have it, applies layer normalization,
+    and means latent along the patch axis.
+
+    Args:
+        wrapper: ModelWrapper instance that wraps IJEPAEncoder.
+        image: Input for IJEPAEncoder.
+            shape (channel, height, width) or (batch, channel, height, width)
+
+    Returns:
+        torch.Tensor: Output of IJEPAEncoder.
+            shape (dim,) or (batch, dim)
+    """
+
+    device = wrapper.device
+    no_batch = image.ndim == 3
+
+    if no_batch:
+        image = image.unsqueeze(0)  # batched
+
+    image = image.to(device)
+
+    out: torch.Tensor = wrapper(image)
+    out = nn.functional.layer_norm(out, (out.size(-1),))
+    if no_batch:
+        out = out.squeeze(0)
+
+    return out.mean(-2)
