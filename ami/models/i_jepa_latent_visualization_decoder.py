@@ -237,8 +237,10 @@ class IJEPALatentVisualizationDecoder(nn.Module):
         if no_batch:
             input_latents = input_latents.unsqueeze(0)
         batch_size = input_latents.size(0)
+        # To Do: Needs to be rewrriten more neatly.
+        input_latents = torch.reshape(input_latents, (batch_size, 1, 1, self.input_latents_dim))
         height, width = self.input_n_patches
-        input_latents = torch.reshape(input_latents, (batch_size, height, width, self.input_latents_dim))
+        input_latents = input_latents.repeat(1, height, width, 1)
         input_latents = input_latents.movedim(-1, 1)  # [batch, latent, height, width]
         # apply input layers
         feature = self.input_resblock_1(input_latents)

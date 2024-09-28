@@ -6,7 +6,7 @@ i_jepa_target_encoder:
   has_inference: True
   inference_forward:
     _target_: hydra.utils.get_method
-    path: ami.models.bool_mask_i_jepa.i_jepa_encoder_infer
+    path: ami.models.bool_mask_i_jepa.encoder_infer_mean_patch
   model:
     _target_: ami.models.bool_mask_i_jepa.BoolMaskIJEPAEncoder
     img_size:
