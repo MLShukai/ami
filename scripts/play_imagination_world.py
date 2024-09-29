@@ -6,6 +6,39 @@ import torch
 from torch import Tensor
 from omegaconf import DictConfig
 
+class KeyboardActionHandler:
+    def __init__(self) -> None:
+        self.initial_actions = {"MoveVertical": 0, "MoveHorizontal": 0, "LookHorizontal": 0, "Jump": 0, "Run": 0}
+        self.actions = self.initial_actions.copy()
+
+        self.key_map = {
+            "w": ("MoveVertical", 1),
+            "s": ("MoveVertical", 2),
+            "d": ("MoveHorizontal", 1),
+            "a": ("MoveHorizontal", 2),
+            ".": ("LookHorizontal", 1),
+            ",": ("LookHorizontal", 2),
+            "space": ("Jump", 1),
+            "shift": ("Run", 1),
+        }
+
+    def update(self) -> None:
+        self.actions = self.initial_actions.copy()
+
+        for key, (action, value) in self.key_map.items():
+            if keyboard.is_pressed(key):
+                self.actions[action] = value
+
+    def get_action(self) -> Tensor:
+        return torch.tensor([
+            self.actions["MoveVertical"],
+            self.actions["MoveHorizontal"],
+            self.actions["LookHorizontal"],
+            self.actions["Jump"],
+            self.actions["Run"],
+        ])
+
+
 @hydra.main(config_path="../data/2024-09-17_04-47-37,195367.ckpt", config_name="launch-configuration.yaml", version_base="1.3")
 def main(cfg: DictConfig) -> None:
     PROJECT_ROOT = rootutils.setup_root(__file__, indicator=".project-root", pythonpath=True)
@@ -28,38 +61,6 @@ def main(cfg: DictConfig) -> None:
     forward_dynamics = hydra.utils.instantiate(cfg.models.forward_dynamics.model)
     forward_dynamics.to(device)
     forward_dynamics.load_state_dict(torch.load(forward_dynamics_parameter_file, map_location=device))
-
-    class KeyboardActionHandler:
-        def __init__(self) -> None:
-            self.initial_actions = {"MoveVertical": 0, "MoveHorizontal": 0, "LookHorizontal": 0, "Jump": 0, "Run": 0}
-            self.actions = self.initial_actions.copy()
-
-            self.key_map = {
-                "w": ("MoveVertical", 1),
-                "s": ("MoveVertical", 2),
-                "d": ("MoveHorizontal", 1),
-                "a": ("MoveHorizontal", 2),
-                ".": ("LookHorizontal", 1),
-                ",": ("LookHorizontal", 2),
-                "space": ("Jump", 1),
-                "shift": ("Run", 1),
-            }
-
-        def update(self) -> None:
-            self.actions = self.initial_actions.copy()
-
-            for key, (action, value) in self.key_map.items():
-                if keyboard.is_pressed(key):
-                    self.actions[action] = value
-
-        def get_action(self) -> Tensor:
-            return torch.tensor([
-                self.actions["MoveVertical"],
-                self.actions["MoveHorizontal"],
-                self.actions["LookHorizontal"],
-                self.actions["Jump"],
-                self.actions["Run"],
-            ])
 
     handler = KeyboardActionHandler()
 
