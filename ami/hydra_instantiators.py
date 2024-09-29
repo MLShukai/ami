@@ -118,12 +118,12 @@ def instantiate_models_v2(model_cfg: DictConfig) -> ModelWrappersDict:
             case ModelWrapper():
                 model_wrapper = model_wrapper_or_alias
                 logger.info(
-                    f"Instantiated model {name!r}: <{model_wrapper.__class__.__name__}[{model_wrapper.model.__class__.__name__}]>"
+                    f"Instantiated model '{name}': <{model_wrapper.__class__.__name__}[{model_wrapper.model.__class__.__name__}]>"
                 )
                 d[name] = model_wrapper
             case ModelNames():
                 target = model_wrapper_or_alias
-                logger.info(f"Model name {name!r} is alias to {target!r}")
+                logger.info(f"Model name '{name}' is alias to '{target}'")
                 aliases.append((name, target))
             case _:
                 raise ValueError(f"Invalid model wrapper or alias type!: {model_wrapper_or_alias!r}")
