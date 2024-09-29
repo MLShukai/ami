@@ -149,8 +149,11 @@ def main(cfg: DictConfig) -> None:
         print(action)
         next_embedding_dist, _, _, hidden = forward_dynamics(embedding, hidden, action)
         embedding = next_embedding_dist.rsample()
-        reconstruction = decoder(embedding.unsqueeze(0))
-        cv2.imshow("imagination world", reconstruction.squeeze(0).permute(1,2,0).to("cpu").detach().numpy())
+        reconstruction = decoder(embedding.unsqueeze(0)).squeeze(0)
+        reconstruction = (reconstruction - reconstruction.min()) / (reconstruction.max() - reconstruction.min() + 1e-8) * 255
+        reconstruction = reconstruction.to(torch.uint8)
+        reconstruction[torch.tensor([0,1,2])] = reconstruction[torch.tensor([2,1,0])]
+        cv2.imshow("imagination world", reconstruction.permute(1,2,0).to("cpu").detach().numpy())
         cv2.waitKey(1)
 
 
