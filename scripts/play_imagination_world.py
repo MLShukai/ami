@@ -5,6 +5,17 @@ import rootutils
 import torch
 from torch import Tensor
 from omegaconf import DictConfig
+from ami.models.bool_mask_i_jepa import BoolMaskIJEPAEncoder
+from ami.models.i_jepa_latent_visualization_decoder import IJEPALatentVisualizationDecoder
+from ami.models.forward_dynamics import ForwardDynamcisWithActionReward
+from ami.models.components.stacked_features import LerpStackedFeatures
+from ami.models.components.multi_embeddings import MultiEmbeddings
+from ami.interactions.environments.actuators.vrchat_osc_discrete_actuator import ACTION_CHOICES_PER_CATEGORY
+from ami.models.components.sioconv import SioConv
+from ami.models.components.stacked_features import ToStackedFeatures
+from ami.models.components.fully_connected_fixed_std_normal import FullyConnectedFixedStdNormal
+from ami.models.components.fully_connected_fixed_std_normal import DeterministicNormal
+from ami.models.components.discrete_policy_head import DiscretePolicyHead
 
 class KeyboardActionHandler:
     def __init__(self) -> None:
@@ -48,17 +59,81 @@ def main(cfg: DictConfig) -> None:
         device = torch.device("cuda:0")
 
     encoder_parameter_file = PROJECT_ROOT / "data/2024-09-17_04-47-37,195367.ckpt/i_jepa_target_encoder.pt"
-    encoder = hydra.utils.instantiate(cfg.models.i_jepa_target_encoder.model)
+    encoder = BoolMaskIJEPAEncoder(
+      img_size=[144, 144],
+      in_channels=3,
+      patch_size=12,
+      embed_dim=648,
+      out_dim=32,
+      depth=12,
+      num_heads=9,
+      mlp_ratio=4.0
+    )
     encoder.to(device)
     encoder.load_state_dict(torch.load(encoder_parameter_file, map_location=device))
 
     decoder_parameter_file = PROJECT_ROOT / "data/2024-09-17_04-47-37,195367.ckpt/i_jepa_target_visualization_decoder.pt"
-    decoder = hydra.utils.instantiate(cfg.models.i_jepa_target_visualization_decoder.model)
+    decoder = IJEPALatentVisualizationDecoder(
+      input_n_patches=[12, 12],
+      input_latents_dim=32,
+      decoder_blocks_in_and_out_channels=[
+        [512, 512],
+        [512, 256],
+        [256, 128],
+        [128, 64]
+      ],
+      n_res_blocks=3,
+      num_heads=4
+    )
     decoder.to(device)
     decoder.load_state_dict(torch.load(decoder_parameter_file, map_location=device))
 
     forward_dynamics_parameter_file = PROJECT_ROOT / "data/2024-09-17_04-47-37,195367.ckpt/forward_dynamics.pt"
-    forward_dynamics = hydra.utils.instantiate(cfg.models.forward_dynamics.model)
+    forward_dynamics = ForwardDynamcisWithActionReward(
+        observation_flatten=LerpStackedFeatures(
+            dim_in=32,
+            dim_out=2048,
+            num_stack=144,
+        ),
+        action_flatten=MultiEmbeddings(
+            choices_per_category=ACTION_CHOICES_PER_CATEGORY,
+            embedding_dim=8,
+            do_flatten=True
+        ),
+        obs_action_projection=torch.nn.Linear(
+            in_features=2088,
+            out_features=2048
+        ),
+        core_model=SioConv(
+            depth=12,
+            dim=2048,
+            num_head=8,
+            dim_ff_hidden=4096,
+            chunk_size=512,
+            dropout=0.1
+        ),
+        obs_hat_dist_head=torch.nn.Sequential(
+            ToStackedFeatures(
+                dim_in=2048,
+                dim_out=32,
+                num_stack=144
+            ),
+            FullyConnectedFixedStdNormal(
+                dim_in=32,
+                dim_out=32,
+                normal_cls=DeterministicNormal
+            )
+        ),
+        action_hat_dist_head=DiscretePolicyHead(
+            dim_in=2048,
+            action_choices_per_category=ACTION_CHOICES_PER_CATEGORY
+        ),
+        reward_hat_dist_head=FullyConnectedFixedStdNormal(
+            dim_in=2048,
+            dim_out=1,
+            squeeze_feature_dim=True
+        )
+    )
     forward_dynamics.to(device)
     forward_dynamics.load_state_dict(torch.load(forward_dynamics_parameter_file, map_location=device))
 
