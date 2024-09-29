@@ -69,7 +69,7 @@ def main(cfg: DictConfig) -> None:
 
     while True:
         handler.update()
-        action = handler.get_action()
+        action = handler.get_action().to(device)
         print(action)
         next_embedding_dist, _, _, hidden = forward_dynamics(embedding, hidden, action)
         embedding = next_embedding_dist.rsample()
