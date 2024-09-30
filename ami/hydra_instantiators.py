@@ -37,33 +37,33 @@ def instantiate_data_collectors(data_collectors_cfg: DictConfig | None) -> DataC
 
 
 def instantiate_models(models_cfg: DictConfig | None) -> ModelWrappersDict:
-    """Models (ModelWrappersDict)をインスタンス化する。
+    """Instantiate Models (ModelWrappersDict).
 
-    `model_cfg`がNoneであれば、空のModelWrappersDictを返す。
+    If `model_cfg` is None, return an empty ModelWrappersDict.
 
-    * Instantiation Versionについて
-        `_version_` を`models_cfg`に追加することでインスタンス化方法のバージョンを切り替えることができる。
-        指定がない場合はデフォルトで 1 である。
+    * About Instantiation Version:
+        You can switch the instantiation method by adding `_version_` to `models_cfg`.
+        If not specified, it defaults to 1.
 
-        * version 1の場合のconfig 構造
+        * Config structure for version 1:
             ```yaml
             <model_name>:
-              _target_: path.to.model_wrapper
-              default_device: ...
-              model:
+            _target_: path.to.model_wrapper
+            default_device: ...
+            model:
                 _target_: path.to.model.class
                 arg1: ...
             ...
             ```
 
-        * version 2 の場合の config 構造
+        * Config structure for version 2:
             ```yaml
             _version_: 2
 
             _target_: path.to.instantiation_func
             arg1: ...
             ```
-            インスタンス化関数の記述ルールに関しては `ami/models/instantiations.py`を参照
+            For rules on describing the instantiation function, refer to `ami/models/instantiations.py`
     """
     if models_cfg is None:
         logger.info("No model configs are provided.")
