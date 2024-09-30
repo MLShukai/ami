@@ -6,6 +6,16 @@
 * 関数の戻り値の型は常に `InstantiationReturnType`であること。
 
 辞書のValueに`ModelNames`を指定した場合、それがAliasキーとして機能します。
+
+---
+This file describes functions for instantiating Models.
+
+There are several rules:
+* The model to be instantiated should be described in the local scope of the function
+* The function name and config name should match
+* The return type of the function should always be `InstantiationReturnType`
+
+If you specify `ModelNames` as the value of a dictionary, it will function as an Alias key.
 """
 from typing import Any, TypeAlias
 
