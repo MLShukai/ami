@@ -8,6 +8,7 @@ from vrchat_io.controller.wrappers.osc import MultiInputWrapper
 from .base_actuator import BaseActuator
 
 ACTION_CHOICES_PER_CATEGORY = [3, 3, 3, 2, 2]
+ACTION_CHOICES_PER_CATEGORY_MASKED_JUMP_RUN = [3, 3, 3, 1, 1]  # 去年のAMIと行動設定を合わせるため。
 
 STOP_ACTION = torch.tensor(
     [
