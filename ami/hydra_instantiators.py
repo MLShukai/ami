@@ -60,7 +60,7 @@ def instantiate_models(models_cfg: DictConfig | None) -> ModelWrappersDict:
             ```yaml
             _version_: 2
 
-            _target_: ami.models.instantiations.<target>
+            _target_: path.to.instantiation_func
             arg1: ...
             ```
             インスタンス化関数の記述ルールに関しては `ami/models/instantiations.py`を参照
