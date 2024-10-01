@@ -5,6 +5,8 @@ import rootutils
 import torch
 from omegaconf import DictConfig
 from torch import Tensor
+import torchvision
+import torchvision.transforms.functional
 
 from ami.interactions.environments.actuators.vrchat_osc_discrete_actuator import (
     ACTION_CHOICES_PER_CATEGORY,
@@ -123,11 +125,10 @@ def main(cfg: DictConfig) -> None:
 
     handler = KeyboardActionHandler()
 
-    initial_observation = torch.randn(
-        cfg.models.i_jepa_target_encoder.model.in_channels,
-        *cfg.models.i_jepa_target_encoder.model.img_size,
-        device=device
-    )
+    image = torchvision.io.read_image("data/2024-09-17_04-47-37,195367.ckpt/init.png")
+    image = torchvision.transforms.functional.resize(image, 144)
+    image = torchvision.transforms.functional.crop(image, 0, image.shape[2]//2-72, 144, 144)
+    initial_observation = torch.nn.functional.layer_norm(image.float(), [3, 144, 144]).to(device)
     embedding = encoder(initial_observation).squeeze(0)
     hidden = torch.zeros(
         cfg.models.forward_dynamics.model.core_model.depth,
@@ -138,7 +139,7 @@ def main(cfg: DictConfig) -> None:
     while True:
         handler.update()
         action = handler.get_action().to(device)
-        print(action)
+        #print(action)
         next_embedding_dist, _, _, hidden = forward_dynamics(embedding, hidden, action)
         embedding = next_embedding_dist.rsample()
         reconstruction = decoder(embedding.unsqueeze(0)).squeeze(0)
