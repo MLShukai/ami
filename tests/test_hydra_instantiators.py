@@ -113,28 +113,10 @@ def test_instantiate_models():
     models = instantiate_models(cfg)
     assert ModelNames.IMAGE_DECODER in models
 
-    # Explicit versioning
-    cfg = OmegaConf.create(
-        """\
-        _version_: 1
-        image_decoder:
-          _target_: ami.models.model_wrapper.ModelWrapper
-          model:
-            _target_: ami.models.vae.Conv2dDecoder
-            height: 84
-            width: 84
-            channels: 3
-            latent_dim: 512
-        """
-    )
-    models = instantiate_models(cfg)
-    assert ModelNames.IMAGE_DECODER in models
-    assert "_version_" in cfg
-
     # Test instantiate v2
     cfg = OmegaConf.create(
         """
-        _version_: 2
+        # version 2
         _target_: tests.test_hydra_instantiators.instantiate_func_for_v2
         height: 84
         width: 84
@@ -145,14 +127,3 @@ def test_instantiate_models():
 
     models = instantiate_models(cfg)
     assert ModelNames.IMAGE_ENCODER in models
-    assert "_version_" in cfg  # not modified
-
-    # Test error with invalid version value.
-    with pytest.raises(ValueError):
-        instantiate_models(OmegaConf.create("_version_: null"))
-
-    with pytest.raises(ValueError):
-        instantiate_models(OmegaConf.create("_version_: 0"))
-
-    with pytest.raises(ValueError):
-        instantiate_models(OmegaConf.create("_version_: one"))

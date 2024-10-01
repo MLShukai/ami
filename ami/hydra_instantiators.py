@@ -41,49 +41,41 @@ def instantiate_models(models_cfg: DictConfig | None) -> ModelWrappersDict:
 
     If `model_cfg` is None, return an empty ModelWrappersDict.
 
-    * About Instantiation Version:
-        You can switch the instantiation method by adding `_version_` to `models_cfg`.
-        If not specified, it defaults to 1.
+    About Instantiation Version:
+        The instantiation version is switched by finding `_target_` in the root of `model_cfg`.
+        If `_target_` does not exist in the root, the version is estimated to be 1; otherwise, it is 2.
+        Please write the version info in your new config comment.
 
-        * Config structure for version 1:
-            ```yaml
-            <model_name>:
+    Config structure for version 1:
+        ```yaml
+        <model_name>:
             _target_: path.to.model_wrapper
             default_device: ...
             model:
                 _target_: path.to.model.class
                 arg1: ...
             ...
-            ```
+        ```
 
-        * Config structure for version 2:
-            ```yaml
-            _version_: 2
+    Config structure for version 2:
+        ```yaml
+        # version: 2
 
-            _target_: path.to.instantiation_func
-            arg1: ...
-            ```
-            For rules on describing the instantiation function, refer to `ami/models/instantiations.py`
+        _target_: path.to.instantiation_func
+        arg1: ...
+        ```
+        For rules on describing the instantiation function, refer to `ami/models/instantiations.py`
     """
     if models_cfg is None:
         logger.info("No model configs are provided.")
         return ModelWrappersDict()
 
-    version = 1
-    if "_version_" in models_cfg:
-        models_cfg = copy.copy(models_cfg)
-        with open_dict(models_cfg):
-            version = models_cfg.pop("_version_")
-
-    match version:
-        case 1:
-            logger.info("Model Instantiation Version is 1.")
-            return instantiate_models_v1(models_cfg)
-        case 2:
-            logger.info("Model Instantiation Version is 2.")
-            return instantiate_models_v2(models_cfg)
-        case _:
-            raise ValueError(f"Specified instantiation version is invalid: {version!r}")
+    if "_target_" not in models_cfg:
+        logger.info("Model Instantiation Version is 1.")
+        return instantiate_models_v1(models_cfg)
+    else:
+        logger.info("Model Instantiation Version is 2.")
+        return instantiate_models_v2(models_cfg)
 
 
 def instantiate_models_v1(models_cfg: DictConfig) -> ModelWrappersDict:

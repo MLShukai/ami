@@ -1,4 +1,4 @@
-_version_: 2 # Instantiation Method Version.
+# Instantiation Method Version 2.
 
 _target_: ami.models.instantiations.image_vae
 device: ${devices.0}
