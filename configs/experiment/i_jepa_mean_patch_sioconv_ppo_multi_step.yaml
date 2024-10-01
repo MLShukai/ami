@@ -26,6 +26,11 @@ interaction:
     log_reconstruction_imaginations: False
     log_imagination_trajectory: False
 
+    initial_hidden:
+      _args_:
+        - ${models.sioconv.depth}
+        - ${models.sioconv.dim}
+
   observation_wrappers:
     - _target_: ami.interactions.io_wrappers.function_wrapper.FunctionIOWrapper
       wrap_function:
@@ -52,6 +57,8 @@ trainers:
     max_epochs: 1
     partial_dataloader:
       batch_size: 32
+      collate_fn:
+        patch_size: ${models.patch_size}
     minimum_new_data_count: 128
 
   forward_dynamics:

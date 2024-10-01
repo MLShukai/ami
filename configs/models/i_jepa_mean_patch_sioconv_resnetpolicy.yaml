@@ -1,121 +1,35 @@
-image_encoder: i_jepa_target_encoder # Alias for ImageEncodingAgent.
+# Instantiation version 2
 
-i_jepa_target_encoder:
-  _target_: ami.models.model_wrapper.ModelWrapper
-  default_device: ${devices.0}
-  has_inference: True
-  inference_forward:
-    _target_: hydra.utils.get_method
-    path: ami.models.bool_mask_i_jepa.encoder_infer_mean_patch
-  model:
-    _target_: ami.models.bool_mask_i_jepa.BoolMaskIJEPAEncoder
-    img_size:
-      - ${shared.image_height} # Assuming 84
-      - ${shared.image_width} # Assuming 84
-    in_channels: ${shared.image_channels} # Assume 3
-    patch_size: 12
-    embed_dim: 648
-    out_dim: ${.embed_dim}
-    depth: 12
-    num_heads: 9
-    mlp_ratio: 4.0
+_target_: ami.models.instantiations.i_jepa_mean_patch_sioconv_resnetpolicy
+device: ${devices.0}
+img_size:
+  - ${shared.image_height}
+  - ${shared.image_width}
+in_channels: ${shared.image_channels}
+patch_size: 12
+action_choices_per_category:
+  _target_: hydra.utils.get_object
+  path: ami.interactions.environments.actuators.vrchat_osc_discrete_actuator.ACTION_CHOICES_PER_CATEGORY
 
-i_jepa_context_encoder:
-  _target_: ami.models.model_wrapper.ModelWrapper
-  default_device: ${devices.0}
-  has_inference: False
-  model: ${..i_jepa_target_encoder.model}
+i_jepa_encoder:
+  embed_dim: 648
+  out_dim: ${.embed_dim}
+  depth: 12
+  num_heads: 9
+  mlp_ratio: 4.0
 
 i_jepa_predictor:
-  _target_: ami.models.model_wrapper.ModelWrapper
-  default_device: ${devices.0}
-  has_inference: False
-  model:
-    _target_: ami.models.bool_mask_i_jepa.BoolTargetIJEPAPredictor
-    n_patches:
-      - ${python.eval:"${shared.image_height} // ${models.i_jepa_target_encoder.model.patch_size}"}
-      - ${python.eval:"${shared.image_width} // ${models.i_jepa_target_encoder.model.patch_size}"}
-    context_encoder_out_dim: ${models.i_jepa_target_encoder.model.out_dim}
-    hidden_dim: 324
-    depth: 12
-    num_heads: 4
+  hidden_dim: 324
+  depth: 12
+  num_heads: 4
 
-forward_dynamics:
-  _target_: ami.models.model_wrapper.ModelWrapper
-  default_device: ${devices.0}
-  has_inference: True
-  model:
-    _target_: ami.models.forward_dynamics.ForwardDynamcisWithActionReward
-    observation_flatten:
-      _target_: torch.nn.Identity
-    action_flatten:
-      _target_: ami.models.components.multi_embeddings.MultiEmbeddings
-      choices_per_category:
-        _target_: hydra.utils.get_object
-        path: ami.interactions.environments.actuators.vrchat_osc_discrete_actuator.ACTION_CHOICES_PER_CATEGORY
-      embedding_dim: 8
-      do_flatten: True
-    obs_action_projection:
-      _target_: torch.nn.Linear
-      # action_embedding_dim * num_action_choices + obs_embedding_dim
-      in_features: ${python.eval:"${..action_flatten.embedding_dim} * 5 + ${models.i_jepa_target_encoder.model.out_dim}"}
-      out_features: ${..core_model.dim}
-    core_model:
-      _target_: ami.models.components.sioconv.SioConv
-      depth: 12
-      dim: 2048
-      num_head: 8
-      dim_ff_hidden: ${python.eval:"${.dim} * 2"}
-      chunk_size: 512
-      dropout: 0.1
-    obs_hat_dist_head:
-      _target_: ami.models.components.fully_connected_fixed_std_normal.FullyConnectedFixedStdNormal
-      dim_in: ${..core_model.dim}
-      dim_out: ${models.i_jepa_target_encoder.model.out_dim}
-      normal_cls: Deterministic
-    action_hat_dist_head:
-      _target_: ami.models.components.discrete_policy_head.DiscretePolicyHead
-      dim_in: ${..core_model.dim}
-      action_choices_per_category:
-        _target_: hydra.utils.get_object
-        path: ami.interactions.environments.actuators.vrchat_osc_discrete_actuator.ACTION_CHOICES_PER_CATEGORY
-    reward_hat_dist_head:
-      _target_: ami.models.components.mixture_desity_network.NormalMixtureDensityNetwork
-      in_features: ${..core_model.dim}
-      out_features: 1
-      num_components: 8
-      squeeze_feature_dim: True
+sioconv:
+  action_embedding_dim: 8
+  depth: 12
+  dim: 2048
+  num_head: 8
 
 policy_value:
-  _target_: ami.models.model_wrapper.ModelWrapper
-  default_device: ${devices.0}
-  has_inference: True
-  model:
-    _target_: ami.models.policy_value_common_net.PolicyValueCommonNet
-    observation_projection:
-      _target_: torch.nn.Identity
-    forward_dynamics_hidden_projection:
-      _target_: ami.models.policy_value_common_net.LerpStackedHidden
-      dim: ${models.forward_dynamics.model.core_model.dim}
-      depth: ${models.forward_dynamics.model.core_model.depth}
-      num_head: ${models.forward_dynamics.model.core_model.num_head}
-    observation_hidden_projection:
-      _target_: ami.models.policy_value_common_net.ConcatFlattenedObservationAndLerpedHidden
-      dim_obs: ${models.i_jepa_target_encoder.model.out_dim}
-      dim_hidden: ${models.forward_dynamics.model.core_model.dim}
-      dim_out: 1024
-    core_model:
-      _target_: ami.models.components.resnet.ResNetFF
-      dim: ${..observation_hidden_projection.dim_out}
-      dim_hidden: 1024
-      depth: 8
-    policy_head:
-      _target_: ami.models.components.discrete_policy_head.DiscretePolicyHead
-      dim_in: ${..observation_hidden_projection.dim_out}
-      action_choices_per_category:
-        _target_: hydra.utils.get_object
-        path: ami.interactions.environments.actuators.vrchat_osc_discrete_actuator.ACTION_CHOICES_PER_CATEGORY
-    value_head:
-      _target_: ami.models.components.fully_connected_value_head.FullyConnectedValueHead
-      dim_in: ${..observation_hidden_projection.dim_out}
-      squeeze_value_dim: True
+  dim: 1024
+  dim_hidden: 1024
+  depth: 8
