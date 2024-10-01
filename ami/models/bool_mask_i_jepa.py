@@ -9,7 +9,6 @@ from torch import Tensor
 from .components.patch_embedding import PatchEmbedding
 from .components.positional_embeddings import get_2d_positional_embeddings
 from .components.vision_transformer_layer import VisionTransformerLayer
-from .i_jepa import i_jepa_encoder_infer  # Alias
 from .model_wrapper import ModelWrapper
 from .utils import size_2d, size_2d_to_int_tuple
 
@@ -291,6 +290,37 @@ def _init_weights(m: nn.Module, init_std: float) -> None:
                 nn.init.constant_(m.bias, 0)
 
 
+def i_jepa_encoder_infer(wrapper: ModelWrapper[BoolMaskIJEPAEncoder], image: torch.Tensor) -> torch.Tensor:
+    """Customizes the inference flow in the agent.
+
+    Please specify to `ModelWrapper(inference_forward=<this>)`.
+    Adding batch axis if image does not have it.
+
+    Args:
+        wrapper: ModelWrapper instance that wraps BoolMaskIJEPAEncoder.
+        image: Input for BoolMaskIJEPAEncoder.
+            shape (channel, height, width) or (batch, channel, height, width)
+
+    Returns:
+        torch.Tensor: Output of BoolMaskIJEPAEncoder.
+            shape (patch, dim) or (batch, patch, dim)
+    """
+    device = wrapper.device
+    no_batch = image.ndim == 3
+
+    if no_batch:
+        image = image.unsqueeze(0)  # batched
+
+    image = image.to(device)
+
+    out: torch.Tensor = wrapper(image)
+    out = torch.nn.functional.layer_norm(out, (out.size(-1),))
+    if no_batch:
+        out = out.squeeze(0)
+
+    return out
+
+
 def encoder_infer_mean_patch(wrapper: ModelWrapper[BoolMaskIJEPAEncoder], image: Tensor) -> Tensor:
     """Customizes the inference flow in the encoder.
 
@@ -308,17 +338,4 @@ def encoder_infer_mean_patch(wrapper: ModelWrapper[BoolMaskIJEPAEncoder], image:
             shape (dim,) or (batch, dim)
     """
 
-    device = wrapper.device
-    no_batch = image.ndim == 3
-
-    if no_batch:
-        image = image.unsqueeze(0)  # batched
-
-    image = image.to(device)
-
-    out: torch.Tensor = wrapper(image)
-    out = nn.functional.layer_norm(out, (out.size(-1),))
-    if no_batch:
-        out = out.squeeze(0)
-
-    return out.mean(-2)
+    return i_jepa_encoder_infer(wrapper, image).mean(-2)
