@@ -57,6 +57,3 @@ job_logging:
       filename: ${hydra.runtime.output_dir}/inference.log
       when: D
       formatter: simple
-
-launcher:
-  n_jobs: ${python.eval:"${os.cpu_count:} // 4"}

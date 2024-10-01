@@ -21,14 +21,36 @@ shared:
 
 interaction:
   agent:
-    max_imagination_steps: 50 # 5 sec
+    # 旧 AMI の設定と同期
+    max_imagination_steps: 1 # * 0.1 = seconds.
+    # 行動に大きなラグが発生するので無効化
+    log_reward_imaginations: False
+    log_reconstruction_imaginations: False
+    log_imagination_trajectory: False
 
   observation_wrappers:
+    - _target_: ami.interactions.io_wrappers.tensor_video_recorder.TensorVideoRecorder
+      output_dir: ${paths.io_log_dir}/video_recordings
+      width: ${shared.image_width}
+      height: ${shared.image_height}
+      frame_rate: ${python.eval:"1 / ${interaction.interval_adjustor.interval}"}
+
     - _target_: ami.interactions.io_wrappers.function_wrapper.FunctionIOWrapper
       wrap_function:
         _target_: ami.interactions.io_wrappers.function_wrapper.normalize_tensor
         _partial_: True
         eps: 1e-6
+
+  action_wrappers:
+    - _target_: ami.interactions.io_wrappers.tensor_csv_recorder.TensorCSVRecorder
+      filename: ${paths.io_log_dir}/action_log.csv
+      timestamp_header: "Timestamp"
+      headers:
+        - "MoveVertical"
+        - "MoveHorizontal"
+        - "LookHorizontal"
+        - "Jump"
+        - "Run"
 
 data_collectors:
   image:
