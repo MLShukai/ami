@@ -123,7 +123,7 @@ def i_jepa_mean_patch_sioconv_resnetpolicy(
     from .bool_mask_i_jepa import (
         BoolMaskIJEPAEncoder,
         BoolTargetIJEPAPredictor,
-        encoder_infer_mean_patch,
+        encoder_infer_mean_along_patch,
     )
     from .components.discrete_policy_head import DiscretePolicyHead
     from .components.fully_connected_fixed_std_normal import (
@@ -168,7 +168,7 @@ def i_jepa_mean_patch_sioconv_resnetpolicy(
         ModelNames.I_JEPA_TARGET_ENCODER: ModelWrapper(
             default_device=device,
             has_inference=True,
-            inference_forward=encoder_infer_mean_patch,
+            inference_forward=encoder_infer_mean_along_patch,
             model=i_jepa_encoder_model,
         ),
         ModelNames.I_JEPA_CONTEXT_ENCODER: ModelWrapper(

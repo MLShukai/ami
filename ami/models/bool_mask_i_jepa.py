@@ -321,7 +321,7 @@ def i_jepa_encoder_infer(wrapper: ModelWrapper[BoolMaskIJEPAEncoder], image: tor
     return out
 
 
-def encoder_infer_mean_patch(wrapper: ModelWrapper[BoolMaskIJEPAEncoder], image: Tensor) -> Tensor:
+def encoder_infer_mean_along_patch(wrapper: ModelWrapper[BoolMaskIJEPAEncoder], image: Tensor) -> Tensor:
     """Customizes the inference flow in the encoder.
 
     Please specify to `ModelWrapper(inference_forward=<this>)`.

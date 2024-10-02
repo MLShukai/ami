@@ -5,7 +5,7 @@ from ami.models.bool_mask_i_jepa import (
     BoolMaskIJEPAEncoder,
     BoolTargetIJEPAPredictor,
     ModelWrapper,
-    encoder_infer_mean_patch,
+    encoder_infer_mean_along_patch,
     i_jepa_encoder_infer,
 )
 
@@ -160,7 +160,7 @@ def test_encoder_infer_mean_patch(device):
         ),
         device,
         has_inference=True,
-        inference_forward=encoder_infer_mean_patch,
+        inference_forward=encoder_infer_mean_along_patch,
     )
     wrapper.to_default_device()
 
