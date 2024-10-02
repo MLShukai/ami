@@ -1,12 +1,11 @@
+# Parameter: https://drive.google.com/file/d/1saWq1fAbyA_BCZryUiWgPixJ6JCssLy0/view?usp=sharing
 import cv2
-import hydra
 import keyboard
 import rootutils
 import torch
-from omegaconf import DictConfig
-from torch import Tensor
 import torchvision
 import torchvision.transforms.functional
+from torch import Tensor
 
 from ami.interactions.environments.actuators.vrchat_osc_discrete_actuator import (
     ACTION_CHOICES_PER_CATEGORY,
@@ -64,10 +63,7 @@ class KeyboardActionHandler:
         )
 
 
-@hydra.main(
-    config_path="../data/2024-09-17_04-47-37,195367.ckpt", config_name="launch-configuration.yaml", version_base="1.3"
-)
-def main(cfg: DictConfig) -> None:
+def main() -> None:
     PROJECT_ROOT = rootutils.setup_root(__file__, indicator=".project-root", pythonpath=True)
 
     device = torch.device("cpu")
@@ -127,19 +123,15 @@ def main(cfg: DictConfig) -> None:
 
     image = torchvision.io.read_image("data/2024-09-17_04-47-37,195367.ckpt/init.png")
     image = torchvision.transforms.functional.resize(image, 144)
-    image = torchvision.transforms.functional.crop(image, 0, image.shape[2]//2-72, 144, 144)
+    image = torchvision.transforms.functional.crop(image, 0, image.shape[2] // 2 - 72, 144, 144)
     initial_observation = torch.nn.functional.layer_norm(image.float(), [3, 144, 144]).to(device)
     embedding = encoder(initial_observation).squeeze(0)
-    hidden = torch.zeros(
-        cfg.models.forward_dynamics.model.core_model.depth,
-        cfg.models.forward_dynamics.model.core_model.dim,
-        device=device,
-    )
+    hidden = torch.zeros(12, 2048, device=device)
 
     while True:
         handler.update()
         action = handler.get_action().to(device)
-        #print(action)
+        # print(action)
         next_embedding_dist, _, _, hidden = forward_dynamics(embedding, hidden, action)
         embedding = next_embedding_dist.rsample()
         reconstruction = decoder(embedding.unsqueeze(0)).squeeze(0)
