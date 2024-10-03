@@ -10,7 +10,7 @@ patch_size: 12
 
 i_jepa_encoder:
   embed_dim: 648
-  out_dim: ${.embed_dim}
+  out_dim: 512
   depth: 12
   num_heads: 9
   mlp_ratio: 4.0

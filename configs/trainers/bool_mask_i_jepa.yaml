@@ -56,7 +56,24 @@ i_jepa_latent_visualization_target:
     shuffle: true
     drop_last: true
 
-  validation_dataloader: ${trainers.i_jepa_latent_visualization_context.validation_dataloader}
+  validation_dataloader:
+    _target_: torch.utils.data.DataLoader
+    batch_size: 128
+    shuffle: false
+    drop_last: false
+    dataset:
+      _target_: ami.trainers.components.vision.IntervalSamplingImageDataset
+      image_dir: ${paths.data_dir}/random_observation_action_log/validation
+      num_sample: 512
+      pre_loading: true
+      transform:
+        _target_: torchvision.transforms.v2.Compose
+        transforms:
+          - _target_: torchvision.transforms.v2.Resize
+            size:
+              - ${shared.image_height}
+              - ${shared.image_width}
+          - _target_: ami.trainers.components.vision.Standardization
 
   partial_optimizer:
     _target_: torch.optim.AdamW

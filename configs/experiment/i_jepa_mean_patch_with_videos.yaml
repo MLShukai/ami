@@ -41,5 +41,6 @@ trainers:
       collate_fn:
         patch_size: ${models.patch_size}
     minimum_new_data_count: 128
+  i_jepa_latent_visualization_context: null # 学習時間が長くなるので無視
 
 task_name: i_jepa_mean_patch_with_videos
