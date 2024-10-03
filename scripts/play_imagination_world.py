@@ -1,4 +1,8 @@
 # Parameter: https://drive.google.com/file/d/1saWq1fAbyA_BCZryUiWgPixJ6JCssLy0/view?usp=sharing
+# In Linux, run `PYTHON=($which python3) && $PYTHON scripts/play_imagination_world.py``
+
+import time
+
 import cv2
 import keyboard
 import rootutils
@@ -63,6 +67,7 @@ class KeyboardActionHandler:
         )
 
 
+@torch.inference_mode()
 def main() -> None:
     PROJECT_ROOT = rootutils.setup_root(__file__, indicator=".project-root", pythonpath=True)
 
@@ -121,7 +126,7 @@ def main() -> None:
 
     handler = KeyboardActionHandler()
 
-    image = torchvision.io.read_image("data/2024-09-17_04-47-37,195367.ckpt/init.png")
+    image = torchvision.io.read_image("data/2024-09-17_04-47-37,195367.ckpt/init.png")[:3]  # ignore Alpha channel.
     image = torchvision.transforms.functional.resize(image, 144)
     image = torchvision.transforms.functional.crop(image, 0, image.shape[2] // 2 - 72, 144, 144)
     initial_observation = torch.nn.functional.layer_norm(image.float(), [3, 144, 144]).to(device)
@@ -142,6 +147,7 @@ def main() -> None:
         reconstruction[torch.tensor([0, 1, 2])] = reconstruction[torch.tensor([2, 1, 0])]
         cv2.imshow("imagination world", reconstruction.permute(1, 2, 0).to("cpu").detach().numpy())
         cv2.waitKey(1)
+        time.sleep(0.1)
 
 
 if __name__ == "__main__":
