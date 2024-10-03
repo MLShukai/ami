@@ -1,0 +1,45 @@
+# @package _global_
+
+defaults:
+  - override /models: i_jepa_mean_patch
+  - override /trainers: bool_mask_i_jepa
+  - override /shared: default
+  - override /interaction/environment: video_folders
+  - override /interaction/agent: image_collecting
+shared:
+  image_width: 144
+  image_height: 144
+
+interaction:
+  environment:
+    observation_generator:
+      folder_frame_limits: ${python.eval:"int(10 * ${cvt_time_str:4h})"} # 10FPS, 4時間分. 6本の動画で24時間分
+      folder_paths:
+        - ${paths.data_dir}/random_observation_action_log/2024-08-26_12-55-45/io/video_recordings
+        - ${paths.data_dir}/random_observation_action_log/2024-08-26_13-00-14/io/video_recordings
+        - ${paths.data_dir}/random_observation_action_log/2024-08-26_13-04-15/io/video_recordings
+        - ${paths.data_dir}/random_observation_action_log/2024-08-26_13-08-31/io/video_recordings
+        - ${paths.data_dir}/random_observation_action_log/2024-08-27_09-28-27/io/video_recordings
+        - ${paths.data_dir}/random_observation_action_log/2024-08-27_09-31-50/io/video_recordings
+
+  observation_wrappers:
+    - _target_: ami.interactions.io_wrappers.function_wrapper.FunctionIOWrapper
+      wrap_function:
+        _target_: ami.interactions.io_wrappers.function_wrapper.normalize_tensor
+        _partial_: True
+        eps: 1e-6
+
+data_collectors:
+  image:
+    max_len: ${python.eval:"32 * ${trainers.i_jepa.partial_dataloader.batch_size}"}
+
+trainers:
+  i_jepa:
+    max_epochs: 1
+    partial_dataloader:
+      batch_size: 32
+      collate_fn:
+        patch_size: ${models.patch_size}
+    minimum_new_data_count: 128
+
+task_name: i_jepa_mean_patch_with_videos
