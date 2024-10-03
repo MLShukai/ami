@@ -351,6 +351,7 @@ def i_jepa_mean_patch(
         ),
         ModelNames.I_JEPA_CONTEXT_ENCODER: ModelWrapper(
             default_device=device,
+            inference_forward=encoder_infer_mean_along_patch,
             has_inference=False,
             model=copy.deepcopy(i_jepa_encoder_model),
         ),
