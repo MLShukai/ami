@@ -1,6 +1,10 @@
 from typing import Any, Callable, get_type_hints
 
-from ami.models.instantiations import InstantiationReturnType, image_vae
+from ami.models.instantiations import (
+    InstantiationReturnType,
+    i_jepa_mean_patch_sioconv_resnetpolicy,
+    image_vae,
+)
 from ami.models.model_names import ModelNames
 from ami.models.model_wrapper import ModelWrapper
 
@@ -28,3 +32,8 @@ def assert_return_type(return_value: InstantiationReturnType | Any) -> None:
 def test_image_vae():
     assert_return_type_annotation(image_vae)
     assert_return_type(image_vae())
+
+
+def test_i_jepa_mean_patch_sioconv_resnetpolicy():
+    assert_return_type_annotation(i_jepa_mean_patch_sioconv_resnetpolicy)
+    assert_return_type(i_jepa_mean_patch_sioconv_resnetpolicy())

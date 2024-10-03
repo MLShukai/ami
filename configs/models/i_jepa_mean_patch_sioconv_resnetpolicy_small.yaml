@@ -1,0 +1,24 @@
+# Instantiation version 2
+
+defaults:
+  - i_jepa_mean_patch_sioconv_resnetpolicy
+
+i_jepa_encoder:
+  embed_dim: 216
+  depth: 6
+  num_heads: 3
+
+i_jepa_predictor:
+  hidden_dim: 108
+  depth: 6
+  num_heads: 2
+
+sioconv:
+  depth: 6
+  dim: 1024
+  num_head: 4
+
+policy_value:
+  dim: 512
+  dim_hidden: 512
+  depth: 4

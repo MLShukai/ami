@@ -1,0 +1,77 @@
+# @package _global_
+
+# 制約条件
+# - VRAM 24GB
+# - 1度のTraining Timeの合計時間が 12.8秒以下
+# - 10 FPSで推論動作
+
+# モデルサイズ Largeは、 RTX 4090を最大限使用する設定です。
+# Medium, Smallはそれぞれ、 1/2, 1/4使用する設定です。
+
+defaults:
+  - override /interaction: vrchat_with_curiosity_image_ppo_agent
+  - override /interaction/agent: curiosity_image_multi_step_imagination
+  - override /models: i_jepa_mean_patch_sioconv_resnetpolicy
+  - override /data_collectors: image_dynamics_ppo
+  - override /trainers: i_jepa_forward_dynamics_ppo
+
+shared:
+  image_height: 144
+  image_width: 144
+
+interaction:
+  agent:
+    max_imagination_steps: 1 # 0.1 sec
+    log_reward_imaginations: False
+    log_reconstruction_imaginations: False
+    log_imagination_trajectory: False
+
+    initial_hidden:
+      _args_:
+        - ${models.sioconv.depth}
+        - ${models.sioconv.dim}
+
+  observation_wrappers:
+    - _target_: ami.interactions.io_wrappers.function_wrapper.FunctionIOWrapper
+      wrap_function:
+        _target_: ami.interactions.io_wrappers.function_wrapper.normalize_tensor
+        _partial_: True
+        eps: 1e-6
+
+data_collectors:
+  image:
+    max_len: ${python.eval:"32 * ${trainers.i_jepa.partial_dataloader.batch_size}"}
+  forward_dynamics_trajectory:
+    max_len: 1000 # 100 sec
+    key_list:
+      - "embed_observation" # embed observationを直接使う
+      - "hidden"
+      - "action"
+      - "reward"
+  ppo_trajectory:
+    max_len: ${python.eval:"128 + 1"} # +1 to retrieve final next value function output.
+    use_embed_obs_as_observation: True
+
+trainers:
+  i_jepa:
+    max_epochs: 1
+    partial_dataloader:
+      batch_size: 32
+      collate_fn:
+        patch_size: ${models.patch_size}
+    minimum_new_data_count: 128
+
+  forward_dynamics:
+    observation_encoder_name: # embed observationを直接使う
+    max_epochs: 1
+    partial_sampler:
+      sequence_length: ${python.eval:"256 + 1"} # +1 to generate future target data.
+      max_samples: 64 # Iteraction count.
+    minimum_new_data_count: 128
+  ppo:
+    partial_dataloader:
+      batch_size: 8
+    max_epochs: 3
+    # 16 (= buffer size / batch size) * epochs = 48 iteration.
+
+task_name: i_jepa_mean_patch_sioconv_ppo_multi_step

@@ -4,6 +4,8 @@ import torch
 from ami.models.bool_mask_i_jepa import (
     BoolMaskIJEPAEncoder,
     BoolTargetIJEPAPredictor,
+    ModelWrapper,
+    encoder_infer_mean_along_patch,
     i_jepa_encoder_infer,
 )
 
@@ -130,3 +132,41 @@ class TestBoolTargetIJEPAPredictor:
         assert predictions.size(0) == batch_size, "batch_size mismatch"
         assert predictions.size(1) == n_patches, "num of patch mismatch"
         assert predictions.size(2) == context_encoder_out_dim, "out_dim mismatch"
+
+
+def test_i_jepa_encoder_infer(device):
+    wrapper = ModelWrapper(
+        BoolMaskIJEPAEncoder(
+            img_size=128, patch_size=16, in_channels=3, embed_dim=64, out_dim=64, depth=4, num_heads=2
+        ),
+        device,
+        has_inference=True,
+        inference_forward=i_jepa_encoder_infer,
+    )
+    wrapper.to_default_device()
+
+    out: torch.Tensor = wrapper.infer(torch.randn(3, 128, 128))
+    assert out.shape == ((128 // 16) ** 2, 64)
+    assert out.device == device
+
+    out: torch.Tensor = wrapper.infer(torch.randn(8, 3, 128, 128))
+    assert out.shape == (8, (128 // 16) ** 2, 64)
+
+
+def test_encoder_infer_mean_patch(device):
+    wrapper = ModelWrapper(
+        BoolMaskIJEPAEncoder(
+            img_size=128, patch_size=16, in_channels=3, embed_dim=64, out_dim=64, depth=4, num_heads=2
+        ),
+        device,
+        has_inference=True,
+        inference_forward=encoder_infer_mean_along_patch,
+    )
+    wrapper.to_default_device()
+
+    out: torch.Tensor = wrapper.infer(torch.randn(3, 128, 128))
+    assert out.shape == (64,)
+    assert out.device == device
+
+    out: torch.Tensor = wrapper.infer(torch.randn(8, 3, 128, 128))
+    assert out.shape == (8, 64)
