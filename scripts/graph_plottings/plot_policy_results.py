@@ -61,7 +61,9 @@ def calculate_ema(data: pd.Series, span: int = 20) -> pd.Series:
     return data.ewm(span=span, adjust=False).mean()
 
 
-def plot_metric(base_path: Path, metric: str, title: str, y_lims: tuple[float, float], ema_span: int = 20) -> None:
+def plot_metric(
+    base_path: Path, metric: str, title: str, ylabel: str, y_lims: tuple[float, float], ema_span: int = 20
+) -> None:
     plt.figure(figsize=FIG_SIZE)
 
     for world_type in WORLD_TYPES:
@@ -86,6 +88,7 @@ def plot_metric(base_path: Path, metric: str, title: str, y_lims: tuple[float, f
 
     plt.title(f"{title}", fontsize=18)
     plt.xlabel("経過時間（秒）")
+    plt.ylabel(ylabel)
     plt.ylim(y_lims)
     plt.xlim(0, MAX_UPTIME)
     plt.legend(loc="upper right")
@@ -97,9 +100,9 @@ def main() -> None:
     base_path = PROJECT_ROOT / "data/policy_tensorboard_logs"
     ema_span = 10
 
-    plot_metric(base_path, "rewards", "Agentの報酬", y_lims=(0.0, 5.0), ema_span=ema_span)
-    plot_metric(base_path, "fd_losses", "Forward Dynamicsの損失", y_lims=(0.0, 1.0), ema_span=ema_span)
-    plot_metric(base_path, "policy_entropies", "Policyの行動エントロピー", y_lims=(0.0, 0.7), ema_span=ema_span)
+    plot_metric(base_path, "rewards", "Agentの報酬", "報酬", y_lims=(0.0, 5.0), ema_span=ema_span)
+    plot_metric(base_path, "fd_losses", "Forward Dynamicsの損失", "損失", y_lims=(0.0, 1.0), ema_span=ema_span)
+    plot_metric(base_path, "policy_entropies", "Policyの行動エントロピー", "エントロピー", y_lims=(0.0, 0.7), ema_span=ema_span)
 
 
 if __name__ == "__main__":
