@@ -114,7 +114,7 @@ def main() -> None:
     base_path = PROJECT_ROOT / "data/sioconv_tensorboard_logs"
     ema_span = 10
 
-    plot_metric(base_path, "SioConvの観測損失", "損失", y_lims=(0.0, 2.5), ema_span=ema_span)
+    plot_metric(base_path, "SioConvの損失", "損失", y_lims=(0.0, 2.5), ema_span=ema_span)
 
 
 if __name__ == "__main__":
