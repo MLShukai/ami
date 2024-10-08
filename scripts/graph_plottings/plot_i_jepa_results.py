@@ -24,7 +24,7 @@ PROJECT_ROOT = rootutils.setup_root(__file__, indicator=".project-root", pythonp
 
 MODEL_SIZES = ["small", "large"]
 FIG_SIZE = (6, 6)
-MAX_UPTIME = 24 * 60 * 60  # 最大経過時間（秒）
+MAX_UPTIME = 24  # 最大経過時間（時間）
 
 COLORS = {
     "small": "#008000",  # green
@@ -83,7 +83,7 @@ def plot_metric(base_path: Path, title: str, y_label: str, y_lims: tuple[float, 
         plt.plot(x, ema, color=color, label=f"{SIZE_NAMES[size]}", linewidth=2, alpha=0.8)
 
     plt.title(f"{title}", fontsize=18)
-    plt.xlabel("経過時間（秒）")
+    plt.xlabel("経過時間（時間）")
     plt.ylabel(y_label)
     plt.ylim(y_lims)
     plt.xlim(0, MAX_UPTIME)
