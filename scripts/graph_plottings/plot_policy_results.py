@@ -62,12 +62,12 @@ def plot_metric(base_path: Path, metric: str, title: str, y_lims: tuple[float, f
             df = process_data(dfs)
             color = COLORS[world_type][size]
 
-            # 元のデータをプロット（薄い色で）
+            # 元のデータをプロット
             x = np.linspace(0, MAX_UPTIME, len(df["Step"]))
             plt.plot(x, df["Mean"], color=color, alpha=0.1, linewidth=1)
             plt.fill_between(x, df["Mean"] - df["Std"], df["Mean"] + df["Std"], color=color, alpha=0.05)
 
-            # EMAを計算してプロット（濃い色で）
+            # EMAを計算してプロット
             ema = calculate_ema(df["Mean"], span=ema_span)
             plt.plot(x, ema, color=color, label=f"{WORLD_NAMES[world_type]}，{SIZE_NAMES[size]}", linewidth=2, alpha=0.8)
 
