@@ -13,7 +13,6 @@ MODEL_SIZES = ["small", "large"]
 FIG_SIZE = (6, 6)
 MAX_UPTIME = 18000
 
-# 色の定義
 COLORS = {
     "SimpleWorld": {
         "small": "#008000",  # green
@@ -26,7 +25,6 @@ COLORS = {
 }
 
 WORLD_NAMES = {"SimpleWorld": "シンプルなワールド", "NoisyWorld2023": "ノイズ付きワールド"}
-
 SIZE_NAMES = {"small": "スモールモデル", "large": "ラージモデル"}
 
 
@@ -36,12 +34,27 @@ def read_csv_files(base_path: Path, world_type: str, size: str, metric: str) -> 
 
 
 def process_data(dfs: list[pd.DataFrame]) -> pd.DataFrame:
-    sorted_dfs = [df.sort_values("Step") for df in dfs]
-    combined = pd.concat([df[["Step", "Value"]] for df in sorted_dfs], axis=0)
-    grouped = combined.groupby("Step")
-    mean = grouped["Value"].mean()
-    std = grouped["Value"].std()
-    return pd.DataFrame({"Mean": mean, "Std": std}).reset_index()
+    # 全てのDataFrameから 'Value', 'Step' 列を抽出
+    values = [df["Value"].values for df in dfs]
+    steps = [df["Step"].values for df in dfs]
+
+    # 最小の長さに合わせて切り詰める
+    min_length = min(len(v) for v in values)
+    values = [v[:min_length] for v in values]
+    steps = [s[:min_length] for s in steps]
+
+    # NumPyの配列に変換
+    values_array = np.array(values)
+    steps_array = np.array(steps)
+
+    # 行ごとの平均と標準偏差を計算
+    mean = np.mean(values_array, axis=0)
+    std = np.std(values_array, axis=0)
+    steps_array = np.mean(steps_array, axis=0)
+
+    # 最初のDataFrameからStepを取得（全てのファイルで同じと仮定）
+
+    return pd.DataFrame({"Step": steps_array, "Mean": mean, "Std": std})
 
 
 def calculate_ema(data: pd.Series, span: int = 20) -> pd.Series:
@@ -82,8 +95,6 @@ def plot_metric(base_path: Path, metric: str, title: str, y_lims: tuple[float, f
 
 def main() -> None:
     base_path = PROJECT_ROOT / "data/policy_tensorboard_logs"
-
-    # EMAのスパンオプション
     ema_span = 10
 
     plot_metric(base_path, "rewards", "Agentの報酬", y_lims=(0.0, 5.0), ema_span=ema_span)
