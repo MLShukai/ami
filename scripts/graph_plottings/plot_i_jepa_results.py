@@ -1,3 +1,17 @@
+"""Expected log structure.
+
+i_jepa_tensorboard_logs
+├── large
+│   └── target_validation_reconstruction
+│       ├── multiruns_2024-09-17_11-59-58_0_tensorboard_i_jepa_latent_visualization_target.csv
+│       ├── multiruns_2024-09-17_11-59-58_1_tensorboard_i_jepa_latent_visualization_target.csv
+│       └── ... .csv
+└── small
+    └── target_validation_reconstruction
+        ├── multiruns_2024-09-13_16-33-46_0_tensorboard_i_jepa_latent_visualization_target.csv
+        ├── multiruns_2024-09-13_16-33-46_1_tensorboard_i_jepa_latent_visualization_target.csv
+        └── ... .csv
+"""
 from pathlib import Path
 
 import japanize_matplotlib  # pip install japanize-matplotlib

@@ -1,3 +1,37 @@
+"""Expected log structure.
+
+policy_tensorboard_logs
+├── NoisyWorld2023
+│   ├── large
+│   │   ├── fd_losses
+│   │   │   └── *.csv
+│   │   ├── policy_entropies
+│   │   │   └── *.csv
+│   │   └── rewards
+│   │       └── *.csv
+│   └── small
+│       ├── fd_losses
+│       │   └── *.csv
+│       ├── policy_entropies
+│       │   └── *.csv
+│       └── rewards
+│           └── *.csv
+└── SimpleWorld
+    ├── large
+    │   ├── fd_losses
+    │   │   └── *.csv
+    │   ├── policy_entropies
+    │   │   └── *.csv
+    │   └── rewards
+    │       └── *.csv
+    └── small
+        ├── fd_losses
+        │   └── *.csv
+        ├── policy_entropies
+        │   └── *.csv
+        └── rewards
+            └── *.csv
+"""
 from pathlib import Path
 
 import japanize_matplotlib  # pip install japanize-matplotlib
