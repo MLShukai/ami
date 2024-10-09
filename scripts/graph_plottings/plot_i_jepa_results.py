@@ -23,7 +23,7 @@ import rootutils
 PROJECT_ROOT = rootutils.setup_root(__file__, indicator=".project-root", pythonpath=True)
 
 MODEL_SIZES = ["small", "large"]
-FIG_SIZE = (6, 6)
+FIG_SIZE = (4, 4)
 MAX_UPTIME = 24  # 最大経過時間（時間）
 
 COLORS = {
@@ -83,13 +83,14 @@ def plot_metric(base_path: Path, title: str, y_label: str, y_lims: tuple[float, 
         plt.plot(x, ema, color=color, label=f"{SIZE_NAMES[size]}", linewidth=2, alpha=0.8)
 
     plt.title(f"{title}", fontsize=18)
-    plt.xlabel("経過時間（時間）")
-    plt.ylabel(y_label)
+    plt.xlabel("経過時間（時間）", fontsize=16)
+    plt.ylabel(y_label, fontsize=16)
     plt.ylim(y_lims)
     plt.xlim(0, MAX_UPTIME)
     plt.legend(loc="upper right")
     plt.grid(True)
-    plt.savefig(base_path / f"{title}.png")
+    plt.tight_layout(pad=0.1)
+    plt.savefig(base_path / f"{title}.svg")
 
 
 def main() -> None:
