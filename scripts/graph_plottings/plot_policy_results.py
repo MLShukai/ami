@@ -44,8 +44,8 @@ PROJECT_ROOT = rootutils.setup_root(__file__, indicator=".project-root", pythonp
 
 WORLD_TYPES = ["SimpleWorld", "NoisyWorld2023"]
 MODEL_SIZES = ["small", "large"]
-FIG_SIZE = (6, 6)
-MAX_UPTIME = 18000
+FIG_SIZE = (4, 4)
+MAX_UPTIME = 5 # 5時間
 
 COLORS = {
     "SimpleWorld": {
@@ -121,13 +121,14 @@ def plot_metric(
             plt.plot(x, ema, color=color, label=f"{WORLD_NAMES[world_type]}，{SIZE_NAMES[size]}", linewidth=2, alpha=0.8)
 
     plt.title(f"{title}", fontsize=18)
-    plt.xlabel("経過時間（秒）")
-    plt.ylabel(ylabel)
+    plt.xlabel("経過時間（時間）", fontsize=16)
+    plt.ylabel(ylabel, fontsize=16)
     plt.ylim(y_lims)
     plt.xlim(0, MAX_UPTIME)
     plt.legend(loc="upper right")
     plt.grid(True)
-    plt.savefig(base_path / f"{title}.png")
+    plt.tight_layout(pad=0.1)
+    plt.savefig(base_path / f"{title}.svg")
 
 
 def main() -> None:
