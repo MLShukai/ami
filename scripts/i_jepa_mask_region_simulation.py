@@ -54,13 +54,13 @@ def main() -> None:
     encoder_mask_tensor = torch.tensor(encoder_mask_ratios)
     predictor_target_tensor = torch.tensor(predictor_target_ratios)
 
-    print(f"\nEncoder mask statistics:")
+    print("\nEncoder mask statistics:")
     print(f"Min: {encoder_mask_tensor.min().item():.4f}")
     print(f"Max: {encoder_mask_tensor.max().item():.4f}")
     print(f"Median: {encoder_mask_tensor.median().item():.4f}")
     print(f"Std Dev: {encoder_mask_tensor.std().item():.4f}")
 
-    print(f"\nPredictor target statistics:")
+    print("\nPredictor target statistics:")
     print(f"Min: {predictor_target_tensor.min().item():.4f}")
     print(f"Max: {predictor_target_tensor.max().item():.4f}")
     print(f"Median: {predictor_target_tensor.median().item():.4f}")
