@@ -45,7 +45,7 @@ PROJECT_ROOT = rootutils.setup_root(__file__, indicator=".project-root", pythonp
 WORLD_TYPES = ["SimpleWorld", "NoisyWorld2023"]
 MODEL_SIZES = ["small", "large"]
 FIG_SIZE = (4, 4)
-MAX_UPTIME = 5 # 5時間
+MAX_UPTIME = 5  # 5時間
 
 COLORS = {
     "SimpleWorld": {
