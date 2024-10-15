@@ -136,7 +136,7 @@ def main() -> None:
     ema_span = 10
 
     plot_metric(base_path, "rewards", "Agentの報酬", "報酬", y_lims=(0.0, 5.0), ema_span=ema_span)
-    plot_metric(base_path, "fd_losses", "Forward Dynamicsの損失", "損失", y_lims=(0.0, 1.0), ema_span=ema_span)
+    plot_metric(base_path, "fd_losses", "Forward Dynamicsの損失", "損失", y_lims=(0.0, 0.5), ema_span=ema_span)
     plot_metric(base_path, "policy_entropies", "Policyの行動エントロピー", "エントロピー", y_lims=(0.0, 0.7), ema_span=ema_span)
 
 
