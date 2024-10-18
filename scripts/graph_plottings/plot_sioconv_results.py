@@ -44,7 +44,7 @@ COLORS = {
 MODEL_NAMES = {
     "large": "ラージモデル",
     "small": "スモールモデル",
-    "permutation": "系列破壊（ラージモデル）",
+    "permutation": "時系列ランダム（ラージモデル）",
     "with_ijepa": "I-JEPAと同時学習（ラージモデル）",
 }
 
