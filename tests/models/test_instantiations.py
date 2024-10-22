@@ -2,6 +2,7 @@ from typing import Any, Callable, get_type_hints
 
 from ami.models.instantiations import (
     InstantiationReturnType,
+    i_jepa_mean_patch,
     i_jepa_mean_patch_sioconv_resnetpolicy,
     image_vae,
 )
@@ -37,3 +38,8 @@ def test_image_vae():
 def test_i_jepa_mean_patch_sioconv_resnetpolicy():
     assert_return_type_annotation(i_jepa_mean_patch_sioconv_resnetpolicy)
     assert_return_type(i_jepa_mean_patch_sioconv_resnetpolicy())
+
+
+def test_i_jepa_mean_patch():
+    assert_return_type_annotation(i_jepa_mean_patch)
+    assert_return_type(i_jepa_mean_patch())

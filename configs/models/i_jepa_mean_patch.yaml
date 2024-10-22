@@ -1,0 +1,30 @@
+# Instantiation version 2
+
+_target_: ami.models.instantiations.i_jepa_mean_patch
+device: ${devices.0}
+img_size:
+  - ${shared.image_height}
+  - ${shared.image_width}
+in_channels: ${shared.image_channels}
+patch_size: 12
+
+i_jepa_encoder:
+  embed_dim: 648
+  out_dim: 512
+  depth: 12
+  num_heads: 9
+  mlp_ratio: 4.0
+
+i_jepa_predictor:
+  hidden_dim: 324
+  depth: 12
+  num_heads: 4
+
+i_jepa_decoder:
+  decoder_blocks_in_and_out_channels:
+    - [512, 512]
+    - [512, 256]
+    - [256, 128]
+    - [128, 64]
+  n_res_blocks: 3
+  num_heads: 4

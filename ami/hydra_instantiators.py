@@ -133,6 +133,9 @@ def instantiate_trainers(trainers_cfg: DictConfig | None) -> TrainersList:
         return tl
 
     for i, (name, cfg) in enumerate(trainers_cfg.items()):
+        if cfg is None:
+            logger.info(f"Trainer[{i}] {name!r} is null. passing...")
+            continue
         logger.info(f"Instatiating Trainer[{i}] {name!r}: <{cfg._target_}>")
         trainer: BaseTrainer = hydra.utils.instantiate(cfg)
         trainer.name = str(name)

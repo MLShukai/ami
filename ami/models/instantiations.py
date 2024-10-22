@@ -253,3 +253,127 @@ def i_jepa_mean_patch_sioconv_resnetpolicy(
             ),
         ),
     }
+
+
+def i_jepa_mean_patch(
+    device: torch.device = CPU_DEVICE,
+    img_size: size_2d = (144, 144),  # (height, width)
+    in_channels: int = 3,
+    patch_size: size_2d = (12, 12),  # (height, width)
+    i_jepa_encoder: dict[str, Any] = {},
+    i_jepa_predictor: dict[str, Any] = {},
+    i_jepa_decoder: dict[str, Any] = {},
+) -> InstantiationReturnType:
+
+    # Defining nested dict config.
+    @dataclass
+    class IJEPAEncoderConfig:
+        embed_dim: int = 216
+        out_dim: int = 216
+        depth: int = 6
+        num_heads: int = 3
+        mlp_ratio: float = 4.0
+
+    @dataclass
+    class IJEPAPredictorConfig:
+        hidden_dim: int = 108
+        depth: int = 6
+        num_heads: int = 2
+
+    @dataclass
+    class IJEPADecoderConfig:
+        decoder_blocks_in_and_out_channels: list[tuple[int, int]] | None = None
+        n_res_blocks: int = 3
+        num_heads: int = 4
+        num_norm_groups: int = 8
+
+    default_decoder_blocks_in_and_out_channels = [
+        (512, 512),
+        (512, 256),
+        (256, 128),
+        (128, 64),
+    ]
+
+    i_jepa_encoder_cfg = IJEPAEncoderConfig(**i_jepa_encoder)
+    i_jepa_predictor_cfg = IJEPAPredictorConfig(**i_jepa_predictor)
+    i_jepa_decoder_cfg = IJEPADecoderConfig(**i_jepa_decoder)
+
+    if i_jepa_decoder_cfg.decoder_blocks_in_and_out_channels is None:
+        i_jepa_decoder_cfg.decoder_blocks_in_and_out_channels = default_decoder_blocks_in_and_out_channels
+
+    # import dependencies
+
+    from .bool_mask_i_jepa import (
+        BoolMaskIJEPAEncoder,
+        BoolTargetIJEPAPredictor,
+        encoder_infer_mean_along_patch,
+    )
+    from .i_jepa_latent_visualization_decoder import (
+        IJEPAMeanLatentAlongPatchVisualizationDecoder,
+    )
+
+    img_size = size_2d_to_int_tuple(img_size)
+    patch_size = size_2d_to_int_tuple(patch_size)
+
+    n_patch_vertical, r = divmod(img_size[0], patch_size[0])
+    assert r == 0
+    n_patch_horizontal, r = divmod(img_size[1], patch_size[1])
+    assert r == 0
+    n_patches = (n_patch_vertical, n_patch_horizontal)
+
+    i_jepa_encoder_model = BoolMaskIJEPAEncoder(
+        img_size=img_size,
+        patch_size=patch_size,
+        in_channels=in_channels,
+        embed_dim=i_jepa_encoder_cfg.embed_dim,
+        out_dim=i_jepa_encoder_cfg.out_dim,
+        depth=i_jepa_encoder_cfg.depth,
+        num_heads=i_jepa_encoder_cfg.num_heads,
+        mlp_ratio=i_jepa_encoder_cfg.mlp_ratio,
+    )
+
+    i_jepa_decoder_model = IJEPAMeanLatentAlongPatchVisualizationDecoder(
+        n_patches,
+        i_jepa_encoder_cfg.out_dim,
+        decoder_blocks_in_and_out_channels=i_jepa_decoder_cfg.decoder_blocks_in_and_out_channels,
+        n_res_blocks=i_jepa_decoder_cfg.n_res_blocks,
+        num_heads=i_jepa_decoder_cfg.num_heads,
+        num_norm_groups=i_jepa_decoder_cfg.num_norm_groups,
+    )
+
+    return {
+        ModelNames.IMAGE_ENCODER: ModelNames.I_JEPA_TARGET_ENCODER,  # Alias for agent.
+        ModelNames.I_JEPA_TARGET_ENCODER: ModelWrapper(
+            default_device=device,
+            has_inference=True,
+            inference_forward=encoder_infer_mean_along_patch,
+            model=i_jepa_encoder_model,
+        ),
+        ModelNames.I_JEPA_CONTEXT_ENCODER: ModelWrapper(
+            default_device=device,
+            inference_forward=encoder_infer_mean_along_patch,
+            has_inference=False,
+            model=copy.deepcopy(i_jepa_encoder_model),
+        ),
+        ModelNames.I_JEPA_PREDICTOR: ModelWrapper(
+            default_device=device,
+            has_inference=False,
+            model=BoolTargetIJEPAPredictor(
+                n_patches=n_patches,
+                context_encoder_out_dim=i_jepa_encoder_cfg.out_dim,
+                hidden_dim=i_jepa_predictor_cfg.hidden_dim,
+                depth=i_jepa_predictor_cfg.depth,
+                num_heads=i_jepa_predictor_cfg.num_heads,
+            ),
+        ),
+        ModelNames.I_JEPA_TARGET_VISUALIZATION_DECODER: ModelWrapper(
+            default_device=device,
+            has_inference=False,
+            model=i_jepa_decoder_model,
+        ),
+        ModelNames.I_JEPA_CONTEXT_VISUALIZATION_DECODER: ModelWrapper(
+            default_device=device,
+            has_inference=False,
+            model=copy.deepcopy(i_jepa_decoder_model),
+        ),
+    }

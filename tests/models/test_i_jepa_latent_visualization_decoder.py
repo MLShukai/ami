@@ -7,6 +7,7 @@ import torch
 from ami.models.i_jepa_latent_visualization_decoder import (
     DecoderBlock,
     IJEPALatentVisualizationDecoder,
+    IJEPAMeanLatentAlongPatchVisualizationDecoder,
     ResBlock,
 )
 
@@ -122,3 +123,22 @@ class TestIJEPALatentVisualizationDecoder:
         expected_height = input_n_patches_height * magnification
         expected_width = input_n_patches_width * magnification
         assert out_images.size() == (batch_size, 3, expected_height, expected_width)
+
+
+class TestIJEPAMeanLatentAlongPatchVisualizationDecoder:
+    @pytest.mark.parametrize("batch_shape", [(), (8,)])
+    @pytest.mark.parametrize("latent_dim", [64, 32])
+    def test_forward(self, batch_shape, latent_dim):
+        decoder = IJEPAMeanLatentAlongPatchVisualizationDecoder(
+            input_n_patches=8,
+            input_latents_dim=latent_dim,
+            decoder_blocks_in_and_out_channels=[(128, 128), (128, 96), (96, 64), (64, 32)],
+            n_res_blocks=1,
+            num_heads=4,
+        )
+
+        x = torch.randn(*batch_shape, latent_dim)
+
+        out = decoder.forward(x)
+        image_size = 8 * 2**3
+        assert out.shape == (*batch_shape, 3, image_size, image_size)

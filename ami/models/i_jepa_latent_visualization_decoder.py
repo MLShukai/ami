@@ -148,6 +148,7 @@ class IJEPALatentVisualizationDecoder(nn.Module):
         decoder_blocks_in_and_out_channels: list[tuple[int, int]],
         n_res_blocks: int,
         num_heads: int,
+        num_norm_groups: int = 32,
     ) -> None:
         """Decoder for visualizing latents as image.
 
@@ -174,6 +175,8 @@ class IJEPALatentVisualizationDecoder(nn.Module):
         self.input_resblock_1 = ResBlock(
             in_channels=input_latents_dim,
             out_channels=decoder_blocks_first_n_channels,
+            num_norm_groups_in_input_layer=num_norm_groups,
+            num_norm_groups_in_output_layer=num_norm_groups,
         )
         self.input_attention = nn.MultiheadAttention(
             embed_dim=decoder_blocks_first_n_channels,
@@ -183,6 +186,8 @@ class IJEPALatentVisualizationDecoder(nn.Module):
         self.input_resblock_2 = ResBlock(
             in_channels=decoder_blocks_first_n_channels,
             out_channels=decoder_blocks_first_n_channels,
+            num_norm_groups_in_input_layer=num_norm_groups,
+            num_norm_groups_in_output_layer=num_norm_groups,
         )
 
         # define decoder blocks
@@ -201,7 +206,7 @@ class IJEPALatentVisualizationDecoder(nn.Module):
         # define output blocks
         decoder_blocks_last_n_channels = decoder_blocks_in_and_out_channels[-1][-1]
         self.output_layer = nn.Sequential(
-            nn.GroupNorm(num_groups=32, num_channels=decoder_blocks_last_n_channels),
+            nn.GroupNorm(num_groups=num_norm_groups, num_channels=decoder_blocks_last_n_channels),
             nn.SiLU(),
             nn.Conv2d(decoder_blocks_last_n_channels, 3, kernel_size=3, padding=1),
         )
@@ -254,3 +259,29 @@ class IJEPALatentVisualizationDecoder(nn.Module):
         if no_batch:
             output = output.squeeze(0)
         return output
+
+
+class IJEPAMeanLatentAlongPatchVisualizationDecoder(IJEPALatentVisualizationDecoder):
+    """Decodes from a latent representation averaged along the patch axis."""
+
+    def forward(self, input_latents: torch.Tensor) -> torch.Tensor:
+        """Generate images from input latents.
+        Args:
+            input_latents (torch.Tensor):
+                latents from other decoder model.
+                (shape: [batch_size, latents_dim])
+        Returns:
+            torch.Tensor:
+                Generated images.
+                (shape:
+                    [
+                        batch_size,
+                        3,
+                        n_patches_height * (2**(len(decoder_blocks_in_and_out_channels)-1)),
+                        n_patches_width * (2**(len(decoder_blocks_in_and_out_channels)-1)),
+                    ]
+                )
+        """
+        num_patch = self.input_n_patches[0] * self.input_n_patches[1]
+        input_latents = input_latents.unsqueeze(-2).expand(*input_latents.shape[:-1], num_patch, self.input_latents_dim)
+        return super().forward(input_latents)
