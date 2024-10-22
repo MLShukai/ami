@@ -11,3 +11,6 @@ actuator:
   _target_: ami.interactions.environments.actuators.vrchat_osc_discrete_actuator.VRChatOSCDiscreteActuator
   osc_address: "127.0.0.1"
   osc_sender_port: 9000
+  move_vertical_velocity: 1.0
+  move_horizontal_velocity: 1.0
+  look_horizontal_velocity: 1.0
