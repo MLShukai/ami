@@ -262,13 +262,15 @@ class MultiStepImaginationCuriosityImageAgent(BaseAgent[Tensor, Tensor]):
     def visualize_reward_imaginations(self) -> None:
         """Creates and logs a heatmap visualization of reward imaginations.
 
-        This method generates a heatmap using the collected reward imagination data,
-        where each row represents a different global step and each column represents
-        an imagination step. The heatmap is then logged to TensorBoard for visual analysis.
+        This method generates a heatmap using the collected reward
+        imagination data, where each row represents a different global
+        step and each column represents an imagination step. The heatmap
+        is then logged to TensorBoard for visual analysis.
 
-        The heatmap provides insights into how the predicted rewards change over time
-        and across different imagination steps, helping to track the agent's
-        performance and the accuracy of its reward predictions.
+        The heatmap provides insights into how the predicted rewards
+        change over time and across different imagination steps, helping
+        to track the agent's performance and the accuracy of its reward
+        predictions.
         """
 
         BASE_FIG_SIZE = 0.6
@@ -415,13 +417,15 @@ class MultiStepImaginationCuriosityImageAgent(BaseAgent[Tensor, Tensor]):
     def visualize_reconstruction_imaginations(self) -> None:
         """Visualizes the reconstruction imaginations.
 
-        This method creates a grid of images showing the ground truth observations
-        alongside the reconstructed observations for each imagination step. The grid
-        is then logged to TensorBoard for visual analysis.
+        This method creates a grid of images showing the ground truth
+        observations alongside the reconstructed observations for each
+        imagination step. The grid is then logged to TensorBoard for
+        visual analysis.
 
-        The visualization helps in understanding how well the agent's imagination
-        process is reconstructing observations over multiple steps, providing insights
-        into the quality of the agent's internal world model.
+        The visualization helps in understanding how well the agent's
+        imagination process is reconstructing observations over multiple
+        steps, providing insights into the quality of the agent's
+        internal world model.
         """
 
         reconstructions = torch.stack(list(self.reconstruction_imaginations_deque))  # (H, T, C, H, W)

@@ -61,7 +61,7 @@ class IJEPAMultiBlockMaskCollator:
         scale_range: tuple[float, float],
         aspect_ratio_range: tuple[float, float],
     ) -> tuple[int, int]:
-        """randomly sampling mask's size.
+        """Randomly sampling mask's size.
 
         Args:
             generator (torch.Generator): Generator to make pseudo random numbers.
@@ -92,7 +92,7 @@ class IJEPAMultiBlockMaskCollator:
         mask_size: tuple[int, int],
         acceptable_regions: Optional[list[torch.Tensor]] = None,
     ) -> tuple[torch.Tensor, torch.Tensor]:
-        """make masks.
+        """Make masks.
 
         Args:
             mask_size (tuple[int, int]):

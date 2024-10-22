@@ -139,8 +139,8 @@ class DreamingPolicyValueTrainer(BaseTrainer):
         self.policy_optimizer_state = policy_optim.state_dict()
         self.value_optimizer_state = value_optim.state_dict()
 
-        self.policy_lr_scheduler_state = self.partial_policy_lr_scheduler(optimizer=policy_optim).state_dict()  # type: ignore
-        self.value_lr_scheduler_state = self.partial_value_lr_scheduler(value_optim).state_dict()  # type: ignore
+        self.policy_lr_scheduler_state = self.partial_policy_lr_scheduler(optimizer=policy_optim).state_dict()
+        self.value_lr_scheduler_state = self.partial_value_lr_scheduler(value_optim).state_dict()
 
     @override
     def is_trainable(self) -> bool:
@@ -175,9 +175,9 @@ class DreamingPolicyValueTrainer(BaseTrainer):
         value_optimizer.load_state_dict(self.value_optimizer_state)
 
         # Setup schedulers
-        policy_lr_scheduler = self.partial_policy_lr_scheduler(policy_optimizer)  # type: ignore
+        policy_lr_scheduler = self.partial_policy_lr_scheduler(policy_optimizer)
         policy_lr_scheduler.load_state_dict(self.policy_lr_scheduler_state)
-        value_lr_scheduler = self.partial_value_lr_scheduler(value_optimizer)  # type: ignore
+        value_lr_scheduler = self.partial_value_lr_scheduler(value_optimizer)
         value_lr_scheduler.load_state_dict(self.value_lr_scheduler_state)
 
         # Setup dataset

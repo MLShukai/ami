@@ -170,5 +170,5 @@ size_2d: TypeAlias = int | tuple[int, int]
 
 
 def size_2d_to_int_tuple(size: size_2d) -> tuple[int, int]:
-    """convert `size_2d` type to int tuple."""
+    """Convert `size_2d` type to int tuple."""
     return (size, size) if isinstance(size, int) else size

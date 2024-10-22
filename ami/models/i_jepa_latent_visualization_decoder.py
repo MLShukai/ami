@@ -114,7 +114,7 @@ class DecoderBlock(nn.Module):
         self,
         x: torch.Tensor,
     ) -> torch.Tensor:
-        """apply this Decoder block.
+        """Apply this Decoder block.
 
         Args:
             x (torch.Tensor):

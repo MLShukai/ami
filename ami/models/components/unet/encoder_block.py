@@ -61,7 +61,7 @@ class UnetEncoderBlock(nn.Module):
         )
 
     def forward(self, x: torch.Tensor, timestep_emb: torch.Tensor) -> tuple[torch.Tensor, list[torch.Tensor]]:
-        """apply this Encoder block.
+        """Apply this Encoder block.
 
         Args:
             x (torch.Tensor):
