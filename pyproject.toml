@@ -26,7 +26,7 @@ seaborn = "^0.13.2"
 
 
 [tool.poetry.group.dev.dependencies]
-pre-commit = "^3.5.0"
+pre-commit = "^4.0.1"
 pytest = "^7.4.3"
 pytest-slow = "^0.0.3"
 pytest-mock = "^3.12.0"
