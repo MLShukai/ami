@@ -37,7 +37,7 @@ class UnetMiddleBlock(nn.Module):
         )
 
     def forward(self, x: torch.Tensor, timestep_emb: torch.Tensor) -> torch.Tensor:
-        """apply this Middle block.
+        """Apply this Middle block.
 
         Args:
             x (torch.Tensor):
