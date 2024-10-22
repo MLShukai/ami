@@ -69,7 +69,7 @@ class UnetDecoderBlock(nn.Module):
         timestep_emb: torch.Tensor,
         features_for_skip_connections: list[torch.Tensor],
     ) -> torch.Tensor:
-        """apply this Decoder block.
+        """Apply this Decoder block.
 
         Args:
             x (torch.Tensor):

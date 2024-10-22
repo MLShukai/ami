@@ -90,7 +90,7 @@ class SmallDeconvNet(nn.Module):
         dilation: int = 1,
         out_pad: int = 0,
     ) -> int:
-        """compute required input size by computing inverse function of the
+        """Compute required input size by computing inverse function of the
         following equation.
 
         H_out = (H_in - 1) * stride - 2 * padding + dilation*(kernel_size - 1) + output_padding + 1
