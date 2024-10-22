@@ -2,7 +2,7 @@ from typing import Any
 
 import torch
 from typing_extensions import override
-from vrchat_io.controller.osc import RESET_VALUES, Buttons, InputController
+from vrchat_io.controller.osc import RESET_VALUES, Axes, Buttons, InputController
 from vrchat_io.controller.wrappers.osc import MultiInputWrapper
 
 from .base_actuator import BaseActuator
@@ -33,16 +33,30 @@ class VRChatOSCDiscreteActuator(BaseActuator[torch.Tensor]):
         Run: [0: release | 1: do]
     """
 
-    def __init__(self, osc_address: str = "127.0.0.1", osc_sender_port: int = 9000) -> None:
+    def __init__(
+        self,
+        osc_address: str = "127.0.0.1",
+        osc_sender_port: int = 9000,
+        move_vertical_velocity: float = 1.0,
+        move_horizontal_velocity: float = 1.0,
+        look_horizontal_velocity: float = 1.0,
+    ) -> None:
         """Create VRChatOSCDiscreteActuator object.
 
         Args:
             osc_address: IP address of OSC server.
             osc_sender_port: Port number of OSC server.
+            move_vertical_velocity: The velocity for moving forward or backward.
+            move_horizontal_velocity: The velocity for moving left or right.
+            look_horizontal_velocity: The velocity for turning left or right.
         """
         controller = InputController((osc_address, osc_sender_port))
         self.controller = MultiInputWrapper(controller)
         self._previous_action = STOP_ACTION
+
+        self.move_vertical_velocity = move_vertical_velocity
+        self.move_horizontal_velocity = move_horizontal_velocity
+        self.look_horizontal_velocity = look_horizontal_velocity
 
     def operate(self, action: torch.Tensor) -> None:
         """Operate the actuator with the given action.
@@ -83,60 +97,36 @@ class VRChatOSCDiscreteActuator(BaseActuator[torch.Tensor]):
         command.update(self.run_to_command(action[4]))
         return command
 
-    @staticmethod
-    def move_vertical_to_command(move_vert: int) -> dict[str, int]:
-        base_command = {
-            Buttons.MoveForward: 0,
-            Buttons.MoveBackward: 0,
-        }
-
+    def move_vertical_to_command(self, move_vert: int) -> dict[str, float]:
         match move_vert:
             case 0:  # stop
-                return base_command
+                return {Axes.Vertical: 0.0}
             case 1:  # forward
-                base_command[Buttons.MoveForward] = 1
-                return base_command
+                return {Axes.Vertical: self.move_vertical_velocity}
             case 2:  # backward
-                base_command[Buttons.MoveBackward] = 1
-                return base_command
+                return {Axes.Vertical: -self.move_vertical_velocity}
             case _:
                 raise ValueError(f"Action choices are 0 to 2! Input: {move_vert}")
 
-    @staticmethod
-    def move_horizontal_to_command(move_horzn: int) -> dict[str, int]:
-        base_command = {
-            Buttons.MoveLeft: 0,
-            Buttons.MoveRight: 0,
-        }
-
+    def move_horizontal_to_command(self, move_horzn: int) -> dict[str, float]:
         match move_horzn:
             case 0:  # stop
-                return base_command
+                return {Axes.Horizontal: 0.0}
             case 1:  # forward
-                base_command[Buttons.MoveLeft] = 1
-                return base_command
+                return {Axes.Horizontal: self.move_horizontal_velocity}
             case 2:  # backward
-                base_command[Buttons.MoveRight] = 1
-                return base_command
+                return {Axes.Horizontal: -self.move_horizontal_velocity}
             case _:
                 raise ValueError(f"Action choices are 0 to 2! Input: {move_horzn}")
 
-    @staticmethod
-    def look_horizontal_to_command(look_horzn: int) -> dict[str, int]:
-        base_command = {
-            Buttons.LookLeft: 0,
-            Buttons.LookRight: 0,
-        }
-
+    def look_horizontal_to_command(self, look_horzn: int) -> dict[str, float]:
         match look_horzn:
             case 0:  # stop
-                return base_command
+                return {Axes.LookHorizontal: 0.0}
             case 1:
-                base_command[Buttons.LookLeft] = 1
-                return base_command
+                return {Axes.LookHorizontal: self.look_horizontal_velocity}
             case 2:
-                base_command[Buttons.LookRight] = 1
-                return base_command
+                return {Axes.LookHorizontal: -self.look_horizontal_velocity}
             case _:
                 raise ValueError(f"Choices are 0 to 2! Input: {look_horzn}")
 
