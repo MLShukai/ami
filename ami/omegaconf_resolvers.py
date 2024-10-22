@@ -32,7 +32,8 @@ def convert_dtype_str_to_torch_dtype(dtype_str: str) -> torch.dtype:
     """Convert the string of dtype such as "float32" to `torch.dtype` object
     `torch.float32` .
 
-    All dtypes are listed in https://pytorch.org/docs/stable/tensor_attributes.html#torch-dtype
+    All dtypes are listed in
+    https://pytorch.org/docs/stable/tensor_attributes.html#torch-dtype
     """
     if hasattr(torch, dtype_str):
         dtype = getattr(torch, dtype_str)
