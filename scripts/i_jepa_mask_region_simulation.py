@@ -8,7 +8,9 @@ from ami.trainers.components.bool_i_jepa_mask_collator import (
 
 
 def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Calculate the ratio of the masked regions output from BoolIJEPAMultiBlockMaskCollator by simulation.")
+    parser = argparse.ArgumentParser(
+        description="Calculate the ratio of the masked regions output from BoolIJEPAMultiBlockMaskCollator by simulation."
+    )
     parser.add_argument("--image_size", type=int, nargs=2, default=[144, 144], help="Image size (height, width)")
     parser.add_argument("--patch_size", type=int, nargs=2, default=[12, 12], help="Patch size (height, width)")
     parser.add_argument("--mask_scale", type=float, nargs=2, default=[0.10, 0.25], help="Mask scale range")
