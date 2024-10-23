@@ -39,7 +39,7 @@ class VRChatOSCDiscreteActuator(BaseActuator[torch.Tensor]):
         osc_sender_port: int = 9000,
         move_vertical_velocity: float = 1.0,
         move_horizontal_velocity: float = 1.0,
-        look_horizontal_velocity: float = 1.0,
+        look_horizontal_velocity: float = 1.0,  # > 0.5 to move.
     ) -> None:
         """Create VRChatOSCDiscreteActuator object.
 
