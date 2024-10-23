@@ -30,7 +30,7 @@ NOTE: Linux User
     Because keyboard module requires root user to access keyboard device.
     So run the following command in the project root directory.
     ```sh
-    PYTHON_PATH=$(which python3) && sudo $PYTHON_PATH ./scripts/first_order_delay_system_discrete_actuator_demo.py
+    PYTHON_PATH=$(which python3) && sudo $PYTHON_PATH ./samples/first_order_delay_system_discrete_actuator_demo.py
     ```
 
 Features:
