@@ -241,6 +241,9 @@ class FirstOrderDelaySystemDiscreteActuator(BaseActuator[torch.Tensor]):
         command = self.convert_action_to_command(action.long().tolist())
         self.controller.command(command)
         self._previous_action = action
+        self._move_vertical_system.step()
+        self._move_horizontal_system.step()
+        self._look_horizontal_system.step()
 
     def setup(self) -> None:
         """Setup the actuator."""
@@ -281,7 +284,7 @@ class FirstOrderDelaySystemDiscreteActuator(BaseActuator[torch.Tensor]):
                 self._move_vertical_system.set_target_value(-self.max_move_vertical_velocity)
             case _:
                 raise ValueError(f"Action choices are 0 to 2! Input: {move_vert}")
-        return {Axes.Vertical: self._move_vertical_system.step()}
+        return {Axes.Vertical: self._move_vertical_system.get_current_value()}
 
     def move_horizontal_to_command(self, move_horzn: int) -> dict[str, float]:
         match move_horzn:
@@ -293,7 +296,7 @@ class FirstOrderDelaySystemDiscreteActuator(BaseActuator[torch.Tensor]):
                 self._move_horizontal_system.set_target_value(-self.max_move_horizontal_velocity)
             case _:
                 raise ValueError(f"Action choices are 0 to 2! Input: {move_horzn}")
-        return {Axes.Horizontal: self._move_horizontal_system.step()}
+        return {Axes.Horizontal: self._move_horizontal_system.get_current_value()}
 
     def look_horizontal_to_command(self, look_horzn: int) -> dict[str, float]:
         match look_horzn:
@@ -305,7 +308,7 @@ class FirstOrderDelaySystemDiscreteActuator(BaseActuator[torch.Tensor]):
                 self._look_horizontal_system.set_target_value(-self.max_look_horizontal_velocity)
             case _:
                 raise ValueError(f"Choices are 0 to 2! Input: {look_horzn}")
-        return {Axes.LookHorizontal: self._look_horizontal_system.step()}
+        return {Axes.LookHorizontal: self._look_horizontal_system.get_current_value()}
 
     @staticmethod
     def jump_to_command(jump: int) -> dict[str, int]:
