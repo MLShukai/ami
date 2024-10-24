@@ -15,9 +15,9 @@ class FirstOrderDelaySystemStepResponce:
 
     The system response is computed using the analytical solution
     for the step response of a first-order system:
-        y(t) = y₀ + (u - y₀)(1 - e^(-t/τ))
+        y(t) = y_0 + (u - y_0)(1 - e^(-t/τ))
     where:
-        y₀: initial value at the start of the current transition
+        y_0: initial value at the start of the current transition
         u: target value
         t: elapsed time since the last target value change
         τ: time constant
@@ -89,7 +89,7 @@ class FirstOrderDelaySystemStepResponce:
 
         Calculates the current value using the analytical solution
         of the first-order differential equation:
-            y(t) = y₀ + (u - y₀)(1 - e^(-t/τ))
+            y(t) = y_0 + (u - y_0)(1 - e^(-t/τ))
 
         Returns:
             float: Current output value of the system.
