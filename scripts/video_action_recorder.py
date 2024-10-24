@@ -1,9 +1,9 @@
 """Video Action Recorder.
 
-This script records video and keyboard actions, sending them as OSC messages.
+This script records video and keyboard actions using VRChatOSCDiscreteActuator.
 
-Installation:
-    pip install opencv-python keyboard numpy python-osc
+Additional Dependency:
+    pip install keyboard
 
 Usage:
     python video_action_recorder.py [--fps FPS] [--width WIDTH] [--height HEIGHT] [--osc-ip OSC_IP] [--osc-port OSC_PORT] [--device DEVICE]
@@ -39,8 +39,12 @@ from typing import Any, List, Optional, Tuple
 
 import cv2
 import keyboard
+import torch
 from numpy.typing import NDArray
-from pythonosc import udp_client
+
+from ami.interactions.environments.actuators.vrchat_osc_discrete_actuator import (
+    VRChatOSCDiscreteActuator,
+)
 
 
 class VideoRecorder:
@@ -75,61 +79,34 @@ class VideoRecorder:
 
 
 class KeyboardActionHandler:
-    def __init__(self, osc_ip: str = "127.0.0.1", osc_port: int = 12345):
-        self.initial_actions = {"MoveVertical": 0, "MoveHorizontal": 0, "LookHorizontal": 0, "Jump": 0, "Run": 0}
-        self.actions = self.initial_actions.copy()
+    def __init__(self, actuator: VRChatOSCDiscreteActuator):
+        self.actuator = actuator
+        self.initial_actions = torch.zeros(5, dtype=torch.long)  # [vertical, horizontal, look, jump, run]
+        self.actions = self.initial_actions.clone()
 
-        self.key_map = {
-            "w": ("MoveVertical", 1),
-            "s": ("MoveVertical", 2),
-            "d": ("MoveHorizontal", 1),
-            "a": ("MoveHorizontal", 2),
-            ".": ("LookHorizontal", 1),
-            ",": ("LookHorizontal", 2),
-            "space": ("Jump", 1),
-            "shift": ("Run", 1),
-        }
-
-        self.osc_client = udp_client.SimpleUDPClient(osc_ip, osc_port)
-        self.osc_addresses = {
-            "MoveForward": "/input/MoveForward",
-            "MoveBackward": "/input/MoveBackward",
-            "MoveLeft": "/input/MoveLeft",
-            "MoveRight": "/input/MoveRight",
-            "LookLeft": "/input/LookLeft",
-            "LookRight": "/input/LookRight",
-            "Jump": "/input/Jump",
-            "Run": "/input/Run",
+        self.key_map = {  # (action_index, value)
+            "w": (0, 1),  # vertical forward
+            "s": (0, 2),  # vertical backward
+            "d": (1, 1),  # horizontal right
+            "a": (1, 2),  # horizontal left
+            ".": (2, 1),  # look right
+            ",": (2, 2),  # look left
+            "space": (3, 1),  # jump
+            "shift": (4, 1),  # run
         }
 
     def update(self) -> bool:
-        self.actions = self.initial_actions.copy()
+        self.actions = self.initial_actions.clone()
 
-        for key, (action, value) in self.key_map.items():
+        for key, (action_idx, value) in self.key_map.items():
             if keyboard.is_pressed(key):
-                self.actions[action] = value
+                self.actions[action_idx] = value
 
-        self.send_osc_messages()
+        self.actuator.operate(self.actions)
         return not keyboard.is_pressed("q")  # Return False if 'q' is pressed to quit
 
-    def send_osc_messages(self) -> None:
-        self.osc_client.send_message(self.osc_addresses["MoveForward"], int(self.actions["MoveVertical"] == 1))
-        self.osc_client.send_message(self.osc_addresses["MoveBackward"], int(self.actions["MoveVertical"] == 2))
-        self.osc_client.send_message(self.osc_addresses["MoveRight"], int(self.actions["MoveHorizontal"] == 1))
-        self.osc_client.send_message(self.osc_addresses["MoveLeft"], int(self.actions["MoveHorizontal"] == 2))
-        self.osc_client.send_message(self.osc_addresses["LookRight"], int(self.actions["LookHorizontal"] == 1))
-        self.osc_client.send_message(self.osc_addresses["LookLeft"], int(self.actions["LookHorizontal"] == 2))
-        self.osc_client.send_message(self.osc_addresses["Jump"], int(self.actions["Jump"] == 1))
-        self.osc_client.send_message(self.osc_addresses["Run"], int(self.actions["Run"] == 1))
-
     def get_action_array(self) -> List[int]:
-        return [
-            self.actions["MoveVertical"],
-            self.actions["MoveHorizontal"],
-            self.actions["LookHorizontal"],
-            self.actions["Jump"],
-            self.actions["Run"],
-        ]
+        return self.actions.tolist()
 
 
 class ActionRecorder:
@@ -177,11 +154,19 @@ def main() -> None:
 
     # Initialize components
     video_recorder = VideoRecorder(video_output, args.fps, resolution, args.device)
-    action_handler = KeyboardActionHandler(osc_ip=args.osc_ip, osc_port=args.osc_port)
+    actuator = VRChatOSCDiscreteActuator(
+        osc_address=args.osc_ip,
+        osc_sender_port=args.osc_port,
+        move_vertical_velocity=1.0,
+        move_horizontal_velocity=1.0,
+        look_horizontal_velocity=1.0,
+    )
+    action_handler = KeyboardActionHandler(actuator)
     action_recorder = ActionRecorder(action_log)
 
-    # Start video recording
+    # Start video recording and setup actuator
     video_recorder.start_recording()
+    actuator.setup()
 
     # Main loop
     frame_time = 1 / args.fps
@@ -189,36 +174,39 @@ def main() -> None:
 
     print("Recording started. Press 'q' to stop.")
 
-    while True:
-        current_time = time.time()
+    try:
+        while True:
+            current_time = time.time()
 
-        if current_time >= next_frame_time:
-            # Record video frame
-            frame = video_recorder.record_frame()
-            if frame is not None:
-                cv2.imshow("Recording", frame)
+            if current_time >= next_frame_time:
+                # Record video frame
+                frame = video_recorder.record_frame()
+                if frame is not None:
+                    cv2.imshow("Recording", frame)
 
-            # Update actions and send OSC
-            if not action_handler.update():
+                # Update actions and send OSC
+                if not action_handler.update():
+                    break
+
+                # Record actions
+                action_array = action_handler.get_action_array()
+                action_recorder.record_action(action_array)
+                print(f"\r{action_array}", end="")
+
+                # Calculate next frame time
+                next_frame_time += frame_time
+
+            # Check for quit
+            if cv2.waitKey(1) & 0xFF == ord("q"):
                 break
 
-            # Record actions
-            action_array = action_handler.get_action_array()
-            action_recorder.record_action(action_array)
-            print(f"\r{action_array}", end="")
+    finally:
+        # Cleanup
+        actuator.teardown()
+        video_recorder.stop_recording()
+        cv2.destroyAllWindows()
 
-            # Calculate next frame time
-            next_frame_time += frame_time
-
-        # Check for quit
-        if cv2.waitKey(1) & 0xFF == ord("q"):
-            break
-
-    # Cleanup
-    video_recorder.stop_recording()
-    cv2.destroyAllWindows()
-
-    print(f"Recording finished. Video saved as {video_output}, actions logged in {action_log}")
+        print(f"\nRecording finished. Video saved as {video_output}, actions logged in {action_log}")
 
 
 if __name__ == "__main__":
