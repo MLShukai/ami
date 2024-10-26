@@ -11,13 +11,25 @@ class ConvLayerConfig:
     out_channels: int
     kernel_size: int
     stride: int
-
-class TransposeLast(nn.Module):
-    def __init__(self):
+    
+class ConvBlock(nn.Module):
+    def __init__(
+        self, in_channels: int, out_channels: int, kernel_size: int, stride: int,
+    ):
         super().__init__()
 
-    def forward(self, x):
-        return x.transpose(-2, -1)
+        self.conv = nn.Conv1d(in_channels, out_channels, kernel_size=kernel_size, stride=stride, bias=False)
+        nn.init.kaiming_normal_(self.conv.weight)
+        self.layer_norm = nn.LayerNorm(out_channels, elementwise_affine=True)
+        self.non_linear_layer = nn.GELU()
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        x = self.conv(x)
+        x = x.transpose(-2, -1)
+        x = self.layer_norm(x)
+        x = x.transpose(-2, -1)
+        x = self.non_linear_layer(x)
+        return x
     
 class AudioPatchifier(nn.Module):
     def __init__(
@@ -38,38 +50,18 @@ class AudioPatchifier(nn.Module):
             ConvLayerConfig(in_channels=out_channels, out_channels=out_channels, kernel_size=2, stride=2),
         ]
 
-        def block(
-            n_in,
-            n_out,
-            k,
-            stride,
-        ):
-            def make_conv():
-                conv = nn.Conv1d(n_in, n_out, k, stride=stride, bias=False)
-                nn.init.kaiming_normal_(conv.weight)
-                return conv
-            return nn.Sequential(
-                make_conv(),
-                nn.Sequential(
-                    TransposeLast(),#x.transpose(-2, -1)
-                    nn.LayerNorm(n_out, elementwise_affine=True),
-                    TransposeLast(),#x.transpose(-2, -1)
-                ),
-                nn.GELU(),
-            )
-
         self.conv_layers = nn.ModuleList()
         for conv_layer_config in conv_layer_configs:
             self.conv_layers.append(
-                block(
-                    conv_layer_config.in_channels,
-                    conv_layer_config.out_channels,
-                    conv_layer_config.kernel_size,
-                    conv_layer_config.stride,
+                ConvBlock(
+                    in_channels=conv_layer_config.in_channels, 
+                    out_channels=conv_layer_config.out_channels, 
+                    kernel_size=conv_layer_config.kernel_size, 
+                    stride=conv_layer_config.stride,
                 )
             )
 
-    def forward(self, x: torch.Tensor):
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
         """Convert input audios into patches.
 
         Args:
