@@ -6,7 +6,7 @@ from ami.models.components.audio_patchifier import AudioPatchifier
 
 class TestAudioPatchifier:
     @pytest.mark.parametrize("batch_size", [1, 4])
-    @pytest.mark.parametrize("n_samples", [400, 16320])
+    @pytest.mark.parametrize("n_samples", [400, 16080])
     @pytest.mark.parametrize("in_channels", [1, 2])  # monoral and stereo audio respectively.
     @pytest.mark.parametrize("embed_dim", [512])
     def test_forward(self, batch_size: int, n_samples: int, in_channels: int, embed_dim: int):
