@@ -21,7 +21,7 @@ class ConvBlock(nn.Module):
         self.conv = nn.Conv1d(in_channels, out_channels, kernel_size=kernel_size, stride=stride, bias=False)
         nn.init.kaiming_normal_(self.conv.weight)
         self.layer_norm = nn.LayerNorm(out_channels, elementwise_affine=True)
-        self.non_linear_layer = nn.GELU()
+        self.activation= nn.GELU()
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         x = self.conv(x)
