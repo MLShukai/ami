@@ -3,10 +3,13 @@ from torch import Tensor
 
 
 class ResNetFF(nn.Module):
-    def __init__(self, dim: int, dim_hidden: int, depth: int, activation: nn.Module = nn.ReLU()):
+    def __init__(self, dim: int, dim_hidden: int, depth: int, activation: nn.Module = nn.GELU()):
         super().__init__()
         self.ff_list = nn.ModuleList(
-            [nn.Sequential(nn.Linear(dim, dim_hidden), activation, nn.Linear(dim_hidden, dim)) for _ in range(depth)]
+            [
+                nn.Sequential(nn.LayerNorm(dim), nn.Linear(dim, dim_hidden), activation, nn.Linear(dim_hidden, dim))
+                for _ in range(depth)
+            ]
         )
 
     def forward(self, x: Tensor) -> Tensor:
