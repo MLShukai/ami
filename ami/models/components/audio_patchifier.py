@@ -52,13 +52,20 @@ class AudioPatchifier(nn.Module):
         super().__init__()
 
         # According to data2vec paper (https://arxiv.org/abs/2202.03555),
-        strides = (5, 2, 2, 2, 2, 2, 2)
         kernel_sizes = (10, 3, 3, 3, 3, 2, 2)
+        strides = (5, 2, 2, 2, 2, 2, 2)
         # results in window_size=400[samples] and hop_size=320[samples] as total.
 
         self.conv_layers = nn.Sequential()
-        for k, s in zip(kernel_sizes, strides):
-            self.conv_layers.append(ConvBlock(in_channels=in_channels, out_channels=embed_dim, kernel_size=k, stride=s))
+        for i, (k, s) in enumerate(zip(kernel_sizes, strides)):
+            self.conv_layers.append(
+                ConvBlock(
+                    in_channels=in_channels if i == 0 else embed_dim,
+                    out_channels=embed_dim,
+                    kernel_size=k,
+                    stride=s,
+                )
+            )
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         """Convert input audios into patches.
