@@ -21,14 +21,14 @@ class ConvBlock(nn.Module):
         self.conv = nn.Conv1d(in_channels, out_channels, kernel_size=kernel_size, stride=stride, bias=False)
         nn.init.kaiming_normal_(self.conv.weight)
         self.layer_norm = nn.LayerNorm(out_channels, elementwise_affine=True)
-        self.activation= nn.GELU()
+        self.activation = nn.GELU()
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         x = self.conv(x)
         x = x.transpose(-2, -1)
         x = self.layer_norm(x)
         x = x.transpose(-2, -1)
-        x = self.non_linear_layer(x)
+        x = self.activation(x)
         return x
 
 
@@ -52,12 +52,12 @@ class AudioPatchifier(nn.Module):
         super().__init__()
 
         # According to data2vec paper (https://arxiv.org/abs/2202.03555),
-        strides =  (5,2,2,2,2,2,2)
-        kernel_sizes = (10,3,3,3,3,2,2)
+        strides = (5, 2, 2, 2, 2, 2, 2)
+        kernel_sizes = (10, 3, 3, 3, 3, 2, 2)
         # results in window_size=400[samples] and hop_size=320[samples] as total.
-        
+
         self.conv_layers = nn.Sequential()
-        for k, s in zip(kernei_sizes, strides):
+        for k, s in zip(kernel_sizes, strides):
             self.conv_layers.append(ConvBlock(in_channels=in_channels, out_channels=embed_dim, kernel_size=k, stride=s))
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
