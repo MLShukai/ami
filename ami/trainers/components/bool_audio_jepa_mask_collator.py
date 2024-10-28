@@ -49,10 +49,10 @@ class BoolAudioJEPAMultiBlockMaskCollator:
         assert mask_scale[0] < mask_scale[1]
         assert mask_scale[0] > 0
         assert mask_scale[1] < 1
-        
-        assert patch_size<=input_size
-        assert stride<=patch_size
-        assert (input_size - (patch_size - stride))%stride == 0
+
+        assert patch_size <= input_size
+        assert stride <= patch_size
+        assert (input_size - (patch_size - stride)) % stride == 0
         self.input_size = input_size
         self.patch_size = patch_size
 
@@ -159,7 +159,7 @@ class BoolAudioJEPAMultiBlockMaskCollator:
                     Boolean masks representing predictor targets (shape: [batch_size, n_patches])
         """
         collated_audios: Tensor = default_collate(audios)[0]
-        assert collated_audios.size(-1)==self.input_size
+        assert collated_audios.size(-1) == self.input_size
 
         seed = self.step()
         g = torch.Generator()
