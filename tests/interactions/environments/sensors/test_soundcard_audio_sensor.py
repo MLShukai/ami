@@ -1,9 +1,15 @@
+import shutil
+import sys
 import time
 
 import numpy as np
 import pytest
 import torch
 from pytest_mock import MockerFixture
+
+if sys.platform == "linux":
+    if shutil.which("pipewire") is None and shutil.which("pulseaudio") is None:
+        pytest.skip("Linux audio backend system (pipewire or pulseaudio) is not available.", allow_module_level=True)
 
 from ami.interactions.environments.sensors.soundcard_audio_sensor import (
     SoundcardAudioSensor,
