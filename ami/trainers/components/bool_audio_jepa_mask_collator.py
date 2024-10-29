@@ -56,8 +56,8 @@ class BoolAudioJEPAMultiBlockMaskCollator:
         self.input_size = input_size
         self.patch_size = patch_size
 
-        self.num_patches = (input_size - (self.patch_size - stride)) // stride
-        assert min_keep <= self.num_patches
+        self.n_patches = (input_size - (self.patch_size - stride)) // stride
+        assert min_keep <= self.n_patches
 
         self.mask_scale = mask_scale
         self.n_masks = n_masks
@@ -89,14 +89,14 @@ class BoolAudioJEPAMultiBlockMaskCollator:
         mask_scale = min_s + torch.rand(1, generator=generator).item() * (max_s - min_s)
 
         # Given scale, compute n_samples of mask.
-        num_patches_max = self.num_patches
+        num_patches_max = self.n_patches
         n_samples_of_mask = round(mask_scale * num_patches_max)
 
-        # clamp with [1, self.num_patches]
-        n_samples_of_mask = min(max(n_samples_of_mask, 1), self.num_patches)
+        # clamp with [1, self.n_patches]
+        n_samples_of_mask = min(max(n_samples_of_mask, 1), self.n_patches)
 
         # Compute mask coordinates
-        start = int(torch.randint(high=self.num_patches - n_samples_of_mask + 1, size=(1,), generator=generator).item())
+        start = int(torch.randint(high=self.n_patches - n_samples_of_mask + 1, size=(1,), generator=generator).item())
         end = start + n_samples_of_mask
         return start, end
 
@@ -117,7 +117,7 @@ class BoolAudioJEPAMultiBlockMaskCollator:
         """
         sampled_masks = []
         for _ in range(self.n_masks):
-            mask = torch.zeros(self.num_patches, dtype=torch.bool)
+            mask = torch.zeros(self.n_patches, dtype=torch.bool)
             start, end = self._sample_mask(generator)
             mask[start:end] = True
             sampled_masks.append(mask.flatten())
@@ -131,7 +131,7 @@ class BoolAudioJEPAMultiBlockMaskCollator:
 
         # Apply min keep
         if encoder_mask.logical_not().sum() < self.min_keep:
-            indices = torch.randperm(self.num_patches, generator=generator)[: self.min_keep]
+            indices = torch.randperm(self.n_patches, generator=generator)[: self.min_keep]
             encoder_mask[indices] = False
             predictor_target[indices] = True
 
