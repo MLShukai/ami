@@ -157,7 +157,7 @@ class TestBoolAudioJEPAMultiBlockMaskCollator:
         encoder_mask, predictor_target = collator.sample_masks_and_target(g)
 
         # calc num of patches
-        n_patches = (input_size - (patch_size - stride)) / stride
+        n_patches = (input_size - (patch_size - stride)) // stride
 
         assert encoder_mask.shape == (n_patches,)
         assert predictor_target.shape == (n_patches,)

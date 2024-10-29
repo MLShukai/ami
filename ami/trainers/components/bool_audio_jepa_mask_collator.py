@@ -64,7 +64,6 @@ class BoolAudioJEPAMultiBlockMaskCollator:
         self.min_keep = min_keep  # minimum number of patches to keep unmasked
         self._itr_counter = Value("i", random.randrange(2**32))  # collator is shared across worker processes
 
-
     def step(self) -> int:
         """Increment and return the iteration counter."""
         i = self._itr_counter
