@@ -99,7 +99,7 @@ class TestBoolAudioJEPAMultiBlockMaskCollator:
         assert collated_audios.size(2) == input_size, "collated_audios num of samples mismatch"
 
         # calc num of patches
-        n_patches = (input_size - (patch_size - stride)) / stride
+        n_patches = (input_size - (patch_size - stride)) // stride
 
         # check masks for context encoder
         assert collated_encoder_masks.dim() == 2
