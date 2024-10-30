@@ -1,5 +1,6 @@
 import math
 import threading
+import time
 from collections import deque
 
 import torch
@@ -48,6 +49,8 @@ class SoundcardAudioSensor(BaseSensor[Tensor]):
             block_size = read_sample_size
         assert block_size >= 1
         assert block_size <= read_sample_size
+        self._sample_rate = sample_rate
+        self._block_size = block_size
         self._read_sample_size = read_sample_size
         self._dtype = dtype
 
@@ -71,6 +74,7 @@ class SoundcardAudioSensor(BaseSensor[Tensor]):
         while not self._teardown_flag.is_set():
             samples = self._cap.read()
             self._sampled_blocks.append(torch.from_numpy(samples).type(self._dtype))
+            time.sleep(self._block_size / self._sample_rate * 0.1)
 
     @override
     def setup(self) -> None:
