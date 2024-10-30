@@ -72,7 +72,7 @@ class AudioPatchifier(nn.Module):
 
         Args:
             x (torch.Tensor):
-                Input audios. Shape is [batch_size, n_channels, n_samples].
+                Input audios. Shape is [batch_size, n_channels, sample_size].
 
         Returns:
             torch.Tensor:
