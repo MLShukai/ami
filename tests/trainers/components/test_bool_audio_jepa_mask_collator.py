@@ -8,27 +8,27 @@ from ami.trainers.components.bool_audio_jepa_mask_collator import (
 
 class TestBoolAudioJEPAMultiBlockMaskCollator:
     @pytest.mark.parametrize(
-        ["input_size", "patch_size", "stride", "mask_scale", "n_masks", "min_keep"],
+        ["input_sample_size", "patch_sample_size", "stride", "mask_scale", "n_masks", "min_keep"],
         [
             [16080, 400, 320, (0.1, 0.25), 4, 10],
         ],
     )
     def test_sample_mask(
         self,
-        input_size: int,
-        patch_size: int,
+        input_sample_size: int,
+        patch_sample_size: int,
         stride: int,
         mask_scale: tuple[float, float],
         n_masks: int,
         min_keep: int,
     ):
-        assert patch_size <= input_size
-        assert stride <= input_size
-        assert (input_size - (patch_size - stride)) % stride == 0
+        assert patch_sample_size <= input_sample_size
+        assert stride <= input_sample_size
+        assert (input_sample_size - (patch_sample_size - stride)) % stride == 0
         # define BoolAudioJEPAMultiBlockMaskCollator
         collator = BoolAudioJEPAMultiBlockMaskCollator(
-            input_size=input_size,
-            patch_size=patch_size,
+            input_sample_size=input_sample_size,
+            patch_sample_size=patch_sample_size,
             stride=stride,
             mask_scale=mask_scale,
             n_masks=n_masks,
@@ -36,24 +36,24 @@ class TestBoolAudioJEPAMultiBlockMaskCollator:
         )
         g = torch.Generator()
         # calc num of patches
-        n_patches = (input_size - (patch_size - stride)) / stride
+        n_patches = (input_sample_size - (patch_sample_size - stride)) / stride
         for _ in range(100):
             start, end = collator._sample_mask(g)
             assert start < end
             assert start >= 0
-            assert end <= input_size
+            assert end <= input_sample_size
 
-            n_samples_of_mask = end - start
+            mask_sample_size = end - start
             # test mask scale
             mask_scale_min, mask_scale_max = mask_scale
-            assert n_samples_of_mask <= mask_scale_max * n_patches
-            assert n_samples_of_mask >= mask_scale_min * n_patches
+            assert mask_sample_size <= mask_scale_max * n_patches
+            assert mask_sample_size >= mask_scale_min * n_patches
             # test min keep
-            assert (n_patches - n_samples_of_mask) >= min_keep
+            assert (n_patches - mask_sample_size) >= min_keep
 
     # collator params
     @pytest.mark.parametrize(
-        ["input_size", "patch_size", "stride", "mask_scale", "n_masks", "min_keep"],
+        ["input_sample_size", "patch_sample_size", "stride", "mask_scale", "n_masks", "min_keep"],
         [
             [16080, 400, 320, (0.1, 0.25), 4, 10],
         ],
@@ -63,8 +63,8 @@ class TestBoolAudioJEPAMultiBlockMaskCollator:
     @pytest.mark.parametrize("n_channels", [1, 2])  # monoral and stereo audio respectively
     def test_bool_i_jepa_mask_collator(
         self,
-        input_size: int,
-        patch_size: int,
+        input_sample_size: int,
+        patch_sample_size: int,
         stride: int,
         mask_scale: tuple[float, float],
         n_masks: int,
@@ -72,20 +72,20 @@ class TestBoolAudioJEPAMultiBlockMaskCollator:
         batch_size: int,
         n_channels: int,
     ):
-        assert patch_size <= input_size
-        assert stride <= input_size
-        assert (input_size - (patch_size - stride)) % stride == 0
+        assert patch_sample_size <= input_sample_size
+        assert stride <= input_sample_size
+        assert (input_sample_size - (patch_sample_size - stride)) % stride == 0
         # define BoolAudioJEPAMultiBlockMaskCollator
         collator = BoolAudioJEPAMultiBlockMaskCollator(
-            input_size=input_size,
-            patch_size=patch_size,
+            input_sample_size=input_sample_size,
+            patch_sample_size=patch_sample_size,
             stride=stride,
             mask_scale=mask_scale,
             n_masks=n_masks,
             min_keep=min_keep,
         )
         # define sample inputs
-        audios = [(torch.randn([n_channels, input_size]),) for _ in range(batch_size)]
+        audios = [(torch.randn([n_channels, input_sample_size]),) for _ in range(batch_size)]
         # collate batch and create masks
         (
             collated_audios,
@@ -96,10 +96,10 @@ class TestBoolAudioJEPAMultiBlockMaskCollator:
         # check image sizes
         assert collated_audios.size(0) == batch_size, "batch_size mismatch"
         assert collated_audios.size(1) == n_channels, "channels mismatch"
-        assert collated_audios.size(2) == input_size, "collated_audios num of samples mismatch"
+        assert collated_audios.size(2) == input_sample_size, "collated_audios num of samples mismatch"
 
         # calc num of patches
-        n_patches = (input_size - (patch_size - stride)) // stride
+        n_patches = (input_sample_size - (patch_sample_size - stride)) // stride
 
         # check masks for context encoder
         assert collated_encoder_masks.dim() == 2
@@ -127,27 +127,27 @@ class TestBoolAudioJEPAMultiBlockMaskCollator:
         ), "encoder masks and predictor targets must be different"
 
     @pytest.mark.parametrize(
-        ["input_size", "patch_size", "stride", "mask_scale", "n_masks", "min_keep"],
+        ["input_sample_size", "patch_sample_size", "stride", "mask_scale", "n_masks", "min_keep"],
         [
             [16080, 400, 320, (0.1, 0.25), 4, 10],
         ],
     )
     def test_sample_masks_and_target(
         self,
-        input_size: int,
-        patch_size: int,
+        input_sample_size: int,
+        patch_sample_size: int,
         stride: int,
         mask_scale: tuple[float, float],
         n_masks: int,
         min_keep: int,
     ):
-        assert patch_size <= input_size
-        assert stride <= input_size
-        assert (input_size - (patch_size - stride)) % stride == 0
+        assert patch_sample_size <= input_sample_size
+        assert stride <= input_sample_size
+        assert (input_sample_size - (patch_sample_size - stride)) % stride == 0
         # define BoolAudioJEPAMultiBlockMaskCollator
         collator = BoolAudioJEPAMultiBlockMaskCollator(
-            input_size=input_size,
-            patch_size=patch_size,
+            input_sample_size=input_sample_size,
+            patch_sample_size=patch_sample_size,
             stride=stride,
             mask_scale=mask_scale,
             n_masks=n_masks,
@@ -157,7 +157,7 @@ class TestBoolAudioJEPAMultiBlockMaskCollator:
         encoder_mask, predictor_target = collator.sample_masks_and_target(g)
 
         # calc num of patches
-        n_patches = (input_size - (patch_size - stride)) // stride
+        n_patches = (input_sample_size - (patch_sample_size - stride)) // stride
 
         assert encoder_mask.shape == (n_patches,)
         assert predictor_target.shape == (n_patches,)
