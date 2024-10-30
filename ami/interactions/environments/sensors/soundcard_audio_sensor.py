@@ -17,7 +17,7 @@ class SoundcardAudioSensor(BaseSensor[Tensor]):
         device_name: str | None = None,
         sample_rate: float = 16000,  # 16 kHz
         channel_size: int = 2,
-        read_frame_size: int = 1600,  # 0.1 sec
+        read_sample_size: int = 1600,  # 0.1 sec
         block_size: int | None = None,
         dtype: torch.dtype = torch.float32,
     ) -> None:
@@ -30,30 +30,30 @@ class SoundcardAudioSensor(BaseSensor[Tensor]):
             device_name: Soundcard device name. If None, uses the default system device.
             sample_rate: Audio sampling rate in Hz.
             channel_size: Number of audio channels (e.g., 1 for mono, 2 for stereo).
-            read_frame_size: Number of samples returned by each `read` call.
+            read_sample_size: Number of samples returned by each `read` call.
                 Represents 0.1 seconds of audio at 16kHz by default.
             block_size: Number of samples to read in each background thread iteration.
-                Defaults to read_frame_size if None.
+                Defaults to read_sample_size if None.
             dtype: Torch dtype for the returned audio tensor.
 
         Raises:
-            AssertionError: If read_frame_size, channel_size, sample_rate, or block_size is less than 1.
-                block_size is larger than read_frame_size
+            AssertionError: If read_sample_size, channel_size, sample_rate, or block_size is less than 1.
+                block_size is larger than read_sample_size
         """
         super().__init__()
-        assert read_frame_size >= 1
+        assert read_sample_size >= 1
         assert channel_size >= 1
         assert sample_rate >= 1
         if block_size is None:
-            block_size = read_frame_size
+            block_size = read_sample_size
         assert block_size >= 1
-        assert block_size <= read_frame_size
-        self._read_frame_size = read_frame_size
+        assert block_size <= read_sample_size
+        self._read_sample_size = read_sample_size
         self._dtype = dtype
 
         self._cap = SoundcardAudioCapture(sample_rate, device_name, frame_size=block_size, channels=channel_size)
-        self._frame_blocks: deque[Tensor] = deque(
-            [torch.zeros(read_frame_size, channel_size)], maxlen=math.ceil(read_frame_size / block_size)
+        self._sampled_blocks: deque[Tensor] = deque(
+            [torch.zeros(read_sample_size, channel_size)], maxlen=math.ceil(read_sample_size / block_size)
         )
 
         self._teardown_flag = threading.Event()
@@ -69,8 +69,8 @@ class SoundcardAudioSensor(BaseSensor[Tensor]):
         The thread continues until the teardown flag is set.
         """
         while not self._teardown_flag.is_set():
-            frame = self._cap.read()
-            self._frame_blocks.append(torch.from_numpy(frame).type(self._dtype))
+            samples = self._cap.read()
+            self._sampled_blocks.append(torch.from_numpy(samples).type(self._dtype))
 
     @override
     def setup(self) -> None:
@@ -87,7 +87,7 @@ class SoundcardAudioSensor(BaseSensor[Tensor]):
         """Read the latest audio frame data.
 
         Returns:
-            Tensor: Audio data tensor of shape (channel_size, read_frame_size).
+            Tensor: Audio data tensor of shape (channel_size, read_sample_size).
                 The first dimension represents audio channels (e.g., stereo channels),
                 and the second dimension represents audio samples in time.
                 Values are in the range [-1, 1] for float dtypes.
@@ -102,8 +102,8 @@ class SoundcardAudioSensor(BaseSensor[Tensor]):
         """
         if not self._capture_thread.is_alive():
             raise RuntimeError("Please call method `setup` before `read`!")
-        frames = torch.cat(list(self._frame_blocks))[-self._read_frame_size :]
-        return frames.transpose(0, 1)
+        samples = torch.cat(list(self._sampled_blocks))[-self._read_sample_size :]
+        return samples.transpose(0, 1)
 
     @override
     def teardown(self) -> None:

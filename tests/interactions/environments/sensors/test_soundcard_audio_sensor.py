@@ -27,7 +27,7 @@ class TestSoundcardAudioSensor:
             device_name="test_device",
             sample_rate=16000,
             channel_size=2,
-            read_frame_size=1600,
+            read_sample_size=1600,
             block_size=1600,
             dtype=torch.float32,
         )
@@ -47,7 +47,7 @@ class TestSoundcardAudioSensor:
         audio = sensor.read()
 
         # Verify shape and values
-        assert audio.shape == (2, 1600)  # (channel_size, read_frame_size)
+        assert audio.shape == (2, 1600)  # (channel_size, read_sample_size)
         assert torch.equal(audio, torch.zeros(2, 1600))
 
         # Cleanup
@@ -56,7 +56,7 @@ class TestSoundcardAudioSensor:
     def test_initialization_parameters(self):
         # Test invalid parameters
         with pytest.raises(AssertionError):
-            SoundcardAudioSensor(read_frame_size=0)
+            SoundcardAudioSensor(read_sample_size=0)
 
         with pytest.raises(AssertionError):
             SoundcardAudioSensor(channel_size=0)
@@ -68,7 +68,7 @@ class TestSoundcardAudioSensor:
             SoundcardAudioSensor(block_size=0)
 
         with pytest.raises(AssertionError):
-            SoundcardAudioSensor(read_frame_size=10, block_size=100)
+            SoundcardAudioSensor(read_sample_size=10, block_size=100)
 
     def test_teardown(self, sensor: SoundcardAudioSensor):
         sensor.setup()
