@@ -32,7 +32,7 @@ class BoolAudioJEPAMultiBlockMaskCollator:
         """Initialize the BoolAudioJEPAMultiBlockMaskCollator.
 
         Args:
-            input_sample_size (size_2d):
+            input_sample_size (int):
                 Num of samples in the input audio.
             patch_sample_size (int):
                 Size of each patch. It can also be regarded as window_size.
