@@ -22,8 +22,8 @@ class BoolAudioJEPAMultiBlockMaskCollator:
 
     def __init__(
         self,
-        input_size: int,
-        patch_size: int,
+        input_sample_size: int,
+        patch_sample_size: int,
         stride: int,
         mask_scale: tuple[float, float] = (0.10, 0.25),  # masking 1/10 ~ 1/4 region
         n_masks: int = 4,
@@ -32,9 +32,9 @@ class BoolAudioJEPAMultiBlockMaskCollator:
         """Initialize the BoolAudioJEPAMultiBlockMaskCollator.
 
         Args:
-            input_size (size_2d):
+            input_sample_size (int):
                 Num of samples in the input audio.
-            patch_size (int):
+            patch_sample_size (int):
                 Size of each patch. It can also be regarded as window_size.
             stride (int):
                 Stride during making patches from audio. It can also be regarded as hop_size.
@@ -50,13 +50,13 @@ class BoolAudioJEPAMultiBlockMaskCollator:
         assert mask_scale[0] > 0
         assert mask_scale[1] < 1
 
-        assert patch_size <= input_size
-        assert stride <= patch_size
-        assert (input_size - (patch_size - stride)) % stride == 0
-        self.input_size = input_size
-        self.patch_size = patch_size
+        assert patch_sample_size <= input_sample_size
+        assert stride <= patch_sample_size
+        assert (input_sample_size - (patch_sample_size - stride)) % stride == 0
+        self.input_sample_size = input_sample_size
+        self.patch_sample_size = patch_sample_size
 
-        self.n_patches = (input_size - (self.patch_size - stride)) // stride
+        self.n_patches = (input_sample_size - (self.patch_sample_size - stride)) // stride
         assert min_keep <= self.n_patches
 
         self.mask_scale = mask_scale
@@ -90,14 +90,14 @@ class BoolAudioJEPAMultiBlockMaskCollator:
 
         # Given scale, compute n_samples of mask.
         num_patches_max = self.n_patches
-        n_samples_of_mask = round(mask_scale * num_patches_max)
+        mask_sample_size = round(mask_scale * num_patches_max)
 
         # clamp with [1, self.n_patches]
-        n_samples_of_mask = min(max(n_samples_of_mask, 1), self.n_patches)
+        mask_sample_size = min(max(mask_sample_size, 1), self.n_patches)
 
         # Compute mask coordinates
-        start = int(torch.randint(high=self.n_patches - n_samples_of_mask + 1, size=(1,), generator=generator).item())
-        end = start + n_samples_of_mask
+        start = int(torch.randint(high=self.n_patches - mask_sample_size + 1, size=(1,), generator=generator).item())
+        end = start + mask_sample_size
         return start, end
 
     def sample_masks_and_target(self, generator: torch.Generator) -> tuple[Tensor, Tensor]:
@@ -155,7 +155,7 @@ class BoolAudioJEPAMultiBlockMaskCollator:
                     Boolean masks representing predictor targets (shape: [batch_size, n_patches])
         """
         collated_audios: Tensor = default_collate(audios)[0]
-        assert collated_audios.size(-1) == self.input_size
+        assert collated_audios.size(-1) == self.input_sample_size
 
         seed = self.step()
         g = torch.Generator()
