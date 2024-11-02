@@ -5,8 +5,8 @@ from ami.models.bool_mask_audio_jepa import (
     BoolMaskAudioJEPAEncoder,
     BoolTargetAudioJEPAPredictor,
     ModelWrapper,
-    encoder_infer_mean_along_patch,
     audio_jepa_encoder_infer,
+    encoder_infer_mean_along_patch,
 )
 
 
@@ -145,7 +145,7 @@ class TestBoolTargetAudioJEPAPredictor:
         assert predictions.size(1) == n_patches, "num of patch mismatch"
         assert predictions.size(2) == context_encoder_out_dim, "out_dim mismatch"
 
-    
+
 def test_audio_jepa_encoder_infer(device):
     wrapper = ModelWrapper(
         BoolMaskAudioJEPAEncoder(
@@ -153,9 +153,9 @@ def test_audio_jepa_encoder_infer(device):
             patch_sample_size=400,
             stride=320,
             in_channels=2,
-            embed_dim=64, 
-            out_dim=64, 
-            depth=4, 
+            embed_dim=64,
+            out_dim=64,
+            depth=4,
             num_heads=2,
         ),
         device,
@@ -163,7 +163,7 @@ def test_audio_jepa_encoder_infer(device):
         inference_forward=audio_jepa_encoder_infer,
     )
     wrapper.to_default_device()
-    
+
     n_patches = 50
 
     out: torch.Tensor = wrapper.infer(torch.randn(2, 16080))
@@ -181,9 +181,9 @@ def test_encoder_infer_mean_patch(device):
             patch_sample_size=400,
             stride=320,
             in_channels=2,
-            embed_dim=64, 
-            out_dim=64, 
-            depth=4, 
+            embed_dim=64,
+            out_dim=64,
+            depth=4,
             num_heads=2,
         ),
         device,
