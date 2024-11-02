@@ -23,6 +23,22 @@ def get_2d_positional_embeddings(embed_dim: int, grid_size: int | tuple[int, int
     return positional_embeddings
 
 
+def get_1d_positional_embeddings(embed_dim: int, sequence_length: int) -> npt.NDArray[np.float64]:
+    """
+    Args:
+        embed_dim (int): dim of positional embeddings.
+        sequence_length (int): length of positional embeddings.
+    Returns:
+        npt.NDArray[np.float64]:
+            positional embeddings (shape: [sequence_length, embed_dim]).
+    """
+    positional_embeddings = get_2d_positional_embeddings(
+        embed_dim=embed_dim, grid_size=(1, sequence_length)
+    )  # [1, sequence_length, embed_dim]
+    positional_embeddings = np.squeeze(positional_embeddings, axis=0)  # [sequence_length, embed_dim]
+    return positional_embeddings
+
+
 def get_2d_sincos_positional_embeddings_from_grid(
     embed_dim: int, grid: npt.NDArray[np.float64]
 ) -> npt.NDArray[np.float64]:

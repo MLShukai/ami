@@ -7,7 +7,7 @@ import torch.nn as nn
 from torch import Tensor
 
 from .components.audio_patchifier import AudioPatchifier
-from .components.positional_embeddings import get_2d_positional_embeddings
+from .components.positional_embeddings import get_1d_positional_embeddings
 from .components.vision_transformer_layer import VisionTransformerLayer
 from .model_wrapper import ModelWrapper
 
@@ -46,40 +46,40 @@ class BoolMaskAudioJEPAEncoder(nn.Module):
                 Stride during making patches from audio. It can also be regarded as hop_size.
                 Defaults to 320.
             in_channels (int):
-                Num of input audio channels. 
+                Num of input audio channels.
                 Defaults to 1.
-            embed_dim (int): 
-                Embedding dimension per patch. 
+            embed_dim (int):
+                Embedding dimension per patch.
                 Defaults to 768.
-            out_dim (int): 
-                Output dimension per patch. 
+            out_dim (int):
+                Output dimension per patch.
                 Defaults to 384.
-            depth (int): 
-                Number of transformer layers. 
+            depth (int):
+                Number of transformer layers.
                 Defaults to 12.
-            num_heads (int): 
-                Number of attention heads for transformer layers. 
+            num_heads (int):
+                Number of attention heads for transformer layers.
                 Defaults to 12.
-            mlp_ratio (float): 
-                Ratio for MLP hidden dimension in transformer layers. 
+            mlp_ratio (float):
+                Ratio for MLP hidden dimension in transformer layers.
                 Defaults to 4.0.
-            qkv_bias (bool): 
-                Whether to use bias in query, key, value projections. 
+            qkv_bias (bool):
+                Whether to use bias in query, key, value projections.
                 Defaults to True.
-            qk_scale (float | None): 
-                Scale factor for query-key dot product. 
+            qk_scale (float | None):
+                Scale factor for query-key dot product.
                 Defaults to None.
-            drop_rate (float): 
-                Dropout rate. 
+            drop_rate (float):
+                Dropout rate.
                 Defaults to 0.0.
-            attn_drop_rate (float): 
-                Attention dropout rate. 
+            attn_drop_rate (float):
+                Attention dropout rate.
                 Defaults to 0.0.
-            drop_path_rate (float): 
-                Stochastic depth rate. 
+            drop_path_rate (float):
+                Stochastic depth rate.
                 Defaults to 0.0.
-            init_std (float): 
-                Standard deviation for weight initialization. 
+            init_std (float):
+                Standard deviation for weight initialization.
                 Defaults to 0.02.
         """
         super().__init__()
@@ -87,7 +87,7 @@ class BoolMaskAudioJEPAEncoder(nn.Module):
         self.num_features = self.embed_dim = embed_dim
         self.num_heads = num_heads
 
-        # define input layer to convert input image into patches.
+        # define input layer to convert input audios into patches.
         self.patch_embed = AudioPatchifier(
             in_channels=in_channels,
             embed_dim=embed_dim,
@@ -97,8 +97,6 @@ class BoolMaskAudioJEPAEncoder(nn.Module):
         self.mask_token_vector = nn.Parameter(torch.empty(embed_dim))
 
         # define positional encodings
-        img_height, img_width = img_size
-
         assert patch_sample_size <= input_sample_size
         assert stride <= patch_sample_size
         assert (input_sample_size - (patch_sample_size - stride)) % stride == 0
@@ -106,9 +104,9 @@ class BoolMaskAudioJEPAEncoder(nn.Module):
         n_patches = (input_sample_size - (patch_sample_size - stride)) // stride
 
         self.positional_encodings: Tensor
-        positional_encodings = get_2d_positional_embeddings(
-            embed_dim,
-            n_patches_hw,
+        positional_encodings = get_1d_positional_embeddings(
+            embed_dim=embed_dim,
+            sequence_length=n_patches,
         ).reshape(1, n_patches, embed_dim)
         self.register_buffer("positional_encodings", torch.from_numpy(positional_encodings).float())
 
@@ -196,7 +194,7 @@ class BoolTargetAudioJEPAPredictor(nn.Module):
         """Initialize the BoolTargetAudioJEPAPredictor.
 
         Args:
-            n_patches (size_2d): Number of patches along vertical and horizontal axes.
+            n_patches (int): Number of patches.
             context_encoder_out_dim (int): Output dimension of the context encoder. Defaults to 384.
             hidden_dim (int): Hidden dimension for prediction. Defaults to 384.
             depth (int): Number of transformer layers. Defaults to 6.
@@ -221,12 +219,11 @@ class BoolTargetAudioJEPAPredictor(nn.Module):
         dpr = np.linspace(0, drop_path_rate, depth).tolist()
 
         # define positional encodings
-        (n_patches_vertical, n_patches_horizontal) = size_2d_to_int_tuple(n_patches)
-        positional_encodings = get_2d_positional_embeddings(
-            hidden_dim, grid_size=(n_patches_vertical, n_patches_horizontal)
-        ).reshape(1, n_patches_vertical * n_patches_horizontal, hidden_dim)
-
-        self.positional_encodings: torch.Tensor
+        self.positional_encodings: Tensor
+        positional_encodings = get_1d_positional_embeddings(
+            embed_dim=hidden_dim,
+            sequence_length=n_patches,
+        ).reshape(1, n_patches, hidden_dim)
         self.register_buffer("positional_encodings", torch.from_numpy(positional_encodings).float())
 
         # define transformers
@@ -334,7 +331,7 @@ def audio_jepa_encoder_infer(wrapper: ModelWrapper[BoolMaskAudioJEPAEncoder], au
             shape (patch, dim) or (batch, patch, dim)
     """
     device = wrapper.device
-    no_batch = audios.ndim == 3
+    no_batch = audios.ndim == 2
 
     if no_batch:
         audios = audios.unsqueeze(0)  # batched
