@@ -5,7 +5,7 @@ defaults:
   - override /trainers: bool_mask_i_jepa
   - override /shared: default
   - override /interaction/environment: video_folders
-  - override /interaction/agent: image_collecting
+  - override /interaction/agent: observation_collecting
 shared:
   image_width: 144
   image_height: 144

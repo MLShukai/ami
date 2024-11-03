@@ -3,7 +3,7 @@
 defaults:
   - bool_mask_i_jepa
   - override /interaction/environment: video_folders
-  - override /interaction/agent: image_collecting
+  - override /interaction/agent: observation_collecting
   - override /models: bool_mask_i_jepa_large
 
 interaction:

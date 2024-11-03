@@ -4,8 +4,8 @@ from ...data.step_data import DataKeys, StepData
 from .base_agent import BaseAgent
 
 
-class ImageCollectingAgent(BaseAgent[Tensor, None]):
-    """Collects the observed image."""
+class ObservationCollectingAgent(BaseAgent[Tensor, None]):
+    """Collects the observation."""
 
     def __init__(self) -> None:
         super().__init__()
