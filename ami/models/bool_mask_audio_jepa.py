@@ -344,23 +344,3 @@ def audio_jepa_encoder_infer(wrapper: ModelWrapper[BoolMaskAudioJEPAEncoder], au
         out = out.squeeze(0)
 
     return out
-
-
-def encoder_infer_mean_along_patch(wrapper: ModelWrapper[BoolMaskAudioJEPAEncoder], audios: Tensor) -> Tensor:
-    """Customizes the inference flow in the encoder.
-
-    Please specify to `ModelWrapper(inference_forward=<this>)`.
-    Adds batch axis if input audio does not have it, applies layer normalization,
-    and means latent along the patch axis.
-
-    Args:
-        wrapper: ModelWrapper instance that wraps AudioJEPAEncoder.
-        audios: Input for AudioJEPAEncoder.
-            shape (channel, sample_size) or (batch, channel, sample_size)
-
-    Returns:
-        torch.Tensor: Output of AudioJEPAEncoder.
-            shape (dim,) or (batch, dim)
-    """
-
-    return audio_jepa_encoder_infer(wrapper, audios).mean(-2)
