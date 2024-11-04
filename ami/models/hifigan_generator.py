@@ -16,7 +16,7 @@ def get_padding(kernel_size: int, dilation: int = 1) -> int:
 
 
 class ResBlock1(torch.nn.Module):
-    def __init__(self, channels: int, kernel_size: int = 3, dilation: list[int] = (1, 3, 5)) -> None:
+    def __init__(self, channels: int, kernel_size: int = 3, dilation: list[int] = [1, 3, 5]) -> None:
         super().__init__()
         self.convs1 = torch.nn.ModuleList(
             [
@@ -69,7 +69,7 @@ class ResBlock1(torch.nn.Module):
         )
         self.convs2.apply(init_weights)
 
-    def forward(self, x: torch.Tensor) -> None:
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
         for c1, c2 in zip(self.convs1, self.convs2):
             xt = torch.nn.functional.leaky_relu(x, 0.1)
             xt = c1(xt)
@@ -100,7 +100,6 @@ class HifiGANGenerator(torch.nn.Module):
         resblock_dilation_sizes: list[list[int]] = [[1, 3, 5], [1, 3, 5], [1, 3, 5]],
     ) -> None:
         super().__init__()
-        self.out_channels = out_channels
         self.num_kernels = len(resblock_kernel_sizes)
         self.num_upsamples = len(upsample_rates)
         self.conv_pre = torch.nn.utils.weight_norm(Conv1d(in_channels, upsample_initial_channel, 7, 1, padding=3))
@@ -134,7 +133,7 @@ class HifiGANGenerator(torch.nn.Module):
         and so on.
 
         Args:
-            audios (Tensor):
+            features (Tensor):
                 Input features. Shape: [batch_size, in_channels, frames]
 
         Returns:
@@ -151,14 +150,14 @@ class HifiGANGenerator(torch.nn.Module):
                     xs = self.resblocks[i * self.num_kernels + j](x)
                 else:
                     xs += self.resblocks[i * self.num_kernels + j](x)
+            assert isinstance(xs, torch.Tensor)
             x = xs / self.num_kernels
         x = torch.nn.functional.leaky_relu(x)
         x = self.conv_post(x)
         x = torch.tanh(x)
-
         return x
 
-    def remove_weight_norm(self):
+    def remove_weight_norm(self) -> None:
         print("Removing weight norm...")
         for layer in self.layers:
             torch.nn.utils.remove_weight_norm(layer)
