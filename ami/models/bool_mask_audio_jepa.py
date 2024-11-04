@@ -22,7 +22,7 @@ class BoolMaskAudioJEPAEncoder(nn.Module):
         patch_sample_size: int = 400,
         stride: int = 320,
         in_channels: int = 1,
-        embed_dim: int = 768,
+        embed_dim: int = 512,
         out_dim: int = 384,
         depth: int = 12,
         num_heads: int = 12,
@@ -50,7 +50,7 @@ class BoolMaskAudioJEPAEncoder(nn.Module):
                 Defaults to 1.
             embed_dim (int):
                 Embedding dimension per patch.
-                Defaults to 768.
+                Defaults to 512.
             out_dim (int):
                 Output dimension per patch.
                 Defaults to 384.
