@@ -1,4 +1,4 @@
-import numpy as np
+# SioConv with Parallel Scan  (PS)
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
