@@ -1,3 +1,5 @@
+from enum import Enum
+
 import torch
 
 
@@ -26,3 +28,10 @@ def min_max_normalize(
     denominator = (x_max - x_min).clamp(min=eps)
 
     return (x - x_min) / denominator * (new_max - new_min) + new_min
+
+
+class Modality(str, Enum):
+    """Enumerates modalities."""
+
+    IMAGE = "image"
+    AUDIO = "audio"

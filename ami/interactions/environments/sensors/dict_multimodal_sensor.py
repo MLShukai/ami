@@ -1,14 +1,9 @@
-from enum import Enum
-
 from torch import Tensor
 from typing_extensions import override
 
+from ami.utils import Modality
+
 from .base_sensor import BaseSensor
-
-
-class Modality(str, Enum):
-    IMAGE = "image"
-    AUDIO = "audio"
 
 
 class DictMultimodalSensor(BaseSensor[dict[Modality, Tensor]]):
