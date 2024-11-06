@@ -23,6 +23,7 @@ mlagents-envs = {git = "https://github.com/MLShukai/ml-agents.git", subdirectory
 hydra-joblib-launcher = "^1.2.0"
 matplotlib = "^3.9.2"
 seaborn = "^0.13.2"
+soundfile = "^0.12.1"
 
 
 [tool.poetry.group.dev.dependencies]
