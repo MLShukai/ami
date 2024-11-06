@@ -45,9 +45,6 @@ class SioConvPSLayer(nn.Module):
         self.fc_y_act = nn.Linear(dim, dim)
         self.act = nn.SiLU()
         self.fc_dt = nn.Linear(dim, dim)
-        self.last_hidden = None
-        self.last_hidden_init = nn.Parameter(torch.randn(dim))
-        self.is_refresh = True
 
     # (batch, len, dim), (batch, dim) -> (batch, len, dim), (batch, len, dim)
     def forward(self, x: Tensor, hidden: Tensor) -> tuple[Tensor, Tensor]:
