@@ -11,8 +11,11 @@ class TestSensorWrapperFromIOWrapper:
     def test_wrapper_method_call(self, mocker: MockerFixture, tmp_path):
         mock_io_wrapper = mocker.Mock(BaseIOWrapper)
         mock_io_wrapper.wrap.return_value = 1
+        mock_sensor = mocker.Mock(BaseSensor)
+        mock_sensor.read.return_value = 0
+
         wrapper = SensorWrapperFromIOWrapper(
-            sensor=mocker.Mock(BaseSensor),
+            sensor=mock_sensor,
             io_wrapper=mock_io_wrapper,
         )
 
@@ -25,7 +28,20 @@ class TestSensorWrapperFromIOWrapper:
         wrapper.save_state(tmp_path)
         wrapper.load_state(tmp_path)
 
-        mock_io_wrapper.wrap.assert_called_with(0)
+        mock_sensor.read.assert_called_once()
+        mock_sensor.setup.assert_called_once()
+        mock_sensor.teardown.assert_called_once()
+        mock_sensor.on_paused.assert_called_once()
+        mock_sensor.on_resumed.assert_called_once()
+        mock_sensor.save_state.assert_called_once_with(tmp_path)
+        mock_sensor.load_state.assert_called_once_with(tmp_path)
+
+        mock_io_wrapper.wrap.assert_has_calls(
+            [
+                mocker.call(0),  # From read()
+                mocker.call(0),  # From wrap_observation()
+            ]
+        )
         mock_io_wrapper.setup.assert_called_once()
         mock_io_wrapper.teardown.assert_called_once()
         mock_io_wrapper.on_paused.assert_called_once()
