@@ -42,17 +42,17 @@ class TestTensorAudioRecoder:
         recorder.teardown()
 
         # Read the recorded audio file
-        data, sample_rate = sf.read(recorder.file_path)
+        waveform, sample_rate = sf.read(recorder.file_path)
 
-        # Verify the recorded data
+        # Verify the recorded waveform
         assert sample_rate == 16000  # Check sample rate
-        assert data.shape[1] == CHANNELS  # Check channel count
-        assert data.shape[0] == SAMPLE_SIZE * 5  # Check total samples
+        assert waveform.shape[1] == CHANNELS  # Check channel count
+        assert waveform.shape[0] == SAMPLE_SIZE * 5  # Check total samples
 
         # Convert original tensor to numpy for comparison
-        expected_data = self.TEST_TENSOR.transpose(0, 1).numpy()
-        # Compare first frame of data
-        np.testing.assert_array_almost_equal(data[:SAMPLE_SIZE], expected_data)
+        expected_waveform = self.TEST_TENSOR.transpose(0, 1).numpy()
+        # Compare first frame of waveform
+        np.testing.assert_array_almost_equal(waveform[:SAMPLE_SIZE], expected_waveform)
 
     def test_sample_slice_recording(self, output_dir):
         slice_size = 8000
@@ -65,17 +65,17 @@ class TestTensorAudioRecoder:
         recorder.teardown()
 
         # Read the recorded audio file
-        data, _ = sf.read(recorder.file_path)
+        waveform, _ = sf.read(recorder.file_path)
 
         # Verify only slice_size samples were recorded
-        assert data.shape[0] == slice_size
+        assert waveform.shape[0] == slice_size
 
-        # Compare the sliced data
-        expected_data = self.TEST_TENSOR.transpose(0, 1)[:slice_size].numpy()
-        np.testing.assert_array_almost_equal(data, expected_data)
+        # Compare the sliced waveform
+        expected_waveform = self.TEST_TENSOR.transpose(0, 1)[:slice_size].numpy()
+        np.testing.assert_array_almost_equal(waveform, expected_waveform)
 
     def test_on_paused_and_resumed(self, recorder: TensorAudioRecorder):
-        # Record initial data
+        # Record initial waveform
         recorder.wrap(self.TEST_TENSOR)
 
         # Pause recording
@@ -88,16 +88,16 @@ class TestTensorAudioRecoder:
         assert previous_file != recorder.file_path
         assert not recorder.file_writer.closed
 
-        # Record more data
+        # Record more waveform
         recorder.wrap(self.TEST_TENSOR)
 
-        # Verify both files exist and contain data
+        # Verify both files exist and contain waveform
         assert previous_file.exists()
         assert recorder.file_path.exists()
 
         # Check the content of both files
-        data1, _ = sf.read(previous_file)
-        data2, _ = sf.read(recorder.file_path)
+        waveform1, _ = sf.read(previous_file)
+        waveform2, _ = sf.read(recorder.file_path)
 
-        assert data1.shape[0] == SAMPLE_SIZE
-        assert data2.shape[0] == SAMPLE_SIZE
+        assert waveform1.shape[0] == SAMPLE_SIZE
+        assert waveform2.shape[0] == SAMPLE_SIZE
