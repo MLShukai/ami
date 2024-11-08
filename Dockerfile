@@ -27,6 +27,7 @@ RUN apt-get update && apt-get install -y \
     libgl1-mesa-glx \
     libgl1-mesa-dri \
     libhdf5-dev \
+    libsndfile1 \
     && rm -rf /var/lib/apt/lists/*
 
 # Install python dependencies
