@@ -1,27 +1,8 @@
 # @package _global_
 
 defaults:
-  - override /interaction: vrchat_with_curiosity_image_ppo_agent
   - override /interaction/agent: discrete_random_action
-
-interaction:
-  observation_wrappers:
-    - _target_: ami.interactions.io_wrappers.tensor_video_recorder.TensorVideoRecorder
-      output_dir: ${paths.io_log_dir}/video_recordings
-      width: ${shared.image_width}
-      height: ${shared.image_height}
-      frame_rate: ${python.eval:"1 / ${interaction.interval_adjustor.interval}"}
-
-  action_wrappers:
-    - _target_: ami.interactions.io_wrappers.tensor_csv_recorder.TensorCSVRecorder
-      filename: ${paths.io_log_dir}/action_log.csv
-      timestamp_header: "Timestamp"
-      headers:
-        - "MoveVertical"
-        - "MoveHorizontal"
-        - "LookHorizontal"
-        - "Jump"
-        - "Run"
+  - override /interaction/environment: vrchat_multimodal_discrete
 
 models: null
 data_collectors: null
