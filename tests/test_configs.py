@@ -1,4 +1,7 @@
 """ここではconfigファイル上からオブジェクトを正常にインスタンス化可能かテストします。"""
+import shutil
+import sys
+
 import cv2
 import hydra
 import numpy as np
@@ -42,6 +45,10 @@ if not (DATA_DIR / "random_observation_action_log").exists():
 if not (DATA_DIR / "2024-09-14_09-42-23,678417.ckpt").exists():
     IGNORE_EXPERIMENT_CONFIGS.add("learn_only_sioconv.yaml")
 
+if sys.platform == "linux":
+    if shutil.which("pipewire") is None and shutil.which("pulseaudio") is None:
+        IGNORE_EXPERIMENT_CONFIGS.add("random_observation_action_log.yaml")
+
 EXPERIMENT_CONFIG_OVERRIDES = [
     [f"experiment={file.name.rsplit('.', 1)[0]}"]
     for file in EXPERIMENT_CONFIG_FILES
@@ -54,7 +61,6 @@ HYDRA_OVERRIDES = [[]] + EXPERIMENT_CONFIG_OVERRIDES
 def test_instantiate(overrides: list[str], mocker: MockerFixture, tmp_path):
     conditional_video_capture_mock(mocker)
     mocker.patch("pythonosc.udp_client.SimpleUDPClient")
-    mocker.patch("vrchat_io.audio.SoundcardAudioCapture")
     with hydra.initialize_config_dir(str(CONFIG_DIR)):
         cfg = hydra.compose(LAUNCH_CONFIG, overrides=overrides + ["devices=cpu"], return_hydra_config=True)
         cfg.paths.output_dir = tmp_path
