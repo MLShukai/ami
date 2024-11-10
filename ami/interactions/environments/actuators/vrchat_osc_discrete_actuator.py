@@ -258,7 +258,7 @@ class FirstOrderDelaySystemDiscreteActuator(BaseActuator[torch.Tensor]):
     @override
     def on_paused(self) -> None:
         self._action_before_on_paused = self._previous_action.clone()
-        self.operate(STOP_ACTION)
+        self.controller.command(RESET_VALUES)
 
     @override
     def on_resumed(self) -> None:
