@@ -1,5 +1,8 @@
 """This test checks whether object can be successfully instantiated from config
 file."""
+import shutil
+import sys
+
 import cv2
 import hydra
 import numpy as np
@@ -42,6 +45,10 @@ if not (DATA_DIR / "random_observation_action_log").exists():
 
 if not (DATA_DIR / "2024-09-14_09-42-23,678417.ckpt").exists():
     IGNORE_EXPERIMENT_CONFIGS.add("learn_only_sioconv.yaml")
+
+if sys.platform == "linux":
+    if shutil.which("pipewire") is None and shutil.which("pulseaudio") is None:
+        IGNORE_EXPERIMENT_CONFIGS.add("random_observation_action_log.yaml")
 
 EXPERIMENT_CONFIG_OVERRIDES = [
     [f"experiment={file.name.rsplit('.', 1)[0]}"]
