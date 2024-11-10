@@ -54,6 +54,7 @@ HYDRA_OVERRIDES = [[]] + EXPERIMENT_CONFIG_OVERRIDES
 def test_instantiate(overrides: list[str], mocker: MockerFixture, tmp_path):
     conditional_video_capture_mock(mocker)
     mocker.patch("pythonosc.udp_client.SimpleUDPClient")
+    mocker.patch("vrchat_io.audio.SoundcardAudioCapture")
     with hydra.initialize_config_dir(str(CONFIG_DIR)):
         cfg = hydra.compose(LAUNCH_CONFIG, overrides=overrides + ["devices=cpu"], return_hydra_config=True)
         cfg.paths.output_dir = tmp_path
