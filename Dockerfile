@@ -28,6 +28,7 @@ RUN apt-get update && apt-get install -y \
     libgl1-mesa-dri \
     libhdf5-dev \
     libsndfile1 \
+    pulseaudio \
     && rm -rf /var/lib/apt/lists/*
 
 # Install python dependencies

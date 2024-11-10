@@ -47,6 +47,11 @@ endif
 # Tensorboardなど
 DOCKER_PORT_OPTION := --net host
 
+# PulseAudioなど
+DOCKER_AUDIO_OPTION := -e PULSE_SERVER=unix:${XDG_RUNTIME_DIR}/pulse/native \
+ -v ${XDG_RUNTIME_DIR}/pulse/native:${XDG_RUNTIME_DIR}/pulse/native \
+ -v ~/.config/pulse/cookie:/root/.config/pulse/cookie
+
 docker-run: ## Run built docker image.
 	docker run -itd $(DOCKER_GPU_OPTION) \
 	$(DOCKER_PORT_OPTION) \
@@ -60,6 +65,7 @@ docker-run-host: ## Run the built Docker image along with network, camera, and o
 	--mount type=volume,source=ami-vconf24_$(NAME),target=/workspace \
 	--mount type=bind,source=`pwd`/logs,target=/workspace/logs \
 	--device `v4l2-ctl --list-devices | grep -A 1 'OBS Virtual Camera' | grep -oP '\t\K/dev.*'`:/dev/video0:mwr \
+	$(DOCKER_AUDIO_OPTION) \
 	$(DOCKER_IMAGE_NAME)
 
 docker-run-unity: ## Run the built Docker image with Unity executables
