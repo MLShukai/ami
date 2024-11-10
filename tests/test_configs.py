@@ -1,4 +1,5 @@
-"""ここではconfigファイル上からオブジェクトを正常にインスタンス化可能かテストします。"""
+"""This test checks whether object can be successfully instantiated from config
+file."""
 import cv2
 import hydra
 import numpy as np
