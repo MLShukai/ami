@@ -24,6 +24,7 @@ hydra-joblib-launcher = "^1.2.0"
 matplotlib = "^3.9.2"
 seaborn = "^0.13.2"
 soundfile = "^0.12.1"
+python-dotenv = "^1.0.1"
 
 
 [tool.poetry.group.dev.dependencies]
