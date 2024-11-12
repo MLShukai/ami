@@ -1,4 +1,5 @@
 import math
+import os
 import threading
 import time
 from collections import deque
@@ -53,6 +54,9 @@ class SoundcardAudioSensor(BaseSensor[Tensor]):
         self._block_size = block_size
         self._read_sample_size = read_sample_size
         self._dtype = dtype
+
+        if device_name is None:
+            device_name = os.environ.get("AMI_DEFAULT_MICROPHONE")
 
         self._cap = SoundcardAudioCapture(sample_rate, device_name, frame_size=block_size, channels=channel_size)
         self._sampled_blocks: deque[Tensor] = deque(
