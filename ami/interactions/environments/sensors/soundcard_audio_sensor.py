@@ -1,3 +1,4 @@
+import logging
 import math
 import os
 import threading
@@ -10,6 +11,8 @@ from typing_extensions import override
 from vrchat_io.audio import SoundcardAudioCapture
 
 from .base_sensor import BaseSensor
+
+logger = logging.getLogger(__name__)
 
 
 class SoundcardAudioSensor(BaseSensor[Tensor]):
@@ -57,6 +60,9 @@ class SoundcardAudioSensor(BaseSensor[Tensor]):
 
         if device_name is None:
             device_name = os.environ.get("AMI_DEFAULT_MICROPHONE")
+
+        if device_name is not None:
+            logger.debug(f"Using audio device: {device_name}")
 
         self._cap = SoundcardAudioCapture(sample_rate, device_name, frame_size=block_size, channels=channel_size)
         self._sampled_blocks: deque[Tensor] = deque(
