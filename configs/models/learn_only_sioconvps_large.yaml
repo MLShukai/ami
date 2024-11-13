@@ -110,10 +110,10 @@ value:
       dim_out: 1
       num_stack: ${python.eval:"12 * 12"} # assuming image size is 144x144, patch size is 12x12.
     forward_dynamics_hidden_projection:
-      _target_: ami.models.policy_value_common_net.LerpStackedHidden
-      dim: ${models.forward_dynamics.model.core_model.dim}
-      depth: ${models.forward_dynamics.model.core_model.depth}
-      num_head: 8
+      _target_: ami.models.components.stacked_features.LerpStackedFeatures
+      dim_in: ${models.forward_dynamics.model.core_model.dim}
+      dim_out: ${.dim_in}
+      num_stack: ${models.forward_dynamics.model.core_model.depth}
     observation_hidden_projection:
       _target_: ami.models.policy_value_common_net.ConcatFlattenedObservationAndLerpedHidden
       dim_obs: ${..observation_projection.dim_out}
