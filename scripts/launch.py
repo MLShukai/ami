@@ -1,6 +1,7 @@
 """Launch script file for the ami system."""
 import os
 
+import dotenv
 import hydra
 import rootutils
 import torch
@@ -29,7 +30,9 @@ from ami.trainers.utils import TrainersList
 
 # Add the project root path to environment vartiable `PROJECT_ROOT`
 # to refer in the config file by `${oc.env:PROJECT_ROOT}`.
-rootutils.setup_root(__file__, indicator=".project-root", pythonpath=True)
+PROJECT_ROOT = rootutils.setup_root(__file__, indicator=".project-root", pythonpath=True)
+
+dotenv.load_dotenv(PROJECT_ROOT / ".env")
 
 logger = get_main_thread_logger(__name__)
 

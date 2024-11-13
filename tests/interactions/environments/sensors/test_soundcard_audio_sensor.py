@@ -1,3 +1,4 @@
+import os
 import shutil
 import sys
 import time
@@ -5,7 +6,7 @@ import time
 import numpy as np
 import pytest
 import torch
-from pytest_mock import MockerFixture
+from pytest_mock import MockerFixture, MockType
 
 if sys.platform == "linux":
     if shutil.which("pipewire") is None and shutil.which("pulseaudio") is None:
@@ -18,11 +19,16 @@ from ami.interactions.environments.sensors.soundcard_audio_sensor import (
 
 class TestSoundcardAudioSensor:
     @pytest.fixture
-    def sensor(self, mocker: MockerFixture):
+    def mock_capture(self, mocker: MockerFixture):
         # Mock SoundcardAudioCapture
         capture = mocker.patch("ami.interactions.environments.sensors.soundcard_audio_sensor.SoundcardAudioCapture")
         # Return zeros array with shape matching block_size and channel_size
         capture().read.return_value = np.zeros((1600, 2), dtype=np.float32)
+        return capture
+
+    @pytest.fixture
+    def sensor(self, mock_capture):
+        # Mock SoundcardAudioCapture
         return SoundcardAudioSensor(
             device_name="test_device",
             sample_rate=16000,
@@ -76,3 +82,15 @@ class TestSoundcardAudioSensor:
 
         # Verify that the background thread has stopped
         assert not sensor._capture_thread.is_alive()
+
+    def test_microphone_from_environment_variable(self, mock_capture: MockType):
+        os.environ["AMI_DEFAULT_MICROPHONE"] = "microphone"
+        sensor = SoundcardAudioSensor(
+            device_name=None,
+            sample_rate=16000,
+            channel_size=2,
+            read_sample_size=1600,
+            block_size=1600,
+            dtype=torch.float32,
+        )
+        mock_capture.assert_called_with(16000, "microphone", frame_size=1600, channels=2)
