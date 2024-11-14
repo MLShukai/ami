@@ -28,7 +28,7 @@ type:
 run: format test-full type
 
 NAME := $(shell whoami)
-DOCKER_IMAGE_NAME := ami-vconf24:$(NAME)
+DOCKER_IMAGE_NAME := $(NAME)/ami:latest
 
 docker-build: ## Build docker image.
 	docker build -t $(DOCKER_IMAGE_NAME) --no-cache .
@@ -52,17 +52,19 @@ DOCKER_AUDIO_OPTION := -e PULSE_SERVER=unix:${XDG_RUNTIME_DIR}/pulse/native \
  -v ${XDG_RUNTIME_DIR}/pulse/native:${XDG_RUNTIME_DIR}/pulse/native \
  -v ~/.config/pulse/cookie:/root/.config/pulse/cookie
 
+DOCKER_VOLUME_NAME := ami-$(NAME)
+
 docker-run: ## Run built docker image.
 	docker run -itd $(DOCKER_GPU_OPTION) \
 	$(DOCKER_PORT_OPTION) \
-	--mount type=volume,source=ami-vconf24_$(NAME),target=/workspace \
+	--mount type=volume,source=$(DOCKER_VOLUME_NAME),target=/workspace \
 	--mount type=bind,source=`pwd`/logs,target=/workspace/logs \
 	$(DOCKER_IMAGE_NAME)
 
 docker-run-host: ## Run the built Docker image along with network, camera, and other host OS device access
 	docker run -itd $(DOCKER_GPU_OPTION) \
 	$(DOCKER_PORT_OPTION) \
-	--mount type=volume,source=ami-vconf24_$(NAME),target=/workspace \
+	--mount type=volume,source=$(DOCKER_VOLUME_NAME),target=/workspace \
 	--mount type=bind,source=`pwd`/logs,target=/workspace/logs \
 	--device `v4l2-ctl --list-devices | grep -A 1 'OBS Virtual Camera' | grep -oP '\t\K/dev.*'`:/dev/video0:mwr \
 	$(DOCKER_AUDIO_OPTION) \
@@ -71,7 +73,7 @@ docker-run-host: ## Run the built Docker image along with network, camera, and o
 docker-run-unity: ## Run the built Docker image with Unity executables
 	docker run -itd $(DOCKER_GPU_OPTION) \
 	$(DOCKER_PORT_OPTION) \
-	--mount type=volume,source=ami-vconf24_$(NAME),target=/workspace \
+	--mount type=volume,source=$(DOCKER_VOLUME_NAME),,target=/workspace \
 	--mount type=bind,source=`pwd`/logs,target=/workspace/logs \
 	--mount type=bind,source=`pwd`/unity_executables,target=/workspace/unity_executables \
 	$(DOCKER_IMAGE_NAME)
@@ -80,7 +82,7 @@ DATA_DIR := `pwd`/data
 docker-run-with-data:
 	docker run -itd $(DOCKER_GPU_OPTION) \
 	$(DOCKER_PORT_OPTION) \
-	--mount type=volume,source=ami-vconf24_$(NAME),target=/workspace \
+	--mount type=volume,source=$(DOCKER_VOLUME_NAME),,target=/workspace \
 	--mount type=bind,source=`pwd`/logs,target=/workspace/logs \
 	--mount type=bind,source=$(DATA_DIR),target=/workspace/data,readonly \
 	$(DOCKER_IMAGE_NAME)
