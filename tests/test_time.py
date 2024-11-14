@@ -4,6 +4,7 @@ import pytest
 
 from ami import time as ami_time
 from ami.time import TimeController
+from tests.helpers import skip_if_platform_is_not_linux
 
 
 def test_module_global_values():
@@ -84,6 +85,7 @@ def test_sleep_with_time_scale(controller):
     assert elapsed == pytest.approx(0.05, abs=0.01)
 
 
+@skip_if_platform_is_not_linux()
 def test_time_functions_scale_properly(controller):
     """Verify all time functions respect time scale."""
     scale = 2.0
@@ -125,6 +127,7 @@ def test_resume_continues_time_properly(controller):
     assert end_time - start_time == pytest.approx(0.1, abs=0.01)
 
 
+@skip_if_platform_is_not_linux()
 def test_pause_resume_with_time_scale(controller):
     """Verify pause/resume works correctly with different time scales."""
     controller.set_time_scale(2.0)

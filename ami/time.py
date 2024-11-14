@@ -96,7 +96,7 @@ class TimeController:
             float: The current time in seconds since the epoch.
         """
         if self._is_paused:
-            return self._pause_start_scaled_time
+            return self._scaled_anchor_time
 
         delta = _original_time.time() - self._anchor_time
         return self._scaled_anchor_time + delta * self._time_scale
@@ -111,7 +111,7 @@ class TimeController:
             float: The current value of the performance counter.
         """
         if self._is_paused:
-            return self._pause_start_scaled_perf_counter
+            return self._scaled_anchor_perf_counter
 
         delta = _original_time.perf_counter() - self._anchor_perf_counter
         return self._scaled_anchor_perf_counter + delta * self._time_scale
@@ -127,7 +127,7 @@ class TimeController:
             float: The current value of the monotonic time counter.
         """
         if self._is_paused:
-            return self._pause_start_scaled_monotonic
+            return self._scaled_anchor_monotonic
 
         delta = _original_time.monotonic() - self._anchor_monotonic
         return self._scaled_anchor_monotonic + delta * self._time_scale
@@ -174,18 +174,14 @@ class TimeController:
     def pause(self) -> None:
         """Pause the flow of time in the AMI system."""
         if not self._is_paused:
-            self._pause_start_scaled_time = self.time()
-            self._pause_start_scaled_perf_counter = self.perf_counter()
-            self._pause_start_scaled_monotonic = self.monotonic()
+            self._update_scaled_anchor_values()
             self._is_paused = True
 
     def resume(self) -> None:
         """Resume the flow of time in the AMI system."""
         if self._is_paused:
             self._is_paused = False
-            self._scaled_anchor_time -= self.time() - self._pause_start_scaled_time
-            self._scaled_anchor_perf_counter -= self.perf_counter() - self._pause_start_scaled_perf_counter
-            self._scaled_anchor_monotonic -= self.monotonic() - self._pause_start_scaled_monotonic
+            self._update_anchor_values()
 
 
 # Create a global instance of TimeController
