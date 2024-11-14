@@ -46,7 +46,7 @@ from __future__ import annotations
 import time as _original_time
 from functools import wraps
 from threading import RLock
-from typing import Callable, Concatenate, ParamSpec, TypeVar, cast
+from typing import Callable, Concatenate, ParamSpec, TypeVar
 
 T = TypeVar("T")
 P = ParamSpec("P")
@@ -58,7 +58,7 @@ def with_lock(method: Callable[Concatenate[TimeController, P], T]) -> Callable[C
         with self._lock:
             return method(self, *method_args, **method_kwargs)
 
-    return cast(Callable[Concatenate[TimeController, P], T], _impl)
+    return _impl
 
 
 class TimeController:
@@ -72,6 +72,7 @@ class TimeController:
         self._scaled_anchor_monotonic = _original_time.monotonic()
 
         self._time_scale = 1.0
+        self._is_paused = False
 
     @with_lock
     def _update_anchor_values(self) -> None:
@@ -94,6 +95,9 @@ class TimeController:
         Returns:
             float: The current time in seconds since the epoch.
         """
+        if self._is_paused:
+            return self._pause_start_scaled_time
+
         delta = _original_time.time() - self._anchor_time
         return self._scaled_anchor_time + delta * self._time_scale
 
@@ -106,6 +110,9 @@ class TimeController:
         Returns:
             float: The current value of the performance counter.
         """
+        if self._is_paused:
+            return self._pause_start_scaled_perf_counter
+
         delta = _original_time.perf_counter() - self._anchor_perf_counter
         return self._scaled_anchor_perf_counter + delta * self._time_scale
 
@@ -119,6 +126,9 @@ class TimeController:
         Returns:
             float: The current value of the monotonic time counter.
         """
+        if self._is_paused:
+            return self._pause_start_scaled_monotonic
+
         delta = _original_time.monotonic() - self._anchor_monotonic
         return self._scaled_anchor_monotonic + delta * self._time_scale
 
@@ -156,8 +166,26 @@ class TimeController:
         """
 
         with self._lock:
+            if self._is_paused:
+                return
             time_scale = self._time_scale
         _original_time.sleep(secs / time_scale)
+
+    def pause(self) -> None:
+        """Pause the flow of time in the AMI system."""
+        if not self._is_paused:
+            self._pause_start_scaled_time = self.time()
+            self._pause_start_scaled_perf_counter = self.perf_counter()
+            self._pause_start_scaled_monotonic = self.monotonic()
+            self._is_paused = True
+
+    def resume(self) -> None:
+        """Resume the flow of time in the AMI system."""
+        if self._is_paused:
+            self._is_paused = False
+            self._scaled_anchor_time -= self.time() - self._pause_start_scaled_time
+            self._scaled_anchor_perf_counter -= self.perf_counter() - self._pause_start_scaled_perf_counter
+            self._scaled_anchor_monotonic -= self.monotonic() - self._pause_start_scaled_monotonic
 
 
 # Create a global instance of TimeController
@@ -170,6 +198,8 @@ perf_counter = _time_controller.perf_counter
 monotonic = _time_controller.monotonic
 set_time_scale = _time_controller.set_time_scale
 get_time_scale = _time_controller.get_time_scale
+pause = _time_controller.pause
+resume = _time_controller.resume
 
 # Expose the original time functions.
 fixed_sleep = _original_time.sleep
