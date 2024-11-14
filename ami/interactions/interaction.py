@@ -50,10 +50,7 @@ class Interaction(SaveAndLoadStateMixin, PauseResumeEventMixin):
             action_wrapper.setup()
 
         self.environment.setup()
-        initial_obs = self.environment.observe()
-        initial_action = self.agent.setup(self.wrap_observation(initial_obs))
-        if initial_action is not None:
-            self.environment.affect(self.wrap_action(initial_action))
+        self.agent.setup()
 
     def step(self) -> None:
         """Executes a single step of interaction.
@@ -66,10 +63,7 @@ class Interaction(SaveAndLoadStateMixin, PauseResumeEventMixin):
 
     def teardown(self) -> None:
         """Called at the end of the interaction."""
-        final_obs = self.environment.observe()
-        final_action = self.agent.teardown(self.wrap_observation(final_obs))
-        if final_action is not None:
-            self.environment.affect(self.wrap_action(final_action))
+        self.agent.teardown()
         self.environment.teardown()
 
         for observation_wrapper in self.observation_wrappers:

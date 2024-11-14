@@ -122,12 +122,12 @@ class TestCuriosityImagePPOAgent:
     def test_setup_step_teardown(self, agent: CuriosityImagePPOAgent):
 
         observation = torch.randn(CHANNELS, HEIGHT, WIDTH)
-        action = agent.setup(observation)
-
-        assert action.shape == (len(ACTION_CHOICES_PER_CATEGORY),)
+        agent.setup()
+        assert agent.initial_step
 
         for _ in range(10):
             action = agent.step(observation)
+            assert not agent.initial_step
             assert action.shape == (len(ACTION_CHOICES_PER_CATEGORY),)
 
         assert agent.step_data[DataKeys.OBSERVATION].shape == observation.shape
@@ -221,12 +221,12 @@ class TestCuriosityImageSeparatePolicyValueAgent:
 
     def test_setup_step_teardown(self, agent: CuriosityImageSeparatePolicyValueAgent):
         observation = torch.randn(CHANNELS, HEIGHT, WIDTH)
-        action = agent.setup(observation)
-
-        assert action.shape == (ACTION_DIM,)
+        agent.setup()
+        assert agent.initial_step
 
         for _ in range(10):
             action = agent.step(observation)
+            assert not agent.initial_step
             assert action.shape == (ACTION_DIM,)
 
         assert agent.step_data[DataKeys.OBSERVATION].shape == observation.shape
