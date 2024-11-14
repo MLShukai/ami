@@ -211,7 +211,7 @@ def test_resume_idempotent(controller):
     assert abs(second_resume_time - first_resume_time) < 0.01
 
 
-def test_pause_resume_fixed_time_unaffected(reset_time):
+def test_pause_resume_fixed_time_unaffected():
     """Verify fixed time functions are not affected by pause/resume."""
     start_fixed = ami_time.fixed_time()
     ami_time.pause()
