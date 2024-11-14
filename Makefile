@@ -28,7 +28,7 @@ type:
 run: format test-full type
 
 NAME := $(shell whoami)
-DOCKER_IMAGE_NAME := ami-vconf24:$(NAME)
+DOCKER_IMAGE_NAME := $(NAME)/ami:latest
 
 docker-build: ## Build docker image.
 	docker build -t $(DOCKER_IMAGE_NAME) --no-cache .
