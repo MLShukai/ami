@@ -6,6 +6,20 @@ from ami import time as ami_time
 from ami.time import TimeController
 
 
+def test_module_global_values():
+    controller = ami_time._time_controller
+    assert ami_time.sleep == controller.sleep
+    assert ami_time.time == controller.time
+    assert ami_time.monotonic == controller.monotonic
+    assert ami_time.set_time_scale == controller.set_time_scale
+    assert ami_time.get_time_scale == controller.get_time_scale
+    assert ami_time.pause == controller.pause
+    assert ami_time.resume == controller.resume
+
+    assert ami_time.fixed_sleep == original_time.sleep
+    assert ami_time.fixed_time == original_time.time
+
+
 @pytest.fixture
 def controller():
     """Provide a fresh TimeController instance for each test."""
