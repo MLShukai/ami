@@ -58,7 +58,7 @@ def with_lock(method: Callable[Concatenate[TimeController, P], T]) -> Callable[C
         with self._lock:
             return method(self, *method_args, **method_kwargs)
 
-    return _impl
+    return _impl  # type: ignore
 
 
 class TimeController:
