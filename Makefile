@@ -52,7 +52,7 @@ DOCKER_AUDIO_OPTION := -e PULSE_SERVER=unix:${XDG_RUNTIME_DIR}/pulse/native \
  -v ${XDG_RUNTIME_DIR}/pulse/native:${XDG_RUNTIME_DIR}/pulse/native \
  -v ~/.config/pulse/cookie:/root/.config/pulse/cookie
 
-DOCKER_VOLUME_NAME := $(NAME)/ami
+DOCKER_VOLUME_NAME := ami-$(NAME)
 
 docker-run: ## Run built docker image.
 	docker run -itd $(DOCKER_GPU_OPTION) \
