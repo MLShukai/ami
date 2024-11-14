@@ -19,21 +19,21 @@ class TestDiscreteRandomActionAgent:
         assert agent.max_action_repeat == 3
 
     def test_setup(self, agent):
-        agent.setup(None)
+        agent.setup()
         assert len(agent.remaining_action_repeat_counts) == 3
         assert len(agent.action) == 3
         assert all(count == 0 for count in agent.remaining_action_repeat_counts)
         assert all(action == 0 for action in agent.action)
 
     def test_step_output_shape(self, agent):
-        agent.setup(None)
+        agent.setup()
         action = agent.step(None)
         assert isinstance(action, torch.Tensor)
         assert action.shape == (3,)
         assert action.dtype == torch.long
 
     def test_action_choices(self, agent):
-        agent.setup(None)
+        agent.setup()
         for _ in range(100):  # Run multiple times to increase chance of covering all possibilities
             action = agent.step(None)
             assert 0 <= action[0] < 3

@@ -38,7 +38,7 @@ class DiscreteRandomActionAgent(BaseAgent[Any, Tensor]):
         return len(self.action_choices_per_category)
 
     @override
-    def setup(self, observation: Any) -> Tensor | None:
+    def setup(self) -> None:
         self.remaining_action_repeat_counts = [0] * self.num_actions
         self.action = [0] * self.num_actions
         return None

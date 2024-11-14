@@ -35,8 +35,7 @@ class TestInteraction:
         mock_obs_wrapper.setup.assert_called_once()
         mock_act_wrapper.setup.assert_called_once()
         mock_env.setup.assert_called_once()
-        mock_agent.setup.assert_called_once_with("wrapped_obs(observation)")
-        mock_env.affect.assert_called_once_with("wrapped_act(setup_action)")
+        mock_agent.setup.assert_called_once()
 
     def test_step(self, interaction, mock_env, mock_agent):
         interaction.step()
@@ -47,8 +46,7 @@ class TestInteraction:
     def test_teardown(self, interaction, mock_env, mock_agent, mock_obs_wrapper, mock_act_wrapper):
         interaction.teardown()
 
-        mock_agent.teardown.assert_called_once_with("wrapped_obs(observation)")
-        mock_env.affect.assert_called_once_with("wrapped_act(teardown_action)")
+        mock_agent.teardown.assert_called_once()
         mock_env.teardown.assert_called_once()
         mock_obs_wrapper.teardown.assert_called_once()
         mock_act_wrapper.teardown.assert_called_once()

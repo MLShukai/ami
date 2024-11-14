@@ -74,24 +74,14 @@ class BaseAgent(ABC, Generic[ObsType, ActType], SaveAndLoadStateMixin, PauseResu
         """
         raise NotImplementedError
 
-    def setup(self, observation: ObsType) -> ActType | None:
+    def setup(self) -> None:
         """Setup procedure for the Agent.
 
-        Args:
-            observation: Initial observation from the environment.
-
-        Returns:
-            action: Initial action to be taken in response to the environment during interaction. Returning no action is also an option.
+        Called before first `step`.
         """
-        return None
 
-    def teardown(self, observation: ObsType) -> ActType | None:
+    def teardown(self) -> None:
         """Teardown procedure for the Agent.
 
-        Args:
-            observation: Final observation from the environment.
-
-        Returns:
-            action: Final action to be taken in the interaction. Returning no action is also an option.
+        Called after final `step`.
         """
-        return None

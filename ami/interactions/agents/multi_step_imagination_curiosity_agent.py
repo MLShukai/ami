@@ -210,8 +210,8 @@ class MultiStepImaginationCuriosityImageAgent(BaseAgent[Tensor, Tensor]):
 
         return action
 
-    def setup(self, observation: Tensor) -> Tensor:
-        super().setup(observation)
+    def setup(self) -> None:
+        super().setup()
         self.step_data = StepData()
 
         device = self.exact_forward_dynamics_hidden_state.device
@@ -219,10 +219,12 @@ class MultiStepImaginationCuriosityImageAgent(BaseAgent[Tensor, Tensor]):
         self.forward_dynamics_hidden_state_imaginations = torch.empty(0, device=device, dtype=dtype)
         self.predicted_embed_obs_imaginations = torch.empty(0, device=device)
 
-        return self._common_step(observation, initial_step=True)
+        self.initial_step = True
 
     def step(self, observation: Tensor) -> Tensor:
-        return self._common_step(observation, initial_step=False)
+        action = self._common_step(observation, initial_step=self.initial_step)
+        self.initial_step = False
+        return action
 
     @override
     def save_state(self, path: Path) -> None:

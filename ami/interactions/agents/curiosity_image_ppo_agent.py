@@ -129,15 +129,15 @@ class CuriosityImagePPOAgent(BaseAgent[Tensor, Tensor]):
 
         return action
 
-    def setup(self, observation: Tensor) -> Tensor:
-        super().setup(observation)
-
+    def setup(self) -> None:
+        super().setup()
         self.step_data = StepData()
-
-        return self._common_step(observation, initial_step=True)
+        self.initial_step = True
 
     def step(self, observation: Tensor) -> Tensor:
-        return self._common_step(observation, initial_step=False)
+        action = self._common_step(observation, initial_step=self.initial_step)
+        self.initial_step = False
+        return action
 
     @override
     def save_state(self, path: Path) -> None:
@@ -238,15 +238,16 @@ class CuriosityImageSeparatePolicyValueAgent(BaseAgent[Tensor, Tensor]):
 
         return action
 
-    def setup(self, observation: Tensor) -> Tensor:
-        super().setup(observation)
+    def setup(self) -> None:
+        super().setup()
 
         self.step_data = StepData()
-
-        return self._common_step(observation, initial_step=True)
+        self.initial_step = True
 
     def step(self, observation: Tensor) -> Tensor:
-        return self._common_step(observation, initial_step=False)
+        action = self._common_step(observation, initial_step=self.initial_step)
+        self.initial_step = False
+        return action
 
     @override
     def save_state(self, path: Path) -> None:

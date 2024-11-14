@@ -104,12 +104,12 @@ class TestMultiStepImaginationCuriosityImageAgent:
 
     def test_setup_step_teardown(self, agent: MultiStepImaginationCuriosityImageAgent):
         observation = torch.randn(CHANNELS, HEIGHT, WIDTH)
-        action = agent.setup(observation)
+        action = agent.setup()
 
-        assert action.shape == (ACTION_DIM,)
-
+        assert agent.initial_step
         for _ in range(10):
             action = agent.step(observation)
+            assert not agent.initial_step
             assert action.shape == (ACTION_DIM,)
             assert agent.global_step == agent.logger.global_step
 
