@@ -1,6 +1,8 @@
 poetry.lock
+/data/
 logs/
 .vscode/
+unity_executables/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

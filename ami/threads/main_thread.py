@@ -4,8 +4,12 @@ from typing import TypeAlias
 from ..checkpointing.checkpoint_schedulers import BaseCheckpointScheduler
 from .base_thread import BaseThread
 from .shared_object_names import SharedObjectNames
-from .thread_control import ThreadController, ThreadControllerStatus
-from .thread_types import ThreadTypes
+from .thread_control import ExceptionNotifier, ThreadController, ThreadControllerStatus
+from .thread_types import (
+    BACKGROUND_THREAD_TYPES,
+    ThreadTypes,
+    get_thread_name_from_type,
+)
 from .web_api_handler import ControlCommands, WebApiHandler
 
 AddressType: TypeAlias = tuple[str, int]  # host, port
@@ -26,6 +30,7 @@ class MainThread(BaseThread):
         address: AddressType = ("0.0.0.0", 8391),
         timeout_for_all_threads_pause: float = 60.0,
         max_attempts_to_pause_all_threads: int = 3,
+        max_uptime: float = float("inf"),
     ) -> None:
         """Constructs the main thread object.
 
@@ -34,6 +39,7 @@ class MainThread(BaseThread):
             address: The tuple of host and port number for web api handler.
             timeout_for_all_threads_pause: Timeout seconds to wait for all threads pause. (for saving checkpoint.)
             max_attempts_to_pause_all_threads: Number of trials for failed attempts to pause all threads.
+            max_uptime: Maximum system uptime. When this time is reached, the system will terminate.
         """
         super().__init__()
 
@@ -44,14 +50,22 @@ class MainThread(BaseThread):
         self.web_api_handler = WebApiHandler(ThreadControllerStatus(self.thread_controller), self._host, self._port)
         self._timeout_for_all_threads_pause = timeout_for_all_threads_pause
         self._max_attempts_to_pause_all_threads = max_attempts_to_pause_all_threads
+        self._max_uptime = max_uptime
 
         self.share_object(SharedObjectNames.THREAD_COMMAND_HANDLERS, self.thread_controller.handlers)
 
+    def on_shared_objects_pool_attached(self) -> None:
+        self.exception_notifiers: dict[ThreadTypes, ExceptionNotifier] = {
+            thread_type: self.get_shared_object(thread_type, SharedObjectNames.EXCEPTION_NOTIFIER)
+            for thread_type in BACKGROUND_THREAD_TYPES
+        }
+
     def worker(self) -> None:
         self.logger.info("Start main thread.")
+        self.logger.info(f"Maxmum uptime is set to {self._max_uptime}.")
         self.thread_controller.activate()
+        start_time = time.time()
 
-        self.logger.info(f"Serving system command at 'http://{self._host}:{self._port}'")
         self.web_api_handler.run_in_background()
 
         try:
@@ -64,6 +78,14 @@ class MainThread(BaseThread):
 
                 if self.checkpoint_scheduler.is_available():
                     self.save_checkpoint()
+
+                if self._max_uptime < (time.time() - start_time):
+                    self.logger.info("Shutting down by reaching maximum uptime.")
+                    break
+
+                if self.check_background_threads_exception():
+                    self.logger.error("An exception occurred. The system will terminate immediately.")
+                    break
 
                 time.sleep(0.001)
 
@@ -117,3 +139,13 @@ class MainThread(BaseThread):
         self.logger.info(f"Saved a checkpoint to '{ckpt_path}'")
 
         self.thread_controller.resume()
+
+    def check_background_threads_exception(self) -> bool:
+        """Checks the some exceptions has occurred in the background
+        threads."""
+        flag = False
+        for thread_type, notififer in self.exception_notifiers.items():
+            if notififer.is_raised():
+                self.logger.error(f"The exception has occurred in the {get_thread_name_from_type(thread_type)} thread.")
+                flag = True
+        return flag

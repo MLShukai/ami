@@ -2,6 +2,8 @@
 
 See: https://omegaconf.readthedocs.io/en/latest/custom_resolvers.html
 """
+import glob
+import os
 import re
 
 import torch
@@ -20,6 +22,8 @@ def register_custom_resolvers() -> None:
             "torch.dtype", convert_dtype_str_to_torch_dtype
         )  # Usage: ${torch.dtype: float32}
         OmegaConf.register_new_resolver("cvt_time_str", time_string_to_seconds)  # Usage: ${cvt_time_str:"1h"}
+        OmegaConf.register_new_resolver("os.cpu_count", os.cpu_count)
+        OmegaConf.register_new_resolver("glob", glob.glob)
 
         _registered = True
 
@@ -28,7 +32,8 @@ def convert_dtype_str_to_torch_dtype(dtype_str: str) -> torch.dtype:
     """Convert the string of dtype such as "float32" to `torch.dtype` object
     `torch.float32` .
 
-    All dtypes are listed in https://pytorch.org/docs/stable/tensor_attributes.html#torch-dtype
+    All dtypes are listed in
+    https://pytorch.org/docs/stable/tensor_attributes.html#torch-dtype
     """
     if hasattr(torch, dtype_str):
         dtype = getattr(torch, dtype_str)

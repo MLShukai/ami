@@ -1,9 +1,10 @@
 """This file contains all base data buffer class."""
 import copy
 from abc import ABC, abstractmethod
-from typing import Any, Self
+from typing import Any
 
 from torch.utils.data import Dataset
+from typing_extensions import Self
 
 from ami.checkpointing import SaveAndLoadStateMixin
 

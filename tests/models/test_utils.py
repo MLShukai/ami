@@ -1,3 +1,4 @@
+import pytest
 import torch
 
 from ami.models.model_wrapper import ModelWrapper
@@ -6,6 +7,7 @@ from ami.models.utils import (
     ModelWrappersDict,
     count_model_parameters,
     create_model_parameter_count_dict,
+    size_2d_to_int_tuple,
 )
 from tests.helpers import ModelMultiplyP, skip_if_gpu_is_not_available
 
@@ -56,6 +58,41 @@ class TestWrappersDict:
         for (wrapper, new_wrapper) in zip(mwd.values(), new_mwd.values()):
             assert torch.equal(wrapper.model.p, new_wrapper.model.p)
 
+    def test_key_alias(self, tmp_path):
+        wrapper1 = ModelWrapper(ModelMultiplyP(), "cpu", True)
+        wrapper2 = ModelWrapper(ModelMultiplyP(), "cpu", True)
+        mwd = ModelWrappersDict(a=wrapper1, b=wrapper1)
+        mwd["c"] = wrapper2
+        mwd["d"] = wrapper2
+
+        assert mwd._alias_keys == {"b", "d"}
+        assert mwd._names_without_alias == {"a", "c"}
+
+        with pytest.raises(KeyError):
+            mwd["a"] = wrapper2
+        with pytest.raises(RuntimeError):
+            del mwd["a"]
+
+        # Test parameter saving
+        models_path = tmp_path / "models"
+        mwd.save_state(models_path)
+        assert (models_path / "a.pt").exists()
+        assert not (models_path / "b.pt").exists()
+        assert (models_path / "c.pt").exists()
+        assert not (models_path / "d.pt").exists()
+
+        mwd.load_state(models_path)
+
+    def test_remove_inference_thread_only_models(self):
+        mwd = ModelWrappersDict(
+            a=ModelWrapper(ModelMultiplyP(), "cpu", True),
+            b=ModelWrapper(ModelMultiplyP(), "cpu", True, inference_thread_only=True),
+        )
+        removed_names = mwd.remove_inference_thread_only_models()
+        assert removed_names == ["b"]
+        assert "b" not in mwd
+        assert "b" in mwd.inference_wrappers_dict
+
 
 class DummyModel(torch.nn.Module):
     def __init__(self, *args, **kwargs) -> None:
@@ -85,3 +122,8 @@ def test_create_model_parameter_count_dict():
     }
 
     assert out["model1"] == out["model2"] == {"total": 15, "trainable": 10, "frozen": 5}
+
+
+def test_size_2d_to_int_tuple():
+    assert size_2d_to_int_tuple(10) == (10, 10)
+    assert size_2d_to_int_tuple((2, 3)) == (2, 3)

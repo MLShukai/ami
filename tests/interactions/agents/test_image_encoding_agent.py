@@ -2,7 +2,7 @@ import pytest
 import torch
 
 from ami.data.utils import DataCollectorsDict
-from ami.interactions.agents.image_encoding_agent import ImageEncodingAgent
+from ami.interactions.agents.image_encoding_agent import DataKeys, ImageEncodingAgent
 from ami.models.components.small_conv_net import SmallConvNet
 from ami.models.model_wrapper import ModelWrapper
 from ami.models.utils import InferenceWrappersDict, ModelNames, ModelWrappersDict
@@ -29,3 +29,5 @@ class TestImageEncodingAgent:
 
         out = agent.step(obs)
         assert out.shape == (256,)
+        assert DataKeys.OBSERVATION in agent.step_data
+        assert DataKeys.EMBED_OBSERVATION in agent.step_data

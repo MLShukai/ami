@@ -1,0 +1,18 @@
+_target_: ami.interactions.environments.sensor_actuator_env.SensorActuatorEnv
+
+sensor:
+  _target_: ami.interactions.environments.sensors.opencv_image_sensor.OpenCVImageSensor
+  camera_index: 0
+  width: ${shared.image_width}
+  height: ${shared.image_height}
+  base_fps: 60
+
+actuator:
+  _target_: ami.interactions.environments.actuators.vrchat_osc_discrete_actuator.FirstOrderDelaySystemDiscreteActuator
+  osc_address: "127.0.0.1"
+  osc_sender_port: 9000
+  max_move_vertical_velocity: 1.0
+  max_move_horizontal_velocity: 1.0
+  max_look_horizontal_velocity: 1.0
+  delta_time: 0.1
+  time_constant: 0.2

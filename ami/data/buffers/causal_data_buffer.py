@@ -1,12 +1,11 @@
-import json
 import pickle
+import time
 from collections import deque
 from pathlib import Path
-from typing import Self
 
 import torch
 from torch.utils.data import TensorDataset
-from typing_extensions import override
+from typing_extensions import Self, override
 
 from ..step_data import DataKeys, StepData
 from .base_data_buffer import BaseDataBuffer
@@ -14,8 +13,6 @@ from .base_data_buffer import BaseDataBuffer
 
 class CausalDataBuffer(BaseDataBuffer):
     """A data buffer which preserve data order."""
-
-    new_data_count: int  # Count of new data added since the last `make_dataset`.
 
     def __init__(self, max_len: int, key_list: list[DataKeys | str]) -> None:
         """Initializes data buffer.
@@ -32,7 +29,7 @@ class CausalDataBuffer(BaseDataBuffer):
         for key in self._key_list:
             self.__buffer_dict[key] = deque(maxlen=max_len)
 
-        self.new_data_count = 0
+        self._added_times: deque[float] = deque(maxlen=max_len)
 
     def __len__(self) -> int:
         """Returns current data length.
@@ -48,9 +45,10 @@ class CausalDataBuffer(BaseDataBuffer):
         Args:
             step_data: A single step of data.
         """
-        self.new_data_count = min(self.new_data_count + 1, self.__max_len)
         for key in self._key_list:
             self.__buffer_dict[key].append(torch.Tensor(step_data[key]).cpu())
+
+        self._added_times.append(time.time())
 
     @property
     def buffer_dict(self) -> dict[DataKeys, deque[torch.Tensor]]:
@@ -62,9 +60,9 @@ class CausalDataBuffer(BaseDataBuffer):
         Args:
             new_data: A buffer to concatenate.
         """
-        self.new_data_count = min(self.__max_len, new_data.new_data_count + self.new_data_count)
         for key in self._key_list:
             self.buffer_dict[key] += new_data.buffer_dict[key]
+        self._added_times += new_data._added_times
 
     def make_dataset(self) -> TensorDataset:
         """Make a TensorDataset from current buffer.
@@ -72,11 +70,24 @@ class CausalDataBuffer(BaseDataBuffer):
         Returns:
             TensorDataset: a TensorDataset created from current buffer.
         """
-        self.new_data_count = 0
         tensor_list = []
         for key in self._key_list:
             tensor_list.append(torch.stack(list(self.__buffer_dict[key])))
         return TensorDataset(*tensor_list)
+
+    def count_data_added_since(self, previous_get_time: float) -> int:
+        """Counts the number of data points added since a specified time.
+
+        Args:
+            previous_get_time: The reference time to count from.
+
+        Returns:
+            int: The number of data points added since the specified time.
+        """
+        for i, t in enumerate(reversed(self._added_times)):
+            if t < previous_get_time:
+                return i
+        return len(self._added_times)
 
     @override
     def save_state(self, path: Path) -> None:
@@ -86,8 +97,8 @@ class CausalDataBuffer(BaseDataBuffer):
             with open(file_name, "wb") as f:
                 pickle.dump(value, f)
 
-        with open(path / "state.json", "w", encoding="utf-8") as f:
-            json.dump({"new_data_count": self.new_data_count}, f, indent=2)
+        with open(path / "_added_times.pkl", "wb") as f:
+            pickle.dump(self._added_times, f)
 
     @override
     def load_state(self, path: Path) -> None:
@@ -96,6 +107,5 @@ class CausalDataBuffer(BaseDataBuffer):
             with open(file_name, "rb") as f:
                 self.__buffer_dict[key] = deque(pickle.load(f), maxlen=self.__max_len)
 
-        with open(path / "state.json", encoding="utf-8") as f:
-            state = json.load(f)
-            self.new_data_count = min(self.__max_len, state["new_data_count"])
+        with open(path / "_added_times.pkl", "rb") as f:
+            self._added_times = deque(pickle.load(f), maxlen=self.__max_len)

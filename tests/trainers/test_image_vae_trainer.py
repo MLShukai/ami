@@ -13,13 +13,7 @@ from ami.data.utils import DataCollectorsDict, DataUsersDict
 from ami.models.model_names import ModelNames
 from ami.models.model_wrapper import ModelWrapper
 from ami.models.utils import ModelWrappersDict
-from ami.models.vae import (
-    Conv2dDecoder,
-    Conv2dEncoder,
-    Decoder,
-    Encoder,
-    EncoderWrapper,
-)
+from ami.models.vae import Conv2dDecoder, Conv2dEncoder, Decoder, Encoder, encoder_infer
 from ami.tensorboard_loggers import StepIntervalLogger
 from ami.trainers.image_vae_trainer import ImageVAETrainer
 
@@ -67,7 +61,7 @@ class TestImageVAETrainer:
     ) -> ModelWrappersDict:
         d = ModelWrappersDict(
             {
-                ModelNames.IMAGE_ENCODER: EncoderWrapper(image_encoder, device, True),
+                ModelNames.IMAGE_ENCODER: ModelWrapper(image_encoder, device, True, encoder_infer),
                 ModelNames.IMAGE_DECODER: ModelWrapper(image_decoder, device, False),
             }
         )
@@ -113,11 +107,15 @@ class TestImageVAETrainer:
         assert trainer_path.exists()
         assert (trainer_path / "optimizer.pt").exists()
         assert (trainer_path / "logger.pt").exists()
+        assert (trainer_path / "dataset_previous_get_time.pt").exists()
         logger_state = trainer.logger.state_dict()
+        dataset_previous_get_time = trainer.dataset_previous_get_time
 
         mocked_logger_load_state_dict = mocker.spy(trainer.logger, "load_state_dict")
         trainer.optimizer_state.clear()
         assert trainer.optimizer_state == {}
+        trainer.dataset_previous_get_time = None
         trainer.load_state(trainer_path)
         assert trainer.optimizer_state != {}
         mocked_logger_load_state_dict.assert_called_once_with(logger_state)
+        assert trainer.dataset_previous_get_time == dataset_previous_get_time

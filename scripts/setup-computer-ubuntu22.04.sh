@@ -1,3 +1,5 @@
+#!/bin/bash
+
 # This script setups the computer (ubuntu22.04)
 
 # Change mirror server and Upgrade
@@ -16,7 +18,8 @@ sudo perl -p -i.bak -e 's%(deb(?:-src|)\s+)https?://(?!archive\.canonical\.com|s
 sudo apt update
 sudo apt upgrade -y
 
-sudo apt install -y curl openssh-server git tmux nvidia-driver-550 btrfs-progs htop nvtop
+sudo apt install -y curl openssh-server git tmux nvidia-driver-550 btrfs-progs htop nvtop python3 python3-pip
+pip3 install poetry obs-websocket-py
 
 # --- Docker https://docs.docker.com/engine/install/ubuntu/ ---
 for pkg in docker.io docker-doc docker-compose docker-compose-v2 podman-docker containerd runc; do sudo apt-get remove $pkg; done
@@ -69,7 +72,7 @@ sudo dpkg -i steam.deb
 curl -fsSL https://tailscale.com/install.sh | sh
 
 # NoMachine
-wget https://download.nomachine.com/download/8.11/Linux/nomachine_8.11.3_4_amd64.deb -O nomachine.deb
+wget https://download.nomachine.com/download/8.13/Linux/nomachine_8.13.1_1_amd64.deb -O nomachine.deb
 sudo dpkg -i nomachine.deb
 
 # Sunshine

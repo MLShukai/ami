@@ -1,0 +1,87 @@
+# @package _global_
+# 学習済パラメータ: https://drive.google.com/file/d/1poEqcdDi2NsP9-oyeBlvnu1q9cKBhPFb/view?usp=drive_link
+
+defaults:
+  - override /data_collectors: dynamics
+  - override /interaction/environment: video_folders
+  - override /interaction/agent: curiosity_image_multi_step_imagination
+  - override /models: learn_only_sioconv_large
+  - override /trainers: forward_dynamics_with_action_reward
+
+shared:
+  image_height: 144
+  image_width: 144
+  frame_limit: ${python.eval:"int(10 * ${cvt_time_str:4h})"} # 10FPS, 4時間分. 6サンプルで24時間分
+
+interaction:
+  agent:
+    max_imagination_steps: 50 # 5 sec
+  environment:
+    observation_generator:
+      folder_frame_limits: ${shared.frame_limit}
+      folder_paths:
+        - ${paths.data_dir}/random_observation_action_log/2024-08-26_12-55-45/io/video_recordings
+        - ${paths.data_dir}/random_observation_action_log/2024-08-26_13-00-14/io/video_recordings
+        - ${paths.data_dir}/random_observation_action_log/2024-08-26_13-04-15/io/video_recordings
+        - ${paths.data_dir}/random_observation_action_log/2024-08-26_13-08-31/io/video_recordings
+        - ${paths.data_dir}/random_observation_action_log/2024-08-27_09-28-27/io/video_recordings
+        - ${paths.data_dir}/random_observation_action_log/2024-08-27_09-31-50/io/video_recordings
+
+  observation_wrappers:
+    - _target_: ami.interactions.io_wrappers.function_wrapper.FunctionIOWrapper
+      wrap_function:
+        _target_: ami.interactions.io_wrappers.function_wrapper.normalize_tensor
+        _partial_: True
+        eps: 1e-6
+
+models:
+  i_jepa_target_encoder:
+    inference_thread_only: True
+    parameter_file: ${paths.data_dir}/2024-09-14_09-42-23,678417.ckpt/i_jepa_target_encoder.pt # 学習済モデルをセットする。
+    model:
+      patch_size: 12
+      embed_dim: 648
+      out_dim: 32
+      depth: 12
+      num_heads: 9
+  i_jepa_target_visualization_decoder:
+    inference_thread_only: True
+    parameter_file: ${paths.data_dir}/2024-09-14_09-42-23,678417.ckpt/i_jepa_target_visualization_decoder.pt # 学習済モデルをセットする
+  policy:
+    model:
+      file_max_rows: ${shared.frame_limit}
+      column_headers:
+        - "MoveVertical"
+        - "MoveHorizontal"
+        - "LookHorizontal"
+        - "Jump"
+        - "Run"
+      file_paths:
+        - ${paths.data_dir}/random_observation_action_log/2024-08-26_12-55-45/io/action_log.csv
+        - ${paths.data_dir}/random_observation_action_log/2024-08-26_13-00-14/io/action_log.csv
+        - ${paths.data_dir}/random_observation_action_log/2024-08-26_13-04-15/io/action_log.csv
+        - ${paths.data_dir}/random_observation_action_log/2024-08-26_13-08-31/io/action_log.csv
+        - ${paths.data_dir}/random_observation_action_log/2024-08-27_09-28-27/io/action_log.csv
+        - ${paths.data_dir}/random_observation_action_log/2024-08-27_09-31-50/io/action_log.csv
+
+data_collectors:
+  forward_dynamics_trajectory:
+    max_len: 1000
+    key_list:
+      - "embed_observation" # 学習済Observation Encoderの出力を使う
+      - "hidden"
+      - "action"
+      - "reward"
+
+trainers:
+  forward_dynamics:
+    observation_encoder_name: null # embed observationを直接使う
+    max_epochs: 1
+    partial_sampler:
+      sequence_length: ${python.eval:"256 // ${..partial_dataloader.batch_size} + 1"} # +1 to generate future target data.
+      max_samples: ${python.eval:"64 * ${..partial_dataloader.batch_size}"} # 64 is Iteraction count.
+    minimum_new_data_count: 128
+    partial_dataloader:
+      batch_size: 1
+
+task_name: "learn_only_sioconv"

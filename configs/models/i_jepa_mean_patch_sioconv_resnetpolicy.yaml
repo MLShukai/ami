@@ -1,0 +1,35 @@
+# Instantiation version 2
+
+_target_: ami.models.instantiations.i_jepa_mean_patch_sioconv_resnetpolicy
+device: ${devices.0}
+img_size:
+  - ${shared.image_height}
+  - ${shared.image_width}
+in_channels: ${shared.image_channels}
+patch_size: 12
+action_choices_per_category:
+  _target_: hydra.utils.get_object
+  path: ami.interactions.environments.actuators.vrchat_osc_discrete_actuator.ACTION_CHOICES_PER_CATEGORY
+
+i_jepa_encoder:
+  embed_dim: 648
+  out_dim: ${.embed_dim}
+  depth: 12
+  num_heads: 9
+  mlp_ratio: 4.0
+
+i_jepa_predictor:
+  hidden_dim: 324
+  depth: 12
+  num_heads: 4
+
+sioconv:
+  action_embedding_dim: 8
+  depth: 12
+  dim: 2048
+  num_head: 8
+
+policy_value:
+  dim: 1024
+  dim_hidden: 1024
+  depth: 8

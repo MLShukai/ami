@@ -4,6 +4,7 @@ import pytest
 
 from ami.logger import (
     ThreadTypes,
+    display_nested_config,
     get_inference_thread_logger,
     get_main_thread_logger,
     get_thread_logger,
@@ -32,3 +33,26 @@ def test_specified_thread_logger():
 
     training = get_training_thread_logger("a")
     assert training.name == "training.a"
+
+
+def test_display_nested_config():
+    # fmt: off
+    data = {
+        "key1": "value1",
+        "key2": [
+            "item1",
+            "item2"
+        ],
+        "key3": {
+            "nested_key": "nested_value"
+        }
+    }
+    expected = (
+        "key1: value1\n"
+        "key2:\n"
+        "  - item1\n"
+        "  - item2\n"
+        "key3:\n"
+        "  nested_key: nested_value\n")
+    # fmt: on
+    assert display_nested_config(data) == expected

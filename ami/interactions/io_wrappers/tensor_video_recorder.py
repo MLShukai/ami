@@ -5,19 +5,19 @@ from pathlib import Path
 import cv2
 import numpy as np
 from torch import Tensor
+from typing_extensions import override
 
-from ami.interactions.environments.sensors.base_sensor import BaseSensor
 from ami.logger import get_inference_thread_logger
 
-from .base_sensor import BaseSensorWrapper
+from .base_io_wrapper import BaseIOWrapper
 
 
-class VideoRecordingWrapper(BaseSensorWrapper[Tensor, Tensor]):
-    """Records the image sensor data to file."""
+class TensorVideoRecorder(BaseIOWrapper[Tensor, Tensor]):
+    """Records the image tensor data to a video file."""
 
+    @override
     def __init__(
         self,
-        sensor: BaseSensor[Tensor],
         output_dir: str,
         width: int,
         height: int,
@@ -27,21 +27,19 @@ class VideoRecordingWrapper(BaseSensorWrapper[Tensor, Tensor]):
         do_rgb_to_bgr: bool = True,
         do_scale_255: bool = True,
     ) -> None:
-        """Constructs the sensor wrapper.
+        """Initializes the TensorVideoRecorder.
 
         Args:
-            sensor: An instance of the image sensor.
             output_dir: Path to the directory where the video will be saved.
             width: Width of the image to be recorded.
             height: Height of the image to be recorded.
             frame_rate: Frame rate at which the video is recorded.
-            fourcc: FourCC (Four Character Code) used for the video writer.
             file_name_format: File name format that includes a datetime format string.
+            fourcc: FourCC (Four Character Code) used for the video writer.
             do_rgb_to_bgr: Whether to convert RGB format tensors to BGR format.
             do_scale_255: Whether to scale values by 255.
         """
-
-        super().__init__(sensor)
+        super().__init__()
 
         self.output_dir = Path(output_dir)
         os.makedirs(self.output_dir)
@@ -63,16 +61,18 @@ class VideoRecordingWrapper(BaseSensorWrapper[Tensor, Tensor]):
         self.logger.info(f"Saved video to '{self.video_path}'")
         self.video_writer.release()
 
+    @override
     def setup(self) -> None:
         super().setup()
         self.setup_video_writer()
 
-    def wrap_observation(self, observation: Tensor) -> Tensor:
-        """Write image observation to file.
+    @override
+    def wrap(self, input: Tensor) -> Tensor:
+        """Write image input to file.
 
-        Observation shape is (C, H, W).
+        image shape is (C, H, W).
         """
-        frame = observation.detach().cpu().clone().numpy()
+        frame = input.detach().cpu().clone().numpy()
 
         frame = np.moveaxis(frame, 0, -1)
         if self.do_scale_255:
@@ -85,16 +85,19 @@ class VideoRecordingWrapper(BaseSensorWrapper[Tensor, Tensor]):
 
         self.video_writer.write(frame)
 
-        return observation
+        return input
 
+    @override
     def teardown(self) -> None:
         super().teardown()
         self.release_video_writer()
 
+    @override
     def on_paused(self) -> None:
         super().on_paused()
         self.release_video_writer()  # 経験が途切れるため一度リリース
 
+    @override
     def on_resumed(self) -> None:
         super().on_resumed()
         self.setup_video_writer()

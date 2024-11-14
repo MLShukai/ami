@@ -1,14 +1,15 @@
 """This file contains helper objects for testing some features."""
 import pickle
 import platform
+import time
 from pathlib import Path
-from typing import Self
 
 import pytest
 import rootutils
 import torch
 import torch.nn as nn
 from torch.utils.data import TensorDataset
+from typing_extensions import Self
 
 from ami.data.buffers.base_data_buffer import BaseDataBuffer
 from ami.data.step_data import DataKeys, StepData
@@ -88,6 +89,7 @@ class TrainerImpl(BaseTrainer):
         data = dataset[0][0]
         self.model1(data)
         self.model2(data)
+        time.sleep(0.1)
 
     def save_state(self, path: Path) -> None:
         path.mkdir()

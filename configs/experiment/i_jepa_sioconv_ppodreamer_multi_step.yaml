@@ -1,0 +1,69 @@
+# @package _global_
+
+# 制約条件
+# - VRAM 24GB
+# - 1度のTraining Timeの合計時間が 12.8秒以下
+# - 10 FPSで推論動作
+
+# モデルサイズ Largeは、 RTX 4090を最大限使用する設定です。
+# Medium, Smallはそれぞれ、 1/2, 1/4使用する設定です。
+
+defaults:
+  - override /interaction: vrchat_with_curiosity_image_ppo_agent
+  - override /interaction/agent: curiosity_image_multi_step_imagination
+  - override /models: i_jepa_sioconv_resnetpolicy_large
+  - override /data_collectors: image_dynamics_dreaming
+  - override /trainers: i_jepa_forward_dynamics_ppo_dreaming
+
+shared:
+  image_height: 144
+  image_width: 144
+
+interaction:
+  agent:
+    max_imagination_steps: 50 # 5 sec
+
+  observation_wrappers:
+    - _target_: ami.interactions.io_wrappers.function_wrapper.FunctionIOWrapper
+      wrap_function:
+        _target_: ami.interactions.io_wrappers.function_wrapper.normalize_tensor
+        _partial_: True
+        eps: 1e-6
+
+data_collectors:
+  image:
+    max_len: ${python.eval:"24 * ${trainers.i_jepa.partial_dataloader.batch_size}"}
+  forward_dynamics_trajectory:
+    max_len: 1000 # 100 sec
+    key_list:
+      - "embed_observation" # embed observationを直接使う
+      - "hidden"
+      - "action"
+      - "reward"
+  dreaming_initial_states:
+    max_len: ${python.eval:"16 * ${trainers.dreaming_policy_value.partial_dataloader.batch_size}"}
+
+trainers:
+  i_jepa:
+    max_epochs: 1
+    partial_dataloader:
+      batch_size: 32
+    minimum_new_data_count: 128
+
+  forward_dynamics:
+    observation_encoder_name: # embed observationを直接使う
+    max_epochs: 1
+    partial_sampler:
+      sequence_length: ${python.eval:"256 + 1"} # +1 to generate future target data.
+      max_samples: 64 # Iteraction count.
+    minimum_new_data_count: 128
+
+  dreaming_policy_value:
+    update_start_train_count: 50
+    max_epochs: 1
+    partial_dataloader:
+      batch_size: 64
+    minimum_new_data_count: 128
+    imagination_temperature: 1.0
+
+task_name: i_jepa_sioconv_ppodreamer_multi_step

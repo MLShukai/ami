@@ -3,7 +3,7 @@ default_language_version:
 
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.3.0
+    rev: v3.4.0
     hooks:
       # list of supported hooks: https://pre-commit.com/hooks.html
       - id: trailing-whitespace
@@ -40,7 +40,7 @@ repos:
 
   # python docstring formatting
   - repo: https://github.com/myint/docformatter
-    rev: v1.4
+    rev: 06907d0267368b49b9180eed423fae5697c1e909 # todo: fix for docformatter after last 1.7.5
     hooks:
       - id: docformatter
         args: [--in-place, --wrap-summaries=79, --wrap-descriptions=72]
@@ -73,7 +73,7 @@ repos:
         args: ["--number"]
         additional_dependencies:
           - mdformat-gfm
-          # - mdformat-tables
+          - mdformat-tables
           - mdformat_frontmatter
           # - mdformat-toc
           # - mdformat-black
@@ -84,4 +84,4 @@ repos:
     hooks:
       - id: codespell
         args:
-          - --skip=logs/**,data/**,*.ipynb
+          - --skip=logs/**,data/**,*.ipynb,obs_settings/**

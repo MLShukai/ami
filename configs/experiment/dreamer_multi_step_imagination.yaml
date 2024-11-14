@@ -1,0 +1,34 @@
+# @package _global_
+
+defaults:
+  - override /interaction: vrchat_with_curiosity_image_ppo_agent
+  - override /interaction/agent: curiosity_image_multi_step_imagination
+  - override /models: dreamer
+  - override /data_collectors: image_dynamics_dreaming
+  - override /trainers: image_vae_forward_dynamics_dreaming
+
+interaction:
+  observation_wrappers:
+    - _target_: ami.interactions.io_wrappers.function_wrapper.FunctionIOWrapper
+      wrap_function:
+        _target_: ami.interactions.io_wrappers.function_wrapper.normalize_tensor
+        _partial_: True
+        eps: 1e-6
+
+  action_wrappers:
+    - _target_: ami.interactions.io_wrappers.function_wrapper.FunctionIOWrapper
+      wrap_function:
+        _target_: torch.argmax
+        _partial_: true
+        dim: -1
+
+trainers:
+  image_vae:
+    partial_dataloader:
+      batch_size: 128
+  forward_dynamics:
+    partial_dataloader:
+      batch_size: ${python.eval:128+1}
+    minimum_new_data_count: ${.partial_dataloader.batch_size}
+
+task_name: dreamer_multi_step_imagination

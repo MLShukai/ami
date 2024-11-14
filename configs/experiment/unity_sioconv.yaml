@@ -1,0 +1,16 @@
+# @package _global_
+
+defaults:
+  - world_models_sioconv
+  - override /interaction/environment: unity
+
+interaction:
+  environment:
+    file_path: ${unity_env_path}
+    log_file_path: ${paths.output_dir}/unity_information_logs.csv
+    worker_id: ${unity_worker_id}
+
+unity_env_path: ??? # Please specify the arg `unity_env_path='<path/to/executable>'
+unity_worker_id: 0 # Please increment this value when launching multiple experience.
+
+task_name: unity_demo_run

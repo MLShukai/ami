@@ -11,6 +11,8 @@ import pytest
 from pytest_mock import MockerFixture
 
 from ami.threads.thread_control import (
+    ExceptionFlag,
+    ExceptionNotifier,
     ThreadCommandHandler,
     ThreadController,
     ThreadControllerStatus,
@@ -169,3 +171,14 @@ class TestThreadControllerStatus:
         assert Status.is_shutdown == controller.is_shutdown
         assert Status.is_paused == controller.is_paused
         assert Status.is_resumed == controller.is_resumed
+
+
+class TestExceptionFlagAndNotifier:
+    def test_is_raised(self):
+        flag = ExceptionFlag()
+        notifier = ExceptionNotifier(flag)
+        assert flag.is_raised() is False
+        assert flag.is_raised() is notifier.is_raised()
+        flag.set()
+        assert flag.is_raised() is True
+        assert flag.is_raised() is notifier.is_raised()

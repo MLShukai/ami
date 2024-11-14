@@ -1,7 +1,7 @@
 import pytest
 import torch
 from pytest_mock import MockerFixture
-from vrchat_io.controller.osc import Buttons
+from vrchat_io.controller.osc import Axes, Buttons
 
 from ami.interactions.environments.actuators.vrchat_osc_discrete_actuator import (
     STOP_ACTION,
@@ -14,7 +14,12 @@ class TestVRChatOSCDiscreteActuator:
     def actuator(self, mocker: MockerFixture):
         mocker.patch("pythonosc.udp_client.SimpleUDPClient")
 
-        actuator = VRChatOSCDiscreteActuator(osc_sender_port=65349)
+        actuator = VRChatOSCDiscreteActuator(
+            osc_sender_port=65349,
+            move_vertical_velocity=1.0,
+            move_horizontal_velocity=0.8,
+            look_horizontal_velocity=0.5,
+        )
         actuator.setup()
         yield actuator
         actuator.teardown()
@@ -31,12 +36,9 @@ class TestVRChatOSCDiscreteActuator:
             (
                 [0, 0, 0, 0, 0],
                 {
-                    Buttons.MoveForward: 0,
-                    Buttons.MoveBackward: 0,
-                    Buttons.MoveLeft: 0,
-                    Buttons.MoveRight: 0,
-                    Buttons.LookLeft: 0,
-                    Buttons.LookRight: 0,
+                    Axes.Vertical: 0.0,
+                    Axes.Horizontal: 0.0,
+                    Axes.LookHorizontal: 0.0,
                     Buttons.Jump: 0,
                     Buttons.Run: 0,
                 },
@@ -44,12 +46,9 @@ class TestVRChatOSCDiscreteActuator:
             (
                 [1, 1, 1, 1, 1],
                 {
-                    Buttons.MoveForward: 1,
-                    Buttons.MoveBackward: 0,
-                    Buttons.MoveLeft: 1,
-                    Buttons.MoveRight: 0,
-                    Buttons.LookLeft: 1,
-                    Buttons.LookRight: 0,
+                    Axes.Vertical: 1.0,  # move_vertical_velocity
+                    Axes.Horizontal: 0.8,  # move_horizontal_velocity
+                    Axes.LookHorizontal: 0.5,  # look_horizontal_velocity
                     Buttons.Jump: 1,
                     Buttons.Run: 1,
                 },
@@ -57,12 +56,9 @@ class TestVRChatOSCDiscreteActuator:
             (
                 [2, 2, 2, 0, 0],
                 {
-                    Buttons.MoveForward: 0,
-                    Buttons.MoveBackward: 1,
-                    Buttons.MoveLeft: 0,
-                    Buttons.MoveRight: 1,
-                    Buttons.LookLeft: 0,
-                    Buttons.LookRight: 1,
+                    Axes.Vertical: -1.0,  # -move_vertical_velocity
+                    Axes.Horizontal: -0.8,  # -move_horizontal_velocity
+                    Axes.LookHorizontal: -0.5,  # -look_horizontal_velocity
                     Buttons.Jump: 0,
                     Buttons.Run: 0,
                 },
@@ -71,6 +67,25 @@ class TestVRChatOSCDiscreteActuator:
     )
     def test_convert_action_to_command(self, actuator, action, expected_command):
         assert actuator.convert_action_to_command(action) == expected_command
+
+    def test_custom_velocities(self, mocker: MockerFixture):
+        mocker.patch("pythonosc.udp_client.SimpleUDPClient")
+
+        actuator = VRChatOSCDiscreteActuator(
+            move_vertical_velocity=2.0,
+            move_horizontal_velocity=1.5,
+            look_horizontal_velocity=0.7,
+        )
+
+        command = actuator.convert_action_to_command([1, 1, 1, 0, 0])
+        assert command[Axes.Vertical] == 2.0
+        assert command[Axes.Horizontal] == 1.5
+        assert command[Axes.LookHorizontal] == 0.7
+
+        command = actuator.convert_action_to_command([2, 2, 2, 0, 0])
+        assert command[Axes.Vertical] == -2.0
+        assert command[Axes.Horizontal] == -1.5
+        assert command[Axes.LookHorizontal] == -0.7
 
     def test_on_paused_and_resumed(self, actuator: VRChatOSCDiscreteActuator, mocker: MockerFixture):
         mock_operate = mocker.spy(actuator, "operate")

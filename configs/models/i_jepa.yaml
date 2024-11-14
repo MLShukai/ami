@@ -1,0 +1,41 @@
+image_encoder: i_jepa_target_encoder # Alias for ImageEncodingAgent.
+
+# Hyper params following set based on original I-JEPA's "vit_base"
+i_jepa_target_encoder:
+  _target_: ami.models.model_wrapper.ModelWrapper
+  default_device: ${devices.0}
+  has_inference: True
+  inference_forward:
+    _target_: hydra.utils.get_method
+    path: ami.models.i_jepa.i_jepa_encoder_infer
+  model:
+    _target_: ami.models.i_jepa.IJEPAEncoder
+    img_size:
+      - ${shared.image_height}
+      - ${shared.image_width}
+    in_channels: ${shared.image_channels}
+    patch_size: 16
+    embed_dim: 768
+    depth: 12
+    num_heads: 12
+    mlp_ratio: 4.0
+
+i_jepa_context_encoder:
+  _target_: ami.models.model_wrapper.ModelWrapper
+  default_device: ${devices.0}
+  has_inference: False
+  model: ${..i_jepa_target_encoder.model}
+
+i_jepa_predictor:
+  _target_: ami.models.model_wrapper.ModelWrapper
+  default_device: ${devices.0}
+  has_inference: False
+  model:
+    _target_: ami.models.i_jepa.IJEPAPredictor
+    n_patches:
+      - ${python.eval:"${shared.image_height} // ${models.i_jepa_target_encoder.model.patch_size}"}
+      - ${python.eval:"${shared.image_width} // ${models.i_jepa_target_encoder.model.patch_size}"}
+    context_encoder_embed_dim: ${models.i_jepa_target_encoder.model.embed_dim}
+    predictor_embed_dim: 384
+    depth: 6
+    num_heads: 12

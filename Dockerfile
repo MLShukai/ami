@@ -8,21 +8,45 @@ ADD ./ /workspace/
 # Install dependencies
 ARG DEBIAN_FRONTEND=noninteractive
 RUN ln -sf /usr/share/zoneinfo/Asia/Tokyo /etc/localtime
-RUN perl -p -i.bak -e 's%(deb(?:-src|)\s+)https?://(?!archive\.canonical\.com|security\.ubuntu\.com)[^\s]+%$1http://ftp.naist.jp/pub/Linux/ubuntu/%' /etc/apt/sources.list
+# Change apt source to japan
+# For linux host (x86_64)
+RUN sed -i -e 's|archive.ubuntu.com/ubuntu|ftp.naist.jp/pub/Linux/ubuntu|g' /etc/apt/sources.list
+# For linux or mac host (arm64)
+RUN sed -i -e 's|ports.ubuntu.com|jp.mirror.coganng.com|g' /etc/apt/sources.list
+
 RUN apt-get update && apt-get install -y \
     curl \
     git \
     make \
-    screen \
-    software-properties-common \
+    tmux \
+    python3 \
+    python3-pip \
     libopencv-dev \
-    && rm -rf /var/lib/apt/lists/*
-
-RUN add-apt-repository ppa:deadsnakes/ppa -y && apt-get update && apt-get install -y \
-    python3.11 python3-pip \
+    xvfb \
+    x11-utils \
+    libgl1-mesa-glx \
+    libgl1-mesa-dri \
+    libhdf5-dev \
+    libsndfile1 \
+    pulseaudio \
     && rm -rf /var/lib/apt/lists/*
 
 # Install python dependencies
-RUN python3.11 -m pip install poetry && \
+RUN python3.10 -m pip install poetry && \
     poetry install && \
-    echo "cd /workspace && poetry shell" >> ~/.bashrc
+    echo "cd /workspace && poetry shell" >> ~/.bashrc && \
+    echo "eval '$(poetry run python scripts/launch.py -sc install=bash)'" >> ~/.bashrc
+
+# Copy Xvfb script
+COPY scripts/start-xvfb.sh /start-xvfb.sh
+RUN chmod +x /start-xvfb.sh
+
+
+# Set DISPLAY environment variable
+ENV DISPLAY=:99
+
+# Set entrypoint to run Xvfb
+ENTRYPOINT ["/start-xvfb.sh"]
+
+# Default command (can be overridden)
+CMD ["/bin/bash"]

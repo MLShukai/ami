@@ -1,0 +1,80 @@
+# @package _global_
+
+defaults:
+  - override /data_collectors: image_dynamics
+  - override /interaction/environment: video_folders
+  - override /interaction/agent: curiosity_image_multi_step_imagination
+  - override /models: learn_i_jepa_sioconv_large
+  - override /trainers: i_jepa_forward_dynamics
+
+shared:
+  image_height: 144
+  image_width: 144
+  frame_limit: ${python.eval:"int(10 * ${cvt_time_str:4h})"} # 10FPS, 4時間分. 6サンプルで24時間分
+
+interaction:
+  agent:
+    max_imagination_steps: 50 # 5 sec
+  environment:
+    observation_generator:
+      folder_frame_limits: ${shared.frame_limit}
+      folder_paths:
+        - ${paths.data_dir}/random_observation_action_log/2024-08-26_12-55-45/io/video_recordings
+        - ${paths.data_dir}/random_observation_action_log/2024-08-26_13-00-14/io/video_recordings
+        - ${paths.data_dir}/random_observation_action_log/2024-08-26_13-04-15/io/video_recordings
+        - ${paths.data_dir}/random_observation_action_log/2024-08-26_13-08-31/io/video_recordings
+        - ${paths.data_dir}/random_observation_action_log/2024-08-27_09-28-27/io/video_recordings
+        - ${paths.data_dir}/random_observation_action_log/2024-08-27_09-31-50/io/video_recordings
+
+  observation_wrappers:
+    - _target_: ami.interactions.io_wrappers.function_wrapper.FunctionIOWrapper
+      wrap_function:
+        _target_: ami.interactions.io_wrappers.function_wrapper.normalize_tensor
+        _partial_: True
+        eps: 1e-6
+
+models:
+  policy:
+    model:
+      file_max_rows: ${shared.frame_limit}
+      column_headers:
+        - "MoveVertical"
+        - "MoveHorizontal"
+        - "LookHorizontal"
+        - "Jump"
+        - "Run"
+      file_paths:
+        - ${paths.data_dir}/random_observation_action_log/2024-08-26_12-55-45/io/action_log.csv
+        - ${paths.data_dir}/random_observation_action_log/2024-08-26_13-00-14/io/action_log.csv
+        - ${paths.data_dir}/random_observation_action_log/2024-08-26_13-04-15/io/action_log.csv
+        - ${paths.data_dir}/random_observation_action_log/2024-08-26_13-08-31/io/action_log.csv
+        - ${paths.data_dir}/random_observation_action_log/2024-08-27_09-28-27/io/action_log.csv
+        - ${paths.data_dir}/random_observation_action_log/2024-08-27_09-31-50/io/action_log.csv
+
+data_collectors:
+  image:
+    max_len: ${python.eval:"24 * ${trainers.i_jepa.partial_dataloader.batch_size}"}
+  forward_dynamics_trajectory:
+    max_len: 1000
+    key_list:
+      - "embed_observation" # embed observationを直接使う
+      - "hidden"
+      - "action"
+      - "reward"
+
+trainers:
+  i_jepa:
+    max_epochs: 1
+    partial_dataloader:
+      batch_size: 32
+    minimum_new_data_count: 128
+
+  forward_dynamics:
+    observation_encoder_name: null # embed observationを直接使う
+    max_epochs: 1
+    partial_sampler:
+      sequence_length: ${python.eval:"256 + 1"} # +1 to generate future target data.
+      max_samples: 64 # Iteraction count.
+    minimum_new_data_count: 128
+
+task_name: "learn_i_jepa_sioconv"

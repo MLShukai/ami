@@ -218,3 +218,23 @@ class ThreadControllerStatus:
         self.is_shutdown = controller.is_shutdown
         self.is_paused = controller.is_paused
         self.is_resumed = controller.is_resumed
+
+
+class ExceptionFlag:
+    """The flag class for sending exception event."""
+
+    def __init__(self) -> None:
+        self._event = threading.Event()
+
+    def set(self) -> None:
+        self._event.set()
+
+    def is_raised(self) -> bool:
+        return self._event.is_set()
+
+
+class ExceptionNotifier:
+    """Only reads the `ExceptionFlag` status."""
+
+    def __init__(self, flag: ExceptionFlag) -> None:
+        self.is_raised = flag.is_raised

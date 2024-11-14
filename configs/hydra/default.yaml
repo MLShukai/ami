@@ -6,6 +6,7 @@
 defaults:
   - override hydra_logging: colorlog
   - override job_logging: colorlog
+  - override launcher: joblib
 
 # output directory, generated dynamically on each run
 run:

@@ -29,6 +29,10 @@ class TrainingThread(BackgroundThread):
 
         self.share_object(SharedObjectNames.INFERENCE_MODELS, models.inference_wrappers_dict)
 
+        removed_names = self.models.remove_inference_thread_only_models()
+        if len(removed_names) != 0:
+            self.logger.debug(f"The inference thread only models are removed from training thread: {removed_names!r}")
+
     def on_shared_objects_pool_attached(self) -> None:
         super().on_shared_objects_pool_attached()
 
@@ -41,9 +45,13 @@ class TrainingThread(BackgroundThread):
         self.logger.info("Starts the training thread.")
 
         while self.thread_command_handler.manage_loop():
+            if len(self.trainers) == 0:
+                time.sleep(self.training_interval)
+                continue
+
             trainer = self.trainers.get_next_trainer()
             if trainer.is_trainable():
-                self.logger.info(f"Running: {type(trainer).__name__} ...")
+                self.logger.info(f"Running a trainer: {trainer.name!r}")
                 start = time.perf_counter()
                 trainer.run()
                 self.logger.info(f"Training time: {time.perf_counter() - start:.2f} [s].")

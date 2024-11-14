@@ -1,0 +1,11 @@
+defaults:
+  - learn_only_sioconv
+
+forward_dynamics:
+  model:
+    observation_flatten:
+      dim_out: 1536
+    core_model:
+      depth: 9
+      dim: 1536
+      dim_ff_hidden: ${python.eval:"${.dim} * 2"}

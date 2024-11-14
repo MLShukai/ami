@@ -1,8 +1,8 @@
 """This file contains utility classes."""
 from collections import UserDict
-from enum import StrEnum
+from enum import Enum
 from pathlib import Path
-from typing import TypeAlias
+from typing import Any, TypeAlias
 
 import torch
 import torch.nn as nn
@@ -13,7 +13,7 @@ from ami.checkpointing import SaveAndLoadStateMixin
 from .model_wrapper import ModelWrapper, ThreadSafeInferenceWrapper
 
 
-class ModelNames(StrEnum):
+class ModelNames(str, Enum):
     """Enumerates the all model names used in ami system."""
 
     IMAGE_ENCODER = "image_encoder"
@@ -33,6 +33,11 @@ class ModelWrappersDict(UserDict[str, ModelWrapper[nn.Module]], SaveAndLoadState
         There is always only one instance of `InferenceWrappersDict` corresponding to this `ModelWrappersDict` class.
     """
 
+    @override
+    def __init__(self, *args: Any, **kwds: Any) -> None:
+        self._alias_keys: set[str] = set()
+        super().__init__(*args, **kwds)
+
     _inference_wrappers_dict: InferenceWrappersDict | None = None
 
     def send_to_default_device(self) -> None:
@@ -43,7 +48,7 @@ class ModelWrappersDict(UserDict[str, ModelWrapper[nn.Module]], SaveAndLoadState
     def _create_inferences(self) -> InferenceWrappersDict:
         """Creates an instance of `InferenceWrappersDict` from the given model
         wrappers."""
-        return InferenceWrappersDict({k: v.create_inference() for k, v in self.items() if v.has_inference})
+        return InferenceWrappersDict({k: v.inference_wrapper for k, v in self.items() if v.has_inference})
 
     @property
     def inference_wrappers_dict(self) -> InferenceWrappersDict:
@@ -53,24 +58,57 @@ class ModelWrappersDict(UserDict[str, ModelWrapper[nn.Module]], SaveAndLoadState
         """
         if self._inference_wrappers_dict is None:
             self._inference_wrappers_dict = self._create_inferences()
-            return self._inference_wrappers_dict
-        else:
-            return self._inference_wrappers_dict
+        return self._inference_wrappers_dict
 
     @override
     def save_state(self, path: Path) -> None:
         """Saves the model parameters to `path`."""
         path.mkdir()
-        for name, wrapper in self.items():
+        for name in self._names_without_alias:
             model_path = path / (name + ".pt")
+            wrapper = self[name]
             torch.save(wrapper.model.state_dict(), model_path)
 
     @override
     def load_state(self, path: Path) -> None:
         """Loads the model parameters from `path`."""
-        for name, wrapper in self.items():
+        for name in self._names_without_alias:
             model_path = path / (name + ".pt")
+            wrapper = self[name]
             wrapper.model.load_state_dict(torch.load(model_path, map_location=wrapper.device))
+
+    @property
+    def _names_without_alias(self) -> set[str]:
+        """Returns the set of model names without alias name."""
+        return set(self.keys()) - self._alias_keys
+
+    @override
+    def __setitem__(self, key: str, item: ModelWrapper[nn.Module]) -> None:
+        if key in self:
+            raise KeyError(f"Key overwriting is prohibited due to the presence of alias keys! Key:{key!r}")
+        elif item in self.values():
+            self._alias_keys.add(key)
+        return super().__setitem__(key, item)
+
+    @override
+    def __delitem__(self, key: str) -> None:
+        raise RuntimeError(f"Deleting item is prohibited! Key:{key!r}")
+
+    def remove_inference_thread_only_models(self) -> list[str]:
+        """Removes the model that is used for inference thread only from
+        ModelWrappersDict.
+
+        Returns:
+            list[str]: Removed model names.
+        """
+        self.inference_wrappers_dict  # Create inference wrappers dict when not created.
+
+        removed_names = []
+        for name, wrapper in list(self.data.items()):
+            if wrapper.inference_thread_only:
+                del self.data[name]
+                removed_names.append(name)
+        return removed_names
 
 
 def count_model_parameters(model: nn.Module) -> tuple[int, int, int]:
@@ -126,3 +164,11 @@ def create_model_parameter_count_dict(models: ModelWrappersDict) -> ModelParamet
     out["_all_"] = {"total": all_total, "trainable": all_trainable, "frozen": all_frozen}
 
     return out
+
+
+size_2d: TypeAlias = int | tuple[int, int]
+
+
+def size_2d_to_int_tuple(size: size_2d) -> tuple[int, int]:
+    """Convert `size_2d` type to int tuple."""
+    return (size, size) if isinstance(size, int) else size

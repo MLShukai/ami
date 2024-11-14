@@ -18,9 +18,9 @@ Assumed usage:
 """
 from collections import UserDict
 from pathlib import Path
-from typing import Any, Self
+from typing import Any
 
-from typing_extensions import override
+from typing_extensions import Self, override
 
 from ami.checkpointing import SaveAndLoadStateMixin
 

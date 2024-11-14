@@ -1,0 +1,15 @@
+# @package _global_
+
+defaults:
+  - override /interaction/agent: discrete_random_action
+  - override /interaction/environment: vrchat_multimodal_discrete
+
+models: null
+data_collectors: null
+trainers: null
+
+shared:
+  image_height: 512
+  image_width: 512
+
+task_name: random_observation_action_log

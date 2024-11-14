@@ -1,0 +1,32 @@
+defaults:
+  - i_jepa_sioconv_resnetpolicy
+
+i_jepa_target_encoder:
+  model:
+    embed_dim: 216
+    depth: 6
+    num_heads: 3
+
+i_jepa_predictor:
+  model:
+    hidden_dim: 108
+    depth: 6
+    num_heads: 2
+
+forward_dynamics:
+  model:
+    observation_flatten:
+      dim_out: 1024
+    core_model:
+      depth: 6
+      dim: 1024
+
+policy_value:
+  model:
+    observation_projection:
+      dim_out: 512
+    observation_hidden_projection:
+      dim_out: 512
+    core_model:
+      dim_hidden: 512
+      depth: 4

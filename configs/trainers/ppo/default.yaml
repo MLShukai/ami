@@ -7,7 +7,7 @@ partial_dataloader:
   shuffle: true
 
 partial_optimizer:
-  _target_: torch.optim.Adam
+  _target_: torch.optim.AdamW
   _partial_: true
   lr: 1e-4
   betas: [0.9, 0.999]
@@ -20,3 +20,4 @@ logger:
 device: ${devices.0}
 max_epochs: 3
 minimum_dataset_size: ${python.eval:"${data_collectors.ppo_trajectory.max_len} - 1"}
+entropy_coef: 0.001

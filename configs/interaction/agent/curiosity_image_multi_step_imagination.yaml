@@ -1,0 +1,31 @@
+_target_: ami.interactions.agents.multi_step_imagination_curiosity_agent.MultiStepImaginationCuriosityImageAgent
+
+initial_hidden:
+  _target_: torch.zeros
+  _args_:
+    - ${models.forward_dynamics.model.core_model.depth}
+    - ${models.forward_dynamics.model.core_model.dim}
+  dtype: ${torch.dtype:float}
+  device: ${devices.0}
+
+logger:
+  _target_: ami.tensorboard_loggers.TimeIntervalLogger
+  log_dir: ${paths.tensorboard_dir}/agent
+  log_every_n_seconds: 0
+
+max_imagination_steps: 50
+log_reward_imaginations: True
+log_reward_imaginations_max_history_size: ${.max_imagination_steps}
+log_reward_imaginations_append_interval: 100
+log_reward_imaginations_every_n_steps: ${python.eval:"${.max_imagination_steps} * ${.log_reward_imaginations_append_interval}"}
+log_reconstruction_imaginations: False # 重いのでデフォルト False.
+log_reconstruction_imaginations_max_history_size: ${.max_imagination_steps}
+log_reconstruction_imaginations_append_interval: 100
+log_reconstruction_imaginations_every_n_steps: ${python.eval:"${.max_imagination_steps} * ${.log_reconstruction_imaginations_append_interval}"}
+log_imagination_trajectory: True
+log_imagination_trajectory_every_n_steps: ${python.eval:"20 * ${.max_imagination_steps}"} # 100 sec
+
+reward_average_method:
+  _target_: ami.interactions.agents.multi_step_imagination_curiosity_agent.average_exponentially
+  _partial_: true
+  decay: ${python.eval:"1 - 1 / ${..max_imagination_steps}"}

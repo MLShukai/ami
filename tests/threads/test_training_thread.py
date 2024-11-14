@@ -7,6 +7,12 @@ from ami.threads.training_thread import DataUsersDict, ModelWrappersDict, Traine
 
 
 class TestTrainingThread:
+    def test_removing_inference_thread_only_models(self, thread_objects):
+        inference_thread: InferenceThread = thread_objects[1]
+        training_thread: TrainingThread = thread_objects[2]
+        assert "model_inference_thread_only" not in training_thread.models
+        assert "model_inference_thread_only" in inference_thread.inference_models
+
     def test_save_and_load_state(self, thread_objects, mocker: MockerFixture, tmp_path: Path) -> TrainingThread:
 
         training_thread: TrainingThread = thread_objects[2]

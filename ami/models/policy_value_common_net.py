@@ -3,6 +3,8 @@ import torch.nn as nn
 from torch import Tensor
 from torch.distributions import Distribution
 
+from .components.stacked_features import LerpStackedFeatures
+
 
 class PolicyValueCommonNet(nn.Module):
     """Module with shared models for policy and value functions."""
@@ -70,3 +72,52 @@ class ConcatFlattenedObservationAndStackedHidden(nn.Module):
         if self.transpose:
             out = out.transpose(-2, -1)
         return out
+
+
+class LerpStackedHidden(LerpStackedFeatures):
+    """Linear interpolation along depth of stacked hidden.
+
+    Shape:
+        - stacked_hidden: (D, N) | (B, D, N)
+
+        Return shape: (N,) | (B, N)
+    """
+
+    def __init__(self, dim: int, depth: int, num_head: int) -> None:
+        super().__init__(dim, dim, depth)
+        assert dim % num_head == 0
+        self.norm = nn.InstanceNorm1d(num_head)
+        self.num_head = num_head
+
+    def forward(self, stacked_features: Tensor) -> Tensor:
+        is_batch = len(stacked_features.shape) == 3
+        if not is_batch:
+            stacked_features = stacked_features.unsqueeze(0)
+        batch, n_stack, dim = stacked_features.shape
+        stacked_features = self.norm(
+            stacked_features.reshape(batch * n_stack, self.num_head, dim // self.num_head)
+        ).view(batch, n_stack, dim)
+
+        out = super().forward(stacked_features)
+
+        if not is_batch:
+            out = out.squeeze(0)
+        return out
+
+
+class ConcatFlattenedObservationAndLerpedHidden(nn.Module):
+    """Concatenates the flattened observation and stacked hidden states.
+
+    Shape:
+        - flattened_obs: (*, N_OBS)
+        - lerped_hidden: (*, N_HIDDEN)
+
+        Return shape: (*, N_OUT)
+    """
+
+    def __init__(self, dim_obs: int, dim_hidden: int, dim_out: int):
+        super().__init__()
+        self.fc = nn.Linear(dim_obs + dim_hidden, dim_out)
+
+    def forward(self, flattened_obs: Tensor, lerped_hidden: Tensor) -> Tensor:
+        return self.fc(torch.cat([flattened_obs, lerped_hidden], dim=-1))

@@ -1,9 +1,11 @@
 """Launch script file for the ami system."""
 import os
 
+import dotenv
 import hydra
 import rootutils
-from omegaconf import DictConfig
+import torch
+from omegaconf import DictConfig, open_dict
 
 from ami.checkpointing.checkpoint_schedulers import BaseCheckpointScheduler
 from ami.checkpointing.checkpointing import Checkpointing
@@ -14,7 +16,7 @@ from ami.hydra_instantiators import (
     instantiate_trainers,
 )
 from ami.interactions.interaction import Interaction
-from ami.logger import get_main_thread_logger
+from ami.logger import display_nested_config, get_main_thread_logger
 from ami.models.utils import ModelWrappersDict, create_model_parameter_count_dict
 from ami.omegaconf_resolvers import register_custom_resolvers
 from ami.tensorboard_loggers import TensorBoardLogger
@@ -28,7 +30,9 @@ from ami.trainers.utils import TrainersList
 
 # Add the project root path to environment vartiable `PROJECT_ROOT`
 # to refer in the config file by `${oc.env:PROJECT_ROOT}`.
-rootutils.setup_root(__file__, indicator=".project-root", pythonpath=True)
+PROJECT_ROOT = rootutils.setup_root(__file__, indicator=".project-root", pythonpath=True)
+
+dotenv.load_dotenv(PROJECT_ROOT / ".env")
 
 logger = get_main_thread_logger(__name__)
 
@@ -39,6 +43,8 @@ register_custom_resolvers()
 @hydra.main(config_path="../configs", config_name="launch", version_base="1.3")
 def main(cfg: DictConfig) -> None:
     logger.info("Launch AMI.")
+    if precision := cfg.get("torch_float32_matmul_precision"):
+        torch.set_float32_matmul_precision(precision)
 
     logger.info(f"Instantiating Interaction <{cfg.interaction._target_}>")
     interaction: Interaction = hydra.utils.instantiate(cfg.interaction)
@@ -49,6 +55,7 @@ def main(cfg: DictConfig) -> None:
     logger.info("Instantiating Models...")
     models: ModelWrappersDict = instantiate_models(cfg.models)
     models.send_to_default_device()
+    param_count = create_model_parameter_count_dict(models)
 
     logger.info("Instantiating Trainers...")
     trainers: TrainersList = instantiate_trainers(cfg.trainers)
@@ -86,9 +93,17 @@ def main(cfg: DictConfig) -> None:
         "data": cfg.data_collectors,
         "models": cfg.models,
         "trainers": cfg.trainers,
-        "param_count": create_model_parameter_count_dict(models),
+        "param_count": param_count,
     }
     tensorboard_logger.log_hyperparameters(hparams_dict)
+
+    with open_dict(cfg) as c:
+        c["param_count"] = param_count
+
+    display_cfg = display_nested_config(cfg)
+    logger.info(f"Displaying configs..\n{display_cfg}")
+    with open(os.path.join(cfg.paths.output_dir, "launch-configuration.txt"), "w") as f:
+        f.write(display_cfg)
 
     logger.info("Sharing objects...")
     attach_shared_objects_pool_to_threads(main_thread, inference_thread, training_thread)

@@ -16,11 +16,11 @@ defaults:
   - paths: default
   - hydra: default
 
-  # experiment configs allow for version control of specific hyperparameters
-  - experiment: null
-
   # You can specify configuration values that are shared among all config files.
   - shared: default
+
+  # experiment configs allow for version control of specific hyperparameters
+  - experiment: null
 
 task_name: image_encoding
 
@@ -29,3 +29,10 @@ saved_checkpoint_path: null
 
 # You can specify `hydra.job_logging.root.level`
 log_level: INFO
+
+# You can specify the time scale for the experiment.
+time_scale: 1.0
+
+max_uptime: inf # This value will scale by `time_scale`.
+
+torch_float32_matmul_precision: "high" # Using tensor core.
