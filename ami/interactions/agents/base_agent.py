@@ -1,4 +1,6 @@
 """This file contains the abstract base agent class."""
+from __future__ import annotations
+
 from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import Any, Generic
@@ -23,13 +25,26 @@ class BaseAgent(ABC, Generic[ObsType, ActType], SaveAndLoadStateMixin, PauseResu
     NOTE: The `data_collectors` attribute is initialized and available before the `setup` method is called.
     """
 
+    def __init__(self, *agents: BaseAgent[Any, Any]) -> None:
+        """Initialize the agent class.
+
+        You can give component agents to attach inference models and data collectors.
+
+        Args:
+            *agents: Component agent instances.
+        """
+        self._agents = agents
+
     _inference_models: InferenceWrappersDict
     data_collectors: DataCollectorsDict
 
     def attach_inference_models(self, inference_models: InferenceWrappersDict) -> None:
-        """Attaches the inference models (wrappers dict) to this agent."""
+        """Attaches the inference models (wrappers dict) to agents."""
         self._inference_models = inference_models
         self.on_inference_models_attached()
+
+        for agent in self._agents:
+            agent.attach_inference_models(inference_models)
 
     def on_inference_models_attached(self) -> None:
         """Callback method for when infernece models are attached to the agent.
@@ -40,9 +55,12 @@ class BaseAgent(ABC, Generic[ObsType, ActType], SaveAndLoadStateMixin, PauseResu
         pass
 
     def attach_data_collectors(self, data_collectors: DataCollectorsDict) -> None:
-        """Attaches the data collectors (dict) to this agent."""
+        """Attaches the data collectors (dict) to agents."""
         self.data_collectors = data_collectors
         self.on_data_collectors_attached()
+
+        for agent in self._agents:
+            agent.attach_data_collectors(data_collectors)
 
     def on_data_collectors_attached(self) -> None:
         """Callback method for when data collectors are attached to this
@@ -79,9 +97,13 @@ class BaseAgent(ABC, Generic[ObsType, ActType], SaveAndLoadStateMixin, PauseResu
 
         Called before first `step`.
         """
+        for agent in self._agents:
+            agent.setup()
 
     def teardown(self) -> None:
         """Teardown procedure for the Agent.
 
         Called after final `step`.
         """
+        for agent in self._agents:
+            agent.teardown()
