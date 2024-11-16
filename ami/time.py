@@ -195,7 +195,7 @@ class TimeController:
         """Return the time controller state.
 
         Returns:
-            TimeControllerState: dict of state values.
+            TimeControllerState: State information that can reproduce the current time flow progression of the system.
         """
         self._update_scaled_anchor_values()
         return self.TimeControllerState(
@@ -207,6 +207,8 @@ class TimeController:
     @with_lock
     def load_state_dict(self, state_dict: TimeControllerState) -> None:
         """Loads states.
+
+        When a state is loaded, the system time starts from the time the state was retrieved.
 
         Args:
             state_dict (TimeControllerState): The dict which contains state values.
