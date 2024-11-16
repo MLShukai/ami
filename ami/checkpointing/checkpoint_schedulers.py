@@ -1,7 +1,8 @@
-import time
 from abc import ABC, abstractmethod
 
 from typing_extensions import override
+
+from ami import time
 
 from .checkpointing import Checkpointing
 

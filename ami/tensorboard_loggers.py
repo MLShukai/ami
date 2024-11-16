@@ -1,5 +1,4 @@
 import math
-import time
 from collections import ChainMap
 from collections.abc import Mapping, MutableSequence
 from typing import Any, TypeAlias
@@ -7,6 +6,8 @@ from typing import Any, TypeAlias
 from torch import Tensor
 from torch.utils.tensorboard import SummaryWriter
 from typing_extensions import override
+
+from ami import time
 
 LoggableTypes: TypeAlias = Tensor | float | int | bool | str
 
