@@ -69,7 +69,9 @@ class MainThread(BaseThread):
 
     def worker(self) -> None:
         self.logger.info("Start main thread.")
-        self.logger.info(f"Maxmum uptime is set to {self._max_uptime}.")
+        self.logger.info(
+            f"Maxmum uptime is set to {self._max_uptime:.1f} [secs]. (actually {self._max_uptime / time.get_time_scale():.1f} [secs] in time scale x{time.get_time_scale()})"
+        )
         self.thread_controller.activate()
         start_time = time.time()
 
