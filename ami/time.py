@@ -197,6 +197,7 @@ class TimeController:
         Returns:
             TimeControllerState: dict of state values.
         """
+        self._update_scaled_anchor_values()
         return self.TimeControllerState(
             scaled_anchor_time=self._scaled_anchor_time,
             scaled_anchor_monotonic=self._scaled_anchor_monotonic,
@@ -213,6 +214,7 @@ class TimeController:
         self._scaled_anchor_time = state_dict["scaled_anchor_time"]
         self._scaled_anchor_monotonic = state_dict["scaled_anchor_monotonic"]
         self._scaled_anchor_perf_counter = state_dict["scaled_anchor_perf_counter"]
+        self._update_anchor_values()
 
 
 # Create a global instance of TimeController
