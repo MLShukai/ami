@@ -52,6 +52,8 @@ class MainThread(BaseThread):
         self._host = address[0]
         self._port = address[1]
         self.thread_controller = ThreadController()
+        self.thread_controller.on_paused = self.on_paused
+        self.thread_controller.on_resumed = self.on_resumed
         self.web_api_handler = WebApiHandler(ThreadControllerStatus(self.thread_controller), self._host, self._port)
         self._timeout_for_all_threads_pause = timeout_for_all_threads_pause
         self._max_attempts_to_pause_all_threads = max_attempts_to_pause_all_threads
@@ -110,11 +112,9 @@ class MainThread(BaseThread):
                 case ControlCommands.PAUSE:
                     self.logger.info("Pausing...")
                     self.thread_controller.pause()
-                    self.on_paused()
                 case ControlCommands.RESUME:
                     self.logger.info("Resuming...")
                     self.thread_controller.resume()
-                    self.on_resumed()
                 case ControlCommands.SHUTDOWN:
                     self.logger.info("Shutting down...")
                     self.thread_controller.shutdown()

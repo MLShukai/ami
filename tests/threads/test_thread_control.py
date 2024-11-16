@@ -78,9 +78,12 @@ def test_manage_loop() -> None:
     controller = ThreadController()
     handler = ThreadCommandHandler(controller, check_resume_interval=10)
     counter = Counter()
-    pause_resume_event_log = PauseResumeEventLog()  # pause/resumeのイベント呼び出し記録用
-    handler.on_paused = pause_resume_event_log.on_paused
-    handler.on_resumed = pause_resume_event_log.on_resumed
+    controller_pause_resume_event_log = PauseResumeEventLog()  # pause/resumeのイベント呼び出し記録用
+    controller.on_paused = controller_pause_resume_event_log.on_paused
+    controller.on_resumed = controller_pause_resume_event_log.on_resumed
+    handler_pause_resume_event_log = PauseResumeEventLog()  # pause/resumeのイベント呼び出し記録用
+    handler.on_paused = handler_pause_resume_event_log.on_paused
+    handler.on_resumed = handler_pause_resume_event_log.on_resumed
     assert not handler.is_loop_paused()
 
     thread = threading.Thread(target=infinity_increment_thread, args=(counter, handler))
@@ -95,8 +98,9 @@ def test_manage_loop() -> None:
     time.sleep(0.05)
     not_changed_value = counter.value
 
+    assert controller_pause_resume_event_log.num_paused == 1
     assert value == not_changed_value
-    assert pause_resume_event_log.num_paused == 1
+    assert handler_pause_resume_event_log.num_paused == 1
     assert handler.is_loop_paused()
 
     # Backgroundスレッドの再開処理が期待通り行われているか
@@ -108,8 +112,9 @@ def test_manage_loop() -> None:
     time.sleep(0.05)
     changed_value = counter.value
 
+    assert controller_pause_resume_event_log.num_resumed == 1
     assert value < changed_value
-    assert pause_resume_event_log.num_resumed == 1
+    assert handler_pause_resume_event_log.num_resumed == 1
     assert not handler.is_loop_paused()
 
     # 一時停止中でも終了命令を処理できるか。
@@ -120,8 +125,10 @@ def test_manage_loop() -> None:
     thread.join()
 
     # Shutdownの際に`resume`(復帰）が呼ばれているか
-    assert pause_resume_event_log.num_paused == 2
-    assert pause_resume_event_log.num_resumed == 2
+    assert controller_pause_resume_event_log.num_paused == 2
+    assert controller_pause_resume_event_log.num_resumed == 2
+    assert handler_pause_resume_event_log.num_paused == 2
+    assert handler_pause_resume_event_log.num_resumed == 2
     assert not handler.is_loop_paused()
 
 
