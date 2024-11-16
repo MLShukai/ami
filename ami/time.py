@@ -75,6 +75,11 @@ class TimeController:
         self._is_paused = False
 
     @with_lock
+    def is_paused(self) -> bool:
+        """Public interface for checking pause."""
+        return self._is_paused
+
+    @with_lock
     def _update_anchor_values(self) -> None:
         self._anchor_time = _original_time.time()
         self._anchor_perf_counter = _original_time.perf_counter()
@@ -219,6 +224,7 @@ class TimeController:
 _time_controller = TimeController()
 
 # Expose the public methods
+is_paused = _time_controller.is_paused
 sleep = _time_controller.sleep
 time = _time_controller.time
 perf_counter = _time_controller.perf_counter
