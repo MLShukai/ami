@@ -46,7 +46,7 @@ from __future__ import annotations
 import time as _original_time
 from functools import wraps
 from threading import RLock
-from typing import Callable, Concatenate, ParamSpec, TypeVar
+from typing import Callable, Concatenate, ParamSpec, TypedDict, TypeVar
 
 T = TypeVar("T")
 P = ParamSpec("P")
@@ -183,6 +183,37 @@ class TimeController:
             self._is_paused = False
             self._update_anchor_values()
 
+    class TimeControllerState(TypedDict):
+        """Time controller state for restarting the system."""
+
+        scaled_anchor_time: float
+        scaled_anchor_monotonic: float
+        scaled_anchor_perf_counter: float
+
+    @with_lock
+    def state_dict(self) -> TimeControllerState:
+        """Return the time controller state.
+
+        Returns:
+            TimeControllerState: dict of state values.
+        """
+        return self.TimeControllerState(
+            scaled_anchor_time=self._scaled_anchor_time,
+            scaled_anchor_monotonic=self._scaled_anchor_monotonic,
+            scaled_anchor_perf_counter=self._scaled_anchor_perf_counter,
+        )
+
+    @with_lock
+    def load_state_dict(self, state_dict: TimeControllerState) -> None:
+        """Loads states.
+
+        Args:
+            state_dict (TimeControllerState): The dict which contains state values.
+        """
+        self._scaled_anchor_time = state_dict["scaled_anchor_time"]
+        self._scaled_anchor_monotonic = state_dict["scaled_anchor_monotonic"]
+        self._scaled_anchor_perf_counter = state_dict["scaled_anchor_perf_counter"]
+
 
 # Create a global instance of TimeController
 _time_controller = TimeController()
@@ -196,6 +227,8 @@ set_time_scale = _time_controller.set_time_scale
 get_time_scale = _time_controller.get_time_scale
 pause = _time_controller.pause
 resume = _time_controller.resume
+state_dict = _time_controller.state_dict
+load_state_dict = _time_controller.load_state_dict
 
 # Expose the original time functions.
 fixed_sleep = _original_time.sleep
