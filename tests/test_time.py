@@ -16,6 +16,8 @@ def test_module_global_values():
     assert ami_time.get_time_scale == controller.get_time_scale
     assert ami_time.pause == controller.pause
     assert ami_time.resume == controller.resume
+    assert ami_time.state_dict == controller.state_dict
+    assert ami_time.load_state_dict == controller.load_state_dict
 
     assert ami_time.fixed_sleep == original_time.sleep
     assert ami_time.fixed_time == original_time.time
@@ -226,3 +228,52 @@ def test_pause_resume_fixed_time_unaffected():
     # Fixed time should continue normally regardless of pause
     assert pause_fixed - start_fixed == pytest.approx(0.1, abs=0.01)
     assert end_fixed - start_fixed == pytest.approx(0.1, abs=0.01)
+
+
+def test_get_and_load_state_dict(controller):
+    """Verify state dict."""
+    state = controller.state_dict()
+    assert isinstance(state, dict)
+    assert state["scaled_anchor_time"] == controller._scaled_anchor_time
+    assert state["scaled_anchor_monotonic"] == controller._scaled_anchor_monotonic
+    assert state["scaled_anchor_perf_counter"] == controller._scaled_anchor_perf_counter
+
+    new_controller = TimeController()
+    assert new_controller.state_dict() != state
+    new_controller.load_state_dict(state)
+    assert new_controller.state_dict() == state
+
+
+def test_state_dict_consistency():
+    func_names = ["time", "perf_counter", "monotonic"]
+
+    # loading same state does not affect anything
+    controller = TimeController()
+    state = controller.state_dict()
+
+    new_controller = TimeController()
+    new_controller.load_state_dict(state)
+
+    for name in func_names:
+        func = getattr(controller, name)
+        new_func = getattr(new_controller, name)
+        assert func() == pytest.approx(new_func(), abs=1e-4), f"'{name}' is not consistent."
+
+    shift = 1_000_000
+    shifted_state = TimeController.TimeControllerState(
+        scaled_anchor_time=state["scaled_anchor_time"] + shift,
+        scaled_anchor_monotonic=state["scaled_anchor_monotonic"] + shift,
+        scaled_anchor_perf_counter=state["scaled_anchor_perf_counter"] + shift,
+    )
+
+    new_controller.load_state_dict(shifted_state)
+    for name in func_names:
+        func = getattr(controller, name)
+        new_func = getattr(new_controller, name)
+        assert func() == pytest.approx(new_func() - shift, abs=1e-4), f"'{name}' is not consistent."
+
+    new_controller.load_state_dict(state)
+    for name in func_names:
+        func = getattr(controller, name)
+        new_func = getattr(new_controller, name)
+        assert func() == pytest.approx(new_func(), abs=1e-4), f"'{name}' is not consistent."
