@@ -1,5 +1,10 @@
-import time
+import pickle
+from pathlib import Path
 from typing import TypeAlias
+
+from typing_extensions import override
+
+from ami import time
 
 from ..checkpointing.checkpoint_schedulers import BaseCheckpointScheduler
 from .base_thread import BaseThread
@@ -87,7 +92,7 @@ class MainThread(BaseThread):
                     self.logger.error("An exception occurred. The system will terminate immediately.")
                     break
 
-                time.sleep(0.001)
+                time.fixed_sleep(0.001)
 
         except KeyboardInterrupt:
             self.logger.info("Shutting down by KeyboardInterrupt.")
@@ -105,9 +110,11 @@ class MainThread(BaseThread):
                 case ControlCommands.PAUSE:
                     self.logger.info("Pausing...")
                     self.thread_controller.pause()
+                    self.on_paused()
                 case ControlCommands.RESUME:
                     self.logger.info("Resuming...")
                     self.thread_controller.resume()
+                    self.on_resumed()
                 case ControlCommands.SHUTDOWN:
                     self.logger.info("Shutting down...")
                     self.thread_controller.shutdown()
@@ -149,3 +156,24 @@ class MainThread(BaseThread):
                 self.logger.error(f"The exception has occurred in the {get_thread_name_from_type(thread_type)} thread.")
                 flag = True
         return flag
+
+    @override
+    def on_paused(self) -> None:
+        super().on_paused()
+        time.pause()
+
+    @override
+    def on_resumed(self) -> None:
+        super().on_resumed()
+        time.resume()
+
+    @override
+    def save_state(self, path: Path) -> None:
+        path.mkdir()
+        with open(path / "time_state.pkl", "wb") as f:
+            pickle.dump(time.state_dict(), f)
+
+    @override
+    def load_state(self, path: Path) -> None:
+        with open(path / "time_state.pkl", "rb") as f:
+            time.load_state_dict(pickle.load(f))
