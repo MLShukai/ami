@@ -7,6 +7,7 @@ import rootutils
 import torch
 from omegaconf import DictConfig, open_dict
 
+import ami.time
 from ami.checkpointing.checkpoint_schedulers import BaseCheckpointScheduler
 from ami.checkpointing.checkpointing import Checkpointing
 from ami.data.utils import DataCollectorsDict
@@ -43,6 +44,10 @@ register_custom_resolvers()
 @hydra.main(config_path="../configs", config_name="launch", version_base="1.3")
 def main(cfg: DictConfig) -> None:
     logger.info("Launch AMI.")
+
+    ami.time.set_time_scale(cfg.time_scale)
+    logger.info(f"Set time scale to {ami.time.get_time_scale()}")
+
     if precision := cfg.get("torch_float32_matmul_precision"):
         torch.set_float32_matmul_precision(precision)
 
