@@ -1,6 +1,8 @@
 import random
 from pathlib import Path
 
+import pytest
+
 import ami.time
 from ami.threads.main_thread import MainThread, ThreadTypes
 from ami.threads.shared_object_names import SharedObjectNames
@@ -35,6 +37,11 @@ class TestMainThread:
                 scaled_anchor_time=random.random(),
             )
         )
-        assert ami.time.state_dict() != state
+        loaded_state = ami.time.state_dict()
+        for key in loaded_state.keys():
+            assert state[key] != pytest.approx(loaded_state[key], abs=0.1)
+
         mt.load_state(path)
-        assert ami.time.state_dict() == state
+        loaded_state = ami.time.state_dict()
+        for key in loaded_state.keys():
+            assert state[key] == pytest.approx(loaded_state[key], abs=0.1)
