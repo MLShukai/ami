@@ -9,6 +9,7 @@ from tests.helpers import skip_if_platform_is_not_linux
 
 def test_module_global_values():
     controller = ami_time._time_controller
+    assert ami_time.is_paused == controller.is_paused
     assert ami_time.sleep == controller.sleep
     assert ami_time.time == controller.time
     assert ami_time.monotonic == controller.monotonic
@@ -258,3 +259,11 @@ def test_get_and_load_state_dict():
         func = getattr(controller, name)
         new_func = getattr(new_controller, name)
         assert func() == pytest.approx(new_func(), abs=0.001), f"'{name}' is not consistent."
+
+
+def test_is_paused(controller):
+    assert not controller.is_paused()
+    controller.pause()
+    assert controller.is_paused()
+    controller.resume()
+    assert not controller.is_paused()

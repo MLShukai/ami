@@ -1,6 +1,7 @@
 import math
-import time
 from abc import ABC, abstractmethod
+
+from ami import time
 
 
 class BaseIntervalAdjustor(ABC):

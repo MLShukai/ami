@@ -7,4 +7,4 @@ defaults:
 
 interval_adjustor:
   _target_: ami.interactions.interval_adjustors.SleepIntervalAdjustor
-  interval: ${python.eval:"0.1 / ${time_scale}"} # 100 ms, 10 Hz.
+  interval: 0.1 # 100 ms, 10 Hz.

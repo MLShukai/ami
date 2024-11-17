@@ -40,11 +40,17 @@ class ThreadController:
     NOTE: **Only one thread can control this object.**
     """
 
+    # 外部から定義されるコールバック関数
+    on_paused: OnPausedCallbackType
+    on_resumed: OnResumedCallbackType
+
     def __init__(self) -> None:
         """Construct this class."""
         self._shutdown_event = threading.Event()
         self._resume_event = threading.Event()  # For pause and resume.
         self._logger = get_main_thread_logger(self.__class__.__name__)
+        self.on_paused = dummy_on_paused
+        self.on_resumed = dummy_on_resumed
 
         # Thread間でHandlerインスタンスを分離。
         self.handlers: dict[ThreadTypes, ThreadCommandHandler] = dict()
@@ -70,10 +76,12 @@ class ThreadController:
     def resume(self) -> None:
         """Sets the resume flag."""
         self._resume_event.set()
+        self.on_resumed()
 
     def pause(self) -> None:
         """Clears the resume flag."""
         self._resume_event.clear()
+        self.on_paused()
 
     def is_resumed(self) -> bool:
         """Returns the resume flag."""

@@ -1,5 +1,10 @@
-import time
+import pickle
+from pathlib import Path
 from typing import TypeAlias
+
+from typing_extensions import override
+
+from ami import time
 
 from ..checkpointing.checkpoint_schedulers import BaseCheckpointScheduler
 from .base_thread import BaseThread
@@ -47,6 +52,8 @@ class MainThread(BaseThread):
         self._host = address[0]
         self._port = address[1]
         self.thread_controller = ThreadController()
+        self.thread_controller.on_paused = self.on_paused
+        self.thread_controller.on_resumed = self.on_resumed
         self.web_api_handler = WebApiHandler(ThreadControllerStatus(self.thread_controller), self._host, self._port)
         self._timeout_for_all_threads_pause = timeout_for_all_threads_pause
         self._max_attempts_to_pause_all_threads = max_attempts_to_pause_all_threads
@@ -62,7 +69,9 @@ class MainThread(BaseThread):
 
     def worker(self) -> None:
         self.logger.info("Start main thread.")
-        self.logger.info(f"Maxmum uptime is set to {self._max_uptime}.")
+        self.logger.info(
+            f"Maxmum uptime is set to {self._max_uptime:.1f} [secs]. (actually {self._max_uptime / time.get_time_scale():.1f} [secs] in time scale x{time.get_time_scale()})"
+        )
         self.thread_controller.activate()
         start_time = time.time()
 
@@ -87,7 +96,7 @@ class MainThread(BaseThread):
                     self.logger.error("An exception occurred. The system will terminate immediately.")
                     break
 
-                time.sleep(0.001)
+                time.fixed_sleep(0.001)
 
         except KeyboardInterrupt:
             self.logger.info("Shutting down by KeyboardInterrupt.")
@@ -149,3 +158,24 @@ class MainThread(BaseThread):
                 self.logger.error(f"The exception has occurred in the {get_thread_name_from_type(thread_type)} thread.")
                 flag = True
         return flag
+
+    @override
+    def on_paused(self) -> None:
+        super().on_paused()
+        time.pause()
+
+    @override
+    def on_resumed(self) -> None:
+        super().on_resumed()
+        time.resume()
+
+    @override
+    def save_state(self, path: Path) -> None:
+        path.mkdir()
+        with open(path / "time_state.pkl", "wb") as f:
+            pickle.dump(time.state_dict(), f)
+
+    @override
+    def load_state(self, path: Path) -> None:
+        with open(path / "time_state.pkl", "rb") as f:
+            time.load_state_dict(pickle.load(f))
