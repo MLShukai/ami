@@ -200,8 +200,9 @@ class TimeController:
         """Return the time controller state.
 
         Returns:
-            TimeControllerState: dict of state values.
+            TimeControllerState: State information that can reproduce the current time flow progression of the system.
         """
+        self._update_scaled_anchor_values()
         return self.TimeControllerState(
             scaled_anchor_time=self._scaled_anchor_time,
             scaled_anchor_monotonic=self._scaled_anchor_monotonic,
@@ -212,12 +213,15 @@ class TimeController:
     def load_state_dict(self, state_dict: TimeControllerState) -> None:
         """Loads states.
 
+        When a state is loaded, the system time starts from the time the state was retrieved.
+
         Args:
             state_dict (TimeControllerState): The dict which contains state values.
         """
         self._scaled_anchor_time = state_dict["scaled_anchor_time"]
         self._scaled_anchor_monotonic = state_dict["scaled_anchor_monotonic"]
         self._scaled_anchor_perf_counter = state_dict["scaled_anchor_perf_counter"]
+        self._update_anchor_values()
 
 
 # Create a global instance of TimeController
