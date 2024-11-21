@@ -1,0 +1,10 @@
+# @package _global_
+defaults:
+  - i_jepa_sioconv_ppo_fundamental
+
+interaction:
+  environment:
+    observation_generator:
+      _target_: torch.randn
+
+task_name: i_jepa_sioconv_ppo_fundamental_whitenoize
