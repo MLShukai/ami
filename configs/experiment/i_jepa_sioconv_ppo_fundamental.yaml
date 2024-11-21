@@ -83,4 +83,6 @@ trainers:
     max_epochs: 3
     # 16 (= buffer size / batch size) * epochs = 48 iteration.
 
+max_uptime: ${cvt_time_str:1h}
+
 task_name: i_jepa_sioconv_ppo_fundamental
