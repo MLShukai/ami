@@ -2,8 +2,10 @@ import random
 from pathlib import Path
 
 import torch
-from torchvision.datasets import ImageFolder
+import torchvision
 from torchvision.transforms import v2
+
+IMG_EXTENSIONS = (".jpg", ".jpeg", ".png", ".ppm", ".bmp", ".pgm", ".tif", ".tiff", ".webp")
 
 
 class ImageFolderObservationGenerator:
@@ -28,12 +30,15 @@ class ImageFolderObservationGenerator:
         if transform is None:
             transform = v2.Compose(
                 [
-                    v2.ToImage(),
                     v2.ToDtype(torch.float, scale=True),
                 ]
             )
+        self.transform = transform
 
-        self._dataset = ImageFolder(root_dir, transform)
+        self._root_dir = Path(root_dir)
+        self.image_files: list[Path] = []
+        for ext in IMG_EXTENSIONS:
+            self.image_files.extend(self._root_dir.glob("*" + ext))
 
     def __call__(self) -> torch.Tensor:
         """Returns a random sampled image.
@@ -42,7 +47,8 @@ class ImageFolderObservationGenerator:
             torch.Tensor: A tensor representing a randomly sampled image from the dataset,
                           resized to the specified image_size, with applied transformations.
         """
-        i = random.randrange(len(self._dataset))
-        img, _ = self._dataset[i]
+        i = random.randrange(len(self.image_files))
+        img = torchvision.io.read_image(str(self.image_files[i]))
+        img = self.transform(img)
         img = v2.functional.resize(img, self.image_size)
         return img
