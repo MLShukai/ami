@@ -73,7 +73,7 @@ docker-run-host: ## Run the built Docker image along with network, camera, and o
 docker-run-unity: ## Run the built Docker image with Unity executables
 	docker run -itd $(DOCKER_GPU_OPTION) \
 	$(DOCKER_PORT_OPTION) \
-	--mount type=volume,source=$(DOCKER_VOLUME_NAME),,target=/workspace \
+	--mount type=volume,source=$(DOCKER_VOLUME_NAME),target=/workspace \
 	--mount type=bind,source=`pwd`/logs,target=/workspace/logs \
 	--mount type=bind,source=`pwd`/unity_executables,target=/workspace/unity_executables \
 	$(DOCKER_IMAGE_NAME)
@@ -82,7 +82,7 @@ DATA_DIR := `pwd`/data
 docker-run-with-data:
 	docker run -itd $(DOCKER_GPU_OPTION) \
 	$(DOCKER_PORT_OPTION) \
-	--mount type=volume,source=$(DOCKER_VOLUME_NAME),,target=/workspace \
+	--mount type=volume,source=$(DOCKER_VOLUME_NAME),target=/workspace \
 	--mount type=bind,source=`pwd`/logs,target=/workspace/logs \
 	--mount type=bind,source=$(DATA_DIR),target=/workspace/data,readonly \
 	$(DOCKER_IMAGE_NAME)
