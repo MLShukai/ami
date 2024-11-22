@@ -46,6 +46,9 @@ if not (DATA_DIR / "random_observation_action_log").exists():
 if not (DATA_DIR / "2024-09-14_09-42-23,678417.ckpt").exists():
     IGNORE_EXPERIMENT_CONFIGS.add("learn_only_sioconv.yaml")
 
+if not (DATA_DIR / "japan_street_images"):
+    IGNORE_EXPERIMENT_CONFIGS.add("i_jepa_sioconv_ppo_fundamental_flickerimage.yaml")
+
 if sys.platform == "linux":
     if shutil.which("pipewire") is None and shutil.which("pulseaudio") is None:
         IGNORE_EXPERIMENT_CONFIGS.add("random_observation_action_log.yaml")
