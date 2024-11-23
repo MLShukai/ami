@@ -14,4 +14,5 @@ interaction:
         - ${shared.image_height}
         - ${shared.image_width}
 
-task_name: i_jepa_sioconv_ppo_fundamental_flickerimage
+task_name: i_jepa_sioconv_ppo_fundamental
+subtask_name: flickerimage
