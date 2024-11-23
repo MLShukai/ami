@@ -7,5 +7,4 @@ interaction:
     observation_generator:
       _target_: torch.randn
 
-task_name: i_jepa_sioconv_ppo_fundamental
 subtask_name: whitenoize
