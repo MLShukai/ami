@@ -96,6 +96,7 @@ def _calc_window_size(
     upsample_paddings: list[int],
 ) -> int:
     """Calculate window_size successive deconv layers correspond to as a whole.
+    Ref: https://pytorch.org/docs/stable/generated/torch.nn.ConvTranspose1d.html
 
     Args:
         upsample_rates (list[int]): Strides of deconvs.
