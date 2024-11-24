@@ -87,7 +87,7 @@ class TestHifiGANGenerator:
             upsample_paddings=upsample_paddings,
         )
         expected_sample_size = (frames - 1) * hop_size + window_size
-        print(output_waveforms.size(), expected_sample_size)
+        assert output_waveforms.size(2) == expected_sample_size, "sample size of output waveform mismatch"
 
 
 def _calc_window_size(
