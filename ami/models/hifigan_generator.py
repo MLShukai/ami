@@ -95,6 +95,12 @@ class HifiGANGenerator(torch.nn.Module):
         out_channels: int = 1,
         upsample_rates: list[int] = [8, 8, 2, 2],
         upsample_kernel_sizes: list[int] = [16, 16, 4, 4],
+        upsample_paddings: list[int] = [
+            4,
+            4,
+            1,
+            1,
+        ],  # Parameters not present in the original implementation. Calculated with (upsample_kernel_size - upsample_rate) // 2
         upsample_initial_channel: int = 128,
         resblock_kernel_sizes: list[int] = [3, 7, 11],
         resblock_dilation_sizes: list[list[int]] = [[1, 3, 5], [1, 3, 5], [1, 3, 5]],
@@ -105,7 +111,9 @@ class HifiGANGenerator(torch.nn.Module):
         self.conv_pre = torch.nn.utils.weight_norm(Conv1d(in_channels, upsample_initial_channel, 7, 1, padding=3))
 
         self.layers = torch.nn.ModuleList()
-        for i, (upsample_rate, upsample_kernel_size) in enumerate(zip(upsample_rates, upsample_kernel_sizes)):
+        for i, (upsample_rate, upsample_kernel_size, upsample_padding) in enumerate(
+            zip(upsample_rates, upsample_kernel_sizes, upsample_paddings)
+        ):
             self.layers.append(
                 torch.nn.utils.weight_norm(
                     ConvTranspose1d(
@@ -113,7 +121,7 @@ class HifiGANGenerator(torch.nn.Module):
                         upsample_initial_channel // (2 ** (i + 1)),
                         upsample_kernel_size,
                         upsample_rate,
-                        padding=(upsample_kernel_size - upsample_rate) // 2,
+                        padding=upsample_padding,
                     )
                 )
             )
