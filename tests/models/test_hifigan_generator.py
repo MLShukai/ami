@@ -77,7 +77,7 @@ class TestHifiGANGenerator:
         input_features = torch.randn([batch_size, in_channels, frames])
         # generate waveforms
         output_waveforms = hifigan_generator(features=input_features)
-        # check size of output latent
+        # check size of output waveforms
         assert output_waveforms.size(0) == batch_size, "batch_size mismatch"
         assert output_waveforms.size(1) == out_channels, "out_channels of output waveform mismatch"
         hop_size = math.prod(upsample_rates)
