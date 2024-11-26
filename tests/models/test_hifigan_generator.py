@@ -37,7 +37,7 @@ class TestHifiGANGenerator:
             ],  # cited from https://github.com/jik876/hifi-gan/blob/master/config_v1.json
             [
                 512,
-                1,
+                2,
                 [10, 8, 2, 2],
                 [20, 16, 4, 4],
                 [4, 2, 1, 1],
