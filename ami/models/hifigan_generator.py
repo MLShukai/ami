@@ -166,7 +166,7 @@ class HifiGANGenerator(torch.nn.Module):
         return x
 
     def remove_weight_norm(self) -> None:
-        print("Removing weight norm...")
+       logger("Removing weight norm...")
         for layer in self.layers:
             torch.nn.utils.remove_weight_norm(layer)
         for layer in self.resblocks:
