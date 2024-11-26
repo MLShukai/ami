@@ -14,6 +14,7 @@ def init_weights(m: torch.nn.Module, mean: float = 0.0, std: float = 0.01) -> No
         m.weight.data.normal_(mean, std)
 
 
+# Avoiding changing the size of inputs and outputs of Conv1ds in ResBlock1.
 def get_padding(kernel_size: int, dilation: int = 1) -> int:
     return int((kernel_size * dilation - dilation) / 2)
 
