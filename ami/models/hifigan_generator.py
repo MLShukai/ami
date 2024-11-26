@@ -136,7 +136,7 @@ class HifiGANGenerator(torch.nn.Module):
             for resblock_kernel_size, resblock_dilation_size in zip(resblock_kernel_sizes, resblock_dilation_sizes):
                 self.resblocks.append(ResBlock1(ch, resblock_kernel_size, resblock_dilation_size))
 
-        self.conv_post = torch.nn.utils.weight_norm(Conv1d(ch, 1, 7, 1, padding=3))
+        self.conv_post = torch.nn.utils.weight_norm(Conv1d(ch, out_channels, 7, 1, padding=3))
         self.layers.apply(init_weights)
         self.conv_post.apply(init_weights)
 
