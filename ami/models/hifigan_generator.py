@@ -10,8 +10,7 @@ logger = logging.getLogger(__name__)
 
 
 def init_weights(m: torch.nn.Module, mean: float = 0.0, std: float = 0.01) -> None:
-    classname = m.__class__.__name__
-    if classname.find("Conv") != -1:
+    if isinstance(m, Conv1d | ConvTransposed1d):
         m.weight.data.normal_(mean, std)
 
 
