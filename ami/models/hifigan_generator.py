@@ -1,8 +1,12 @@
 # Ref:
 # https://github.com/jik876/hifi-gan/blob/master/models.py
 
+import logging
+
 import torch
 from torch.nn import Conv1d, ConvTranspose1d
+
+logger = logging.getLogger(__name__)
 
 
 def init_weights(m: torch.nn.Module, mean: float = 0.0, std: float = 0.01) -> None:
@@ -166,7 +170,7 @@ class HifiGANGenerator(torch.nn.Module):
         return x
 
     def remove_weight_norm(self) -> None:
-       logger("Removing weight norm...")
+        logger("Removing weight norm...")
         for layer in self.layers:
             torch.nn.utils.remove_weight_norm(layer)
         for layer in self.resblocks:
