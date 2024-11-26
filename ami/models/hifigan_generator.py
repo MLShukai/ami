@@ -10,7 +10,7 @@ logger = logging.getLogger(__name__)
 
 
 def init_weights(m: torch.nn.Module, mean: float = 0.0, std: float = 0.01) -> None:
-    if isinstance(m, Conv1d | ConvTransposed1d):
+    if isinstance(m, Conv1d | ConvTranspose1d):
         m.weight.data.normal_(mean, std)
 
 
@@ -20,7 +20,7 @@ def get_padding(kernel_size: int, dilation: int = 1) -> int:
 
 
 class ResBlock1(torch.nn.Module):
-    def __init__(self, channels: int, kernel_size: int = 3, dilation: list[int] = [1, 3, 5]) -> None:
+    def __init__(self, channels: int, kernel_size: int = 3, dilations: list[int] = [1, 3, 5]) -> None:
         super().__init__()
         self.convs1 = torch.nn.ModuleList(
             [
@@ -30,8 +30,8 @@ class ResBlock1(torch.nn.Module):
                         channels,
                         kernel_size,
                         1,
-                        dilation=dilation[0],
-                        padding=get_padding(kernel_size, dilation[0]),
+                        dilation=dilations[0],
+                        padding=get_padding(kernel_size, dilations[0]),
                     )
                 ),
                 torch.nn.utils.weight_norm(
@@ -40,8 +40,8 @@ class ResBlock1(torch.nn.Module):
                         channels,
                         kernel_size,
                         1,
-                        dilation=dilation[1],
-                        padding=get_padding(kernel_size, dilation[1]),
+                        dilation=dilations[1],
+                        padding=get_padding(kernel_size, dilations[1]),
                     )
                 ),
                 torch.nn.utils.weight_norm(
@@ -50,8 +50,8 @@ class ResBlock1(torch.nn.Module):
                         channels,
                         kernel_size,
                         1,
-                        dilation=dilation[2],
-                        padding=get_padding(kernel_size, dilation[2]),
+                        dilation=dilations[2],
+                        padding=get_padding(kernel_size, dilations[2]),
                     )
                 ),
             ]
