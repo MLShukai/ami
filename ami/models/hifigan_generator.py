@@ -117,9 +117,7 @@ class HifiGANGenerator(torch.nn.Module):
         )
 
         self.layers = torch.nn.ModuleList()
-        for i, (rate, kernel_size, padding) in enumerate(
-            zip(upsample_rates, upsample_kernel_sizes, upsample_paddings)
-        ):
+        for i, (rate, kernel_size, padding) in enumerate(zip(upsample_rates, upsample_kernel_sizes, upsample_paddings)):
             self.layers.append(
                 torch.nn.utils.parametrizations.weight_norm(
                     ConvTranspose1d(
