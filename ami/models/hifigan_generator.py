@@ -24,7 +24,7 @@ class ResBlock1(torch.nn.Module):
         super().__init__()
         self.convs1 = torch.nn.ModuleList(
             [
-                torch.nn.utils.weight_norm(
+                torch.nn.utils.parametrizations.weight_norm(
                     Conv1d(
                         channels,
                         channels,
@@ -34,7 +34,7 @@ class ResBlock1(torch.nn.Module):
                         padding=get_padding(kernel_size, dilations[0]),
                     )
                 ),
-                torch.nn.utils.weight_norm(
+                torch.nn.utils.parametrizations.weight_norm(
                     Conv1d(
                         channels,
                         channels,
@@ -44,7 +44,7 @@ class ResBlock1(torch.nn.Module):
                         padding=get_padding(kernel_size, dilations[1]),
                     )
                 ),
-                torch.nn.utils.weight_norm(
+                torch.nn.utils.parametrizations.weight_norm(
                     Conv1d(
                         channels,
                         channels,
@@ -60,13 +60,13 @@ class ResBlock1(torch.nn.Module):
 
         self.convs2 = torch.nn.ModuleList(
             [
-                torch.nn.utils.weight_norm(
+                torch.nn.utils.parametrizations.weight_norm(
                     Conv1d(channels, channels, kernel_size, 1, dilation=1, padding=get_padding(kernel_size, 1))
                 ),
-                torch.nn.utils.weight_norm(
+                torch.nn.utils.parametrizations.weight_norm(
                     Conv1d(channels, channels, kernel_size, 1, dilation=1, padding=get_padding(kernel_size, 1))
                 ),
-                torch.nn.utils.weight_norm(
+                torch.nn.utils.parametrizations.weight_norm(
                     Conv1d(channels, channels, kernel_size, 1, dilation=1, padding=get_padding(kernel_size, 1))
                 ),
             ]
@@ -84,9 +84,9 @@ class ResBlock1(torch.nn.Module):
 
     def remove_weight_norm(self) -> None:
         for layer in self.convs1:
-            torch.nn.utils.remove_weight_norm(layer)
+            torch.nn.utils.parametrize.remove_parametrizations(layer)
         for layer in self.convs2:
-            torch.nn.utils.remove_weight_norm(layer)
+            torch.nn.utils.parametrize.remove_parametrizations(layer)
 
 
 class HifiGANGenerator(torch.nn.Module):
@@ -112,14 +112,16 @@ class HifiGANGenerator(torch.nn.Module):
         super().__init__()
         self.num_kernels = len(resblock_kernel_sizes)
         self.num_upsamples = len(upsample_rates)
-        self.conv_pre = torch.nn.utils.weight_norm(Conv1d(in_channels, upsample_initial_channel, 7, 1, padding=3))
+        self.conv_pre = torch.nn.utils.parametrizations.weight_norm(
+            Conv1d(in_channels, upsample_initial_channel, 7, 1, padding=3)
+        )
 
         self.layers = torch.nn.ModuleList()
         for i, (upsample_rate, upsample_kernel_size, upsample_padding) in enumerate(
             zip(upsample_rates, upsample_kernel_sizes, upsample_paddings)
         ):
             self.layers.append(
-                torch.nn.utils.weight_norm(
+                torch.nn.utils.parametrizations.weight_norm(
                     ConvTranspose1d(
                         upsample_initial_channel // (2**i),
                         upsample_initial_channel // (2 ** (i + 1)),
@@ -136,7 +138,7 @@ class HifiGANGenerator(torch.nn.Module):
             for resblock_kernel_size, resblock_dilation_size in zip(resblock_kernel_sizes, resblock_dilation_sizes):
                 self.resblocks.append(ResBlock1(ch, resblock_kernel_size, resblock_dilation_size))
 
-        self.conv_post = torch.nn.utils.weight_norm(Conv1d(ch, out_channels, 7, 1, padding=3))
+        self.conv_post = torch.nn.utils.parametrizations.weight_norm(Conv1d(ch, out_channels, 7, 1, padding=3))
         self.layers.apply(init_weights)
         self.conv_post.apply(init_weights)
 
@@ -172,8 +174,8 @@ class HifiGANGenerator(torch.nn.Module):
     def remove_weight_norm(self) -> None:
         logger("Removing weight norm...")
         for layer in self.layers:
-            torch.nn.utils.remove_weight_norm(layer)
+            torch.nn.utils.parametrize.remove_parametrizations(layer)
         for layer in self.resblocks:
             layer.remove_weight_norm()
-        torch.nn.utils.remove_weight_norm(self.conv_pre)
-        torch.nn.utils.remove_weight_norm(self.conv_post)
+        torch.nn.utils.parametrize.remove_parametrizations(self.conv_pre)
+        torch.nn.utils.parametrize.remove_parametrizations(self.conv_post)
