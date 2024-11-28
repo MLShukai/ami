@@ -108,8 +108,14 @@ class HifiGANGenerator(nn.Module):
         self.resblocks = nn.ModuleList()
         for i in range(len(self.layers)):
             ch = upsample_initial_channel // (2 ** (i + 1))
-            for kernel_size, dilation_size in zip(resblock_kernel_sizes, resblock_dilation_sizes):
-                self.resblocks.append(ResBlock1(ch, kernel_size, dilation_size))
+            self.resblocks.append(
+                nn.ModuleList(
+                    [
+                        ResBlock1(ch, kernel_size, dilation_size)
+                        for kernel_size, dilation_size in zip(resblock_kernel_sizes, resblock_dilation_sizes)
+                    ]
+                )
+            )
 
         self.conv_post = nn.utils.parametrizations.weight_norm(nn.Conv1d(ch, out_channels, 7, 1, padding=3))
         self.layers.apply(init_weights)
@@ -131,14 +137,8 @@ class HifiGANGenerator(nn.Module):
         for i in range(self.num_upsamples):
             x = F.leaky_relu(x, 0.1)
             x = self.layers[i](x)
-            xs = None
-            for j in range(self.num_kernels):
-                if xs is None:
-                    xs = self.resblocks[i * self.num_kernels + j](x)
-                else:
-                    xs += self.resblocks[i * self.num_kernels + j](x)
-            assert isinstance(xs, torch.Tensor)
-            x = xs / self.num_kernels
+            xs: list[torch.Tensor] = [resblock(x) for resblock in self.resblocks[i]]
+            x = torch.mean(torch.stack(xs), dim=0)
         x = F.leaky_relu(x)
         x = self.conv_post(x)
         x = torch.tanh(x)
