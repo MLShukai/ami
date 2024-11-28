@@ -4,13 +4,14 @@
 import logging
 
 import torch
-from torch.nn import Conv1d, ConvTranspose1d
+import torch.nn as nn
+import torch.nn.functional as F
 
 logger = logging.getLogger(__name__)
 
 
-def init_weights(m: torch.nn.Module, mean: float = 0.0, std: float = 0.01) -> None:
-    if isinstance(m, Conv1d | ConvTranspose1d):
+def init_weights(m: nn.Module, mean: float = 0.0, std: float = 0.01) -> None:
+    if isinstance(m, nn.Conv1d | nn.ConvTranspose1d):
         m.weight.data.normal_(mean, std)
 
 
@@ -19,16 +20,16 @@ def get_padding(kernel_size: int, dilation: int = 1) -> int:
     return int((kernel_size * dilation - dilation) / 2)
 
 
-class ResBlock1(torch.nn.Module):
+class ResBlock1(nn.Module):
     def __init__(self, channels: int, kernel_size: int = 3, dilations: list[int] = [1, 3, 5]) -> None:
         super().__init__()
-        self.layers = torch.nn.ModuleList([])
+        self.layers = nn.ModuleList([])
         for dilation in dilations:
             self.layers.append(
-                torch.nn.Sequential(
-                    torch.nn.LeakyReLU(0.1),
-                    torch.nn.utils.parametrizations.weight_norm(
-                        Conv1d(
+                nn.Sequential(
+                    nn.LeakyReLU(0.1),
+                    nn.utils.parametrizations.weight_norm(
+                        nn.Conv1d(
                             channels,
                             channels,
                             kernel_size,
@@ -37,9 +38,9 @@ class ResBlock1(torch.nn.Module):
                             padding=get_padding(kernel_size, dilation),
                         )
                     ),
-                    torch.nn.LeakyReLU(0.1),
-                    torch.nn.utils.parametrizations.weight_norm(
-                        Conv1d(
+                    nn.LeakyReLU(0.1),
+                    nn.utils.parametrizations.weight_norm(
+                        nn.Conv1d(
                             channels,
                             channels,
                             kernel_size,
@@ -58,12 +59,12 @@ class ResBlock1(torch.nn.Module):
 
     def remove_weight_norm(self) -> None:
         for layer in self.convs1:
-            torch.nn.utils.parametrize.remove_parametrizations(layer)
+            nn.utils.parametrize.remove_parametrizations(layer)
         for layer in self.convs2:
-            torch.nn.utils.parametrize.remove_parametrizations(layer)
+            nn.utils.parametrize.remove_parametrizations(layer)
 
 
-class HifiGANGenerator(torch.nn.Module):
+class HifiGANGenerator(nn.Module):
     """Generate waveforms from input features such as spectrogram, latents, and
     so on."""
 
@@ -86,15 +87,15 @@ class HifiGANGenerator(torch.nn.Module):
         super().__init__()
         self.num_kernels = len(resblock_kernel_sizes)
         self.num_upsamples = len(upsample_rates)
-        self.conv_pre = torch.nn.utils.parametrizations.weight_norm(
-            Conv1d(in_channels, upsample_initial_channel, 7, 1, padding=3)
+        self.conv_pre = nn.utils.parametrizations.weight_norm(
+            nn.Conv1d(in_channels, upsample_initial_channel, 7, 1, padding=3)
         )
 
-        self.layers = torch.nn.ModuleList()
+        self.layers = nn.ModuleList()
         for i, (rate, kernel_size, padding) in enumerate(zip(upsample_rates, upsample_kernel_sizes, upsample_paddings)):
             self.layers.append(
-                torch.nn.utils.parametrizations.weight_norm(
-                    ConvTranspose1d(
+                nn.utils.parametrizations.weight_norm(
+                    nn.ConvTranspose1d(
                         upsample_initial_channel // (2**i),
                         upsample_initial_channel // (2 ** (i + 1)),
                         kernel_size,
@@ -104,13 +105,13 @@ class HifiGANGenerator(torch.nn.Module):
                 )
             )
 
-        self.resblocks = torch.nn.ModuleList()
+        self.resblocks = nn.ModuleList()
         for i in range(len(self.layers)):
             ch = upsample_initial_channel // (2 ** (i + 1))
             for kernel_size, dilation_size in zip(resblock_kernel_sizes, resblock_dilation_sizes):
                 self.resblocks.append(ResBlock1(ch, kernel_size, dilation_size))
 
-        self.conv_post = torch.nn.utils.parametrizations.weight_norm(Conv1d(ch, out_channels, 7, 1, padding=3))
+        self.conv_post = nn.utils.parametrizations.weight_norm(nn.Conv1d(ch, out_channels, 7, 1, padding=3))
         self.layers.apply(init_weights)
         self.conv_post.apply(init_weights)
 
@@ -128,7 +129,7 @@ class HifiGANGenerator(torch.nn.Module):
         """
         x = self.conv_pre(features)
         for i in range(self.num_upsamples):
-            x = torch.nn.functional.leaky_relu(x, 0.1)
+            x = F.leaky_relu(x, 0.1)
             x = self.layers[i](x)
             xs = None
             for j in range(self.num_kernels):
@@ -138,7 +139,7 @@ class HifiGANGenerator(torch.nn.Module):
                     xs += self.resblocks[i * self.num_kernels + j](x)
             assert isinstance(xs, torch.Tensor)
             x = xs / self.num_kernels
-        x = torch.nn.functional.leaky_relu(x)
+        x = F.leaky_relu(x)
         x = self.conv_post(x)
         x = torch.tanh(x)
         return x
@@ -146,8 +147,8 @@ class HifiGANGenerator(torch.nn.Module):
     def remove_weight_norm(self) -> None:
         logger("Removing weight norm...")
         for layer in self.layers:
-            torch.nn.utils.parametrize.remove_parametrizations(layer)
+            nn.utils.parametrize.remove_parametrizations(layer)
         for layer in self.resblocks:
             layer.remove_weight_norm()
-        torch.nn.utils.parametrize.remove_parametrizations(self.conv_pre)
-        torch.nn.utils.parametrize.remove_parametrizations(self.conv_post)
+        nn.utils.parametrize.remove_parametrizations(self.conv_pre)
+        nn.utils.parametrize.remove_parametrizations(self.conv_post)
