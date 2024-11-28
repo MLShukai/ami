@@ -31,7 +31,7 @@ class TestHifiGANGenerator:
                     1,
                     1,
                 ],  # Parameters not present in the original implementation. Calculated with (upsample_kernel_size - upsample_rate) // 2
-                128,
+                512,
                 [3, 7, 11],
                 [[1, 3, 5], [1, 3, 5], [1, 3, 5]],
             ],  # cited from https://github.com/jik876/hifi-gan/blob/master/config_v1.json
@@ -41,7 +41,7 @@ class TestHifiGANGenerator:
                 [10, 8, 2, 2],
                 [20, 16, 4, 4],
                 [4, 2, 1, 1],
-                128,
+                512,
                 [3, 7, 11],
                 [[1, 3, 5], [1, 3, 5], [1, 3, 5]],
             ],  # Equivalent to window_size=400 and hop_size=320.

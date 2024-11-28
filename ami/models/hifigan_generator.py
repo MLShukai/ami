@@ -80,7 +80,7 @@ class HifiGANGenerator(nn.Module):
             1,
             1,
         ],  # Parameters not present in the original implementation. Calculated with (upsample_kernel_size - upsample_rate) // 2
-        upsample_initial_channel: int = 128,
+        upsample_initial_channel: int = 512,
         resblock_kernel_sizes: list[int] = [3, 7, 11],
         resblock_dilation_sizes: list[list[int]] = [[1, 3, 5], [1, 3, 5], [1, 3, 5]],
     ) -> None:
