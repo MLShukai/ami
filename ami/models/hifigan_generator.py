@@ -59,9 +59,9 @@ class ResBlock1(nn.Module):
 
     def remove_weight_norm(self) -> None:
         for layer in self.convs1:
-            nn.utils.parametrize.remove_parametrizations(layer)
+            nn.utils.parametrize.remove_parametrizations(layer, tensor_name='weight')
         for layer in self.convs2:
-            nn.utils.parametrize.remove_parametrizations(layer)
+            nn.utils.parametrize.remove_parametrizations(layer, tensor_name='weight')
 
 
 class HifiGANGenerator(nn.Module):
@@ -147,8 +147,8 @@ class HifiGANGenerator(nn.Module):
     def remove_weight_norm(self) -> None:
         logger.info("Removing weight norm...")
         for layer in self.layers:
-            nn.utils.parametrize.remove_parametrizations(layer)
+            nn.utils.parametrize.remove_parametrizations(layer, tensor_name='weight')
         for layer in self.resblocks:
             layer.remove_weight_norm()
-        nn.utils.parametrize.remove_parametrizations(self.conv_pre)
-        nn.utils.parametrize.remove_parametrizations(self.conv_post)
+        nn.utils.parametrize.remove_parametrizations(self.conv_pre, tensor_name='weight')
+        nn.utils.parametrize.remove_parametrizations(self.conv_post, tensor_name='weight')
