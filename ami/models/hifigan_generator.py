@@ -145,7 +145,7 @@ class HifiGANGenerator(nn.Module):
         return x
 
     def remove_weight_norm(self) -> None:
-        logger("Removing weight norm...")
+        logger.info("Removing weight norm...")
         for layer in self.layers:
             nn.utils.parametrize.remove_parametrizations(layer)
         for layer in self.resblocks:
