@@ -22,64 +22,38 @@ def get_padding(kernel_size: int, dilation: int = 1) -> int:
 class ResBlock1(torch.nn.Module):
     def __init__(self, channels: int, kernel_size: int = 3, dilations: list[int] = [1, 3, 5]) -> None:
         super().__init__()
-        self.convs1 = torch.nn.ModuleList(
-            [
-                torch.nn.utils.parametrizations.weight_norm(
-                    Conv1d(
-                        channels,
-                        channels,
-                        kernel_size,
-                        1,
-                        dilation=dilations[0],
-                        padding=get_padding(kernel_size, dilations[0]),
-                    )
-                ),
-                torch.nn.utils.parametrizations.weight_norm(
-                    Conv1d(
-                        channels,
-                        channels,
-                        kernel_size,
-                        1,
-                        dilation=dilations[1],
-                        padding=get_padding(kernel_size, dilations[1]),
-                    )
-                ),
-                torch.nn.utils.parametrizations.weight_norm(
-                    Conv1d(
-                        channels,
-                        channels,
-                        kernel_size,
-                        1,
-                        dilation=dilations[2],
-                        padding=get_padding(kernel_size, dilations[2]),
-                    )
-                ),
-            ]
-        )
-        self.convs1.apply(init_weights)
-
-        self.convs2 = torch.nn.ModuleList(
-            [
-                torch.nn.utils.parametrizations.weight_norm(
-                    Conv1d(channels, channels, kernel_size, 1, dilation=1, padding=get_padding(kernel_size, 1))
-                ),
-                torch.nn.utils.parametrizations.weight_norm(
-                    Conv1d(channels, channels, kernel_size, 1, dilation=1, padding=get_padding(kernel_size, 1))
-                ),
-                torch.nn.utils.parametrizations.weight_norm(
-                    Conv1d(channels, channels, kernel_size, 1, dilation=1, padding=get_padding(kernel_size, 1))
-                ),
-            ]
-        )
-        self.convs2.apply(init_weights)
+        self.layers = torch.nn.ModuleList([])
+        for dilation in dilations:
+            self.layers.append(
+                torch.nn.Sequential(
+                    torch.nn.LeakyReLU(0.1),
+                    torch.nn.utils.parametrizations.weight_norm(
+                        Conv1d(
+                            channels,
+                            channels,
+                            kernel_size,
+                            1,
+                            dilation=dilation,
+                            padding=get_padding(kernel_size, dilation),
+                        )
+                    ),
+                    torch.nn.LeakyReLU(0.1),
+                    torch.nn.utils.parametrizations.weight_norm(
+                        Conv1d(
+                            channels,
+                            channels,
+                            kernel_size,
+                            1,
+                            dilation=1,
+                            padding=get_padding(kernel_size, 1),
+                        )
+                    ),
+                )
+            )
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        for c1, c2 in zip(self.convs1, self.convs2):
-            xt = torch.nn.functional.leaky_relu(x, 0.1)
-            xt = c1(xt)
-            xt = torch.nn.functional.leaky_relu(xt, 0.1)
-            xt = c2(xt)
-            x = xt + x
+        for layer in self.layers:
+            x = layer(x) + x
         return x
 
     def remove_weight_norm(self) -> None:
