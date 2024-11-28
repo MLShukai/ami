@@ -95,6 +95,7 @@ class HifiGANGenerator(nn.Module):
         for i, (rate, kernel_size, padding) in enumerate(zip(upsample_rates, upsample_kernel_sizes, upsample_paddings)):
             self.layers.append(
                 nn.utils.parametrizations.weight_norm(
+                    # Reducing num of channels by half for each Deconv.
                     nn.ConvTranspose1d(
                         upsample_initial_channel // (2**i),
                         upsample_initial_channel // (2 ** (i + 1)),
