@@ -339,3 +339,32 @@ def encoder_infer_mean_along_patch(wrapper: ModelWrapper[BoolMaskIJEPAEncoder], 
     """
 
     return i_jepa_encoder_infer(wrapper, image).mean(-2)
+
+
+class EncoderInferAveragePool:
+    def __init__(self, n_patches: size_2d, kernel_size: size_2d, stride: size_2d | None = None) -> None:
+        self.n_patches = size_2d_to_int_tuple(n_patches)
+        self.pool = nn.AvgPool2d(kernel_size, stride)
+
+    def __call__(self, wrapper: ModelWrapper[BoolMaskIJEPAEncoder], image: Tensor) -> Tensor:
+        """Customizes the inference flow in the encoder with average pooling.
+
+        Adds batch axis if image does not have it, applies layer normalization,
+        and performs average pooling on the patch dimension with specified kernel size and stride.
+
+        Args:
+            wrapper: ModelWrapper instance that wraps IJEPAEncoder.
+            image: Input for IJEPAEncoder.
+                shape (channel, height, width) or (batch, channel, height, width)
+
+        Returns:
+            Tensor: Output of IJEPAEncoder after average pooling.
+                shape (patch', dim) or (batch, patch', dim) where patch' is the reduced patch dimension
+                after average pooling
+        """
+        x = i_jepa_encoder_infer(wrapper, image)
+        x = x.transpose(-1, -2)
+        x = x.view(x.shape[:-1] + self.n_patches)
+        x = self.pool(x)
+        x = x.flatten(-2).transpose(-1, -2)
+        return x
