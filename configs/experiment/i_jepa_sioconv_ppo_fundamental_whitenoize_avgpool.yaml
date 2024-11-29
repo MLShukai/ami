@@ -8,4 +8,8 @@ models:
     inference_forward:
       kernel_size: 1
 
+trainers: 
+  ppo:
+    entropy_coef: 0.999 # デフォルト.
+
 subtask_name: whitenoize_avgpool
