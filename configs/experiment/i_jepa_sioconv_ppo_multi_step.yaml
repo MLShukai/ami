@@ -22,7 +22,7 @@ shared:
 interaction:
   agent:
     # 旧 AMI の設定と同期
-    max_imagination_steps: 10 # 1.0 sec
+    max_imagination_steps: 1 # 1.0 sec
     # 行動に大きなラグが発生するので無効化
     log_reward_imaginations: False
     log_reconstruction_imaginations: False
@@ -65,7 +65,7 @@ data_collectors:
   ppo_trajectory:
     max_len: ${python.eval:"128 + 1"} # +1 to retrieve final next value function output.
     use_embed_obs_as_observation: True
-    gamma: 0.8
+    gamma: 0.95
 
 trainers:
   i_jepa:
@@ -82,7 +82,7 @@ trainers:
       max_samples: 64 # Iteraction count.
     minimum_new_data_count: 128
   ppo:
-    entropy_coef: 0.05
+    entropy_coef: 0.04
     partial_dataloader:
       batch_size: 8
     max_epochs: 3
