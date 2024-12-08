@@ -220,18 +220,16 @@ class MultiScaleDiscriminator(nn.Module):
                 Feature maps of fake waveforms by discriminators.
                 Shape of each tensor: [batch_size, channels, each_n_frames]
         """
-        y = real_waveforms
-        y_hat = fake_waveforms
         y_d_rs: list[torch.Tensor] = []
         y_d_fs: list[torch.Tensor] = []
         fmaps_rs: list[list[torch.Tensor]] = []
         fmaps_fs: list[list[torch.Tensor]] = []
         for i, discriminator in enumerate(self.discriminators):
             if i != 0:
-                y = self.meanpools[i - 1](y)
-                y_hat = self.meanpools[i - 1](y_hat)
-            y_d_r, fmaps_r = discriminator(y)
-            y_d_g, fmaps_g = discriminator(y_hat)
+                real_waveforms = self.meanpools[i - 1](real_waveforms)
+                fake_waveforms = self.meanpools[i - 1](fake_waveforms)
+            y_d_r, fmaps_r = discriminator(real_waveforms)
+            y_d_g, fmaps_g = discriminator(fake_waveforms)
             y_d_rs.append(y_d_r)
             fmaps_rs.append(fmaps_r)
             y_d_fs.append(y_d_g)
