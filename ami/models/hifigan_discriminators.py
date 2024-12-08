@@ -53,7 +53,7 @@ class DiscriminatorP(nn.Module):
             list[torch.Tensor]:
                 Feature maps from layers. Shape of each tensor in list: [batch_size, channels, each_n_frames, self.period]
         """
-        fmaps: list[torch.Tesnor] = []
+        fmaps: list[torch.Tensor] = []
         x = input_waveforms
 
         # 1d to 2d
