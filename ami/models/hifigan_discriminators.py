@@ -175,7 +175,7 @@ class DiscriminatorS(nn.Module):
         x = self.conv_post(x)
         fmaps.append(x)
         x = torch.flatten(x, 1, -1)
-        
+
         return x, fmaps
 
 
