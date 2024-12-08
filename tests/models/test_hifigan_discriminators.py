@@ -26,7 +26,7 @@ class TestHifiGANDiscriminators:
         fake_waveforms = torch.randn([batch_size, channels, sample_size])
         # generate waveforms
         y_d_rs, y_d_fs, fmaps_rs, fmaps_fs = hifigan_discriminator(real_waveforms, fake_waveforms)
-        # check size of output discriminations
+        # check size of output authenticities
         for y_d_r, y_d_f in zip(y_d_rs, y_d_fs):
             assert y_d_r.dim() == 2
             assert y_d_r.size(0) == batch_size
@@ -54,7 +54,7 @@ class TestHifiGANDiscriminators:
         fake_waveforms = torch.randn([batch_size, channels, sample_size])
         # generate waveforms
         y_d_rs, y_d_fs, fmaps_rs, fmaps_fs = hifigan_discriminator(real_waveforms, fake_waveforms)
-        # check size of output discriminations
+        # check size of output authenticities
         for y_d_r, y_d_f in zip(y_d_rs, y_d_fs):
             assert y_d_r.dim() == 2
             assert y_d_r.size(0) == batch_size
