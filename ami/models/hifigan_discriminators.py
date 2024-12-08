@@ -175,10 +175,7 @@ class DiscriminatorS(nn.Module):
         x = self.conv_post(x)
         fmaps.append(x)
         x = torch.flatten(x, 1, -1)
-
-        print(input_waveforms.size(), x.size())
-        for fmap in fmaps:
-            print(fmap.size())
+        
         return x, fmaps
 
 
