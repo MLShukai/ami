@@ -193,7 +193,7 @@ class MultiScaleDiscriminator(nn.Module):
                 DiscriminatorS(in_channels=in_channels),
             ]
         )
-        self.meanpools = nn.ModuleList([nn.AvgPool1d(4, 2, padding=2), nn.AvgPool1d(4, 2, padding=2)])
+        self.meanpools = nn.AvgPool1d(kernel_size=4, stride=2, padding=2)
 
     def forward(
         self, real_waveforms: torch.Tensor, fake_waveforms: torch.Tensor
@@ -225,9 +225,9 @@ class MultiScaleDiscriminator(nn.Module):
         fmaps_rs: list[list[torch.Tensor]] = []
         fmaps_fs: list[list[torch.Tensor]] = []
         for i, discriminator in enumerate(self.discriminators):
-            if i != 0:
-                real_waveforms = self.meanpools[i - 1](real_waveforms)
-                fake_waveforms = self.meanpools[i - 1](fake_waveforms)
+            if i > 0:
+                real_waveforms = self.meanpools(real_waveforms)
+                fake_waveforms = self.meanpools(fake_waveforms)
             y_d_r, fmaps_r = discriminator(real_waveforms)
             y_d_g, fmaps_g = discriminator(fake_waveforms)
             y_d_rs.append(y_d_r)
