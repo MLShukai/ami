@@ -121,11 +121,11 @@ class MultiPeriodDiscriminator(nn.Module):
         fmaps_fs: list[list[torch.Tensor]] = []
         for discriminator in self.discriminators:
             y_d_r, fmaps_r = discriminator(real_waveforms)
-            y_d_g, fmaps_g = discriminator(fake_waveforms)
+            y_d_f, fmaps_f = discriminator(fake_waveforms)
             y_d_rs.append(y_d_r)
-            y_d_fs.append(y_d_g)
+            y_d_fs.append(y_d_f)
             fmaps_rs.append(fmaps_r)
-            fmaps_fs.append(fmaps_g)
+            fmaps_fs.append(fmaps_f)
         return y_d_rs, y_d_fs, fmaps_rs, fmaps_fs
 
 
@@ -229,9 +229,9 @@ class MultiScaleDiscriminator(nn.Module):
                 real_waveforms = self.meanpools(real_waveforms)
                 fake_waveforms = self.meanpools(fake_waveforms)
             y_d_r, fmaps_r = discriminator(real_waveforms)
-            y_d_g, fmaps_g = discriminator(fake_waveforms)
+            y_d_f, fmaps_f = discriminator(fake_waveforms)
             y_d_rs.append(y_d_r)
             fmaps_rs.append(fmaps_r)
-            y_d_fs.append(y_d_g)
-            fmaps_fs.append(fmaps_g)
+            y_d_fs.append(y_d_f)
+            fmaps_fs.append(fmaps_f)
         return y_d_rs, y_d_fs, fmaps_rs, fmaps_fs
