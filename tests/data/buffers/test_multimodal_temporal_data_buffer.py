@@ -1,4 +1,5 @@
 import time
+from pathlib import Path
 
 import pytest
 import torch
@@ -16,15 +17,15 @@ class TestMultimodalTemporalDataBuffer:
     max_len = 16
     observation_key = DataKeys.EMBED_OBSERVATION
 
-    # テストデータの作成
     @pytest.fixture
     def sample_step_data(self):
+        # Create sample data for testing with different modalities
         return {
             self.observation_key: {
-                Modality.IMAGE: torch.randn(3, 224, 224),  # 画像データ
-                Modality.AUDIO: torch.randn(1, 16000),  # 音声データ (16kHz)
+                Modality.IMAGE: torch.randn(3, 224, 224),  # RGB image data
+                Modality.AUDIO: torch.randn(1, 16000),  # Audio data at 16kHz sampling rate
             },
-            DataKeys.HIDDEN: torch.randn(256),  # 隠れ状態を想定
+            DataKeys.HIDDEN: torch.randn(256),  # Hidden state representation
         }
 
     def test__init__(self):
@@ -67,7 +68,7 @@ class TestMultimodalTemporalDataBuffer:
         dataset = mod.make_dataset()
         assert isinstance(dataset, TensorDataset)
 
-        # データセットの形状を確認
+        # Verify the structure and shape of the dataset
         observations, hiddens = dataset[0]
         assert isinstance(observations, TensorDict)
         assert Modality.IMAGE in observations.keys()
@@ -92,27 +93,27 @@ class TestMultimodalTemporalDataBuffer:
         data_dir = tmp_path / "data"
         mod.save_state(data_dir)
 
-        # 必要なファイルが保存されているか確認
+        # Verify that all necessary files are saved
         assert (data_dir / "observations.pkl").exists()
         assert (data_dir / "hiddens.pkl").exists()
         assert (data_dir / "added_times.pkl").exists()
 
-        # データセットの保存状態を取得
+        # Get the state of the saved dataset
         saved_buffer_dataset = mod.make_dataset()
 
-        # 新しいバッファーを作成して状態を読み込み
+        # Create new buffer and load the saved state
         mod = MultimodalTemporalDataBuffer(self.max_len)
         assert mod.count_data_added_since(previous_get_time) == 0
         mod.load_state(data_dir)
         assert mod.count_data_added_since(previous_get_time) == 1
 
-        # 読み込んだデータセットを取得
+        # Get the loaded dataset
         loaded_buffer_dataset = mod.make_dataset()
 
-        # データセットの内容を比較
+        # Compare the content of datasets
         assert len(loaded_buffer_dataset) == len(saved_buffer_dataset) == 1
 
-        # TensorDictとTensorの比較
+        # Compare TensorDict and Tensor values
         loaded_obs, loaded_hidden = loaded_buffer_dataset[0]
         saved_obs, saved_hidden = saved_buffer_dataset[0]
 
