@@ -13,8 +13,8 @@ def get_padding(kernel_size: int, dilation: int = 1) -> int:
     return int((kernel_size * dilation - dilation) / 2)
 
 
-class DiscriminatorP(nn.Module):
-    """DiscriminatorP that constitutes MultiPeriodDiscriminator described
+class PeriodDiscriminator(nn.Module):
+    """PeriodDiscriminator that constitutes MultiPeriodDiscriminator described
     below.
 
     Discriminate authenticity of the periodicity of the input audio.
@@ -82,11 +82,11 @@ class MultiPeriodDiscriminator(nn.Module):
         super().__init__()
         self.discriminators = nn.ModuleList(
             [
-                DiscriminatorP(period=2, in_channels=in_channels),
-                DiscriminatorP(period=3, in_channels=in_channels),
-                DiscriminatorP(period=5, in_channels=in_channels),
-                DiscriminatorP(period=7, in_channels=in_channels),
-                DiscriminatorP(period=11, in_channels=in_channels),
+                PeriodDiscriminator(period=2, in_channels=in_channels),
+                PeriodDiscriminator(period=3, in_channels=in_channels),
+                PeriodDiscriminator(period=5, in_channels=in_channels),
+                PeriodDiscriminator(period=7, in_channels=in_channels),
+                PeriodDiscriminator(period=11, in_channels=in_channels),
             ]
         )
 
@@ -129,12 +129,13 @@ class MultiPeriodDiscriminator(nn.Module):
         return y_d_rs, y_d_fs, fmaps_rs, fmaps_fs
 
 
-class DiscriminatorS(nn.Module):
-    """DiscriminatorS that constitutes MultiScaleDiscriminator described below.
+class ScaleDiscriminator(nn.Module):
+    """ScaleDiscriminator that constitutes MultiScaleDiscriminator described
+    below.
 
-    Because each DiscriminatorP in MultiPeriodDiscriminator only accepts
-    disjoint samples, Adding MultiScaleDiscriminator to consecutively
-    evaluate the audio sequence.
+    Because each PeriodDiscriminator in MultiPeriodDiscriminator only
+    accepts disjoint samples, Adding MultiScaleDiscriminator to
+    consecutively evaluate the audio sequence.
     """
 
     def __init__(self, in_channels: int = 1, use_spectral_norm: bool = False) -> None:
@@ -180,17 +181,17 @@ class DiscriminatorS(nn.Module):
 
 
 class MultiScaleDiscriminator(nn.Module):
-    """Because each DiscriminatorP in MultiPeriodDiscriminator only accepts
-    disjoint samples, Adding MultiScaleDiscriminator to consecutively evaluate
-    the audio sequence."""
+    """Because each PeriodDiscriminator in MultiPeriodDiscriminator only
+    accepts disjoint samples, Adding MultiScaleDiscriminator to consecutively
+    evaluate the audio sequence."""
 
     def __init__(self, in_channels: int = 1) -> None:
         super().__init__()
         self.discriminators = nn.ModuleList(
             [
-                DiscriminatorS(in_channels=in_channels, use_spectral_norm=True),
-                DiscriminatorS(in_channels=in_channels),
-                DiscriminatorS(in_channels=in_channels),
+                ScaleDiscriminator(in_channels=in_channels, use_spectral_norm=True),
+                ScaleDiscriminator(in_channels=in_channels),
+                ScaleDiscriminator(in_channels=in_channels),
             ]
         )
         self.meanpools = nn.AvgPool1d(kernel_size=4, stride=2, padding=2)
