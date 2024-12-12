@@ -38,7 +38,7 @@ class MultimodalTemporalEncodingAgent(BaseAgent[Mapping[Modality, Tensor], Tenso
         )
 
     @override
-    def on_data_collectors_attached(self):
+    def on_data_collectors_attached(self) -> None:
         super().on_data_collectors_attached()
         self.collector = self.get_data_collector(BufferNames.MULTIMODAL_TEMPORAL)
 
