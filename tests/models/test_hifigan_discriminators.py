@@ -22,21 +22,18 @@ class TestHifiGANDiscriminators:
     ):
         hifigan_discriminator = MultiPeriodDiscriminator(in_channels=channels)
         # define input wav
-        real_waveforms = torch.randn([batch_size, channels, sample_size])
-        fake_waveforms = torch.randn([batch_size, channels, sample_size])
-        # generate waveforms
-        y_d_rs, y_d_fs, fmaps_rs, fmaps_fs = hifigan_discriminator(real_waveforms, fake_waveforms)
+        input_waveforms = torch.randn([batch_size, channels, sample_size])
+        # discriminate authenticity of the input audio
+        authenticity_list, fmaps_list = hifigan_discriminator(input_waveforms)
         # check size of output authenticities
-        for y_d_r, y_d_f in zip(y_d_rs, y_d_fs):
-            assert y_d_r.dim() == 2
-            assert y_d_r.size(0) == batch_size
-            assert y_d_r.size() == y_d_f.size()
+        for authenticity in authenticity_list:
+            assert authenticity.dim() == 2
+            assert authenticity.size(0) == batch_size
         # check size of output feature maps
-        for fmaps_r, fmaps_f in zip(fmaps_rs, fmaps_fs):
-            for fmap_r, fmap_f in zip(fmaps_r, fmaps_f):
-                assert fmap_r.dim() == 4
-                assert fmap_r.size(0) == batch_size
-                assert fmap_r.size() == fmap_f.size()
+        for fmaps in fmaps_list:
+            for fmap in fmaps:
+                assert fmap.dim() == 4
+                assert fmap.size(0) == batch_size
 
     # test input params
     @pytest.mark.parametrize("batch_size", [1, 4])
@@ -50,18 +47,15 @@ class TestHifiGANDiscriminators:
     ):
         hifigan_discriminator = MultiScaleDiscriminator(in_channels=channels)
         # define input wav
-        real_waveforms = torch.randn([batch_size, channels, sample_size])
-        fake_waveforms = torch.randn([batch_size, channels, sample_size])
-        # generate waveforms
-        y_d_rs, y_d_fs, fmaps_rs, fmaps_fs = hifigan_discriminator(real_waveforms, fake_waveforms)
+        input_waveforms = torch.randn([batch_size, channels, sample_size])
+        # discriminate authenticity of the input audio
+        authenticity_list, fmaps_list = hifigan_discriminator(input_waveforms)
         # check size of output authenticities
-        for y_d_r, y_d_f in zip(y_d_rs, y_d_fs):
-            assert y_d_r.dim() == 2
-            assert y_d_r.size(0) == batch_size
-            assert y_d_r.size() == y_d_f.size()
+        for authenticity in authenticity_list:
+            assert authenticity.dim() == 2
+            assert authenticity.size(0) == batch_size
         # check size of output feature maps
-        for fmaps_r, fmaps_f in zip(fmaps_rs, fmaps_fs):
-            for fmap_r, fmap_f in zip(fmaps_r, fmaps_f):
-                assert fmap_r.dim() == 3
-                assert fmap_r.size(0) == batch_size
-                assert fmap_r.size() == fmap_f.size()
+        for fmaps in fmaps_list:
+            for fmap in fmaps:
+                assert fmap.dim() == 3
+                assert fmap.size(0) == batch_size

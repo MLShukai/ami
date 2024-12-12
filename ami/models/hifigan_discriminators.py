@@ -86,42 +86,29 @@ class MultiPeriodDiscriminator(nn.Module):
         )
 
     def forward(
-        self, real_waveforms: torch.Tensor, fake_waveforms: torch.Tensor
-    ) -> tuple[list[torch.Tensor], list[torch.Tensor], list[list[torch.Tensor]], list[list[torch.Tensor]]]:
+        self, input_waveforms: torch.Tensor
+    ) -> tuple[list[torch.Tensor], list[list[torch.Tensor]]]:
         """Discriminate authenticity of the periodicity of the input audio.
 
         Args:
-            real_waveforms (torch.Tensor):
-                Real waveforms selected from datasets. Shape: [batch_size, in_channels, sample_size]
-            fake_waveforms (torch.Tensor):
-                Fake waveforms generated from model. Shape: [batch_size, in_channels, sample_size]
+            input_waveforms (torch.Tensor):
+                Real waveforms selected from datasets or fake waveforms generated from model. Shape: [batch_size, in_channels, sample_size]
 
         Returns:
             list[torch.Tensor]:
-                Authenticities of real waveforms by discriminators.
-                Shape of each tensor: [batch_size, frames]
-            list[torch.Tensor]:
-                Authenticities of fake waveforms by discriminators.
+                Authenticities of input waveforms by discriminators.
                 Shape of each tensor: [batch_size, frames]
             list[list[torch.Tensor]]:
-                Feature maps of real waveforms by discriminators.
-                Shape of each tensor: [batch_size, channels, each_n_frames, self.period]
-            list[list[torch.Tensor]]:
-                Feature maps of fake waveforms by discriminators.
+                Intermediate feature maps.
                 Shape of each tensor: [batch_size, channels, each_n_frames, self.period]
         """
-        y_d_rs: list[torch.Tensor] = []
-        y_d_fs: list[torch.Tensor] = []
-        fmaps_rs: list[list[torch.Tensor]] = []
-        fmaps_fs: list[list[torch.Tensor]] = []
+        authenticity_list: list[torch.Tensor] = []
+        fmaps_list: list[list[torch.Tensor]] = []
         for discriminator in self.discriminators:
-            y_d_r, fmaps_r = discriminator(real_waveforms)
-            y_d_f, fmaps_f = discriminator(fake_waveforms)
-            y_d_rs.append(y_d_r)
-            y_d_fs.append(y_d_f)
-            fmaps_rs.append(fmaps_r)
-            fmaps_fs.append(fmaps_f)
-        return y_d_rs, y_d_fs, fmaps_rs, fmaps_fs
+            authenticity, fmaps = discriminator(input_waveforms)
+            authenticity_list.append(authenticity)
+            fmaps_list.append(fmaps)
+        return authenticity_list, fmaps_list
 
 
 class ScaleDiscriminator(nn.Module):
@@ -192,42 +179,28 @@ class MultiScaleDiscriminator(nn.Module):
         self.meanpools = nn.AvgPool1d(kernel_size=4, stride=2, padding=2)
 
     def forward(
-        self, real_waveforms: torch.Tensor, fake_waveforms: torch.Tensor
-    ) -> tuple[list[torch.Tensor], list[torch.Tensor], list[list[torch.Tensor]], list[list[torch.Tensor]]]:
+        self, input_waveforms: torch.Tensor
+    ) -> tuple[list[torch.Tensor], list[list[torch.Tensor]]]:
         """Discriminate authenticity of the input audio consecutively.
 
         Args:
-            real_waveforms (torch.Tensor):
-                Real waveforms selected from datasets. Shape: [batch_size, in_channels, sample_size]
-            fake_waveforms (torch.Tensor):
-                Fake waveforms generated from model. Shape: [batch_size, in_channels, sample_size]
+            input_waveforms (torch.Tensor):
+                Real waveforms selected from datasets or fake waveforms generated from model. Shape: [batch_size, in_channels, sample_size]
 
         Returns:
             list[torch.Tensor]:
-                Authenticities of real waveforms by discriminators.
-                Shape of each tensor: [batch_size, frames]
-            list[torch.Tensor]:
-                Authenticities of fake waveforms by discriminators.
+                Authenticities of input waveforms by discriminators.
                 Shape of each tensor: [batch_size, frames]
             list[list[torch.Tensor]]:
-                Feature maps of real waveforms by discriminators.
-                Shape of each tensor: [batch_size, channels, each_n_frames]
-            list[list[torch.Tensor]]:
-                Feature maps of fake waveforms by discriminators.
-                Shape of each tensor: [batch_size, channels, each_n_frames]
+                Intermediate feature maps.
+                Shape of each tensor: [batch_size, channels, each_n_frames, self.period]
         """
-        y_d_rs: list[torch.Tensor] = []
-        y_d_fs: list[torch.Tensor] = []
-        fmaps_rs: list[list[torch.Tensor]] = []
-        fmaps_fs: list[list[torch.Tensor]] = []
+        authenticity_list: list[torch.Tensor] = []
+        fmaps_list: list[list[torch.Tensor]] = []
         for i, discriminator in enumerate(self.discriminators):
             if i > 0:
-                real_waveforms = self.meanpools(real_waveforms)
-                fake_waveforms = self.meanpools(fake_waveforms)
-            y_d_r, fmaps_r = discriminator(real_waveforms)
-            y_d_f, fmaps_f = discriminator(fake_waveforms)
-            y_d_rs.append(y_d_r)
-            fmaps_rs.append(fmaps_r)
-            y_d_fs.append(y_d_f)
-            fmaps_fs.append(fmaps_f)
-        return y_d_rs, y_d_fs, fmaps_rs, fmaps_fs
+                input_waveforms = self.meanpools(input_waveforms)
+            authenticity, fmaps = discriminator(input_waveforms)
+            authenticity_list.append(authenticity)
+            fmaps_list.append(fmaps)
+        return authenticity_list, fmaps_list
