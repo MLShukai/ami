@@ -85,9 +85,7 @@ class MultiPeriodDiscriminator(nn.Module):
             [PeriodDiscriminator(period=period, in_channels=in_channels) for period in periods]
         )
 
-    def forward(
-        self, input_waveforms: torch.Tensor
-    ) -> tuple[list[torch.Tensor], list[list[torch.Tensor]]]:
+    def forward(self, input_waveforms: torch.Tensor) -> tuple[list[torch.Tensor], list[list[torch.Tensor]]]:
         """Discriminate authenticity of the periodicity of the input audio.
 
         Args:
@@ -178,9 +176,7 @@ class MultiScaleDiscriminator(nn.Module):
         )
         self.meanpools = nn.AvgPool1d(kernel_size=4, stride=2, padding=2)
 
-    def forward(
-        self, input_waveforms: torch.Tensor
-    ) -> tuple[list[torch.Tensor], list[list[torch.Tensor]]]:
+    def forward(self, input_waveforms: torch.Tensor) -> tuple[list[torch.Tensor], list[list[torch.Tensor]]]:
         """Discriminate authenticity of the input audio consecutively.
 
         Args:
