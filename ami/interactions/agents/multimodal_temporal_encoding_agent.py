@@ -5,6 +5,7 @@ import torch
 from torch import Tensor
 from typing_extensions import override
 
+from ami.data.buffers.buffer_names import BufferNames
 from ami.data.step_data import DataKeys, StepData
 from ami.models.model_names import ModelNames
 from ami.models.model_wrapper import ThreadSafeInferenceWrapper
@@ -37,9 +38,14 @@ class MultimodalTemporalEncodingAgent(BaseAgent[Mapping[Modality, Tensor], Tenso
         )
 
     @override
+    def on_data_collectors_attached(self):
+        super().on_data_collectors_attached()
+        self.collector = self.get_data_collector(BufferNames.MULTIMODAL_TEMPORAL)
+
+    @override
     def step(self, observation: Mapping[Modality, Tensor]) -> Tensor:
         embed_obs = {key: agent.step(observation[key]) for key, agent in self.unimodal_agents.items()}
-        self.data_collectors.collect(
+        self.collector.collect(
             StepData(
                 {
                     DataKeys.OBSERVATION: observation,
