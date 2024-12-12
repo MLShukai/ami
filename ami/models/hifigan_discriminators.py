@@ -80,14 +80,9 @@ class MultiPeriodDiscriminator(nn.Module):
 
     def __init__(self, in_channels: int = 1) -> None:
         super().__init__()
+        periods = [2, 3, 5, 7, 11]
         self.discriminators = nn.ModuleList(
-            [
-                PeriodDiscriminator(period=2, in_channels=in_channels),
-                PeriodDiscriminator(period=3, in_channels=in_channels),
-                PeriodDiscriminator(period=5, in_channels=in_channels),
-                PeriodDiscriminator(period=7, in_channels=in_channels),
-                PeriodDiscriminator(period=11, in_channels=in_channels),
-            ]
+            [PeriodDiscriminator(period=period, in_channels=in_channels) for period in periods]
         )
 
     def forward(
