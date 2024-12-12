@@ -1,4 +1,5 @@
 import pickle
+import time
 from collections import deque
 from dataclasses import dataclass
 from pathlib import Path
@@ -39,7 +40,8 @@ class MultimodalTemporalDataBuffer(BaseDataBuffer):
 
         Args:
             max_len (int): max length of buffer.
-            observation_key (Literal[DataKeys.OBSERVATION, DataKeys.EMBED_OBSERVATION], optional): Keyname of the observation. Defaults to DataKeys.EMBED_OBSERVATION.
+            observation_key (Literal[DataKeys.OBSERVATION, DataKeys.EMBED_OBSERVATION], optional):
+                Keyname of the observation. Defaults to DataKeys.EMBED_OBSERVATION.
         """
         super().__init__()
 
@@ -72,6 +74,7 @@ class MultimodalTemporalDataBuffer(BaseDataBuffer):
         obs = TensorDict({k: v for k, v in obs.items()}, batch_size=(), device="cpu")
         self._storage.observations.append(obs)
         self._storage.hiddens.append(Tensor(step_data[DataKeys.HIDDEN]).cpu())
+        self._storage.added_times.append(time.time())
 
     @override
     def concatenate(self, new_data: Self) -> None:
@@ -104,7 +107,7 @@ class MultimodalTemporalDataBuffer(BaseDataBuffer):
         for i, t in enumerate(reversed(self._storage.added_times)):
             if t < previous_get_time:
                 return i
-        return len(self._storage.added_times)
+        return len(self)
 
     @override
     def save_state(self, path: Path) -> None:
