@@ -13,14 +13,12 @@ from ami.data.utils import DataCollectorsDict
 from ami.interactions.agents.multimodal_temporal_encoding_agent import (
     MultimodalTemporalEncodingAgent,
 )
-from ami.interactions.agents.unimodal_encoding_agent import UnimodalEncodingAgent
 from ami.models.components.sioconvps import SioConvPS
 from ami.models.model_names import ModelNames
 from ami.models.model_wrapper import ModelWrapper
 from ami.models.temporal_encoder import MultimodalTemporalEncoder
 from ami.models.utils import ModelWrappersDict
 from ami.utils import Modality
-from tests.helpers import DataBufferImpl
 
 
 class TestMultimodalTemporalEncodingAgent:
@@ -31,11 +29,11 @@ class TestMultimodalTemporalEncodingAgent:
     DEPTH = 4
 
     @pytest.fixture
-    def temporal_encoder(self) -> MultimodalTemporalEncoder:
-        """Create a mock temporal encoder for testing.
+    def models(self) -> ModelWrappersDict:
+        """Create mock models dictionary for testing.
 
         Returns:
-            MultimodalTemporalEncoder: A simple temporal encoder for testing.
+            ModelWrappersDict: Dictionary containing all required model wrappers.
         """
         observation_flattens = {Modality.IMAGE: nn.Identity(), Modality.AUDIO: nn.Identity()}
         # Project concatenated features (IMAGE_DIM + AUDIO_DIM) to PROJECTION_DIM
@@ -45,24 +43,15 @@ class TestMultimodalTemporalEncodingAgent:
             Modality.IMAGE: nn.Linear(self.HIDDEN_DIM, self.IMAGE_DIM),
             Modality.AUDIO: nn.Linear(self.HIDDEN_DIM, self.AUDIO_DIM),
         }
-        return MultimodalTemporalEncoder(
+        temporal_encoder = MultimodalTemporalEncoder(
             observation_flattens=observation_flattens,
             flattened_obses_projection=flattened_obses_projection,
             core_model=core_model,
             obs_hat_dist_heads=obs_hat_dist_heads,
         )
 
-    @pytest.fixture
-    def models(self, temporal_encoder) -> ModelWrappersDict:
-        """Create mock models dictionary for testing.
-
-        Returns:
-            ModelWrappersDict: Dictionary containing all required model wrappers.
-        """
         mwd = ModelWrappersDict(
             {
-                ModelNames.IMAGE_ENCODER: ModelWrapper(nn.Identity(), "cpu"),
-                ModelNames.AUDIO_ENCODER: ModelWrapper(nn.Identity(), "cpu"),
                 ModelNames.MULTIMODAL_TEMPORAL_ENCODER: ModelWrapper(temporal_encoder, "cpu"),
             }
         )
@@ -79,8 +68,6 @@ class TestMultimodalTemporalEncodingAgent:
         return DataCollectorsDict.from_data_buffers(
             **{
                 BufferNames.MULTIMODAL_TEMPORAL: temporal_buf,
-                BufferNames.IMAGE: DataBufferImpl(),
-                BufferNames.AUDIO: DataBufferImpl(),
             }
         )
 
@@ -91,13 +78,9 @@ class TestMultimodalTemporalEncodingAgent:
         Returns:
             MultimodalTemporalEncodingAgent: The agent instance for testing.
         """
-        unimodal_agents = {
-            Modality.IMAGE: UnimodalEncodingAgent(Modality.IMAGE),
-            Modality.AUDIO: UnimodalEncodingAgent(Modality.AUDIO),
-        }
 
         initial_hidden = torch.zeros(self.DEPTH, self.HIDDEN_DIM)
-        agent = MultimodalTemporalEncodingAgent(unimodal_agents, initial_hidden)
+        agent = MultimodalTemporalEncodingAgent(initial_hidden)
         agent.attach_inference_models(models)
         agent.attach_data_collectors(data_collectors)
         return agent
@@ -152,21 +135,8 @@ class TestMultimodalTemporalEncodingAgent:
         """Test the state saving and loading functionality."""
         agent_path = tmp_path / "agent"
 
-        save_methods = []
-        save_method_expected_arg = []
-        load_methods = []
-        load_method_expected_arg = []
-
-        for m, a in agent.unimodal_agents.items():
-            save_methods.append(mocker.spy(a, "save_state"))
-            save_method_expected_arg.append(agent_path / m)
-            load_methods.append(mocker.spy(a, "load_state"))
-            load_method_expected_arg.append(agent_path / m)
-
         agent.save_state(agent_path)
         assert (agent_path / "encoder_hidden_state.pt").exists()
-        for mock, expected in zip(save_methods, save_method_expected_arg):
-            mock.assert_called_once_with(expected)
 
         hidden = agent.encoder_hidden_state.clone()
         agent.encoder_hidden_state.random_()
@@ -174,5 +144,3 @@ class TestMultimodalTemporalEncodingAgent:
 
         agent.load_state(agent_path)
         assert torch.equal(agent.encoder_hidden_state, hidden)
-        for mock, expected in zip(load_methods, load_method_expected_arg):
-            mock.assert_called_once_with(expected)

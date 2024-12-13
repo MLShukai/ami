@@ -13,7 +13,6 @@ from ami.models.temporal_encoder import MultimodalTemporalEncoder
 from ami.utils import Modality
 
 from .base_agent import BaseAgent
-from .unimodal_encoding_agent import UnimodalEncodingAgent
 
 
 class MultimodalTemporalEncodingAgent(BaseAgent[Mapping[Modality, Tensor], Tensor]):
@@ -22,11 +21,9 @@ class MultimodalTemporalEncodingAgent(BaseAgent[Mapping[Modality, Tensor], Tenso
     @override
     def __init__(
         self,
-        unimodal_agents: Mapping[Modality, UnimodalEncodingAgent],
         initial_hidden: Tensor,
     ) -> None:
-        super().__init__(*unimodal_agents.values())
-        self.unimodal_agents = unimodal_agents
+        super().__init__()
         self.encoder_hidden_state = initial_hidden
 
     @override
@@ -44,17 +41,15 @@ class MultimodalTemporalEncodingAgent(BaseAgent[Mapping[Modality, Tensor], Tenso
 
     @override
     def step(self, observation: Mapping[Modality, Tensor]) -> Tensor:
-        embed_obs = {key: agent.step(observation[key]) for key, agent in self.unimodal_agents.items()}
         self.collector.collect(
             StepData(
                 {
                     DataKeys.OBSERVATION: observation,
-                    DataKeys.EMBED_OBSERVATION: embed_obs,
                     DataKeys.HIDDEN: self.encoder_hidden_state,
                 }
             )
         )
-        out, self.encoder_hidden_state, _ = self.encoder(embed_obs, self.encoder_hidden_state)
+        out, self.encoder_hidden_state, _ = self.encoder(observation, self.encoder_hidden_state)
         return out
 
     @override
@@ -62,12 +57,8 @@ class MultimodalTemporalEncodingAgent(BaseAgent[Mapping[Modality, Tensor], Tenso
         super().save_state(path)
         path.mkdir()
         torch.save(self.encoder_hidden_state, path / "encoder_hidden_state.pt")
-        for modality, agent in self.unimodal_agents.items():
-            agent.save_state(path / modality)
 
     @override
     def load_state(self, path: Path) -> None:
         super().load_state(path)
         self.encoder_hidden_state = torch.load(path / "encoder_hidden_state.pt")
-        for modality, agent in self.unimodal_agents.items():
-            agent.load_state(path / modality)

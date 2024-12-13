@@ -34,7 +34,7 @@ class MultimodalTemporalDataBuffer(BaseDataBuffer):
     def __init__(
         self,
         max_len: int,
-        observation_key: Literal[DataKeys.OBSERVATION, DataKeys.EMBED_OBSERVATION] = DataKeys.EMBED_OBSERVATION,
+        observation_key: Literal[DataKeys.OBSERVATION, DataKeys.EMBED_OBSERVATION] = DataKeys.OBSERVATION,
     ):
         """Initializes data buffer.
 
