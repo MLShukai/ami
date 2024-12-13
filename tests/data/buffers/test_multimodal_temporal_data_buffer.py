@@ -15,7 +15,7 @@ from ami.utils import Modality
 
 class TestMultimodalTemporalDataBuffer:
     max_len = 16
-    observation_key = DataKeys.EMBED_OBSERVATION
+    observation_key = DataKeys.OBSERVATION
 
     @pytest.fixture
     def sample_step_data(self):
