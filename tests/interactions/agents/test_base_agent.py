@@ -1,3 +1,4 @@
+import pytest
 from pytest_mock import MockerFixture
 
 from ami.interactions.agents.base_agent import BaseAgent
@@ -20,6 +21,10 @@ class TestBaseAgent:
         agent.attach_data_collectors(data_collectors_dict)
 
         assert agent.data_collector1
+
+        # check acquiring
+        with pytest.raises(RuntimeError):
+            data_collectors_dict.collect(...)
 
     def test_child_agent_method_call(self, mocker: MockerFixture, inference_wrappers_dict, data_collectors_dict):
         mock_agent = mocker.Mock(BaseAgent)
