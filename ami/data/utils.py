@@ -92,7 +92,7 @@ class DataCollectorsDict(UserDict[str, ThreadSafeDataCollector[Any]]):
         Raises:
             RuntimeError: If any collectors are currently acquired
         """
-        if self._acquired_collectors:
+        if len(self._acquired_collectors) > 0:
             acquired_list = ", ".join(sorted(self._acquired_collectors))
             raise RuntimeError(f"Cannot collect while collectors are acquired: {acquired_list}")
         for v in self.values():
