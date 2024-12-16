@@ -92,7 +92,7 @@ class CuriosityAgent(BaseAgent[Tensor, Tensor]):
     def setup(self) -> None:
         super().setup()
         self.step_data = StepData()
-        self.forward_dynamics_hidden_imaginations = torch.empty(0).type_as(self.forward_dynamics_hidden_imaginations)
+        self.forward_dynamics_hidden_imaginations = torch.empty(0).type_as(self.head_forward_dynamics_hidden_state)
         self.obs_imaginations = torch.empty(0, device=self.forward_dynamics_hidden_imaginations.device)
         self.initial_step = True
 
@@ -134,8 +134,6 @@ class CuriosityAgent(BaseAgent[Tensor, Tensor]):
             : self.max_imagination_steps
         ]  # (imaginations, depth, dim)
 
-        action_dist: Distribution
-        value: Tensor
         action_dist: Distribution
         value: Tensor
         action_dist, value = self.policy_value(obs_imaginations[0], hidden_imaginations[0])
