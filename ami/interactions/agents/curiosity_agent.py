@@ -15,6 +15,7 @@ from ami.models.policy_value_common_net import PolicyValueCommonNet
 from ami.tensorboard_loggers import TimeIntervalLogger
 
 from .base_agent import BaseAgent
+from .utils import PolicyValueCommonProxy
 
 
 class CuriosityAgent(BaseAgent[Tensor, Tensor]):
@@ -59,9 +60,15 @@ class CuriosityAgent(BaseAgent[Tensor, Tensor]):
         self.forward_dynamics: ThreadSafeInferenceWrapper[ForwardDynamcisWithActionReward] = self.get_inference_model(
             ModelNames.FORWARD_DYNAMICS
         )
-        self.policy_value: ThreadSafeInferenceWrapper[PolicyValueCommonNet] = self.get_inference_model(
-            ModelNames.POLICY_VALUE
-        )
+        self.policy_value = self._get_policy_value_net()
+
+    def _get_policy_value_net(self) -> ThreadSafeInferenceWrapper[PolicyValueCommonNet] | PolicyValueCommonProxy:
+        if self.check_model_exists(ModelNames.POLICY_VALUE):
+            return self.get_inference_model(ModelNames.POLICY_VALUE)
+        else:
+            policy = self.get_inference_model(ModelNames.POLICY)
+            value = self.get_inference_model(ModelNames.VALUE)
+            return PolicyValueCommonProxy(policy, value)
 
     @override
     def on_data_collectors_attached(self) -> None:
