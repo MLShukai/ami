@@ -18,6 +18,15 @@ from .base_agent import BaseAgent
 
 
 class CuriosityAgent(BaseAgent[Tensor, Tensor]):
+    """A reinforcement learning agent that uses curiosity-driven exploration
+    through forward dynamics prediction.
+
+    This agent implements curiosity-driven exploration by predicting
+    future observations and using prediction errors as intrinsic
+    rewards. It maintains a forward dynamics model to predict future
+    states and a policy-value network for action selection.
+    """
+
     @override
     def __init__(
         self,
@@ -26,6 +35,15 @@ class CuriosityAgent(BaseAgent[Tensor, Tensor]):
         max_imagination_steps: int = 1,
         reward_average_method: Callable[[Tensor], Tensor] = torch.mean,
     ) -> None:
+        """Initializes the CuriosityAgent.
+
+        Args:
+            initial_hidden (Tensor): Initial hidden state tensor for the forward dynamics model.
+            logger (TimeIntervalLogger): Logger instance for recording metrics and rewards.
+            max_imagination_steps (int, optional): Maximum number of steps to imagine into the future. Must be >= 1. Defaults to 1.
+            reward_average_method (Callable[[Tensor], Tensor], optional): Function to average rewards across imagination steps.
+                Takes a tensor of rewards (imagination_steps,) and returns a scalar reward. Defaults to torch.mean.
+        """
         super().__init__()
         if max_imagination_steps < 1:
             raise ValueError(...)
@@ -78,6 +96,16 @@ class CuriosityAgent(BaseAgent[Tensor, Tensor]):
         return action
 
     def _common_step(self, observation: Tensor, initial_step: bool) -> Tensor:
+        """Executes the common step procedure for the curiosity-driven agent.
+
+        Args:
+            observation (Tensor): Current observation from the environment
+            initial_step (bool): Whether this is the first step in an episode.
+                When True, skips reward calculation as there are no previous predictions.
+
+        Returns:
+            Tensor: Selected action to be executed in the environment
+        """
         if not initial_step:
             observation = observation.type_as(observation)
             target_obses = observation.expand_as(self.obs_imaginations)
