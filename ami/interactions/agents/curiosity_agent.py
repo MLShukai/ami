@@ -114,7 +114,7 @@ class CuriosityAgent(BaseAgent[Tensor, Tensor]):
             Tensor: Selected action to be executed in the environment
         """
         if not initial_step:
-            observation = observation.type_as(observation)
+            observation = observation.type_as(self.obs_imaginations)
             target_obses = observation.expand_as(self.obs_imaginations)
             reward_imaginations = -self.obs_dist_imaginations.log_prob(target_obses)
 
