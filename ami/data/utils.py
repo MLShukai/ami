@@ -49,10 +49,52 @@ class DataUsersDict(UserDict[str, ThreadSafeDataUser[Any]], SaveAndLoadStateMixi
 
 class DataCollectorsDict(UserDict[str, ThreadSafeDataCollector[Any]]):
     """A class for aggregating `DataCollectors` to invoke their `collect`
-    methods within the agent class."""
+    methods within the agent class.
+
+    Once a collector is acquired, it cannot be released until system
+    restart. Acquired collectors are excluded from the collect
+    operation.
+    """
+
+    def __init__(self, *args: Any, **kwds: Any) -> None:
+        super().__init__(*args, **kwds)
+        self._acquired_collectors: set[str] = set()
+
+    def acquire(self, collector_name: str) -> ThreadSafeDataCollector[Any]:
+        """Acquire permanent exclusive access to a specific data collector.
+
+        Once acquired, a collector cannot be released until system restart.
+
+        Args:
+            collector_name: Name of the collector to acquire
+
+        Returns:
+            ThreadSafeDataCollector[Any]: The acquired data collector
+
+        Raises:
+            KeyError: If collector_name is already acquired or doesn't exist
+        """
+        if collector_name in self._acquired_collectors:
+            raise KeyError(f"Data collector '{collector_name}' is already acquired.")
+        if collector_name not in self:
+            raise KeyError(f"Data collector '{collector_name}' not found.")
+
+        self._acquired_collectors.add(collector_name)
+        return self[collector_name]
 
     def collect(self, step_data: StepData) -> None:
-        """Calls the `collect` method on every `DataCollector` item."""
+        """Calls the `collect` method on every non-acquired `DataCollector`
+        item.
+
+        Args:
+            step_data: Data to be collected
+
+        Raises:
+            RuntimeError: If any collectors are currently acquired
+        """
+        if len(self._acquired_collectors) > 0:
+            acquired_list = ", ".join(sorted(self._acquired_collectors))
+            raise RuntimeError(f"Cannot collect while collectors are acquired: {acquired_list}")
         for v in self.values():
             v.collect(step_data)
 
