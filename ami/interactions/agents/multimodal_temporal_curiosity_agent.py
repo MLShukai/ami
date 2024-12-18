@@ -1,6 +1,7 @@
 from collections.abc import Mapping
 from pathlib import Path
 
+import torch
 from torch import Tensor
 
 from ami.utils import Modality
@@ -69,9 +70,13 @@ class MultimodalTemporalCuriosityAgent(BaseAgent[Mapping[Modality, Tensor], Tens
         self.temporal_agent.save_state(path / "temporal")
         self.curiosity_agent.save_state(path / "curiosity")
 
+        torch.save(self._previous_action, path / "previous_action.pt")
+
     def load_state(self, path: Path) -> None:
         super().load_state(path)
         for modality, agent in self.unimodal_agents.items():
             agent.load_state(path / modality)
         self.temporal_agent.load_state(path / "temporal")
         self.curiosity_agent.load_state(path / "curiosity")
+
+        self._previous_action = torch.load(path / "previous_action.pt")
