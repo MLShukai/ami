@@ -51,4 +51,4 @@ services:
 volumes:
   ami:
     name: ami-${USER}
-    external: false
+    external: true
