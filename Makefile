@@ -27,71 +27,24 @@ type:
 
 run: format test-full type
 
-NAME := $(shell whoami)
-DOCKER_IMAGE_NAME := $(NAME)/ami:latest
+docker-build: ## Build docker image
+	docker compose build --no-cache
 
-docker-build: ## Build docker image.
-	docker build -t $(DOCKER_IMAGE_NAME) --no-cache .
+docker-run: ## Run built docker image
+	docker compose up -d ami
 
-# Docker GPU Option.
-USING_GPU_DEVICES := all # Index 0,1,2, ... or device UUID.
+docker-run-host: ## Run with host device access
+	export WEBCAM_DEVICE=$(shell v4l2-ctl --list-devices | grep -A 1 'OBS Virtual Camera' | grep -oP '\t\K/dev.*')
+	docker compose up -d ami-host
 
-GPU_AVAILABLE := $(shell [ -f /proc/driver/nvidia/version ] && echo 1 || echo 0)
+docker-run-unity: ## Run with Unity executables
+	docker compose up -d ami-unity
 
-ifeq ($(GPU_AVAILABLE),1)
-    DOCKER_GPU_OPTION := --gpus device=$(USING_GPU_DEVICES)
-else
-    DOCKER_GPU_OPTION :=
-endif
+docker-run-with-data: ## Run with data directory mounted
+	docker compose up -d ami-data
 
-# Tensorboardなど
-DOCKER_PORT_OPTION := --net host
+docker-attach: ## Attach to the latest container
+	docker compose exec $(shell docker compose ps --services | grep -m1 "^ami") bash
 
-# PulseAudioなど
-DOCKER_AUDIO_OPTION := -e PULSE_SERVER=unix:${XDG_RUNTIME_DIR}/pulse/native \
- -v ${XDG_RUNTIME_DIR}/pulse/native:${XDG_RUNTIME_DIR}/pulse/native \
- -v ~/.config/pulse/cookie:/root/.config/pulse/cookie
-
-DOCKER_VOLUME_NAME := ami-$(NAME)
-
-docker-run: ## Run built docker image.
-	docker run -itd $(DOCKER_GPU_OPTION) \
-	$(DOCKER_PORT_OPTION) \
-	--mount type=volume,source=$(DOCKER_VOLUME_NAME),target=/workspace \
-	--mount type=bind,source=`pwd`/logs,target=/workspace/logs \
-	$(DOCKER_IMAGE_NAME)
-
-docker-run-host: ## Run the built Docker image along with network, camera, and other host OS device access
-	docker run -itd $(DOCKER_GPU_OPTION) \
-	$(DOCKER_PORT_OPTION) \
-	--mount type=volume,source=$(DOCKER_VOLUME_NAME),target=/workspace \
-	--mount type=bind,source=`pwd`/logs,target=/workspace/logs \
-	--device `v4l2-ctl --list-devices | grep -A 1 'OBS Virtual Camera' | grep -oP '\t\K/dev.*'`:/dev/video0:mwr \
-	$(DOCKER_AUDIO_OPTION) \
-	$(DOCKER_IMAGE_NAME)
-
-docker-run-unity: ## Run the built Docker image with Unity executables
-	docker run -itd $(DOCKER_GPU_OPTION) \
-	$(DOCKER_PORT_OPTION) \
-	--mount type=volume,source=$(DOCKER_VOLUME_NAME),target=/workspace \
-	--mount type=bind,source=`pwd`/logs,target=/workspace/logs \
-	--mount type=bind,source=`pwd`/unity_executables,target=/workspace/unity_executables \
-	$(DOCKER_IMAGE_NAME)
-
-DATA_DIR := `pwd`/data
-docker-run-with-data:
-	docker run -itd $(DOCKER_GPU_OPTION) \
-	$(DOCKER_PORT_OPTION) \
-	--mount type=volume,source=$(DOCKER_VOLUME_NAME),target=/workspace \
-	--mount type=bind,source=`pwd`/logs,target=/workspace/logs \
-	--mount type=bind,source=$(DATA_DIR),target=/workspace/data,readonly \
-	$(DOCKER_IMAGE_NAME)
-
-docker-attach: # 一番最後に起動したコンテナにアタッチする。
-	@container_id=$$(docker ps --filter "ancestor=$(DOCKER_IMAGE_NAME)" --latest --quiet); \
-	if [ -n "$$container_id" ]; then \
-		echo "Attaching to container $$container_id"; \
-		docker exec -it $$container_id bash; \
-	else \
-		echo "No running container with image '$(DOCKER_IMAGE_NAME)' found."; \
-	fi
+docker-down: ## Remove the container
+	docker compose down
