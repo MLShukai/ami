@@ -47,7 +47,7 @@ class CuriosityAgent(BaseAgent[Tensor, Tensor]):
         """
         super().__init__()
         if max_imagination_steps < 1:
-            raise ValueError(...)
+            raise ValueError(f"`max_imagination_steps` must be >= 1! Your input: {max_imagination_steps}")
 
         self.head_forward_dynamics_hidden_state = initial_hidden
         self.logger = logger
@@ -113,8 +113,9 @@ class CuriosityAgent(BaseAgent[Tensor, Tensor]):
         Returns:
             Tensor: Selected action to be executed in the environment
         """
+        observation = observation.type_as(self.obs_imaginations)  # convert type and send to device
+
         if not initial_step:
-            observation = observation.type_as(self.obs_imaginations)
             target_obses = observation.expand_as(self.obs_imaginations)
             reward_imaginations = -self.obs_dist_imaginations.log_prob(target_obses)
 
