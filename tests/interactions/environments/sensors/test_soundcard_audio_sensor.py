@@ -10,7 +10,7 @@ from pytest_mock import MockerFixture, MockType
 
 try:
     import soundcard
-except AssertionError:
+except Exception:
     pytest.skip("soundcard is unavailable in this test environment.", allow_module_level=True)
 
 
