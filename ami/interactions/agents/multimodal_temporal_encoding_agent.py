@@ -13,6 +13,7 @@ from ami.models.temporal_encoder import MultimodalTemporalEncoder
 from ami.utils import Modality
 
 from .base_agent import BaseAgent
+from .unimodal_encoding_agent import UnimodalEncodingAgent
 
 
 class MultimodalTemporalEncodingAgent(BaseAgent[Mapping[Modality, Tensor], Tensor]):
@@ -22,9 +23,22 @@ class MultimodalTemporalEncodingAgent(BaseAgent[Mapping[Modality, Tensor], Tenso
     def __init__(
         self,
         initial_hidden: Tensor,
+        unimodal_agents: Mapping[Modality, UnimodalEncodingAgent | BaseAgent[Tensor, Tensor]] | None = None,
     ) -> None:
-        super().__init__()
+        """Initializes the MultimodalTemporalEncodingAgent.
+
+        Args:
+            initial_hidden (Tensor): The initial hidden state for the encoder.
+            unimodal_agents (Mapping[Modality, UnimodalEncodingAgent | BaseAgent[Tensor, Tensor]] | None, optional):
+                A mapping of modalities to their corresponding unimodal encoding agents. Defaults to None.
+        """
+
+        if unimodal_agents is None:
+            unimodal_agents = {}
+
+        super().__init__(*unimodal_agents.values())
         self.encoder_hidden_state = initial_hidden
+        self.unimodal_agents = unimodal_agents
 
     @override
     def on_inference_models_attached(self) -> None:
@@ -41,6 +55,12 @@ class MultimodalTemporalEncodingAgent(BaseAgent[Mapping[Modality, Tensor], Tenso
 
     @override
     def step(self, observation: Mapping[Modality, Tensor]) -> Tensor:
+
+        observation = dict(observation)  # copy
+
+        for modality, agent in self.unimodal_agents.items():
+            observation[modality] = agent.step(observation[modality])
+
         self.collector.collect(
             StepData(
                 {
@@ -57,8 +77,12 @@ class MultimodalTemporalEncodingAgent(BaseAgent[Mapping[Modality, Tensor], Tenso
         super().save_state(path)
         path.mkdir()
         torch.save(self.encoder_hidden_state, path / "encoder_hidden_state.pt")
+        for modality, agent in self.unimodal_agents.items():
+            agent.save_state(path / modality)
 
     @override
     def load_state(self, path: Path) -> None:
         super().load_state(path)
         self.encoder_hidden_state = torch.load(path / "encoder_hidden_state.pt")
+        for modality, agent in self.unimodal_agents.items():
+            agent.load_state(path / modality)
