@@ -22,6 +22,17 @@ class MultimodalTemporalCuriosityAgent(BaseAgent[Mapping[Modality, Tensor], Tens
         include_action_modality: bool,
         initial_action: Tensor | None = None,
     ) -> None:
+        """Initializes the MultimodalTemporalCuriosityAgent.
+
+        Args:
+            multimodal_temporal_agent (MultimodalTemporalEncodingAgent): The agent for multimodal temporal encoding
+            curiosity_agent (CuriosityAgent): The agent of curiosity-driven exploration.
+            include_action_modality (bool): If true, add loopback action modality to observation.
+            initial_action (Tensor | None, optional): Initial action for action modality. Defaults to None.
+
+        Raises:
+            ValueError: If `initial_action` is None when including action modality.
+        """
         super().__init__(multimodal_temporal_agent, curiosity_agent)
 
         self.multimodal_temporal_agent = multimodal_temporal_agent
