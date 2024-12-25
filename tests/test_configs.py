@@ -49,9 +49,10 @@ if not (DATA_DIR / "2024-09-14_09-42-23,678417.ckpt").exists():
 if not (DATA_DIR / "japan_street_images"):
     IGNORE_EXPERIMENT_CONFIGS.add("i_jepa_sioconv_ppo_fundamental_flickerimage.yaml")
 
-if sys.platform == "linux":
-    if shutil.which("pipewire") is None and shutil.which("pulseaudio") is None:
-        IGNORE_EXPERIMENT_CONFIGS.add("random_observation_action_log.yaml")
+try:
+    import soundcard
+except Exception:
+    IGNORE_EXPERIMENT_CONFIGS.add("random_observation_action_log.yaml")
 
 EXPERIMENT_CONFIG_OVERRIDES = [
     [f"experiment={file.name.rsplit('.', 1)[0]}"]
