@@ -29,16 +29,28 @@ class PeriodDiscriminator(nn.Module):
     ) -> None:
         super().__init__()
         self.period = period
-        self.convs = nn.ModuleList(
-            [
-                weight_norm(nn.Conv2d(in_channels, 32, (kernel_size, 1), (stride, 1), padding=(get_padding(5, 1), 0))),
-                weight_norm(nn.Conv2d(32, 128, (kernel_size, 1), (stride, 1), padding=(get_padding(5, 1), 0))),
-                weight_norm(nn.Conv2d(128, 512, (kernel_size, 1), (stride, 1), padding=(get_padding(5, 1), 0))),
-                weight_norm(nn.Conv2d(512, 1024, (kernel_size, 1), (stride, 1), padding=(get_padding(5, 1), 0))),
-                weight_norm(nn.Conv2d(1024, 1024, (kernel_size, 1), 1, padding=(2, 0))),
-            ]
-        )
-        self.conv_post = weight_norm(nn.Conv2d(1024, 1, (3, 1), 1, padding=(1, 0)))
+
+        channels = [
+            (in_channels, 32),
+            (32, 128),
+            (128, 512),
+            (512, 1024),
+            (1024, 1024),
+        ]
+        self.convs = nn.ModuleList()
+        for i, (in_ch, out_ch) in enumerate(channels, start=1):
+            self.convs.append(
+                weight_norm(
+                    nn.Conv1d(
+                        in_ch,
+                        out_ch,
+                        kernel_size,
+                        stride=1 if i == len(channels) else stride,
+                        padding=2 if i == len(channels) else get_padding(kernel_size, 1),
+                    )
+                )
+            )
+        self.conv_post = weight_norm(nn.Conv1d(channels[-1][-1], 1, 3, 1, padding=1))
 
     def forward(self, input_waveforms: torch.Tensor) -> tuple[torch.Tensor, list[torch.Tensor]]:
         """Discriminate authenticity of the periodicity of the input audio.
@@ -63,12 +75,18 @@ class PeriodDiscriminator(nn.Module):
             x = F.pad(x, (0, n_pad), "reflect")
             sample_size = sample_size + n_pad
         x = x.view(batch_size, channels, sample_size // self.period, self.period)
+        x = x.movedim(-1, 0)
+        x = x.contiguous().view(batch_size * self.period, channels, sample_size // self.period)
 
         for conv in self.convs:
             x = conv(x)
             x = F.leaky_relu(x, 0.1)
-            fmaps.append(x)
+            fmap = x.contiguous().view(self.period, batch_size, x.size(-2), x.size(-1))
+            fmap = fmap.movedim(0, -1)
+            fmaps.append(fmap)
         x = self.conv_post(x)
+        x = x.contiguous().view(self.period, batch_size, x.size(-2), x.size(-1))
+        x = x.movedim(0, -1)
         fmaps.append(x)
         x = torch.flatten(x, 1, -1)
 
