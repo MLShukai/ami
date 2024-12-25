@@ -1,17 +1,12 @@
 # @package _global_
 
-# 制約条件
-# - VRAM 24GB
-# - 1度のTraining Timeの合計時間が 12.8秒以下
-# - 10 FPSで推論動作
-
-# モデルサイズ Largeは、 RTX 4090を最大限使用する設定です。
-# Medium, Smallはそれぞれ、 1/2, 1/4使用する設定です。
+# 基礎実験用config
 
 defaults:
   - override /interaction: vrchat_with_curiosity_image_ppo_agent
   - override /interaction/agent: curiosity_image_multi_step_imagination
-  - override /models: i_jepa_sioconv_resnetpolicy_large
+  - override /interaction/environment: dummy_image_io
+  - override /models: i_jepa_sioconv_resnetpolicy_small
   - override /data_collectors: image_dynamics_ppo
   - override /trainers: i_jepa_forward_dynamics_ppo
 
@@ -29,11 +24,11 @@ interaction:
     log_imagination_trajectory: False
 
   observation_wrappers:
-    - _target_: ami.interactions.io_wrappers.tensor_video_recorder.TensorVideoRecorder
-      output_dir: ${paths.io_log_dir}/video_recordings
-      width: ${shared.image_width}
-      height: ${shared.image_height}
-      frame_rate: ${python.eval:"1 / ${interaction.interval_adjustor.interval}"}
+    # - _target_: ami.interactions.io_wrappers.tensor_video_recorder.TensorVideoRecorder
+    #   output_dir: ${paths.io_log_dir}/video_recordings
+    #   width: ${shared.image_width}
+    #   height: ${shared.image_height}
+    #   frame_rate: ${python.eval:"1 / ${interaction.interval_adjustor.interval}"}
 
     - _target_: ami.interactions.io_wrappers.function_wrapper.FunctionIOWrapper
       wrap_function:
@@ -65,7 +60,7 @@ data_collectors:
   ppo_trajectory:
     max_len: ${python.eval:"128 + 1"} # +1 to retrieve final next value function output.
     use_embed_obs_as_observation: True
-    gamma: 0.95
+    gamma: 0.9
 
 trainers:
   i_jepa:
@@ -82,10 +77,12 @@ trainers:
       max_samples: 64 # Iteraction count.
     minimum_new_data_count: 128
   ppo:
-    entropy_coef: 0.04
+    entropy_coef: 0.1
     partial_dataloader:
       batch_size: 8
     max_epochs: 3
     # 16 (= buffer size / batch size) * epochs = 48 iteration.
 
-task_name: i_jepa_sioconv_ppo_multi_step
+max_uptime: ${cvt_time_str:4h}
+
+task_name: i_jepa_sioconv_ppo_fundamental

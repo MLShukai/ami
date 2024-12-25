@@ -1,0 +1,15 @@
+# @package _global_
+defaults:
+  - i_jepa_sioconv_ppo_fundamental_whitenoize
+  - override /models: i_jepa_avgpool_sioconv_resnetpolicy_small
+
+models:
+  i_jepa_target_encoder:
+    inference_forward:
+      kernel_size: 1
+
+data_collectors:
+  ppo_trajectory:
+    gamma: 0.999
+
+subtask_name: whitenoize_avgpool

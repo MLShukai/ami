@@ -4,6 +4,7 @@ import torch
 from ami.models.bool_mask_i_jepa import (
     BoolMaskIJEPAEncoder,
     BoolTargetIJEPAPredictor,
+    EncoderInferAveragePool,
     ModelWrapper,
     encoder_infer_mean_along_patch,
     i_jepa_encoder_infer,
@@ -170,3 +171,22 @@ def test_encoder_infer_mean_patch(device):
 
     out: torch.Tensor = wrapper.infer(torch.randn(8, 3, 128, 128))
     assert out.shape == (8, 64)
+
+
+def test_encoder_infer_average_pool(device):
+    wrapper = ModelWrapper(
+        BoolMaskIJEPAEncoder(
+            img_size=128, patch_size=16, in_channels=3, embed_dim=64, out_dim=64, depth=4, num_heads=2
+        ),
+        device,
+        has_inference=True,
+        inference_forward=EncoderInferAveragePool(n_patches=(8, 8), kernel_size=2),
+    )
+    wrapper.to_default_device()
+
+    out: torch.Tensor = wrapper.infer(torch.randn(3, 128, 128))
+    assert out.shape == (16, 64)  # 8x8のパッチがkernel_size=2で1/4に
+    assert out.device == device
+
+    out: torch.Tensor = wrapper.infer(torch.randn(8, 3, 128, 128))
+    assert out.shape == (8, 16, 64)  # バッチサイズ8を追加

@@ -23,6 +23,8 @@ defaults:
   - experiment: null
 
 task_name: image_encoding
+subtask_name: "" # if given, create subfolder under the task_name
+task_tag: "default" # Running tags
 
 # You can specify saved checkpoint path when system is begun.
 saved_checkpoint_path: null
