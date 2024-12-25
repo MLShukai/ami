@@ -1,0 +1,40 @@
+_target_: ami.interactions.agents.multimodal_temporal_curiosity_agent.MultimodalTemporalCuriosityAgent
+
+multimodal_temporal_agent:
+  _target_: ami.interactions.agents.multimodal_temporal_encoding_agent.MultimodalTemporalEncodingAgent
+  initial_hidden:
+    _target_: torch.zeros
+    _args_:
+      - ${models.multimodal_temporal_encoder.model.core_model.depth}
+      - ${models.multimodal_temporal_encoder.model.core_model.dim}
+    dtype: ${torch.dtype:float}
+    device: ${devices.0}
+
+  unimodal_agents:
+    image:
+      _target_: ami.interactions.agents.unimodal_encoding_agent.UnimodalEncodingAgent
+      modality: image
+
+curiosity_agent:
+  _target_: ami.interactions.agents.curiosity_agent.CuriosityAgent
+  initial_hidden:
+    _target_: torch.zeros
+    _args_:
+      - ${models.forward_dynamics.model.core_model.depth}
+      - ${models.forward_dynamics.model.core_model.dim}
+    dtype: ${torch.dtype:float}
+    device: ${devices.0}
+  logger:
+    _target_: ami.tensorboard_loggers.TimeIntervalLogger
+    log_dir: ${paths.tensorboard_dir}/agent
+    log_every_n_seconds: 0
+    max_imagination_steps: 1
+  reward_average_method:
+    _target_: ami.interactions.agents.multi_step_imagination_curiosity_agent.average_exponentially
+    _partial_: true
+    decay: ${python.eval:"1 - 1 / ${..max_imagination_steps}"}
+
+include_action_modality: true
+initial_action:
+  _target_: hydra.utils.get_object
+  path: ami.interactions.environments.actuators.vrchat_osc_discrete_actuator.STOP_ACTION
