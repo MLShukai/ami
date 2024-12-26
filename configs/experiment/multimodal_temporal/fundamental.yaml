@@ -44,7 +44,7 @@ data_collectors:
     max_len: 1000 # 100 sec
   ppo_trajectory:
     max_len: ${python.eval:"128 + 1"} # +1 to retrieve final next value function output.
-    gamma: 0.9
+    gamma: 0.97
 
 trainers:
   i_jepa:
@@ -66,12 +66,12 @@ trainers:
       max_samples: 64 # Iteraction count.
     minimum_new_data_count: 128
   ppo:
-    entropy_coef: 0.1
+    entropy_coef: 0.04
     partial_dataloader:
       batch_size: 8
     max_epochs: 3
     # 16 (= buffer size / batch size) * epochs = 48 iteration.
 
-max_uptime: ${cvt_time_str:4h}
+max_uptime: ${cvt_time_str:8h}
 
 task_name: multimodal_temporal_fundamental
