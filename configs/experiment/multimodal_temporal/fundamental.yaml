@@ -30,6 +30,11 @@ interaction:
         _partial_: True
         modality: image
 
+models:
+  i_jepa_target_encoder:
+    inference_forward:
+      kernel_size: 1
+
 data_collectors:
   image:
     max_len: ${python.eval:"24 * ${trainers.i_jepa.partial_dataloader.batch_size}"}
