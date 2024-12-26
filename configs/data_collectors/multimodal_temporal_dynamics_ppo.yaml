@@ -5,7 +5,7 @@ image:
     - "observation"
 
 multimodal_temporal:
-  _target_: ami.data.buffers.multimodal_temporal_data_buffer.MultimodalTemporalDataBuffer
+  _target_: ami.data.buffers.multimodal_temporal_data_buffer.MultimodalTemporalDataBuffer.reconstructable_init
   max_len: 2048
 
 forward_dynamics_trajectory:
