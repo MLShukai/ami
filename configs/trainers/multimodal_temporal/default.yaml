@@ -4,6 +4,9 @@ partial_dataloader:
   _target_: torch.utils.data.DataLoader
   _partial_: true
   shuffle: false
+  collate_fn:
+    _target_: hydra.utils.get_method
+    path: ami.trainers.components.transpose_and_stack_collator.transpose_and_stack_collator
 
 partial_sampler:
   _target_: ami.trainers.components.random_time_series_sampler.RandomTimeSeriesSampler
@@ -23,3 +26,4 @@ logger:
   log_every_n_steps: 1
 
 device: ${devices.0}
+minimum_dataset_size: ${.partial_sampler.sequence_length}
