@@ -39,7 +39,6 @@ data_collectors:
     max_len: 1000 # 100 sec
   ppo_trajectory:
     max_len: ${python.eval:"128 + 1"} # +1 to retrieve final next value function output.
-    use_embed_obs_as_observation: True
     gamma: 0.9
 
 trainers:
