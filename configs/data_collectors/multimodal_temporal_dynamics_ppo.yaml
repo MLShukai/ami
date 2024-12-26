@@ -15,6 +15,7 @@ forward_dynamics_trajectory:
     - "observation"
     - "hidden"
     - "action"
+    - "reward"
 
 ppo_trajectory:
   _target_: ami.data.buffers.ppo_trajectory_buffer.PPOTrajectoryBuffer.reconstructable_init
