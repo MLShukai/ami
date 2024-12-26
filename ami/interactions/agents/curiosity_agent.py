@@ -117,7 +117,7 @@ class CuriosityAgent(BaseAgent[Tensor, Tensor]):
 
         if not initial_step:
             target_obses = observation.expand_as(self.obs_imaginations)
-            reward_imaginations = -self.obs_dist_imaginations.log_prob(target_obses)
+            reward_imaginations = -self.obs_dist_imaginations.log_prob(target_obses).flatten(1).mean(-1)
 
             reward = self.reward_average_method(reward_imaginations)
             self.logger.log("curiosity_agent/reward", reward)
