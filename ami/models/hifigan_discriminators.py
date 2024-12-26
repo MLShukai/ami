@@ -76,16 +76,16 @@ class PeriodDiscriminator(nn.Module):
             sample_size = sample_size + n_pad
         x = x.view(batch_size, channels, sample_size // self.period, self.period)
         x = x.movedim(-1, 0)
-        x = x.contiguous().view(batch_size * self.period, channels, sample_size // self.period)
+        x = x.reshape(batch_size * self.period, channels, sample_size // self.period)
 
         for conv in self.convs:
             x = conv(x)
             x = F.leaky_relu(x, 0.1)
-            fmap = x.contiguous().view(self.period, batch_size, x.size(-2), x.size(-1))
+            fmap = x.reshape(self.period, batch_size, x.size(-2), x.size(-1))
             fmap = fmap.movedim(0, -1)
             fmaps.append(fmap)
         x = self.conv_post(x)
-        x = x.contiguous().view(self.period, batch_size, x.size(-2), x.size(-1))
+        x = x.reshape(self.period, batch_size, x.size(-2), x.size(-1))
         x = x.movedim(0, -1)
         fmaps.append(x)
         x = torch.flatten(x, 1, -1)
