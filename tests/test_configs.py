@@ -1,7 +1,9 @@
 """This test checks whether object can be successfully instantiated from config
 file."""
+import logging
 import shutil
 import sys
+from pathlib import Path
 
 import cv2
 import hydra
@@ -23,7 +25,7 @@ register_custom_resolvers()
 CONFIG_DIR = PROJECT_ROOT / "configs"
 LAUNCH_CONFIG = "launch.yaml"
 EXPERIMENT_CONFIG_DIR = CONFIG_DIR / "experiment"
-EXPERIMENT_CONFIG_FILES = EXPERIMENT_CONFIG_DIR.glob("*.*")
+EXPERIMENT_CONFIG_FILES = EXPERIMENT_CONFIG_DIR.glob("**/*.*")
 
 IGNORE_EXPERIMENT_CONFIGS = {
     "unity_sioconv.yaml",
@@ -54,19 +56,28 @@ try:
 except Exception:
     IGNORE_EXPERIMENT_CONFIGS.add("random_observation_action_log.yaml")
 
+
+def _get_experiment_name(path: Path) -> str:
+    name = str(path)[len(str(EXPERIMENT_CONFIG_DIR)) + 1 :]
+    return name.rsplit(".", 1)[0]
+
+
 EXPERIMENT_CONFIG_OVERRIDES = [
-    [f"experiment={file.name.rsplit('.', 1)[0]}"]
+    [f"experiment={_get_experiment_name(file)}"]
     for file in EXPERIMENT_CONFIG_FILES
     if file.name not in IGNORE_EXPERIMENT_CONFIGS
 ]
 HYDRA_OVERRIDES = [[]] + EXPERIMENT_CONFIG_OVERRIDES
 
+logger = logging.getLogger(__name__)
+
 
 @pytest.mark.parametrize("overrides", HYDRA_OVERRIDES)
-def test_instantiate(overrides: list[str], mocker: MockerFixture, tmp_path):
+def test_instantiate(overrides: list[str], mocker: MockerFixture, tmp_path, caplog):
     conditional_video_capture_mock(mocker)
     mocker.patch("pythonosc.udp_client.SimpleUDPClient")
     with hydra.initialize_config_dir(str(CONFIG_DIR)):
+        logger.info(overrides)
         cfg = hydra.compose(LAUNCH_CONFIG, overrides=overrides + ["devices=cpu"], return_hydra_config=True)
         cfg.paths.output_dir = tmp_path
 
