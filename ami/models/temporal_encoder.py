@@ -46,7 +46,7 @@ class MultimodalTemporalEncoder(nn.Module):
 
         self.flattened_obses_projection = flattened_obses_projection
         self.core_model = core_model
-        self.obs_hat_dist_heads = obs_hat_dist_heads
+        self.obs_hat_dist_heads = nn.ModuleDict(obs_hat_dist_heads)
 
     def forward(
         self, observations: Mapping[str, Tensor], hidden: Tensor

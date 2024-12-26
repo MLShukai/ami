@@ -4,6 +4,7 @@ from pathlib import Path
 from typing import Any
 
 import torch
+from tensordict import TensorDict
 from torch.distributions import Distribution
 from torch.optim import Optimizer
 from torch.utils.data import DataLoader, Dataset
@@ -20,6 +21,7 @@ from ami.models.temporal_encoder import MultimodalTemporalEncoder
 from ami.tensorboard_loggers import StepIntervalLogger
 
 from .base_trainer import BaseTrainer
+from .components.random_time_series_sampler import RandomTimeSeriesSampler
 
 
 class MultimodalTemporalEncoderTrainer(BaseTrainer):
@@ -29,6 +31,7 @@ class MultimodalTemporalEncoderTrainer(BaseTrainer):
     def __init__(
         self,
         partial_dataloader: partial[DataLoader[torch.Tensor]],
+        partial_sampler: partial[RandomTimeSeriesSampler],
         partial_optimizer: partial[Optimizer],
         device: torch.device,
         logger: StepIntervalLogger,
@@ -52,6 +55,7 @@ class MultimodalTemporalEncoderTrainer(BaseTrainer):
         super().__init__()
         self.partial_optimizer = partial_optimizer
         self.partial_dataloader = partial_dataloader
+        self.partial_sampler = partial_sampler
         self.device = device
         self.logger = logger
         self.max_epochs = max_epochs
@@ -99,15 +103,25 @@ class MultimodalTemporalEncoderTrainer(BaseTrainer):
         optimizer = self.partial_optimizer(self.temporal_encoder.parameters())
         optimizer.load_state_dict(self.optimizer_state)
 
-        dataloader = self.partial_dataloader(dataset=self.get_dataset())
+        dataset = self.get_dataset()
+        sampler = self.partial_sampler(dataset)
+        dataloader = self.partial_dataloader(dataset=dataset, sampler=sampler)
 
         for _ in range(self.max_epochs):
             for batch in dataloader:
+                observations: TensorDict
+                hiddens: torch.Tensor
                 observations, hiddens = batch
 
                 # Move data to device
-                observations = {k: v.to(self.device) for k, v in observations.items()}
+                observations = observations.to(self.device)
                 hiddens = hiddens.to(self.device)
+
+                observations, hiddens, observation_next = (
+                    observations[:, :-1],  # o_0:T-1
+                    hiddens[:, 0],  # h_0
+                    observations[:, 1:],  # o_1:T
+                )
 
                 optimizer.zero_grad()
 
@@ -118,7 +132,7 @@ class MultimodalTemporalEncoderTrainer(BaseTrainer):
                 # Calculate losses for each modality
                 total_loss = torch.tensor(0.0, device=self.device)
                 for modality, dist in obs_hat_dists.items():
-                    modal_loss = -dist.log_prob(observations[modality]).mean()
+                    modal_loss = -dist.log_prob(observation_next[modality]).mean()
                     self.logger.log(f"temporal_encoder/losses/{modality}_loss", modal_loss)
                     total_loss += modal_loss
 
