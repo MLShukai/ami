@@ -1,0 +1,17 @@
+# @package _global_
+
+defaults:
+  - multimodal_temporal/fundamental
+  - override /models: multimodal_temporal/no_action
+
+interaction:
+  agent:
+    include_action_modality: False
+    initial_action: null
+
+  environment:
+    observation_generator:
+      _target_: torch.zeros
+
+subtask_name: blackout
+task_tag: no_action
