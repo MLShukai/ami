@@ -36,5 +36,8 @@ curiosity_agent:
 
 include_action_modality: true
 initial_action:
-  _target_: hydra.utils.get_object
-  path: ami.interactions.environments.actuators.vrchat_osc_discrete_actuator.STOP_ACTION
+  _target_: torch.zeros_like
+  input:
+    _target_: hydra.utils.get_object
+    path: ami.interactions.environments.actuators.vrchat_osc_discrete_actuator.STOP_ACTION
+  device: ${devices.0}
