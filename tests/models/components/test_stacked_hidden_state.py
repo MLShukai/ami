@@ -27,19 +27,11 @@ class TestStackedHiddenState:
         assert x.shape == x_shape
         assert hidden.shape == hidden_shape
 
-        x, hidden = sconv(x, hidden[:, :, -1, :])
-        assert x.shape == x_shape
-        assert hidden.shape == hidden_shape
-
     def test_no_batch_len(self, sconv):
         x_shape = (LEN, DIM)
         x = torch.randn(*x_shape)
         hidden_shape = (DEPTH, LEN, DIM)
         hidden = torch.randn(*hidden_shape)
-
-        x, hidden = sconv(x, hidden[:, -1, :])
-        assert x.shape == x_shape
-        assert hidden.shape == hidden_shape
 
         x, hidden = sconv(x, hidden[:, -1, :])
         assert x.shape == x_shape
@@ -55,10 +47,6 @@ class TestStackedHiddenState:
         assert x.shape == x_shape
         assert hidden.shape == hidden_shape
 
-        x, hidden = sconv(x, hidden)
-        assert x.shape == x_shape
-        assert hidden.shape == hidden_shape
-
     def test_no_batch_no_len(self, sconv):
         x_shape = (DIM,)
         x = torch.randn(*x_shape)
@@ -69,6 +57,12 @@ class TestStackedHiddenState:
         assert x.shape == x_shape
         assert hidden.shape == hidden_shape
 
-        x, hidden = sconv(x, hidden)
+    def test_many_batch_shape(self, sconv):
+        x_shape = (1, 2, 3, BATCH, LEN, DIM)
+        x = torch.randn(*x_shape)
+        hidden_shape = (1, 2, 3, BATCH, DEPTH, LEN, DIM)
+        hidden = torch.randn(*hidden_shape)
+
+        x, hidden = sconv(x, hidden[:, :, :, :, -1])
         assert x.shape == x_shape
         assert hidden.shape == hidden_shape
