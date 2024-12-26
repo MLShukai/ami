@@ -28,7 +28,7 @@ curiosity_agent:
     _target_: ami.tensorboard_loggers.TimeIntervalLogger
     log_dir: ${paths.tensorboard_dir}/agent
     log_every_n_seconds: 0
-    max_imagination_steps: 1
+  max_imagination_steps: 1
   reward_average_method:
     _target_: ami.interactions.agents.multi_step_imagination_curiosity_agent.average_exponentially
     _partial_: true

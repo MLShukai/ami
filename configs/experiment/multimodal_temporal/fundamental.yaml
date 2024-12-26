@@ -7,7 +7,7 @@ defaults:
   - override /interaction/environment: dummy_image_io
   - override /models: multimodal_temporal/default.yaml
   - override /data_collectors: multimodal_temporal_dynamics_ppo
-  - override /trainers: i_jepa_multimodal_temporal_forward_dynamics_ppo
+  - override /trainers: i_jepa_mulitmodal_temporal_dynamics_ppo
 
 shared:
   image_height: 144
@@ -15,7 +15,8 @@ shared:
 
 interaction:
   agent:
-    max_imagination_steps: 1 # 0.1 sec
+    curiosity_agent:
+      max_imagination_steps: 1 # 0.1 sec
 
   observation_wrappers:
     - _target_: ami.interactions.io_wrappers.function_wrapper.FunctionIOWrapper
