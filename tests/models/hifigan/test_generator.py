@@ -3,7 +3,7 @@ import math
 import pytest
 import torch
 
-from ami.models.hifigan.hifigan_generator import HifiGANGenerator
+from ami.models.hifigan.generator import HifiGANGenerator
 
 
 class TestHifiGANGenerator:

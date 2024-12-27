@@ -7,7 +7,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from .get_padding import get_padding
+from .utils import get_padding
 
 logger = logging.getLogger(__name__)
 
