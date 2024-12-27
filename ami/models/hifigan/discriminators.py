@@ -8,9 +8,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 from torch.nn.utils.parametrizations import spectral_norm, weight_norm
 
-
-def get_padding(kernel_size: int, dilation: int = 1) -> int:
-    return int((kernel_size * dilation - dilation) / 2)
+from .utils import get_padding
 
 
 class PeriodDiscriminator(nn.Module):
