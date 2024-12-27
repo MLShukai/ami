@@ -3,7 +3,7 @@ import math
 import pytest
 import torch
 
-from ami.models.hifigan_discriminators import (
+from ami.models.hifigan.hifigan_discriminators import (
     MultiPeriodDiscriminator,
     MultiScaleDiscriminator,
 )
