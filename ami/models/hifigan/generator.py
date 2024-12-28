@@ -7,17 +7,14 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
+from .utils import get_padding
+
 logger = logging.getLogger(__name__)
 
 
 def init_weights(m: nn.Module, mean: float = 0.0, std: float = 0.01) -> None:
     if isinstance(m, nn.Conv1d | nn.ConvTranspose1d):
         m.weight.data.normal_(mean, std)
-
-
-# Avoiding changing the size of inputs and outputs of Conv1ds in ResBlock1.
-def get_padding(kernel_size: int, dilation: int = 1) -> int:
-    return int((kernel_size * dilation - dilation) / 2)
 
 
 class ResBlock1(nn.Module):
