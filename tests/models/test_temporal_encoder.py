@@ -36,7 +36,9 @@ class TestMultimodalTemporalEncoder:
 
     @pytest.fixture
     def wrapped_encoder(self, encoder, device):
-        return ModelWrapper(encoder, device, has_inference=True, inference_forward=inference_forward)
+        wrapper = ModelWrapper(encoder, device, has_inference=True, inference_forward=inference_forward)
+        wrapper.to_default_device()
+        return wrapper
 
     def test_multimodal_temporal_encoder(self, encoder):
         obs_shapes = {m: (BATCH, LEN, d) for m, d in MODALITY_DIMS.items()}
