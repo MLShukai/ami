@@ -13,5 +13,4 @@ interaction:
     observation_generator:
       _target_: torch.zeros
 
-subtask_name: blackout
-task_tag: no_action
+subtask_name: blackout_no_action

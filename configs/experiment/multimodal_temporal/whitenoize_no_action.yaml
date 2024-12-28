@@ -13,5 +13,4 @@ interaction:
     observation_generator:
       _target_: torch.randn
 
-subtask_name: whitenoize
-task_tag: no_action
+subtask_name: whitenoize_no_action
