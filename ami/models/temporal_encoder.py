@@ -2,12 +2,14 @@ from typing import Mapping
 
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 from torch import Tensor
 from torch.distributions import Distribution
 
 from ami.utils import Modality
 
 from .components.stacked_hidden_state import StackedHiddenState
+from .model_wrapper import ModelWrapper
 
 
 class MultimodalTemporalEncoder(nn.Module):
@@ -46,7 +48,7 @@ class MultimodalTemporalEncoder(nn.Module):
 
         self.flattened_obses_projection = flattened_obses_projection
         self.core_model = core_model
-        self.obs_hat_dist_heads = obs_hat_dist_heads
+        self.obs_hat_dist_heads = nn.ModuleDict(obs_hat_dist_heads)
 
     def forward(
         self, observations: Mapping[str, Tensor], hidden: Tensor
@@ -69,3 +71,22 @@ class MultimodalTemporalEncoder(nn.Module):
         x, next_hidden = self.core_model(x, hidden)
         obs_hat_dists = {k: layer(x) for k, layer in self.obs_hat_dist_heads.items()}
         return x, next_hidden, obs_hat_dists
+
+
+def inference_forward(
+    wrapper: ModelWrapper[MultimodalTemporalEncoder], observation: Mapping[str, Tensor], hidden: Tensor
+) -> tuple[Tensor, Tensor]:
+    """Custom encoder infer procedure for multimodal temporal encoder.
+
+    Args:
+        wrapper (ModelWrapper[MultimodalTemporalEncoder]): Wrapper instance
+        observation (Mapping[str, Tensor]): observation to encoded.
+        hidden (Tensor): hidden state for temporal encoding
+
+    Returns:
+        tuple[Tensor, Tensor]: (encoded, next_hidden).
+    """
+    device = wrapper.device
+    observation = {k: v.to(device) for k, v in observation.items()}
+    x, next_hidden, _ = wrapper(observation, hidden.to(device))
+    return x, next_hidden

@@ -17,7 +17,7 @@ from ami.interactions.agents.unimodal_encoding_agent import UnimodalEncodingAgen
 from ami.models.components.sioconvps import SioConvPS
 from ami.models.model_names import ModelNames
 from ami.models.model_wrapper import ModelWrapper
-from ami.models.temporal_encoder import MultimodalTemporalEncoder
+from ami.models.temporal_encoder import MultimodalTemporalEncoder, inference_forward
 from ami.models.utils import ModelWrappersDict
 from ami.utils import Modality
 
@@ -70,7 +70,9 @@ class TestMultimodalTemporalEncodingAgent:
 
         mwd = ModelWrappersDict(
             {
-                ModelNames.MULTIMODAL_TEMPORAL_ENCODER: ModelWrapper(temporal_encoder, "cpu"),
+                ModelNames.MULTIMODAL_TEMPORAL_ENCODER: ModelWrapper(
+                    temporal_encoder, "cpu", inference_forward=inference_forward
+                ),
             }
         )
         return mwd.inference_wrappers_dict
