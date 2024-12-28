@@ -66,6 +66,9 @@ multimodal_temporal_encoder:
   _target_: ami.models.model_wrapper.ModelWrapper
   default_device: ${devices.0}
   has_inference: True
+  inference_forward:
+    _target_: hydra.utils.get_method
+    path: ami.models.temporal_encoder.inference_forward
   model:
     _target_: ami.models.temporal_encoder.MultimodalTemporalEncoder
     observation_flattens:
