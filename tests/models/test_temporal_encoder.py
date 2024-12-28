@@ -8,7 +8,11 @@ from ami.models.components.fully_connected_fixed_std_normal import (
 )
 from ami.models.components.sioconvps import SioConvPS
 from ami.models.model_wrapper import ModelWrapper
-from ami.models.temporal_encoder import MultimodalTemporalEncoder, inference_forward
+from ami.models.temporal_encoder import (
+    MultimodalTemporalEncoder,
+    inference_forward,
+    inference_forward_with_layernorm,
+)
 from ami.utils import Modality
 
 BATCH = 4
@@ -40,6 +44,12 @@ class TestMultimodalTemporalEncoder:
         wrapper.to_default_device()
         return wrapper
 
+    @pytest.fixture
+    def layernorm_wrapped_encoder(self, encoder, device):
+        wrapper = ModelWrapper(encoder, device, inference_forward=inference_forward_with_layernorm)
+        wrapper.to_default_device()
+        return wrapper
+
     def test_multimodal_temporal_encoder(self, encoder):
         obs_shapes = {m: (BATCH, LEN, d) for m, d in MODALITY_DIMS.items()}
         obses = {m: torch.randn(*s) for m, s in obs_shapes.items()}
@@ -65,3 +75,13 @@ class TestMultimodalTemporalEncoder:
 
         assert embed_obs.device == device
         assert hidden.device == device
+
+    def test_inference_forward_with_layernorm(self, layernorm_wrapped_encoder):
+        obs_shapes = {m: (BATCH, LEN, d) for m, d in MODALITY_DIMS.items()}
+        obses = {m: torch.randn(*s) for m, s in obs_shapes.items()}
+        hidden_shape = (BATCH, DEPTH, LEN, DIM)
+        hidden = torch.randn(*hidden_shape)
+
+        embed_obs: torch.Tensor = layernorm_wrapped_encoder.infer(obses, hidden[:, -1])[0]
+        assert embed_obs.detach().mean(-1) == pytest.approx(0.0, abs=1e-4)
+        assert embed_obs.detach().std(-1) == pytest.approx(1.0, abs=1e-1)
