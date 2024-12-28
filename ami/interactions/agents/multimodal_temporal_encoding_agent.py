@@ -2,6 +2,7 @@ from pathlib import Path
 from typing import Mapping
 
 import torch
+import torch.nn as nn
 from torch import Tensor
 from typing_extensions import override
 
@@ -9,7 +10,6 @@ from ami.data.buffers.buffer_names import BufferNames
 from ami.data.step_data import DataKeys, StepData
 from ami.models.model_names import ModelNames
 from ami.models.model_wrapper import ThreadSafeInferenceWrapper
-from ami.models.temporal_encoder import MultimodalTemporalEncoder
 from ami.utils import Modality
 
 from .base_agent import BaseAgent
@@ -44,7 +44,7 @@ class MultimodalTemporalEncodingAgent(BaseAgent[Mapping[Modality, Tensor], Tenso
     def on_inference_models_attached(self) -> None:
         super().on_inference_models_attached()
 
-        self.encoder: ThreadSafeInferenceWrapper[MultimodalTemporalEncoder] = self.get_inference_model(
+        self.encoder: ThreadSafeInferenceWrapper[nn.Module] = self.get_inference_model(
             ModelNames.MULTIMODAL_TEMPORAL_ENCODER
         )
 
@@ -69,7 +69,7 @@ class MultimodalTemporalEncodingAgent(BaseAgent[Mapping[Modality, Tensor], Tenso
                 }
             )
         )
-        out, self.encoder_hidden_state, _ = self.encoder(observation, self.encoder_hidden_state)
+        out, self.encoder_hidden_state = self.encoder(observation, self.encoder_hidden_state)
         return out
 
     @override
