@@ -83,5 +83,5 @@ class TestMultimodalTemporalEncoder:
         hidden = torch.randn(*hidden_shape)
 
         embed_obs: torch.Tensor = layernorm_wrapped_encoder.infer(obses, hidden[:, -1])[0]
-        assert embed_obs.detach().mean(-1) == pytest.approx(0.0, abs=1e-4)
-        assert embed_obs.detach().std(-1) == pytest.approx(1.0, abs=1e-1)
+        assert embed_obs.cpu().detach().mean(-1) == pytest.approx(0.0, abs=1e-4)
+        assert embed_obs.cpu().detach().std(-1) == pytest.approx(1.0, abs=1e-1)
