@@ -38,3 +38,9 @@ time_scale: 1.0
 max_uptime: inf # This value will scale by `time_scale`.
 
 torch_float32_matmul_precision: "high" # Using tensor core.
+
+torch_cudnn_benchmark: True # Performance up on the cuda.
+
+torch_default_dtype: ${torch.dtype:float32}
+
+torch_default_device: ${devices.0}

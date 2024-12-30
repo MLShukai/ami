@@ -51,6 +51,15 @@ def main(cfg: DictConfig) -> None:
     if precision := cfg.get("torch_float32_matmul_precision"):
         torch.set_float32_matmul_precision(precision)
 
+    if cfg.get("torch_cudnn_benchmark"):
+        torch.backends.cudnn.benchmark = True
+
+    if default_dtype := cfg.get("torch_default_dtype"):
+        torch.set_default_dtype(default_dtype)
+
+    if default_device := cfg.get("torch_default_device"):
+        torch.set_default_device(default_device)
+
     logger.info(f"Instantiating Interaction <{cfg.interaction._target_}>")
     interaction: Interaction = hydra.utils.instantiate(cfg.interaction)
 
