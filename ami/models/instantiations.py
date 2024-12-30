@@ -40,6 +40,7 @@ def image_vae(
     width: int = 84,
     channels: int = 3,
     latent_dim: int = 512,
+    dtype: torch.dtype | None = None,
 ) -> InstantiationReturnType:
     from .vae import Conv2dDecoder, Conv2dEncoder, encoder_infer
 
@@ -64,6 +65,7 @@ def image_vae(
             ),
             default_device=device,
             has_inference=False,
+            dtype=dtype,
         ),
     }
 

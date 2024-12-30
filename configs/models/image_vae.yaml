@@ -6,3 +6,4 @@ height: ${shared.image_height}
 width: ${shared.image_width}
 channels: ${shared.image_channels}
 latent_dim: 512
+dtype: ${shared.dtype}
