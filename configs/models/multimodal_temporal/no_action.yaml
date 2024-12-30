@@ -89,7 +89,7 @@ multimodal_temporal_encoder:
         ${python.eval:"
         ${..observation_flattens.image.dim_out}
         "}
-      out_features: 1024
+      out_features: ${..core_model.dim}
     core_model:
       _target_: ami.models.components.sioconvps.SioConvPS
       depth: 6
