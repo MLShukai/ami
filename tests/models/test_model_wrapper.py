@@ -105,3 +105,16 @@ class TestWrappers:
         # test consistency between `has_inference` and `inference_thread_only`
         with pytest.raises(ValueError):
             ModelWrapper(ModelMultiplyP(), has_inference=False, inference_thread_only=True)
+
+    def test_dtype(self):
+        m = ModelMultiplyP()
+        m.type(torch.float32)
+
+        # No conversion if not specify dtype
+        wrapper = ModelWrapper(m)
+        for p in wrapper.state_dict().values():
+            assert p.dtype == torch.float32
+
+        wrapper = ModelWrapper(m, dtype=torch.float16)
+        for p in wrapper.state_dict().values():
+            assert p.dtype == torch.float16

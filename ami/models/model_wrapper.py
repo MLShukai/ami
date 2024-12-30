@@ -58,6 +58,7 @@ class ModelWrapper(nn.Module, Generic[ModuleType]):
         inference_forward: InferenceForwardCallable = default_infer,
         parameter_file: str | Path | None = None,
         inference_thread_only: bool = False,
+        dtype: torch.dtype | None = None,
     ) -> None:
         """Constructs the model wrapper.
 
@@ -68,6 +69,7 @@ class ModelWrapper(nn.Module, Generic[ModuleType]):
             inference_forward: The inference forward flow for the wrapped model.
             parameter_file: The path to the parameter file for wrapping model.
             inference_thread_only: Whether the model should be used in inference thread only.
+            dtype: Specify model data type at compute. If provided, convert model dtype to specified dtype.
         """
 
         super().__init__()
@@ -78,6 +80,9 @@ class ModelWrapper(nn.Module, Generic[ModuleType]):
             raise ValueError("`has_inference` is False but model is inference thread only!")
         self.inference_thread_only = inference_thread_only
         self._inference_forward = inference_forward
+
+        if dtype is not None:
+            self.model.type(dtype)
 
         if parameter_file is not None:
             self.model.load_state_dict(torch.load(parameter_file, map_location=self.device))
