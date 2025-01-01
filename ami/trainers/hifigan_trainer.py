@@ -146,7 +146,12 @@ class HifiGANTrainer(BaseTrainer):
 
         input_audio_batch_list = []
         reconstruction_audio_batch_list = []
-        loss_list = []
+        losses_adv_mpd = []
+        losses_adv_msd = []
+        losses_rec = []
+        losses_fm = []
+        losses_adv_g = []
+
         batch: tuple[Tensor]
         for batch in dataloader:
             (audio_batch,) = batch
@@ -156,14 +161,43 @@ class HifiGANTrainer(BaseTrainer):
             latents = self.encoder.infer(audio_batch)
             latents = latents.transpose(-1, -2)
             reconstructions: Tensor = self.generator(latents)
-            loss_list.append(
+            reconstruction_audio_batch_list.append(reconstructions.cpu())
+
+            # multi_period_discriminator
+            authenticity_list_real, _ = self.multi_period_discriminator(audio_batch)
+            authenticity_list_fake, _ = self.multi_period_discriminator(reconstructions.detach())
+            loss_adv_mpd = self._discriminator_adversarial_losses(authenticity_list_real, authenticity_list_fake)
+            losses_adv_mpd.append(loss_adv_mpd)
+
+            # multi_scale_discriminator
+            authenticity_list_real, _ = self.multi_scale_discriminator(audio_batch)
+            authenticity_list_fake, _ = self.multi_scale_discriminator(reconstructions.detach())
+            loss_adv_msd = self._discriminator_adversarial_losses(authenticity_list_real, authenticity_list_fake)
+            losses_adv_mpd.append(loss_adv_msd)
+
+            # generator
+            # calc reconstruction loss
+            losses_rec.append(
                 self._reconstruction_loss(
                     waveform_batch=audio_batch,
                     waveform_reconstructed=reconstructions,
                 )
+                * self.rec_coef
             )
-
-            reconstruction_audio_batch_list.append(reconstructions.cpu())
+            # calc feature matching loss
+            authenticity_list_mpd_real, fmaps_list_mpd_real = self.multi_period_discriminator(audio_batch)
+            authenticity_list_mpd_fake, fmaps_list_mpd_fake = self.multi_period_discriminator(reconstructions)
+            authenticity_list_msd_real, fmaps_list_msd_real = self.multi_scale_discriminator(audio_batch)
+            authenticity_list_msd_fake, fmaps_list_msd_fake = self.multi_scale_discriminator(reconstructions)
+            loss_fm = self._feature_loss(fmaps_list_mpd_real, fmaps_list_mpd_fake) + self._feature_loss(
+                fmaps_list_msd_real, fmaps_list_msd_fake
+            )
+            losses_fm.append(loss_fm)
+            # calc adversarial loss
+            loss_adv_g = self._generator_adversarial_losses(
+                authenticity_list_mpd_fake
+            ) + self._generator_adversarial_losses(authenticity_list_msd_fake)
+            losses_adv_g.append(loss_adv_g)
 
         input_audio_batches = torch.cat(input_audio_batch_list)
         reconstruction_audio_batches = torch.cat(reconstruction_audio_batch_list)
@@ -177,10 +211,16 @@ class HifiGANTrainer(BaseTrainer):
             reconstruction_audio_selected.flatten(1), 0, 1, dim=-1
         ).reshape(reconstruction_audio_selected.shape)
 
-        losses = torch.stack(loss_list)
-        loss = torch.mean(losses)
+        self.logger.log(
+            self.log_prefix + "losses/mpd/valid-adv", torch.mean(torch.stack(losses_adv_mpd)), force_log=True
+        )
+        self.logger.log(
+            self.log_prefix + "losses/msd/valid-adv", torch.mean(torch.stack(losses_adv_msd)), force_log=True
+        )
+        self.logger.log(self.log_prefix + "losses/g/valid-rec", torch.mean(torch.stack(losses_rec)), force_log=True)
+        self.logger.log(self.log_prefix + "losses/g/valid-fm", torch.mean(torch.stack(losses_fm)), force_log=True)
+        self.logger.log(self.log_prefix + "losses/g/valid-adv", torch.mean(torch.stack(losses_adv_g)), force_log=True)
 
-        self.logger.log(self.log_prefix + "losses/validation-reconstruction", loss, force_log=True)
         for i, (in_audio, rec_audio) in enumerate(zip(input_audio_selected, reconstruction_audio_selected)):
             self.logger.tensorboard.add_audio(
                 self.log_prefix + f"metrics/input-{i}",
@@ -237,7 +277,7 @@ class HifiGANTrainer(BaseTrainer):
                 optimizer_mpd.zero_grad()
                 loss_adv_mpd.backward()
                 optimizer_mpd.step()
-                self.logger.log(self.log_prefix + "losses/mpd/loss_adv", loss_adv_mpd)
+                self.logger.log(self.log_prefix + "losses/mpd/train_adv", loss_adv_mpd)
 
                 # train multi_scale_discriminator
                 authenticity_list_real, _ = self.multi_scale_discriminator(audio_batch)
@@ -246,10 +286,10 @@ class HifiGANTrainer(BaseTrainer):
                 optimizer_msd.zero_grad()
                 loss_adv_msd.backward()
                 optimizer_msd.step()
-                self.logger.log(self.log_prefix + "losses/msd/loss_adv", loss_adv_msd)
+                self.logger.log(self.log_prefix + "losses/msd/train_adv", loss_adv_msd)
 
                 # train generator
-                ## calc reconstruction loss
+                # calc reconstruction loss
                 loss_rec = (
                     self._reconstruction_loss(
                         waveform_batch=audio_batch,
@@ -257,7 +297,7 @@ class HifiGANTrainer(BaseTrainer):
                     )
                     * self.rec_coef
                 )
-                ## calc feature matching loss
+                # calc feature matching loss
                 authenticity_list_mpd_real, fmaps_list_mpd_real = self.multi_period_discriminator(audio_batch)
                 authenticity_list_mpd_fake, fmaps_list_mpd_fake = self.multi_period_discriminator(audio_out)
                 authenticity_list_msd_real, fmaps_list_msd_real = self.multi_scale_discriminator(audio_batch)
@@ -265,18 +305,18 @@ class HifiGANTrainer(BaseTrainer):
                 loss_fm = self._feature_loss(fmaps_list_mpd_real, fmaps_list_mpd_fake) + self._feature_loss(
                     fmaps_list_msd_real, fmaps_list_msd_fake
                 )
-                ## calc adversarial loss
+                # calc adversarial loss
                 loss_adv_g = self._generator_adversarial_losses(
                     authenticity_list_mpd_fake
                 ) + self._generator_adversarial_losses(authenticity_list_msd_fake)
-                ## calc sum
+                # calc sum
                 loss_g = loss_rec + loss_fm + loss_adv_g
                 optimizer_g.zero_grad()
                 loss_g.backward()
                 optimizer_g.step()
-                self.logger.log(self.log_prefix + "losses/g/loss_rec", loss_rec)
-                self.logger.log(self.log_prefix + "losses/g/loss_fm", loss_fm)
-                self.logger.log(self.log_prefix + "losses/g/loss_adv", loss_adv_g)
+                self.logger.log(self.log_prefix + "losses/g/train_rec", loss_rec)
+                self.logger.log(self.log_prefix + "losses/g/train_fm", loss_fm)
+                self.logger.log(self.log_prefix + "losses/g/train_adv", loss_adv_g)
 
                 self.logger.update()
 
