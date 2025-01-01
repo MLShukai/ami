@@ -18,9 +18,9 @@ from ami.tensorboard_loggers import StepIntervalLogger
 from ami.trainers.hifigan_trainer import (
     BoolMaskAudioJEPAEncoder,
     HifiGANGenerator,
+    HifiGANTrainer,
     MultiPeriodDiscriminator,
     MultiScaleDiscriminator,
-    HifiGANTrainer,
 )
 
 # input data params
@@ -99,11 +99,19 @@ class TestHifiGANTrainer:
                 ModelNames.AUDIO_JEPA_CONTEXT_ENCODER: ModelWrapper(encoder, device, True),
                 ModelNames.AUDIO_JEPA_TARGET_ENCODER: ModelWrapper(copy.deepcopy(encoder), device, False),
                 ModelNames.HIFIGAN_CONTEXT_AURALIZATION_GENERATOR: ModelWrapper(generator, device, False),
-                ModelNames.HIFIGAN_CONTEXT_AURALIZATION_MULTI_PERIOD_DISCRIMINATOR: ModelWrapper(multi_period_discriminator, device, False),
-                ModelNames.HIFIGAN_CONTEXT_AURALIZATION_MULTI_SCALE_DISCRIMINATOR: ModelWrapper(multi_scale_discriminator, device, False),
+                ModelNames.HIFIGAN_CONTEXT_AURALIZATION_MULTI_PERIOD_DISCRIMINATOR: ModelWrapper(
+                    multi_period_discriminator, device, False
+                ),
+                ModelNames.HIFIGAN_CONTEXT_AURALIZATION_MULTI_SCALE_DISCRIMINATOR: ModelWrapper(
+                    multi_scale_discriminator, device, False
+                ),
                 ModelNames.HIFIGAN_TARGET_AURALIZATION_GENERATOR: ModelWrapper(generator, device, False),
-                ModelNames.HIFIGAN_TARGET_AURALIZATION_MULTI_PERIOD_DISCRIMINATOR: ModelWrapper(multi_period_discriminator, device, False),
-                ModelNames.HIFIGAN_TARGET_AURALIZATION_MULTI_SCALE_DISCRIMINATOR: ModelWrapper(multi_scale_discriminator, device, False),
+                ModelNames.HIFIGAN_TARGET_AURALIZATION_MULTI_PERIOD_DISCRIMINATOR: ModelWrapper(
+                    multi_period_discriminator, device, False
+                ),
+                ModelNames.HIFIGAN_TARGET_AURALIZATION_MULTI_SCALE_DISCRIMINATOR: ModelWrapper(
+                    multi_scale_discriminator, device, False
+                ),
             }
         )
         d.send_to_default_device()
