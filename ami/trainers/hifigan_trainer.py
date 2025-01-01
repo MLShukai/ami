@@ -205,7 +205,7 @@ class HifiGANTrainer(BaseTrainer):
                     latents = self.encoder.infer(audio_batch)
                     # latents: [batch_size, n_patches_height * n_patches_width, latents_dim]
                     latents = latents.transpose(-1, -2)
-                    
+
                 # reconstruct
                 audio_out: Tensor = self.vocoder(latents)
 
