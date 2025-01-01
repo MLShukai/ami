@@ -79,9 +79,13 @@ class HifiGANTrainer(BaseTrainer):
         # Prepare self.log_prefix correspond to generator name.
         match generator_name:
             case ModelNames.HIFIGAN_CONTEXT_AURALIZATION_GENERATOR:
+                multi_period_discriminator_name = ModelNames.HIFIGAN_CONTEXT_AURALIZATION_MULTI_PERIOD_DISCRIMINATOR
+                multi_scale_discriminator_name = ModelNames.HIFIGAN_CONTEXT_AURALIZATION_MULTI_SCALE_DISCRIMINATOR
                 encoder_name = ModelNames.AUDIO_JEPA_CONTEXT_ENCODER
                 self.log_prefix += "context/"
             case ModelNames.HIFIGAN_TARGET_AURALIZATION_GENERATOR:
+                multi_period_discriminator_name = ModelNames.HIFIGAN_TARGET_AURALIZATION_MULTI_PERIOD_DISCRIMINATOR
+                multi_scale_discriminator_name = ModelNames.HIFIGAN_TARGET_AURALIZATION_MULTI_SCALE_DISCRIMINATOR
                 encoder_name = ModelNames.AUDIO_JEPA_TARGET_ENCODER
                 self.log_prefix += "target/"
             case _:
@@ -89,6 +93,8 @@ class HifiGANTrainer(BaseTrainer):
 
         self.encoder_name = encoder_name
         self.generator_name = generator_name
+        self.multi_period_discriminator_name = multi_period_discriminator_name
+        self.multi_scale_discriminator_name = multi_scale_discriminator_name
 
         self.mel_spectrogram = mel_spectrogram
         self.rec_coef = rec_coef
@@ -107,8 +113,16 @@ class HifiGANTrainer(BaseTrainer):
     def on_model_wrappers_dict_attached(self) -> None:
         self.encoder: ModelWrapper[BoolMaskAudioJEPAEncoder] = self.get_frozen_model(self.encoder_name)
         self.generator: ModelWrapper[HifiGANGenerator] = self.get_training_model(self.generator_name)
+        self.multi_period_discriminator: ModelWrapper[MultiPeriodDiscriminator] = self.get_training_model(
+            self.multi_period_discriminator_name
+        )
+        self.multi_scale_discriminator: ModelWrapper[MultiScaleDiscriminator] = self.get_training_model(
+            self.multi_scale_discriminator_name
+        )
 
-        self.optimizer_state = self.partial_optimizer(self.generator.parameters()).state_dict()
+        self.optimizer_state_g = self.partial_optimizer(self.generator.parameters()).state_dict()
+        self.optimizer_state_mpd = self.partial_optimizer(self.multi_period_discriminator.parameters()).state_dict()
+        self.optimizer_state_msd = self.partial_optimizer(self.multi_scale_discriminator.parameters()).state_dict()
 
     @override
     def is_trainable(self) -> bool:
@@ -186,9 +200,16 @@ class HifiGANTrainer(BaseTrainer):
         # move to device
         self.encoder.to(self.device)
         self.generator.to(self.device)
+        self.multi_period_discriminator.to(self.device)
+        self.multi_scale_discriminator.to(self.device)
 
-        optimizer = self.partial_optimizer(self.generator.parameters())
-        optimizer.load_state_dict(self.optimizer_state)
+        optimizer_g = self.partial_optimizer(self.generator.parameters())
+        optimizer_mpd = self.partial_optimizer(self.multi_period_discriminator.parameters())
+        optimizer_msd = self.partial_optimizer(self.multi_scale_discriminator.parameters())
+
+        optimizer_g.load_state_dict(self.optimizer_state_g)
+        optimizer_mpd.load_state_dict(self.optimizer_state_mpd)
+        optimizer_msd.load_state_dict(self.optimizer_state_msd)
 
         # prepare about dataset
         dataloader = self.partial_dataloader(dataset=self.get_dataset())
@@ -209,38 +230,105 @@ class HifiGANTrainer(BaseTrainer):
                 # reconstruct
                 audio_out: Tensor = self.generator(latents)
 
-                # calc losses
-                loss = self._reconstruction_loss(
-                    waveform_batch=audio_batch,
-                    waveform_reconstructed=audio_out,
+                # train multi_period_discriminator
+                authenticity_list_real, _ = self.multi_period_discriminator(audio_batch)
+                authenticity_list_fake, _ = self.multi_period_discriminator(audio_out.detach())
+                loss_adv_mpd = self._discriminator_adversarial_losses(authenticity_list_real, authenticity_list_fake)
+                optimizer_mpd.zero_grad()
+                loss_adv_mpd.backward()
+                optimizer_mpd.step()
+                self.logger.log(self.log_prefix + "losses/mpd/loss_adv", loss_adv_mpd)
+
+                # train multi_scale_discriminator
+                authenticity_list_real, _ = self.multi_scale_discriminator(audio_batch)
+                authenticity_list_fake, _ = self.multi_scale_discriminator(audio_out.detach())
+                loss_adv_msd = self._discriminator_adversarial_losses(authenticity_list_real, authenticity_list_fake)
+                optimizer_msd.zero_grad()
+                loss_adv_msd.backward()
+                optimizer_msd.step()
+                self.logger.log(self.log_prefix + "losses/msd/loss_adv", loss_adv_msd)
+
+                # train generator
+                ## calc reconstruction loss
+                loss_rec = (
+                    self._reconstruction_loss(
+                        waveform_batch=audio_batch,
+                        waveform_reconstructed=audio_out,
+                    )
+                    * self.rec_coef
                 )
-
-                optimizer.zero_grad()
-                loss.backward()
-                optimizer.step()
-
-                self.logger.log(self.log_prefix + "losses/reconstruction", loss)
+                ## calc feature matching loss
+                authenticity_list_mpd_real, fmaps_list_mpd_real = self.multi_period_discriminator(audio_batch)
+                authenticity_list_mpd_fake, fmaps_list_mpd_fake = self.multi_period_discriminator(audio_out)
+                authenticity_list_msd_real, fmaps_list_msd_real = self.multi_scale_discriminator(audio_batch)
+                authenticity_list_msd_fake, fmaps_list_msd_fake = self.multi_scale_discriminator(audio_out)
+                loss_fm = self._feature_loss(fmaps_list_mpd_real, fmaps_list_mpd_fake) + self._feature_loss(
+                    fmaps_list_msd_real, fmaps_list_msd_fake
+                )
+                ## calc adversarial loss
+                loss_adv_g = self._generator_adversarial_losses(
+                    authenticity_list_mpd_fake
+                ) + self._generator_adversarial_losses(authenticity_list_msd_fake)
+                ## calc sum
+                loss_g = loss_rec + loss_fm + loss_adv_g
+                optimizer_g.zero_grad()
+                loss_g.backward()
+                optimizer_g.step()
+                self.logger.log(self.log_prefix + "losses/g/loss_rec", loss_rec)
+                self.logger.log(self.log_prefix + "losses/g/loss_fm", loss_fm)
+                self.logger.log(self.log_prefix + "losses/g/loss_adv", loss_adv_g)
 
                 self.logger.update()
 
         if self.validation_dataloader is not None:
             self.validation(self.validation_dataloader)
 
-        self.optimizer_state = optimizer.state_dict()
+        self.optimizer_state_g = optimizer_g.state_dict()
+        self.optimizer_state_mpd = optimizer_mpd.state_dict()
+        self.optimizer_state_msd = optimizer_msd.state_dict()
         self.logger_state = self.logger.state_dict()
 
     @override
     def save_state(self, path: Path) -> None:
         path.mkdir()
-        torch.save(self.optimizer_state, path / "optimizer.pt")
+        torch.save(self.optimizer_state_g, path / "optimizer_g.pt")
+        torch.save(self.optimizer_state_mpd, path / "optimizer_mpd.pt")
+        torch.save(self.optimizer_state_msd, path / "optimizer_msd.pt")
         torch.save(self.logger.state_dict(), path / "logger.pt")
         torch.save(self.dataset_previous_get_time, path / "dataset_previous_get_time.pt")
 
     @override
     def load_state(self, path: Path) -> None:
-        self.optimizer_state = torch.load(path / "optimizer.pt")
+        self.optimizer_state_g = torch.load(path / "optimizer_g.pt")
+        self.optimizer_state_mpd = torch.load(path / "optimizer_mpd.pt")
+        self.optimizer_state_msd = torch.load(path / "optimizer_msd.pt")
         self.logger.load_state_dict(torch.load(path / "logger.pt"))
         self.dataset_previous_get_time = torch.load(path / "dataset_previous_get_time.pt")
+
+    def _discriminator_adversarial_losses(
+        self, authenticity_list_real: list[torch.Tensor], authenticity_list_fake: list[torch.Tensor]
+    ) -> torch.Tensor:
+        loss = 0
+        for authenticity_real, authenticity_fake in zip(authenticity_list_real, authenticity_list_fake):
+            real_loss = torch.mean((1 - authenticity_real) ** 2)
+            fake_loss = torch.mean(authenticity_fake**2)
+            loss += real_loss + fake_loss
+        return loss
+
+    def _feature_loss(
+        self, fmaps_list_real: list[list[torch.Tensor]], fmaps_list_fake: list[list[torch.Tensor]]
+    ) -> torch.Tensor:
+        loss = 0
+        for fmaps_real, fmaps_fake in zip(fmaps_list_real, fmaps_list_fake):
+            for fmap_real, fmap_fake in zip(fmaps_real, fmaps_fake):
+                loss += torch.mean(torch.abs(fmap_real - fmap_fake))
+        return loss * 2
+
+    def _generator_adversarial_losses(self, authenticity_list_fake: list[torch.Tensor]) -> torch.Tensor:
+        loss = 0
+        for authenticity_fake in authenticity_list_fake:
+            loss += torch.mean((1 - authenticity_fake) ** 2)
+        return loss
 
     def _spectral_normalize(self, x: torch.Tensor, clip_val: float = 1e-5) -> torch.Tensor:
         return torch.log(torch.clamp(x, min=clip_val))
