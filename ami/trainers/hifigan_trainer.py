@@ -19,7 +19,7 @@ from ami.data.buffers.random_data_buffer import RandomDataBuffer
 from ami.data.interfaces import ThreadSafeDataUser
 from ami.models.bool_mask_audio_jepa import BoolMaskAudioJEPAEncoder
 from ami.models.hifigan.generator import HifiGANGenerator
-from ami.models.hifigan.discriminator import HifiGANDiscriminator
+from ami.models.hifigan.discriminators import MultiPeriodDiscriminator, MultiScaleDiscriminator
 from ami.models.model_names import ModelNames
 from ami.models.model_wrapper import ModelWrapper
 from ami.tensorboard_loggers import StepIntervalLogger
