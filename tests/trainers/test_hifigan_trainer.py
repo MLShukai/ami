@@ -3,9 +3,9 @@ from functools import partial
 
 import pytest
 import torch
+import torchaudio
 from torch.optim import AdamW
 from torch.utils.data import DataLoader, TensorDataset
-import torchaudio
 
 from ami.data.buffers.buffer_names import BufferNames
 from ami.data.buffers.random_data_buffer import RandomDataBuffer
@@ -100,19 +100,19 @@ class TestIJEPALatentVisualizationTrainer:
     @pytest.fixture
     def logger(self, tmp_path):
         return StepIntervalLogger(f"{tmp_path}/tensorboard", 1)
-    
+
     @pytest.fixture
     def mel_spectrogram(self) -> torchaudio.transforms.MelSpectrogram:
         # ref: https://github.com/jik876/hifi-gan/blob/master/config_v1.json
         return torchaudio.transforms.MelSpectrogram(
             sample_rate=16000,
-            n_fft=1024, 
-            win_length=1024, 
+            n_fft=1024,
+            win_length=1024,
             hop_length=256,
             n_mels=80,
             window=torch.hann_window,
-            center=False, 
-            pad_mode='reflect',
+            center=False,
+            pad_mode="reflect",
             normalized=False,
         )
 
@@ -140,10 +140,10 @@ class TestIJEPALatentVisualizationTrainer:
             logger=logger,
             vocoder_name=vocoder_name,
             mel_spectrogram=mel_spectrogram,
-            rec_coef = 45.0,
+            rec_coef=45.0,
             minimum_new_data_count=1,
-            validation_dataloader = validation_dataloader,
-            num_auralize_audios = 4,
+            validation_dataloader=validation_dataloader,
+            num_auralize_audios=4,
         )
         trainer.attach_model_wrappers_dict(model_wrappers_dict)
         trainer.attach_data_users_dict(audio_buffer_dict.get_data_users())

@@ -6,9 +6,9 @@ from typing import Literal
 # import matplotlib.pyplot as plt
 import torch
 import torch.nn.functional as F
+import torchaudio
 import torchvision.transforms.v2.functional
 import torchvision.utils
-import torchaudio
 from torch import Tensor
 from torch.optim import Optimizer
 from torch.utils.data import DataLoader, Dataset
@@ -18,8 +18,11 @@ from ami.data.buffers.buffer_names import BufferNames
 from ami.data.buffers.random_data_buffer import RandomDataBuffer
 from ami.data.interfaces import ThreadSafeDataUser
 from ami.models.bool_mask_audio_jepa import BoolMaskAudioJEPAEncoder
+from ami.models.hifigan.discriminators import (
+    MultiPeriodDiscriminator,
+    MultiScaleDiscriminator,
+)
 from ami.models.hifigan.generator import HifiGANGenerator
-from ami.models.hifigan.discriminators import MultiPeriodDiscriminator, MultiScaleDiscriminator
 from ami.models.model_names import ModelNames
 from ami.models.model_wrapper import ModelWrapper
 from ami.tensorboard_loggers import StepIntervalLogger
@@ -86,7 +89,7 @@ class HifiGANTrainer(BaseTrainer):
 
         self.encoder_name = encoder_name
         self.vocoder_name = vocoder_name
-        
+
         self.mel_spectrogram = mel_spectrogram
         self.rec_coef = rec_coef
 
@@ -140,7 +143,7 @@ class HifiGANTrainer(BaseTrainer):
             reconstructions: Tensor = self.vocoder(latents)
             loss_list.append(
                 self._reconstruction_loss(
-                    waveform_batch=audio_batch, 
+                    waveform_batch=audio_batch,
                     waveform_reconstructed=reconstructions,
                 )
             )
@@ -164,9 +167,17 @@ class HifiGANTrainer(BaseTrainer):
 
         self.logger.log(self.log_prefix + "losses/validation-reconstruction", loss, force_log=True)
         for i, (in_audio, rec_audio) in enumerate(zip(input_audio_selected, reconstruction_audio_selected)):
-            self.logger.tensorboard.add_audio(self.log_prefix + f"metrics/input-{i}", in_audio, self.logger.global_step, sample_rate=self.mel_spectrogram.sample_rate)
             self.logger.tensorboard.add_audio(
-                self.log_prefix + f"metrics/reconstruction-{i}", rec_audio, self.logger.global_step, sample_rate=self.mel_spectrogram.sample_rate
+                self.log_prefix + f"metrics/input-{i}",
+                in_audio,
+                self.logger.global_step,
+                sample_rate=self.mel_spectrogram.sample_rate,
+            )
+            self.logger.tensorboard.add_audio(
+                self.log_prefix + f"metrics/reconstruction-{i}",
+                rec_audio,
+                self.logger.global_step,
+                sample_rate=self.mel_spectrogram.sample_rate,
             )
 
     @override
@@ -200,7 +211,7 @@ class HifiGANTrainer(BaseTrainer):
 
                 # calc losses
                 loss = self._reconstruction_loss(
-                    waveform_batch=audio_batch, 
+                    waveform_batch=audio_batch,
                     waveform_reconstructed=audio_out,
                 )
 
@@ -230,11 +241,11 @@ class HifiGANTrainer(BaseTrainer):
         self.optimizer_state = torch.load(path / "optimizer.pt")
         self.logger.load_state_dict(torch.load(path / "logger.pt"))
         self.dataset_previous_get_time = torch.load(path / "dataset_previous_get_time.pt")
-    
-    def _spectral_normalize(self, x: torch.Tensor, clip_val: float=1e-5)->torch.Tensor:
+
+    def _spectral_normalize(self, x: torch.Tensor, clip_val: float = 1e-5) -> torch.Tensor:
         return torch.log(torch.clamp(x, min=clip_val))
-        
-    def _reconstruction_loss(self, waveform_batch: torch.Tensor, waveform_reconstructed: torch.Tensor)->torch.Tensor:
+
+    def _reconstruction_loss(self, waveform_batch: torch.Tensor, waveform_reconstructed: torch.Tensor) -> torch.Tensor:
         mel_batch = self._spectral_normalize(self.mel_spectrogram(waveform_batch))
         mel_reconstructed = self._spectral_normalize(self.mel_spectrogram(waveform_reconstructed))
         loss_rec = F.l1_loss(mel_batch, mel_reconstructed) * self.rec_coef
