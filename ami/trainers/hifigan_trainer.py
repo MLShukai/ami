@@ -42,7 +42,7 @@ class HifiGANTrainer(BaseTrainer):
         device: torch.device,
         logger: StepIntervalLogger,
         vocoder_name: Literal[
-            ModelNames.AUDIO_JEPA_CONTEXT_AURALIZATION_VOCODER, ModelNames.AUDIO_JEPA_TARGET_AURALIZATION_VOCODER
+            ModelNames.HIFIGAN_CONTEXT_AURALIZATION_GENERATOR, ModelNames.HIFIGAN_TARGET_AURALIZATION_GENERATOR
         ],
         mel_spectrogram: torchaudio.transforms.MelSpectrogram,
         rec_coef: float = 45.0,
@@ -78,10 +78,10 @@ class HifiGANTrainer(BaseTrainer):
 
         # Prepare self.log_prefix correspond to vocoder name.
         match vocoder_name:
-            case ModelNames.AUDIO_JEPA_CONTEXT_AURALIZATION_VOCODER:
+            case ModelNames.HIFIGAN_CONTEXT_AURALIZATION_GENERATOR:
                 encoder_name = ModelNames.AUDIO_JEPA_CONTEXT_ENCODER
                 self.log_prefix += "context/"
-            case ModelNames.AUDIO_JEPA_TARGET_AURALIZATION_VOCODER:
+            case ModelNames.HIFIGAN_TARGET_AURALIZATION_GENERATOR:
                 encoder_name = ModelNames.AUDIO_JEPA_TARGET_ENCODER
                 self.log_prefix += "target/"
             case _:

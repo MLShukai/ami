@@ -40,7 +40,7 @@ ENCODER_OUT_DIM = 32
 
 @pytest.mark.parametrize(
     "vocoder_name",
-    [ModelNames.AUDIO_JEPA_CONTEXT_AURALIZATION_VOCODER, ModelNames.AUDIO_JEPA_TARGET_AURALIZATION_VOCODER],
+    [ModelNames.HIFIGAN_CONTEXT_AURALIZATION_GENERATOR, ModelNames.HIFIGAN_TARGET_AURALIZATION_GENERATOR],
 )
 class TestHifiGANTrainer:
     @pytest.fixture
@@ -94,8 +94,8 @@ class TestHifiGANTrainer:
             {
                 ModelNames.AUDIO_JEPA_CONTEXT_ENCODER: ModelWrapper(encoder, device, True),
                 ModelNames.AUDIO_JEPA_TARGET_ENCODER: ModelWrapper(copy.deepcopy(encoder), device, False),
-                ModelNames.AUDIO_JEPA_CONTEXT_AURALIZATION_VOCODER: ModelWrapper(vocoder, device, False),
-                ModelNames.AUDIO_JEPA_TARGET_AURALIZATION_VOCODER: ModelWrapper(vocoder, device, False),
+                ModelNames.HIFIGAN_CONTEXT_AURALIZATION_GENERATOR: ModelWrapper(vocoder, device, False),
+                ModelNames.HIFIGAN_TARGET_AURALIZATION_GENERATOR: ModelWrapper(vocoder, device, False),
             }
         )
         d.send_to_default_device()
