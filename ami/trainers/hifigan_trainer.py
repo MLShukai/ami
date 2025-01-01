@@ -32,7 +32,7 @@ from .base_trainer import BaseTrainer
 
 
 class HifiGANTrainer(BaseTrainer):
-    """Trainer for HifiGAN Vocoder to auralize AudioJEPA latents."""
+    """Trainer for HifiGAN to auralize AudioJEPA latents."""
 
     @override
     def __init__(
@@ -41,7 +41,7 @@ class HifiGANTrainer(BaseTrainer):
         partial_optimizer: partial[Optimizer],
         device: torch.device,
         logger: StepIntervalLogger,
-        vocoder_name: Literal[
+        generator_name: Literal[
             ModelNames.HIFIGAN_CONTEXT_AURALIZATION_GENERATOR, ModelNames.HIFIGAN_TARGET_AURALIZATION_GENERATOR
         ],
         mel_spectrogram: torchaudio.transforms.MelSpectrogram,
@@ -59,10 +59,10 @@ class HifiGANTrainer(BaseTrainer):
             partial_optimizer: A partially instantiated optimizer lacking provided parameters.
             device: The accelerator device (e.g., CPU, GPU) utilized for training the model.
             logger: The logger object for recording training metrics and auralizations.
-            vocoder_name: Name of the vocoder (context or target) to be trained for auralization.
+            generator_name: Name of the generator (context or target) to be trained for auralization.
             mel_spectrogram: Converter waveform into mel-spec.
             rec_coef: Coefficient for reconstruction loss.
-            max_epochs: Maximum number of epochs to train the vocoder. Default is 1.
+            max_epochs: Maximum number of epochs to train the generator and discriminators. Default is 1.
             minimum_dataset_size: Minimum number of samples required in the dataset to start training. Default is 1.
             minimum_new_data_count: Minimum number of new data samples required to run the training. Default is 0.
             validation_dataloader DataLoader instance for validation.
@@ -76,8 +76,8 @@ class HifiGANTrainer(BaseTrainer):
         self.logger = logger
         self.log_prefix = "audio-jepa-latent-auralization/"
 
-        # Prepare self.log_prefix correspond to vocoder name.
-        match vocoder_name:
+        # Prepare self.log_prefix correspond to generator name.
+        match generator_name:
             case ModelNames.HIFIGAN_CONTEXT_AURALIZATION_GENERATOR:
                 encoder_name = ModelNames.AUDIO_JEPA_CONTEXT_ENCODER
                 self.log_prefix += "context/"
@@ -85,10 +85,10 @@ class HifiGANTrainer(BaseTrainer):
                 encoder_name = ModelNames.AUDIO_JEPA_TARGET_ENCODER
                 self.log_prefix += "target/"
             case _:
-                raise ValueError(f"Unexpected vocoder_name: {vocoder_name}")
+                raise ValueError(f"Unexpected generator_name: {generator_name}")
 
         self.encoder_name = encoder_name
-        self.vocoder_name = vocoder_name
+        self.generator_name = generator_name
 
         self.mel_spectrogram = mel_spectrogram
         self.rec_coef = rec_coef
@@ -106,9 +106,9 @@ class HifiGANTrainer(BaseTrainer):
 
     def on_model_wrappers_dict_attached(self) -> None:
         self.encoder: ModelWrapper[BoolMaskAudioJEPAEncoder] = self.get_frozen_model(self.encoder_name)
-        self.vocoder: ModelWrapper[HifiGANGenerator] = self.get_training_model(self.vocoder_name)
+        self.generator: ModelWrapper[HifiGANGenerator] = self.get_training_model(self.generator_name)
 
-        self.optimizer_state = self.partial_optimizer(self.vocoder.parameters()).state_dict()
+        self.optimizer_state = self.partial_optimizer(self.generator.parameters()).state_dict()
 
     @override
     def is_trainable(self) -> bool:
@@ -141,7 +141,7 @@ class HifiGANTrainer(BaseTrainer):
 
             latents = self.encoder.infer(audio_batch)
             latents = latents.transpose(-1, -2)
-            reconstructions: Tensor = self.vocoder(latents)
+            reconstructions: Tensor = self.generator(latents)
             loss_list.append(
                 self._reconstruction_loss(
                     waveform_batch=audio_batch,
@@ -185,9 +185,9 @@ class HifiGANTrainer(BaseTrainer):
     def train(self) -> None:
         # move to device
         self.encoder.to(self.device)
-        self.vocoder.to(self.device)
+        self.generator.to(self.device)
 
-        optimizer = self.partial_optimizer(self.vocoder.parameters())
+        optimizer = self.partial_optimizer(self.generator.parameters())
         optimizer.load_state_dict(self.optimizer_state)
 
         # prepare about dataset
@@ -207,7 +207,7 @@ class HifiGANTrainer(BaseTrainer):
                     latents = latents.transpose(-1, -2)
 
                 # reconstruct
-                audio_out: Tensor = self.vocoder(latents)
+                audio_out: Tensor = self.generator(latents)
 
                 # calc losses
                 loss = self._reconstruction_loss(

@@ -20,4 +20,8 @@ class ModelNames(str, Enum):
     AUDIO_JEPA_CONTEXT_ENCODER = "audio_jepa_context_encoder"
     AUDIO_JEPA_TARGET_ENCODER = "audio_jepa_target_encoder"  # Always alias to other key: `AUDIO_ENCODDER`.
     HIFIGAN_CONTEXT_AURALIZATION_GENERATOR = "hifigan_context_auralization_generator"
+    HIFIGAN_CONTEXT_AURALIZATION_MULTI_PERIOD_DISCRIMINATOR = "hifigan_context_auralization_multi_period_discriminator"
+    HIFIGAN_CONTEXT_AURALIZATION_MULTI_SCALE_DISCRIMINATOR = "hifigan_context_auralization_multi_scale_discriminator"
     HIFIGAN_TARGET_AURALIZATION_GENERATOR = "hifigan_target_auralization_generator"
+    HIFIGAN_TARGET_AURALIZATION_MULTI_PERIOD_DISCRIMINATOR = "hifigan_target_auralization_multi_period_discriminator"
+    HIFIGAN_TARGET_AURALIZATION_MULTI_SCALE_DISCRIMINATOR = "hifigan_target_auralization_multi_scale_discriminator"

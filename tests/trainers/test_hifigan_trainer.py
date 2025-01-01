@@ -39,7 +39,7 @@ ENCODER_OUT_DIM = 32
 
 
 @pytest.mark.parametrize(
-    "vocoder_name",
+    "generator_name",
     [ModelNames.HIFIGAN_CONTEXT_AURALIZATION_GENERATOR, ModelNames.HIFIGAN_TARGET_AURALIZATION_GENERATOR],
 )
 class TestHifiGANTrainer:
@@ -82,7 +82,7 @@ class TestHifiGANTrainer:
             mlp_ratio=4.0,
         )
         # Setting params to match shapes between waveform reconstructed and original.
-        vocoder = HifiGANGenerator(
+        generator = HifiGANGenerator(
             in_channels=ENCODER_EMBEDDING_DIM,
             out_channels=AUDIO_CHANNELS,
             upsample_rates=[10, 8, 2, 2],
@@ -94,8 +94,8 @@ class TestHifiGANTrainer:
             {
                 ModelNames.AUDIO_JEPA_CONTEXT_ENCODER: ModelWrapper(encoder, device, True),
                 ModelNames.AUDIO_JEPA_TARGET_ENCODER: ModelWrapper(copy.deepcopy(encoder), device, False),
-                ModelNames.HIFIGAN_CONTEXT_AURALIZATION_GENERATOR: ModelWrapper(vocoder, device, False),
-                ModelNames.HIFIGAN_TARGET_AURALIZATION_GENERATOR: ModelWrapper(vocoder, device, False),
+                ModelNames.HIFIGAN_CONTEXT_AURALIZATION_GENERATOR: ModelWrapper(generator, device, False),
+                ModelNames.HIFIGAN_TARGET_AURALIZATION_GENERATOR: ModelWrapper(generator, device, False),
             }
         )
         d.send_to_default_device()
@@ -133,7 +133,7 @@ class TestHifiGANTrainer:
         audio_buffer_dict: DataCollectorsDict,
         device,
         logger,
-        vocoder_name,
+        generator_name,
         mel_spectrogram: torchaudio.transforms.MelSpectrogram,
         validation_dataloader,
     ):
@@ -142,7 +142,7 @@ class TestHifiGANTrainer:
             partial_optimizer=partial_optimizer,
             device=device,
             logger=logger,
-            vocoder_name=vocoder_name,
+            generator_name=generator_name,
             mel_spectrogram=mel_spectrogram,
             rec_coef=45.0,
             minimum_new_data_count=1,
