@@ -10,7 +10,10 @@ from ami.data.buffers.buffer_names import BufferNames
 from ami.data.buffers.random_data_buffer import RandomDataBuffer
 from ami.data.step_data import DataKeys, StepData
 from ami.data.utils import DataCollectorsDict
-from ami.models.bool_mask_audio_jepa import BoolMaskAudioJEPAEncoder, BoolTargetAudioJEPAPredictor
+from ami.models.bool_mask_audio_jepa import (
+    BoolMaskAudioJEPAEncoder,
+    BoolTargetAudioJEPAPredictor,
+)
 from ami.models.model_names import ModelNames
 from ami.models.model_wrapper import ModelWrapper
 from ami.models.utils import ModelWrappersDict
@@ -64,7 +67,7 @@ class TestBoolMaskAudioJEPATrainer:
 
     @pytest.fixture
     def bool_mask_audio_jepa_encoder(self):
-        return BoolMaskAudioJEPAEncoder(            
+        return BoolMaskAudioJEPAEncoder(
             input_sample_size=AUDIO_SAMPLE_SIZE,
             patch_sample_size=PATCH_SAMPLE_SIZE,
             stride=STRIDE,
@@ -111,8 +114,12 @@ class TestBoolMaskAudioJEPATrainer:
     ) -> ModelWrappersDict:
         d = ModelWrappersDict(
             {
-                ModelNames.AUDIO_JEPA_CONTEXT_ENCODER: ModelWrapper(bool_mask_audio_jepa_encoder, device, has_inference=False),
-                ModelNames.AUDIO_JEPA_PREDICTOR: ModelWrapper(bool_target_audio_jepa_predictor, device, has_inference=False),
+                ModelNames.AUDIO_JEPA_CONTEXT_ENCODER: ModelWrapper(
+                    bool_mask_audio_jepa_encoder, device, has_inference=False
+                ),
+                ModelNames.AUDIO_JEPA_PREDICTOR: ModelWrapper(
+                    bool_target_audio_jepa_predictor, device, has_inference=False
+                ),
                 ModelNames.AUDIO_JEPA_TARGET_ENCODER: ModelWrapper(
                     copy.deepcopy(bool_mask_audio_jepa_encoder), device, has_inference=True
                 ),
@@ -135,7 +142,9 @@ class TestBoolMaskAudioJEPATrainer:
         device: torch.device,
         logger: StepIntervalLogger,
     ) -> BoolMaskAudioJEPATrainer:
-        trainer = BoolMaskAudioJEPATrainer(partial_dataloader, partial_optimizer, device, logger, minimum_new_data_count=1)
+        trainer = BoolMaskAudioJEPATrainer(
+            partial_dataloader, partial_optimizer, device, logger, minimum_new_data_count=1
+        )
         trainer.attach_model_wrappers_dict(model_wrappers_dict)
         trainer.attach_data_users_dict(audio_buffer_dict.get_data_users())
         return trainer

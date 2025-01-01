@@ -13,7 +13,10 @@ from typing_extensions import override
 from ami.data.buffers.buffer_names import BufferNames
 from ami.data.buffers.random_data_buffer import RandomDataBuffer
 from ami.data.interfaces import ThreadSafeDataUser
-from ami.models.bool_mask_audio_jepa import BoolMaskAudioJEPAEncoder, BoolTargetAudioJEPAPredictor
+from ami.models.bool_mask_audio_jepa import (
+    BoolMaskAudioJEPAEncoder,
+    BoolTargetAudioJEPAPredictor,
+)
 from ami.models.model_names import ModelNames
 from ami.models.model_wrapper import ModelWrapper
 from ami.tensorboard_loggers import StepIntervalLogger
@@ -60,7 +63,9 @@ class BoolMaskAudioJEPATrainer(BaseTrainer):
         self.context_encoder: ModelWrapper[BoolMaskAudioJEPAEncoder] = self.get_training_model(
             ModelNames.AUDIO_JEPA_CONTEXT_ENCODER
         )
-        self.predictor: ModelWrapper[BoolTargetAudioJEPAPredictor] = self.get_training_model(ModelNames.AUDIO_JEPA_PREDICTOR)
+        self.predictor: ModelWrapper[BoolTargetAudioJEPAPredictor] = self.get_training_model(
+            ModelNames.AUDIO_JEPA_PREDICTOR
+        )
         self.target_encoder: ModelWrapper[BoolMaskAudioJEPAEncoder] = self.get_training_model(
             ModelNames.AUDIO_JEPA_TARGET_ENCODER
         )
@@ -137,8 +142,12 @@ class BoolMaskAudioJEPATrainer(BaseTrainer):
                 losses = torch.masked_fill(losses, ~targets_for_predictor, 0.0)
                 loss = losses.sum() / targets_for_predictor.sum()
 
-                self.logger.log("audio-jepa/metrics/target-encoder-latent-std", latent_from_target_encoder.std(0).mean())
-                self.logger.log("audio-jepa/metrics/context-encoder-latent-std", latent_from_context_encoder.std(0).mean())
+                self.logger.log(
+                    "audio-jepa/metrics/target-encoder-latent-std", latent_from_target_encoder.std(0).mean()
+                )
+                self.logger.log(
+                    "audio-jepa/metrics/context-encoder-latent-std", latent_from_context_encoder.std(0).mean()
+                )
                 self.logger.log("audio-jepa/losses/smooth-l1", loss)
                 loss.backward()
                 optimizer.step()
