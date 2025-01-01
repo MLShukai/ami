@@ -187,7 +187,9 @@ class TestHifiGANTrainer:
         trainer_path = tmp_path / "bool_mask_audio_jepa"
         trainer.save_state(trainer_path)
         assert trainer_path.exists()
-        assert (trainer_path / "optimizer.pt").exists()
+        assert (trainer_path / "optimizer_g.pt").exists()
+        assert (trainer_path / "optimizer_mpd.pt").exists()
+        assert (trainer_path / "optimizer_msd.pt").exists()
         assert (trainer_path / "logger.pt").exists()
         assert (trainer_path / "dataset_previous_get_time.pt").exists()
         logger_state = trainer.logger.state_dict()
