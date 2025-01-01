@@ -55,13 +55,15 @@ class HifiGANTrainer(BaseTrainer):
             partial_dataloader: A partially instantiated dataloader lacking a provided dataset.
             partial_optimizer: A partially instantiated optimizer lacking provided parameters.
             device: The accelerator device (e.g., CPU, GPU) utilized for training the model.
-            logger: The logger object for recording training metrics and visualizations.
-            vocoder_name: Name of the vocoder (context or target) to be trained for visualization.
+            logger: The logger object for recording training metrics and auralizations.
+            vocoder_name: Name of the vocoder (context or target) to be trained for auralization.
+            mel_spectrogram: Converter waveform into mel-spec.
+            rec_coef: Coefficient for reconstruction loss.
             max_epochs: Maximum number of epochs to train the vocoder. Default is 1.
             minimum_dataset_size: Minimum number of samples required in the dataset to start training. Default is 1.
             minimum_new_data_count: Minimum number of new data samples required to run the training. Default is 0.
             validation_dataloader DataLoader instance for validation.
-            num_auralize_audios: Number of audios to use for visualization. Default is 64.
+            num_auralize_audios: Number of audios to use for auralization. Default is 4.
         """
         super().__init__()
 
