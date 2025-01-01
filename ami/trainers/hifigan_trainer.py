@@ -8,6 +8,7 @@ import torch
 import torch.nn.functional as F
 import torchvision.transforms.v2.functional
 import torchvision.utils
+import torchaudio
 from torch import Tensor
 from torch.optim import Optimizer
 from torch.utils.data import DataLoader, Dataset
@@ -40,11 +41,13 @@ class HifiGANTrainer(BaseTrainer):
         vocoder_name: Literal[
             ModelNames.AUDIO_JEPA_CONTEXT_AURALIZATION_VOCODER, ModelNames.AUDIO_JEPA_TARGET_AURALIZATION_VOCODER
         ],
+        mel_spectrogram: torchaudio.transforms.MelSpectrogram,
+        rec_coef: float = 45.0,
         max_epochs: int = 1,
         minimum_dataset_size: int = 1,
         minimum_new_data_count: int = 0,
         validation_dataloader: DataLoader[tuple[Tensor]] | None = None,
-        num_auralize_audios: int = 64,
+        num_auralize_audios: int = 4,
     ) -> None:
         """Initializes an HifiGANTrainer object.
 
@@ -58,7 +61,7 @@ class HifiGANTrainer(BaseTrainer):
             minimum_dataset_size: Minimum number of samples required in the dataset to start training. Default is 1.
             minimum_new_data_count: Minimum number of new data samples required to run the training. Default is 0.
             validation_dataloader DataLoader instance for validation.
-            num_auralize_audios: Number of images to use for visualization. Default is 64.
+            num_auralize_audios: Number of audios to use for visualization. Default is 64.
         """
         super().__init__()
 
@@ -81,6 +84,8 @@ class HifiGANTrainer(BaseTrainer):
 
         self.encoder_name = encoder_name
         self.vocoder_name = vocoder_name
+        
+        self.rec_coef = rec_coef
 
         self.max_epochs = max_epochs
         self.minimum_dataset_size = minimum_dataset_size
@@ -91,7 +96,7 @@ class HifiGANTrainer(BaseTrainer):
         self.dataset_previous_get_time = float("-inf")
 
     def on_data_users_dict_attached(self) -> None:
-        self.audio_data_user: ThreadSafeDataUser[RandomDataBuffer] = self.get_data_user(BufferNames.IMAGE)
+        self.audio_data_user: ThreadSafeDataUser[RandomDataBuffer] = self.get_data_user(BufferNames.AUDIO)
 
     def on_model_wrappers_dict_attached(self) -> None:
         self.encoder: ModelWrapper[BoolMaskAudioJEPAEncoder] = self.get_frozen_model(self.encoder_name)
@@ -117,7 +122,7 @@ class HifiGANTrainer(BaseTrainer):
 
     @torch.inference_mode()
     def validation(self, dataloader: DataLoader[tuple[Tensor]]) -> None:
-        """Compute the reconstruction loss and log visualization grid image."""
+        """Compute the reconstruction loss and log auralization."""
 
         input_audio_batch_list = []
         reconstruction_audio_batch_list = []
@@ -180,23 +185,22 @@ class HifiGANTrainer(BaseTrainer):
                     latents = self.encoder.infer(audio_batch)
                     # latents: [batch_size, n_patches_height * n_patches_width, latents_dim]
 
-                image_out: Tensor = self.vocoder(latents)
-                image_size = image_out.size()[-2:]
+                audio_out: Tensor = self.vocoder(latents)
+                audio_sample_size = audio_out.size()[-2:]
 
-                audio_batch_resized = torchvision.transforms.v2.functional.resize(audio_batch, image_size)
+                audio_batch_resized = torchvision.transforms.v2.functional.resize(audio_batch, audio_sample_size)
 
-                # calc loss
-                loss = F.mse_loss(
-                    image_out,
-                    audio_batch_resized,
-                    reduction="mean",
+                # calc losses
+                loss_rec = self._reconstruction_loss(
+                    waveform_batch=audio_batch, 
+                    waveform_reconstructed=audio_out,
                 )
 
                 optimizer.zero_grad()
                 loss.backward()
                 optimizer.step()
 
-                self.logger.log(self.log_prefix + "losses/reconstruction", loss)
+                self.logger.log(self.log_prefix + "losses/reconstruction", loss_rec)
 
                 self.logger.update()
 
@@ -218,3 +222,12 @@ class HifiGANTrainer(BaseTrainer):
         self.optimizer_state = torch.load(path / "optimizer.pt")
         self.logger.load_state_dict(torch.load(path / "logger.pt"))
         self.dataset_previous_get_time = torch.load(path / "dataset_previous_get_time.pt")
+    
+    def _spectral_normalize(self, x: torch.Tensor, clip_val=1e-5)->torch.Tensor:
+        return torch.log(torch.clamp(x, min=clip_val))
+        
+    def _reconstruction_loss(self, waveform_batch: torch.Tensor, waveform_reconstructed: torch.Tensor)->torch.Tensor:
+        mel_batch = self._spectral_normalize(self.mel_spectrogram(waveform_batch))
+        mel_reconstructed = self._spectral_normalize(self.mel_spectrogram(waveform_reconstructed))
+        loss_rec = F.l1_loss(mel_batch, mel_reconstructed) * self.rec_coef
+        return loss_rec
