@@ -42,8 +42,7 @@ ENCODER_OUT_DIM = 32
     "vocoder_name",
     [ModelNames.AUDIO_JEPA_CONTEXT_AURALIZATION_VOCODER, ModelNames.AUDIO_JEPA_TARGET_AURALIZATION_VOCODER],
 )
-@pytest.mark.skipif(not torch.cuda.is_available(), reason="CPU環境だと Segmentation Faultで落ちる。")
-class TestIJEPALatentVisualizationTrainer:
+class TestHifiGANTrainer:
     @pytest.fixture
     def partial_dataloader(self):
         partial_dataloader = partial(DataLoader, batch_size=2, shuffle=True)
@@ -82,9 +81,14 @@ class TestIJEPALatentVisualizationTrainer:
             num_heads=ENCODER_NUM_HEADS,
             mlp_ratio=4.0,
         )
+        # Setting params to match shapes between waveform reconstructed and original.
         vocoder = HifiGANGenerator(
             in_channels=ENCODER_EMBEDDING_DIM,
             out_channels=AUDIO_CHANNELS,
+            upsample_rates=[10, 8, 2, 2],
+            upsample_kernel_sizes=[20, 16, 4, 4],
+            upsample_paddings=[4, 2, 1, 1],
+            upsample_initial_channel=16,
         )
         d = ModelWrappersDict(
             {
@@ -110,7 +114,7 @@ class TestIJEPALatentVisualizationTrainer:
             win_length=1024,
             hop_length=256,
             n_mels=80,
-            window=torch.hann_window,
+            window_fn=torch.hann_window,
             center=False,
             pad_mode="reflect",
             normalized=False,

@@ -140,6 +140,7 @@ class HifiGANTrainer(BaseTrainer):
             audio_batch = audio_batch.to(self.device)
 
             latents = self.encoder.infer(audio_batch)
+            latents = latents.transpose(-1, -2)
             reconstructions: Tensor = self.vocoder(latents)
             loss_list.append(
                 self._reconstruction_loss(
@@ -162,7 +163,7 @@ class HifiGANTrainer(BaseTrainer):
             reconstruction_audio_selected.flatten(1), 0, 1, dim=-1
         ).reshape(reconstruction_audio_selected.shape)
 
-        losses = torch.cat(loss_list)
+        losses = torch.stack(loss_list)
         loss = torch.mean(losses)
 
         self.logger.log(self.log_prefix + "losses/validation-reconstruction", loss, force_log=True)
@@ -203,11 +204,10 @@ class HifiGANTrainer(BaseTrainer):
                 with torch.no_grad():
                     latents = self.encoder.infer(audio_batch)
                     # latents: [batch_size, n_patches_height * n_patches_width, latents_dim]
-
+                    latents = latents.transpose(-1, -2)
+                    
+                # reconstruct
                 audio_out: Tensor = self.vocoder(latents)
-                audio_sample_size = audio_out.size()[-2:]
-
-                audio_batch_resized = torchvision.transforms.v2.functional.resize(audio_batch, audio_sample_size)
 
                 # calc losses
                 loss = self._reconstruction_loss(
