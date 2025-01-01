@@ -19,3 +19,5 @@ class ModelNames(str, Enum):
     AUDIO_JEPA_PREDICTOR = "audio_jepa_predictor"
     AUDIO_JEPA_CONTEXT_ENCODER = "audio_jepa_context_encoder"
     AUDIO_JEPA_TARGET_ENCODER = "audio_jepa_target_encoder"  # Always alias to other key: `AUDIO_ENCODDER`.
+    AUDIO_JEPA_CONTEXT_AURALIZATION_VOCODER = "audio_jepa_context_auralization_vocoder"
+    AUDIO_JEPA_TARGET_AURALIZATION_VOCODER = "audio_jepa_target_auralization_vocoder"
