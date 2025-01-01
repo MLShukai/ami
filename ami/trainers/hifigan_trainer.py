@@ -85,6 +85,7 @@ class HifiGANTrainer(BaseTrainer):
         self.encoder_name = encoder_name
         self.vocoder_name = vocoder_name
         
+        self.mel_spectrogram = mel_spectrogram
         self.rec_coef = rec_coef
 
         self.max_epochs = max_epochs
@@ -135,7 +136,12 @@ class HifiGANTrainer(BaseTrainer):
 
             latents = self.encoder.infer(audio_batch)
             reconstructions: Tensor = self.vocoder(latents)
-            loss_list.append(F.mse_loss(resized_audio_batch, reconstructions, reduction="none").flatten(1).mean(1))
+            loss_list.append(
+                self._reconstruction_loss(
+                    waveform_batch=audio_batch, 
+                    waveform_reconstructed=reconstructions,
+                )
+            )
 
             reconstruction_audio_batch_list.append(reconstructions.cpu())
 
@@ -156,9 +162,9 @@ class HifiGANTrainer(BaseTrainer):
 
         self.logger.log(self.log_prefix + "losses/validation-reconstruction", loss, force_log=True)
         for i, (in_audio, rec_audio) in enumerate(zip(input_audio_selected, reconstruction_audio_selected)):
-            self.logger.tensorboard.add_audio(self.log_prefix + f"metrics/input-{i}", in_audio, self.logger.global_step, sample_rate=)
+            self.logger.tensorboard.add_audio(self.log_prefix + f"metrics/input-{i}", in_audio, self.logger.global_step, sample_rate=self.mel_spectrogram.sample_rate)
             self.logger.tensorboard.add_audio(
-                self.log_prefix + f"metrics/reconstruction-{i}", rec_audio, self.logger.global_step, sample_rate=
+                self.log_prefix + f"metrics/reconstruction-{i}", rec_audio, self.logger.global_step, sample_rate=self.mel_spectrogram.sample_rate
             )
 
     @override
@@ -191,7 +197,7 @@ class HifiGANTrainer(BaseTrainer):
                 audio_batch_resized = torchvision.transforms.v2.functional.resize(audio_batch, audio_sample_size)
 
                 # calc losses
-                loss_rec = self._reconstruction_loss(
+                loss = self._reconstruction_loss(
                     waveform_batch=audio_batch, 
                     waveform_reconstructed=audio_out,
                 )
@@ -200,7 +206,7 @@ class HifiGANTrainer(BaseTrainer):
                 loss.backward()
                 optimizer.step()
 
-                self.logger.log(self.log_prefix + "losses/reconstruction", loss_rec)
+                self.logger.log(self.log_prefix + "losses/reconstruction", loss)
 
                 self.logger.update()
 
@@ -223,7 +229,7 @@ class HifiGANTrainer(BaseTrainer):
         self.logger.load_state_dict(torch.load(path / "logger.pt"))
         self.dataset_previous_get_time = torch.load(path / "dataset_previous_get_time.pt")
     
-    def _spectral_normalize(self, x: torch.Tensor, clip_val=1e-5)->torch.Tensor:
+    def _spectral_normalize(self, x: torch.Tensor, clip_val: float=1e-5)->torch.Tensor:
         return torch.log(torch.clamp(x, min=clip_val))
         
     def _reconstruction_loss(self, waveform_batch: torch.Tensor, waveform_reconstructed: torch.Tensor)->torch.Tensor:
