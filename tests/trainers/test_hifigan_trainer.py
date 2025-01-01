@@ -196,10 +196,16 @@ class TestHifiGANTrainer:
         dataset_previous_get_time = trainer.dataset_previous_get_time
 
         mocked_logger_load_state_dict = mocker.spy(trainer.logger, "load_state_dict")
-        trainer.optimizer_state.clear()
+        trainer.optimizer_state_g.clear()
+        trainer.optimizer_state_mpd.clear()
+        trainer.optimizer_state_msd.clear()
         trainer.dataset_previous_get_time = None
-        assert trainer.optimizer_state == {}
+        assert trainer.optimizer_state_g == {}
+        assert trainer.optimizer_state_mpd == {}
+        assert trainer.optimizer_state_msd == {}
         trainer.load_state(trainer_path)
-        assert trainer.optimizer_state != {}
+        assert trainer.optimizer_state_g != {}
+        assert trainer.optimizer_state_mpd != {}
+        assert trainer.optimizer_state_msd != {}
         mocked_logger_load_state_dict.assert_called_once_with(logger_state)
         assert trainer.dataset_previous_get_time == dataset_previous_get_time
