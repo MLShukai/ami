@@ -173,7 +173,7 @@ class HifiGANTrainer(BaseTrainer):
             authenticity_list_real, _ = self.multi_scale_discriminator(audio_batch)
             authenticity_list_fake, _ = self.multi_scale_discriminator(reconstructions.detach())
             loss_adv_msd = self._discriminator_adversarial_losses(authenticity_list_real, authenticity_list_fake)
-            losses_adv_mpd.append(loss_adv_msd)
+            losses_adv_msd.append(loss_adv_msd)
 
             # generator
             # calc reconstruction loss
