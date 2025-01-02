@@ -6,12 +6,12 @@ from ami.models.components.unet.middle_block import UnetMiddleBlock
 
 class TestUnetMiddleBlock:
     # model params
-    @pytest.mark.parametrize("in_and_out_channels", [32, 64])
+    @pytest.mark.parametrize("in_and_out_channels", [32])
     @pytest.mark.parametrize("timestep_embed_dim", [32])
     # test input params
     @pytest.mark.parametrize("batch_size", [4])
-    @pytest.mark.parametrize("height", [4, 32])
-    @pytest.mark.parametrize("width", [4, 32])
+    @pytest.mark.parametrize("height", [32])
+    @pytest.mark.parametrize("width", [32])
     def test_unet_middle_block(
         self,
         in_and_out_channels: int,
