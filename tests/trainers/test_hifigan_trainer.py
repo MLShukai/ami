@@ -25,7 +25,7 @@ from ami.trainers.hifigan_trainer import (
 
 # input data params
 AUDIO_CHANNELS = 1
-AUDIO_SAMPLE_SIZE = 16080
+AUDIO_SAMPLE_SIZE = 1040
 PATCH_SAMPLE_SIZE = 400
 STRIDE = 320
 assert PATCH_SAMPLE_SIZE <= AUDIO_SAMPLE_SIZE
