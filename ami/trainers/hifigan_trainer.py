@@ -348,7 +348,7 @@ class HifiGANTrainer(BaseTrainer):
     def _discriminator_adversarial_losses(
         self, authenticity_list_real: list[torch.Tensor], authenticity_list_fake: list[torch.Tensor]
     ) -> torch.Tensor:
-        loss = 0
+        loss = torch.tensor(0.0, dtype=torch.float32)
         for authenticity_real, authenticity_fake in zip(authenticity_list_real, authenticity_list_fake):
             real_loss = torch.mean((1 - authenticity_real) ** 2)
             fake_loss = torch.mean(authenticity_fake**2)
@@ -358,14 +358,14 @@ class HifiGANTrainer(BaseTrainer):
     def _feature_loss(
         self, fmaps_list_real: list[list[torch.Tensor]], fmaps_list_fake: list[list[torch.Tensor]]
     ) -> torch.Tensor:
-        loss = 0
+        loss = torch.tensor(0.0, dtype=torch.float32)
         for fmaps_real, fmaps_fake in zip(fmaps_list_real, fmaps_list_fake):
             for fmap_real, fmap_fake in zip(fmaps_real, fmaps_fake):
                 loss += torch.mean(torch.abs(fmap_real - fmap_fake))
         return loss * 2
 
     def _generator_adversarial_losses(self, authenticity_list_fake: list[torch.Tensor]) -> torch.Tensor:
-        loss = 0
+        loss = torch.tensor(0.0, dtype=torch.float32)
         for authenticity_fake in authenticity_list_fake:
             loss += torch.mean((1 - authenticity_fake) ** 2)
         return loss
