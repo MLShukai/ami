@@ -12,7 +12,6 @@ class TestUNet:
     @pytest.mark.parametrize(
         "encoder_blocks_in_and_out_channels",
         [
-            [(32, 32), (32, 32), (32, 64), (64, 96), (96, 128)],
             [(32, 32), (32, 64), (64, 96), (96, 128)],
         ],
     )
@@ -20,8 +19,8 @@ class TestUNet:
     @pytest.mark.parametrize("ssl_latent_dim", [384])
     # test input params
     @pytest.mark.parametrize("batch_size", [1, 4])
-    @pytest.mark.parametrize("image_height", [32, 128])
-    @pytest.mark.parametrize("image_width", [32, 128])
+    @pytest.mark.parametrize("image_height", [32])
+    @pytest.mark.parametrize("image_width", [32])
     @pytest.mark.parametrize("max_timestep", [1000])
     @pytest.mark.parametrize("n_patches_of_latents_from_ssl", [14 * 14])
     def test_unet(

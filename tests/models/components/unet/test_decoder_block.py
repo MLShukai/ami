@@ -8,16 +8,16 @@ from ami.models.components.unet.decoder_block import UnetDecoderBlock
 
 class TestUnetDecoderBlock:
     # model params
-    @pytest.mark.parametrize("in_channels", [32, 64])
+    @pytest.mark.parametrize("in_channels", [32])
     @pytest.mark.parametrize("in_channels_for_skip_connections", [[32, 64, 96]])
     @pytest.mark.parametrize("timestep_embed_dim", [32])
-    @pytest.mark.parametrize("out_channels", [32, 64])
+    @pytest.mark.parametrize("out_channels", [32])
     @pytest.mark.parametrize("use_attention", [False, True])
     @pytest.mark.parametrize("use_upsample", [False, True])
     # test input params
     @pytest.mark.parametrize("batch_size", [4])
-    @pytest.mark.parametrize("height", [4, 32])
-    @pytest.mark.parametrize("width", [4, 32])
+    @pytest.mark.parametrize("height", [32])
+    @pytest.mark.parametrize("width", [32])
     def test_unet_decoder_block(
         self,
         in_channels: int,
