@@ -12,6 +12,7 @@ class TestUNet:
     @pytest.mark.parametrize(
         "encoder_blocks_in_and_out_channels",
         [
+            # [(32, 32), (32, 32), (32, 64), (64, 96), (96, 128)],
             [(32, 32), (32, 64), (64, 96), (96, 128)],
         ],
     )
