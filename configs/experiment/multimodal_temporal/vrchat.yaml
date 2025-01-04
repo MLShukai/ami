@@ -4,7 +4,7 @@
 
 defaults:
   - override /interaction/agent: multimodal_temporal_curiosity
-  - override /interaction/environment: vrchat_image_discrete
+  - override /interaction/environment: vrchat_image_discrete_1st_order_delay
   - override /models: multimodal_temporal/no_action.yaml
   - override /data_collectors: multimodal_temporal_dynamics_ppo
   - override /trainers: i_jepa_mulitmodal_temporal_dynamics_ppo
@@ -73,9 +73,9 @@ trainers:
   ppo:
     entropy_coef: 0.04
     partial_dataloader:
-      batch_size: 8
-    max_epochs: 3
-    # 16 (= buffer size / batch size) * epochs = 48 iteration.
+      batch_size: 32
+    max_epochs: 6
+    # (buffer size / batch size) * epochs = iteration. (24.)
 
 task_name: multimodal_temporal_fundamental
 subtask_name: vrchat
