@@ -211,14 +211,30 @@ class HifiGANTrainer(BaseTrainer):
         ).reshape(reconstruction_audio_selected.shape)
 
         self.logger.log(
-            self.log_prefix + "losses/multi_period_discriminator/valid-adversarial", torch.mean(torch.stack(losses_adv_mpd)), force_log=True
+            self.log_prefix + "losses/multi_period_discriminator/valid-adversarial",
+            torch.mean(torch.stack(losses_adv_mpd)),
+            force_log=True,
         )
         self.logger.log(
-            self.log_prefix + "losses/multi_scale_discriminator/valid-adversarial", torch.mean(torch.stack(losses_adv_msd)), force_log=True
+            self.log_prefix + "losses/multi_scale_discriminator/valid-adversarial",
+            torch.mean(torch.stack(losses_adv_msd)),
+            force_log=True,
         )
-        self.logger.log(self.log_prefix + "losses/generator/valid-reconstruction", torch.mean(torch.stack(losses_rec)), force_log=True)
-        self.logger.log(self.log_prefix + "losses/generator/valid-feature_matching", torch.mean(torch.stack(losses_fm)), force_log=True)
-        self.logger.log(self.log_prefix + "losses/generator/valid-adversarial", torch.mean(torch.stack(losses_adv_g)), force_log=True)
+        self.logger.log(
+            self.log_prefix + "losses/generator/valid-reconstruction",
+            torch.mean(torch.stack(losses_rec)),
+            force_log=True,
+        )
+        self.logger.log(
+            self.log_prefix + "losses/generator/valid-feature_matching",
+            torch.mean(torch.stack(losses_fm)),
+            force_log=True,
+        )
+        self.logger.log(
+            self.log_prefix + "losses/generator/valid-adversarial",
+            torch.mean(torch.stack(losses_adv_g)),
+            force_log=True,
+        )
 
         for i, (in_audio, rec_audio) in enumerate(zip(input_audio_selected, reconstruction_audio_selected)):
             self.logger.tensorboard.add_audio(
