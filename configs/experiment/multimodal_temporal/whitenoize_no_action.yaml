@@ -1,0 +1,16 @@
+# @package _global_
+
+defaults:
+  - multimodal_temporal/fundamental
+  - override /models: multimodal_temporal/no_action
+
+interaction:
+  agent:
+    include_action_modality: False
+    initial_action: null
+
+  environment:
+    observation_generator:
+      _target_: torch.randn
+
+subtask_name: whitenoize_no_action

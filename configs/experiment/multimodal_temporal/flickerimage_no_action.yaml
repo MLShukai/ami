@@ -1,0 +1,22 @@
+# @package _global_
+
+defaults:
+  - multimodal_temporal/fundamental
+  - override /models: multimodal_temporal/no_action
+
+interaction:
+  agent:
+    include_action_modality: False
+    initial_action: null
+
+  environment:
+    observation_generator:
+      _partial_: false
+      _target_: ami.interactions.environments.image_folder_observation_generator.ImageFolderObservationGenerator
+      _args_:
+        - ${paths.data_dir}/japan_street_images
+      image_size:
+        - ${shared.image_height}
+        - ${shared.image_width}
+
+subtask_name: flickerimage_no_action

@@ -23,6 +23,7 @@ from ami.models.model_wrapper import ModelWrapper
 from ami.models.temporal_encoder import MultimodalTemporalEncoder
 from ami.models.utils import ModelWrappersDict
 from ami.tensorboard_loggers import StepIntervalLogger
+from ami.trainers.components.random_time_series_sampler import RandomTimeSeriesSampler
 from ami.trainers.components.transpose_and_stack_collator import (
     transpose_and_stack_collator,
 )
@@ -125,6 +126,7 @@ class TestMultimodalTemporalEncoderTrainer:
     ):
         trainer = MultimodalTemporalEncoderTrainer(
             partial_dataloader=partial_dataloader,
+            partial_sampler=partial(RandomTimeSeriesSampler, sequence_length=2),
             partial_optimizer=partial_optimizer,
             device=device,
             logger=logger,

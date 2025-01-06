@@ -1,0 +1,16 @@
+# @package models
+
+defaults:
+  - multimodal_temporal/no_action.yaml
+
+multimodal_temporal_encoder:
+  model:
+    core_model:
+      depth: 30
+      dim: 1024
+
+forward_dynamics:
+  model:
+    core_model:
+      depth: 30
+      dim: 1024

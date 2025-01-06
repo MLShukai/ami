@@ -90,3 +90,12 @@ def inference_forward(
     observation = {k: v.to(device) for k, v in observation.items()}
     x, next_hidden, _ = wrapper(observation, hidden.to(device))
     return x, next_hidden
+
+
+def inference_forward_with_layernorm(
+    wrapper: ModelWrapper[MultimodalTemporalEncoder], observation: Mapping[str, Tensor], hidden: Tensor
+) -> tuple[Tensor, Tensor]:
+    """Applies layer normalization to the encoded observation."""
+    x, next_hidden = inference_forward(wrapper, observation, hidden)
+    x = F.layer_norm(x, x.shape[-1:])
+    return x, next_hidden
