@@ -373,5 +373,5 @@ class HifiGANTrainer(BaseTrainer):
     def _reconstruction_loss(self, waveform_batch: torch.Tensor, waveform_reconstructed: torch.Tensor) -> torch.Tensor:
         mel_batch = self._spectral_normalize(self.mel_spectrogram(waveform_batch))
         mel_reconstructed = self._spectral_normalize(self.mel_spectrogram(waveform_reconstructed))
-        loss_rec = F.l1_loss(mel_batch, mel_reconstructed) * self.rec_coef
+        loss_rec = F.l1_loss(mel_batch, mel_reconstructed)
         return loss_rec
