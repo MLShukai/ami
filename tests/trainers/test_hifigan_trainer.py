@@ -1,5 +1,3 @@
-# ref: https://github.com/jik876/hifi-gan/blob/master/train.py
-
 import copy
 from functools import partial
 

@@ -1,3 +1,5 @@
+# ref: https://github.com/jik876/hifi-gan/blob/master/train.py
+
 import time
 from functools import partial
 from pathlib import Path
