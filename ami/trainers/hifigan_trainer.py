@@ -211,14 +211,14 @@ class HifiGANTrainer(BaseTrainer):
         ).reshape(reconstruction_audio_selected.shape)
 
         self.logger.log(
-            self.log_prefix + "losses/mpd/valid-adv", torch.mean(torch.stack(losses_adv_mpd)), force_log=True
+            self.log_prefix + "losses/multi_period_discriminator/valid-adversarial", torch.mean(torch.stack(losses_adv_mpd)), force_log=True
         )
         self.logger.log(
-            self.log_prefix + "losses/msd/valid-adv", torch.mean(torch.stack(losses_adv_msd)), force_log=True
+            self.log_prefix + "losses/multi_scale_discriminator/valid-adversarial", torch.mean(torch.stack(losses_adv_msd)), force_log=True
         )
-        self.logger.log(self.log_prefix + "losses/g/valid-rec", torch.mean(torch.stack(losses_rec)), force_log=True)
-        self.logger.log(self.log_prefix + "losses/g/valid-fm", torch.mean(torch.stack(losses_fm)), force_log=True)
-        self.logger.log(self.log_prefix + "losses/g/valid-adv", torch.mean(torch.stack(losses_adv_g)), force_log=True)
+        self.logger.log(self.log_prefix + "losses/generator/valid-reconstruction", torch.mean(torch.stack(losses_rec)), force_log=True)
+        self.logger.log(self.log_prefix + "losses/generator/valid-feature_matching", torch.mean(torch.stack(losses_fm)), force_log=True)
+        self.logger.log(self.log_prefix + "losses/generator/valid-adversarial", torch.mean(torch.stack(losses_adv_g)), force_log=True)
 
         for i, (in_audio, rec_audio) in enumerate(zip(input_audio_selected, reconstruction_audio_selected)):
             self.logger.tensorboard.add_audio(
@@ -274,7 +274,7 @@ class HifiGANTrainer(BaseTrainer):
                 optimizer_mpd.zero_grad()
                 loss_adv_mpd.backward()
                 optimizer_mpd.step()
-                self.logger.log(self.log_prefix + "losses/mpd/train_adv", loss_adv_mpd)
+                self.logger.log(self.log_prefix + "losses/multi_period_discriminator/train-adversarial", loss_adv_mpd)
 
                 # train multi_scale_discriminator
                 authenticity_list_real, _ = self.multi_scale_discriminator(audio_batch)
@@ -283,7 +283,7 @@ class HifiGANTrainer(BaseTrainer):
                 optimizer_msd.zero_grad()
                 loss_adv_msd.backward()
                 optimizer_msd.step()
-                self.logger.log(self.log_prefix + "losses/msd/train_adv", loss_adv_msd)
+                self.logger.log(self.log_prefix + "losses/multi_scale_discriminator/train-adversarial", loss_adv_msd)
 
                 # train generator
                 # calc reconstruction loss
@@ -311,9 +311,9 @@ class HifiGANTrainer(BaseTrainer):
                 optimizer_g.zero_grad()
                 loss_g.backward()
                 optimizer_g.step()
-                self.logger.log(self.log_prefix + "losses/g/train_rec", loss_rec)
-                self.logger.log(self.log_prefix + "losses/g/train_fm", loss_fm)
-                self.logger.log(self.log_prefix + "losses/g/train_adv", loss_adv_g)
+                self.logger.log(self.log_prefix + "losses/generator/train-reconstruction", loss_rec)
+                self.logger.log(self.log_prefix + "losses/generator/train-feature_matching", loss_fm)
+                self.logger.log(self.log_prefix + "losses/generator/train-adversarial", loss_adv_g)
 
                 self.logger.update()
 
