@@ -3,7 +3,6 @@ from functools import partial
 from pathlib import Path
 from typing import Literal
 
-# import matplotlib.pyplot as plt
 import torch
 import torch.nn.functional as F
 import torchaudio
@@ -255,16 +254,14 @@ class HifiGANTrainer(BaseTrainer):
         dataloader = self.partial_dataloader(dataset=self.get_dataset())
 
         for _ in range(self.max_epochs):
-            batch: tuple[
-                Tensor,
-            ]
+            batch: tuple[Tensor]
             for batch in dataloader:
                 (audio_batch,) = batch
                 audio_batch = audio_batch.to(self.device)
 
                 with torch.no_grad():
                     latents = self.encoder.infer(audio_batch)
-                    # latents: [batch_size, n_patches_height * n_patches_width, latents_dim]
+                    # latents: [batch_size, n_patches, latents_dim]
                     latents = latents.transpose(-1, -2)
 
                 # reconstruct
