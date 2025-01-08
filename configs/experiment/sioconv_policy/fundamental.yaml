@@ -17,6 +17,8 @@ interaction:
   agent:
     curiosity_agent:
       max_imagination_steps: 1 # 0.1 sec
+    include_action_modality: False
+    initial_action: null
 
   observation_wrappers:
     - _target_: ami.interactions.io_wrappers.function_wrapper.FunctionIOWrapper
@@ -74,4 +76,4 @@ trainers:
 
 max_uptime: ${cvt_time_str:8h}
 
-task_name: sioconv_policyf_fundamental
+task_name: sioconv_policy_fundamental
