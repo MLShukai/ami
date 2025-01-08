@@ -70,7 +70,7 @@ multimodal_temporal_encoder:
   has_inference: True
   inference_forward:
     _target_: hydra.utils.get_method
-    path: ami.models.temporal_encoder.inference_forward
+    path: ami.models.temporal_encoder.inference_forward_with_layernorm
   model:
     _target_: ami.models.temporal_encoder.MultimodalTemporalEncoder
     observation_flattens:
