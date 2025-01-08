@@ -68,11 +68,11 @@ trainers:
       max_samples: 64 # Iteraction count.
     minimum_new_data_count: 128
   ppo:
-    entropy_coef: 0.04
+    entropy_coef: 0.01
     partial_dataloader:
-      batch_size: 8
-    max_epochs: 3
-    # 16 (= buffer size / batch size) * epochs = 48 iteration.
+      batch_size: 32
+    max_epochs: 12
+    # (buffer size / batch size) * epochs = 24 iteration.
 
 max_uptime: ${cvt_time_str:8h}
 
