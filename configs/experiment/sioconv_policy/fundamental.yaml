@@ -71,7 +71,7 @@ trainers:
     entropy_coef: 0.01
     partial_dataloader:
       batch_size: 32
-    max_epochs: 12
+    max_epochs: 6
     # (buffer size / batch size) * epochs = 24 iteration.
 
 max_uptime: ${cvt_time_str:8h}
