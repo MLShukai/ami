@@ -14,4 +14,6 @@ models:
     inference_forward:
       kernel_size: 3
 
+max_uptime: inf
+
 subtask_name: vrchat
