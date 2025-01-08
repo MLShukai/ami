@@ -178,8 +178,8 @@ policy_value:
       dim: 1024
       dim_ff_hidden: ${python.eval:"${.dim} * 2"}
       dropout: 0.1
-    core_model:
-      _target_: torch.nn.Identity
+    core_model: >- # Select SioConv output [0]
+      ${python.eval:"lambda x_hidden: x_hidden[0]"}
     policy_head:
       _target_: ami.models.components.discrete_policy_head.DiscretePolicyHead
       dim_in: ${..observation_hidden_projection.dim}
