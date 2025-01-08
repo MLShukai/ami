@@ -12,6 +12,6 @@ interaction:
 models:
   i_jepa_target_encoder:
     inference_forward:
-      kernel_size: 2
+      kernel_size: 3
 
 subtask_name: vrchat
