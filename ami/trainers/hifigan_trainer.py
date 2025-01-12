@@ -97,7 +97,7 @@ class HifiGANTrainer(BaseTrainer):
         self.multi_period_discriminator_name = multi_period_discriminator_name
         self.multi_scale_discriminator_name = multi_scale_discriminator_name
 
-        self.mel_spectrogram = mel_spectrogram
+        self.mel_spectrogram = mel_spectrogram.to(device)
         self.rec_coef = rec_coef
 
         self.max_epochs = max_epochs
