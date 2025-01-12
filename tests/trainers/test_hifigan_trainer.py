@@ -159,7 +159,7 @@ class TestHifiGANTrainer:
             device=device,
             logger=logger,
             generator_name=generator_name,
-            mel_spectrogram=mel_spectrogram,
+            mel_spectrogram=mel_spectrogram.to(device),
             rec_coef=45.0,
             minimum_new_data_count=1,
             validation_dataloader=validation_dataloader,
