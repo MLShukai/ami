@@ -4,7 +4,7 @@ defaults:
 audio_jepa_latent_auralization_context:
   _target_: ami.trainers.hifigan_trainer.HifiGANTrainer
   generator_name: hifigan_context_auralization_generator
-  mel_spectrogram: 
+  mel_spectrogram:
     _target_: torchaudio.transforms.MelSpectrogram
     sample_rate: ${shared.sample_rate}
     n_fft: 1024
@@ -62,7 +62,7 @@ audio_jepa_latent_auralization_context:
 audio_jepa_latent_auralization_target:
   _target_: ami.trainers.hifigan_trainer.HifiGANTrainer
   generator_name: hifigan_context_auralization_generator
-  mel_spectrogram: 
+  mel_spectrogram:
     _target_: torchaudio.transforms.MelSpectrogram
     sample_rate: ${shared.sample_rate}
     n_fft: 1024
