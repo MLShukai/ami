@@ -1,0 +1,38 @@
+audio_encoder: audio_jepa_target_encoder # Alias for AudioEncodingAgent.
+
+audio_jepa_target_encoder:
+  _target_: ami.models.model_wrapper.ModelWrapper
+  default_device: ${devices.0}
+  has_inference: True
+  inference_forward:
+    _target_: hydra.utils.get_method
+    path: ami.models.bool_mask_audio_jepa.audio_jepa_encoder_infer
+  model:
+    _target_: ami.models.bool_mask_audio_jepa.BoolMaskAudioJEPAEncoder
+    input_sample_size: ${shared.audio_sample_size}
+    patch_sample_size: 400
+    stride: 320
+    in_channels: ${shared.audio_channel_size}
+    embed_dim: 512
+    out_dim: 384
+    depth: 12
+    num_heads: 12
+    mlp_ratio: 4.0
+
+audio_jepa_context_encoder:
+  _target_: ami.models.model_wrapper.ModelWrapper
+  default_device: ${devices.0}
+  has_inference: False
+  model: ${..audio_jepa_target_encoder.model}
+
+audio_jepa_predictor:
+  _target_: ami.models.model_wrapper.ModelWrapper
+  default_device: ${devices.0}
+  has_inference: False
+  model:
+    _target_: ami.models.bool_mask_audio_jepa.BoolTargetAudioJEPAPredictor
+    n_patches: ${python.eval:"(${models.audio_jepa_target_encoder.input_sample_size} - (${models.audio_jepa_target_encoder.patch_sample_size} - ${models.audio_jepa_target_encoder.stride}))//${models.audio_jepa_target_encoder.stride}"}
+    context_encoder_out_dim: ${models.audio_jepa_target_encoder.model.out_dim}
+    hidden_dim: 384
+    depth: 6
+    num_heads: 12
