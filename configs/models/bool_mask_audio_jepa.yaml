@@ -1,5 +1,6 @@
 audio_encoder: audio_jepa_target_encoder # Alias for AudioEncodingAgent.
 
+# AudioJEPA models
 audio_jepa_target_encoder:
   _target_: ami.models.model_wrapper.ModelWrapper
   default_device: ${devices.0}
@@ -13,7 +14,7 @@ audio_jepa_target_encoder:
     patch_sample_size: 400
     stride: 320
     in_channels: ${shared.audio_channel_size}
-    embed_dim: 512
+    embed_dim: 768
     out_dim: 384
     depth: 12
     num_heads: 12
@@ -36,3 +37,40 @@ audio_jepa_predictor:
     hidden_dim: 384
     depth: 6
     num_heads: 12
+
+# HifiGAN models
+hifigan_context_auralization_generator:
+  _target_: ami.models.model_wrapper.ModelWrapper
+  default_device: ${devices.0}
+  has_inference: False
+  model:
+    _target_: ami.models.hifigan.HifiGANGenerator
+    in_channels: ${models.audio_jepa_target_encoder.model.out_dim}
+    out_channels: ${models.audio_jepa_target_encoder.model.in_channels}
+    # Equivalent to window_size=400 and hop_size=320.
+    upsample_rates: [10, 8, 2, 2]
+    upsample_kernel_sizes: [20, 16, 4, 4]
+    upsample_paddings: [4, 2, 1, 1]
+    upsample_initial_channel: 512
+    resblock_kernel_sizes: [3, 7, 11]
+    resblock_dilation_sizes: [[1, 3, 5], [1, 3, 5], [1, 3, 5]]
+
+hifigan_context_auralization_multi_period_discriminator:
+  _target_: ami.models.model_wrapper.ModelWrapper
+  default_device: ${devices.0}
+  has_inference: False
+  model:
+    _target_: ami.models.hifigan.MultiPeriodDiscriminator
+    in_channels: ${models.hifigan_context_auralization_generator.model.out_channels}
+
+hifigan_context_auralization_multi_scale_discriminator:
+  _target_: ami.models.model_wrapper.ModelWrapper
+  default_device: ${devices.0}
+  has_inference: False
+  model:
+    _target_: ami.models.hifigan.MultiScaleDiscriminator
+    in_channels: ${models.hifigan_context_auralization_generator.model.out_channels}
+
+hifigan_target_auralization_generator: ${.hifigan_context_auralization_generator}
+hifigan_target_auralization_multi_period_discriminator: ${.hifigan_context_auralization_multi_period_discriminator}
+hifigan_target_auralization_multi_scale_discriminator: ${.hifigan_context_auralization_multi_scale_discriminator}
