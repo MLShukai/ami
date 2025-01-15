@@ -68,24 +68,3 @@ class StackedHiddenSelection(nn.Module):
         hidden_stack = hidden_stack @ self._weight.softmax(0)
         hidden_stack = hidden_stack.transpose(-1, -2)
         return hidden_stack
-
-
-class StackwiseLinear(nn.Module):
-    """Apply `nn.Linear` to hidden stacking dimension."""
-
-    def __init__(self, in_stacks: int, out_stacks: int) -> None:
-        super().__init__()
-        self._linear = nn.Linear(in_stacks, out_stacks)
-
-    def forward(self, hidden_stack: Tensor) -> Tensor:
-        """
-        Args:
-            hidden_stack (Tensor): shape is (*, in_stacks, dim)
-
-        Returns:
-            Tensor: shape is (*, out_stacks, dim)
-        """
-        hidden_stack = hidden_stack.transpose(-1, -2)
-        hidden_stack = self._linear(hidden_stack)
-        hidden_stack = hidden_stack.transpose(-1, -2)
-        return hidden_stack
