@@ -2,7 +2,10 @@ import pytest
 import torch
 
 from ami.models.components.sconv import SConv
-from ami.models.components.stacked_hidden_state import StackwiseLinear
+from ami.models.components.stacked_hidden_state import (
+    StackedHiddenSelection,
+    StackwiseLinear,
+)
 
 BATCH = 4
 DEPTH = 8
@@ -67,6 +70,25 @@ class TestStackedHiddenState:
         x, hidden = sconv(x, hidden[:, :, :, :, -1])
         assert x.shape == x_shape
         assert hidden.shape == hidden_shape
+
+
+class TestStackedHiddenSelection:
+    @pytest.fixture
+    def layer(self):
+        return StackedHiddenSelection(10, 8)
+
+    @pytest.mark.parametrize(
+        "input_shape,output_shape",
+        [
+            ((10, 16), (8, 16)),
+            ((2, 10, 32), (2, 8, 32)),
+            ((2, 3, 10, 16), (2, 3, 8, 16)),
+        ],
+    )
+    def test_forward(self, layer, input_shape, output_shape):
+        hidden_stack = torch.randn(input_shape)
+        out = layer(hidden_stack)
+        assert out.shape == output_shape
 
 
 class TestStackwiseLinear:
