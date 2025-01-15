@@ -169,9 +169,14 @@ policy_value:
       in_features: ${models.multimodal_temporal_encoder.model.core_model.dim}
       out_features: ${..observation_hidden_projection.dim}
     forward_dynamics_hidden_projection:
-      _target_: ami.models.components.stacked_hidden_state.StackwiseLinear
-      in_stacks: ${models.forward_dynamics.model.core_model.depth}
-      out_stacks: ${..observation_hidden_projection.depth}
+      _target_: torch.nn.Sequential
+      _args_:
+        - _target_: ami.models.components.stacked_hidden_state.StackedHiddenSelection
+          in_stacks: ${models.forward_dynamics.model.core_model.depth}
+          out_stacks: ${....observation_hidden_projection.depth}
+        - _target_: torch.nn.Linear
+          in_features: ${models.forward_dynamics.model.core_model.dim}
+          out_features: ${....observation_hidden_projection.dim}
     observation_hidden_projection:
       _target_: ami.models.components.sioconvps.SioConvPS
       depth: 6
