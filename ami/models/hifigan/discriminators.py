@@ -151,6 +151,7 @@ class ScaleDiscriminator(nn.Module):
         use_spectral_norm: bool = False,
     ) -> None:
         super().__init__()
+        assert initial_hidden_channels % 16 == 0
         norm_f = spectral_norm if use_spectral_norm else weight_norm
         self.convs = nn.ModuleList(
             [
