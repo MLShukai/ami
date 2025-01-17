@@ -119,3 +119,62 @@ class ChunkedStridedAudioReader:
         if frame is None:
             raise StopIteration
         return frame
+
+
+class AudioFilesObservationGenerator:
+    """Generates audio observations from multiple audio files sequentially.
+
+    This class processes multiple audio files sequentially, yielding
+    audio chunks as observations. Each file is processed using
+    ChunkedStridedAudioReader with shared chunk size and stride
+    parameters.
+    """
+
+    def __init__(
+        self,
+        audio_files: list[StrPath],
+        chunk_size: int,
+        stride: int,
+        target_sample_rate: int | None,
+        max_frames_per_file: list[int | None] | int | None,
+    ) -> None:
+        """
+        Args:
+            audio_files: List of paths to audio files.
+            chunk_size: Number of samples in each chunk.
+            stride: Number of samples to advance between chunks.
+            target_sample_rate: Optional; target sample rate for resampling.
+            max_frames_per_file: Maximum number of frames to read from each file.
+                Can be either a single value for all files, a list of values
+                per file, or None for no limit.
+
+        Raises:
+            ValueError: If max_frames_per_file is a list with length different
+                from the number of audio files.
+        """
+        if isinstance(max_frames_per_file, list):
+            if len(max_frames_per_file) != len(audio_files):
+                raise ValueError
+        else:
+            max_frames_per_file = [max_frames_per_file] * len(audio_files)
+
+        self._audio_readers = [
+            ChunkedStridedAudioReader(f, chunk_size, stride, target_sample_rate, max_frames)
+            for f, max_frames in zip(audio_files, max_frames_per_file)
+        ]
+        self._current_reader_index = 0
+
+    @property
+    def num_samples(self) -> int:
+        return sum(reader.num_samples for reader in self._audio_readers)
+
+    def __call__(self) -> torch.Tensor:
+        if self._current_reader_index >= len(self._audio_readers):
+            raise StopIteration
+        reader = self._audio_readers[self._current_reader_index]
+        sample = reader.read()
+        if sample is None:
+            self._current_reader_index += 1
+            return self.__call__()
+        else:
+            return sample

@@ -4,6 +4,7 @@ import soundfile as sf
 import torch
 
 from ami.interactions.environments.audio_observation_generator import (
+    AudioFilesObservationGenerator,
     ChunkedStridedAudioReader,
 )
 
@@ -148,3 +149,109 @@ class TestChunkedStridedAudioReader:
 
         # Verify `None` at end.
         assert reader.read() is None
+
+
+class TestAudioFilesObservationGenerator:
+    @pytest.fixture
+    def sample_audio_files(self, tmp_path):
+        """Create sample audio files for testing."""
+        sample_rate = 16000
+        duration = 1.0  # 1 second
+        samples = int(sample_rate * duration)
+        t = np.linspace(0, duration, samples)
+
+        files = []
+        # Create two files with different frequencies
+        for i in range(2):
+            audio_data = np.sin(2 * np.pi * (440 * (i + 1)) * t)
+            file_path = tmp_path / f"test_audio_{i}.wav"
+            sf.write(file_path, audio_data, sample_rate)
+            files.append(file_path)
+        return files
+
+    def test_initialization(self, sample_audio_files):
+        generator = AudioFilesObservationGenerator(
+            audio_files=sample_audio_files,
+            chunk_size=4000,
+            stride=2000,
+            target_sample_rate=None,
+            max_frames_per_file=None,
+        )
+        assert len(generator._audio_readers) == 2
+        assert generator._current_reader_index == 0
+
+    def test_num_samples(self, sample_audio_files):
+        generator = AudioFilesObservationGenerator(
+            audio_files=sample_audio_files,
+            chunk_size=4000,
+            stride=2000,
+            target_sample_rate=8000,
+            max_frames_per_file=None,
+        )
+        expected_samples = sum((8000 - 4000) // 2000 for _ in range(2))
+        assert generator.num_samples == expected_samples
+
+    def test_max_frames_per_file_list(self, sample_audio_files):
+        max_frames = [8000, 12000]
+        generator = AudioFilesObservationGenerator(
+            audio_files=sample_audio_files,
+            chunk_size=4000,
+            stride=2000,
+            target_sample_rate=None,
+            max_frames_per_file=max_frames,
+        )
+        expected_samples = sum((frames - 4000) // 2000 for frames in max_frames)
+        assert generator.num_samples == expected_samples
+
+    def test_max_frames_per_file_single_value(self, sample_audio_files):
+        generator = AudioFilesObservationGenerator(
+            audio_files=sample_audio_files,
+            chunk_size=4000,
+            stride=2000,
+            target_sample_rate=None,
+            max_frames_per_file=8000,
+        )
+        expected_samples = sum((8000 - 4000) // 2000 for _ in range(2))
+        assert generator.num_samples == expected_samples
+
+    def test_invalid_max_frames_per_file(self, sample_audio_files):
+        with pytest.raises(ValueError):
+            AudioFilesObservationGenerator(
+                audio_files=sample_audio_files,
+                chunk_size=4000,
+                stride=2000,
+                target_sample_rate=None,
+                max_frames_per_file=[8000],  # Wrong length
+            )
+
+    def test_sequential_file_processing(self, sample_audio_files):
+        generator = AudioFilesObservationGenerator(
+            audio_files=sample_audio_files,
+            chunk_size=4000,
+            stride=2000,
+            target_sample_rate=None,
+            max_frames_per_file=None,
+        )
+
+        chunks = []
+        try:
+            while True:
+                chunks.append(generator())
+        except StopIteration:
+            pass
+
+        assert len(chunks) == generator.num_samples
+        for chunk in chunks:
+            assert isinstance(chunk, torch.Tensor)
+            assert chunk.shape == (1, 4000)
+
+    def test_empty_file_list(self):
+        generator = AudioFilesObservationGenerator(
+            audio_files=[],
+            chunk_size=4000,
+            stride=2000,
+            target_sample_rate=None,
+            max_frames_per_file=None,
+        )
+        with pytest.raises(StopIteration):
+            generator()
