@@ -51,11 +51,12 @@ class ChunkedStridedAudioReader:
         self._target_sample_rate = target_sample_rate
         self.chunk_size = chunk_size
 
+        sample_rate_ratio = self._audio_file.samplerate / target_sample_rate
+
         self._max_frames = self._audio_file.frames
         if max_frames is not None:
-            self._max_frames = max_frames
+            self._max_frames = min(round(max_frames * sample_rate_ratio), self._max_frames)
 
-        sample_rate_ratio = self._audio_file.samplerate / target_sample_rate
         self._actual_chunk_size = math.ceil(chunk_size * sample_rate_ratio)
         if stride is None:
             stride = chunk_size
