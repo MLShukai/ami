@@ -31,10 +31,10 @@ class PeriodDiscriminator(nn.Module):
 
         channels = [
             (in_channels, initial_hidden_channels),
-            (initial_hidden_channels, initial_hidden_channels*4),
-            (initial_hidden_channels*4, initial_hidden_channels*16),
-            (initial_hidden_channels*16, initial_hidden_channels*32),
-            (initial_hidden_channels*32, initial_hidden_channels*32),
+            (initial_hidden_channels, initial_hidden_channels * 4),
+            (initial_hidden_channels * 4, initial_hidden_channels * 16),
+            (initial_hidden_channels * 16, initial_hidden_channels * 32),
+            (initial_hidden_channels * 32, initial_hidden_channels * 32),
         ]
         self.convs = nn.ModuleList()
         for i, (in_ch, out_ch) in enumerate(channels, start=1):
@@ -157,14 +157,20 @@ class ScaleDiscriminator(nn.Module):
             [
                 norm_f(nn.Conv1d(in_channels, initial_hidden_channels, 15, 1, padding=7)),
                 norm_f(nn.Conv1d(initial_hidden_channels, initial_hidden_channels, 41, 2, groups=4, padding=20)),
-                norm_f(nn.Conv1d(initial_hidden_channels, initial_hidden_channels*2, 41, 2, groups=16, padding=20)),
-                norm_f(nn.Conv1d(initial_hidden_channels*2, initial_hidden_channels*4, 41, 4, groups=16, padding=20)),
-                norm_f(nn.Conv1d(initial_hidden_channels*4, initial_hidden_channels*8, 41, 4, groups=16, padding=20)),
-                norm_f(nn.Conv1d(initial_hidden_channels*8, initial_hidden_channels*8, 41, 1, groups=16, padding=20)),
-                norm_f(nn.Conv1d(initial_hidden_channels*8, initial_hidden_channels*8, 5, 1, padding=2)),
+                norm_f(nn.Conv1d(initial_hidden_channels, initial_hidden_channels * 2, 41, 2, groups=16, padding=20)),
+                norm_f(
+                    nn.Conv1d(initial_hidden_channels * 2, initial_hidden_channels * 4, 41, 4, groups=16, padding=20)
+                ),
+                norm_f(
+                    nn.Conv1d(initial_hidden_channels * 4, initial_hidden_channels * 8, 41, 4, groups=16, padding=20)
+                ),
+                norm_f(
+                    nn.Conv1d(initial_hidden_channels * 8, initial_hidden_channels * 8, 41, 1, groups=16, padding=20)
+                ),
+                norm_f(nn.Conv1d(initial_hidden_channels * 8, initial_hidden_channels * 8, 5, 1, padding=2)),
             ]
         )
-        self.conv_post = norm_f(nn.Conv1d(initial_hidden_channels*8, 1, 3, 1, padding=1))
+        self.conv_post = norm_f(nn.Conv1d(initial_hidden_channels * 8, 1, 3, 1, padding=1))
 
     def forward(self, input_waveforms: torch.Tensor) -> tuple[torch.Tensor, list[torch.Tensor]]:
         """Discriminate authenticity of the input audio consecutively.
