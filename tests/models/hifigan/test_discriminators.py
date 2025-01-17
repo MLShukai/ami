@@ -51,6 +51,7 @@ class TestHifiGANDiscriminators:
         initial_hidden_channels: int,
         sample_size: int,
     ):
+        assert initial_hidden_channels % 16 == 0
         hifigan_discriminator = MultiScaleDiscriminator(
             in_channels=channels, initial_hidden_channels=initial_hidden_channels
         )
