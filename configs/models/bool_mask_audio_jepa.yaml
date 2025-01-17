@@ -34,11 +34,11 @@ audio_jepa_predictor:
     _target_: ami.models.bool_mask_audio_jepa.BoolTargetAudioJEPAPredictor
     n_patches: >-
       ${python.eval:"(
-        (${models.audio_jepa_target_encoder.input_sample_size} 
-        - (${models.audio_jepa_target_encoder.patch_sample_size} 
+        (${models.audio_jepa_target_encoder.input_sample_size}
+        - (${models.audio_jepa_target_encoder.patch_sample_size}
         - ${models.audio_jepa_target_encoder.stride}))
         // ${models.audio_jepa_target_encoder.stride}
-      )"} 
+      )"}
     context_encoder_out_dim: ${models.audio_jepa_target_encoder.model.out_dim}
     hidden_dim: 384
     depth: 6
