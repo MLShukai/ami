@@ -14,7 +14,7 @@ partial_dataloader:
     stride: 320
     mask_scale: [0.1, 0.25]
     n_masks: 4
-    min_keep: 10
+    min_keep: 5
 
 # based on the original paper's initial params
 partial_optimizer:
