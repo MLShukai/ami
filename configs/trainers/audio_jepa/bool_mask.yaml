@@ -3,7 +3,7 @@ _target_: ami.trainers.bool_mask_audio_jepa_trainer.BoolMaskAudioJEPATrainer
 partial_dataloader:
   _target_: torch.utils.data.DataLoader
   _partial_: true
-  batch_size: 8
+  batch_size: 32
   shuffle: true
   drop_last: true # for batchnorm.
   # based on the original paper settings
