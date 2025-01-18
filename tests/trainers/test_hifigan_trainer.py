@@ -34,10 +34,13 @@ assert (AUDIO_SAMPLE_SIZE - (PATCH_SAMPLE_SIZE - STRIDE)) % STRIDE == 0
 N_PATCHES = (AUDIO_SAMPLE_SIZE - (PATCH_SAMPLE_SIZE - STRIDE)) // STRIDE
 
 # model params
-ENCODER_EMBEDDING_DIM = 64
+ENCODER_EMBEDDING_DIM = 16
 ENCODER_NUM_HEADS = 4
 assert ENCODER_EMBEDDING_DIM % ENCODER_NUM_HEADS == 0
-ENCODER_OUT_DIM = 32
+ENCODER_OUT_DIM = 8
+MULTI_PERIOD_DISCRIMINATOR_INITIAL_HIDDEN_CHANNELS = 4
+MULTI_SCALE_DISCRIMINATOR_INITIAL_HIDDEN_CHANNELS = 16
+assert MULTI_SCALE_DISCRIMINATOR_INITIAL_HIDDEN_CHANNELS % 16 == 0
 
 
 @pytest.mark.parametrize(
@@ -92,8 +95,12 @@ class TestHifiGANTrainer:
             upsample_paddings=[4, 2, 1, 1],
             upsample_initial_channel=16,
         )
-        multi_period_discriminator = MultiPeriodDiscriminator(in_channels=AUDIO_CHANNELS)
-        multi_scale_discriminator = MultiScaleDiscriminator(in_channels=AUDIO_CHANNELS)
+        multi_period_discriminator = MultiPeriodDiscriminator(
+            in_channels=AUDIO_CHANNELS, initial_hidden_channels=MULTI_PERIOD_DISCRIMINATOR_INITIAL_HIDDEN_CHANNELS
+        )
+        multi_scale_discriminator = MultiScaleDiscriminator(
+            in_channels=AUDIO_CHANNELS, initial_hidden_channels=MULTI_SCALE_DISCRIMINATOR_INITIAL_HIDDEN_CHANNELS
+        )
         d = ModelWrappersDict(
             {
                 ModelNames.AUDIO_JEPA_CONTEXT_ENCODER: ModelWrapper(encoder, device, True),
