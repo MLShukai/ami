@@ -6,7 +6,7 @@ Usage:
     python equidistant_audio_sampler.py --audio_paths PATH [PATH ...] --output_dir PATH
                                        [--chunk_size SAMPLES] [--stride SAMPLES]
                                        [--target_rate RATE] [--max_frames_per_file LIMIT]
-                                       [--num_sample SAMPLES]
+                                       [--num_chunks SAMPLES]
 
 Arguments:
     --audio_paths PATH [PATH ...]
@@ -27,7 +27,7 @@ Arguments:
     --max_frames_per_file LIMIT
         Maximum number of frames to process from each file. Default is None.
 
-    --num_sample SAMPLES
+    --num_chunks SAMPLES
         Number of chunks to sample across all audio files. Default is 65536 (2^16).
 """
 
@@ -80,7 +80,7 @@ def parse_args() -> argparse.Namespace:
         help="Output directory for sampled chunks",
     )
     parser.add_argument(
-        "--num-sample",
+        "--num-chunks",
         type=int,
         default=2**16,
         help="Number of chunks to sample",
@@ -101,8 +101,8 @@ def main() -> None:
     )
 
     args.output_dir.mkdir(parents=True, exist_ok=True)
-    print("Available chunks: ", generator.num_samples)
-    chunk_write_interval = max(1, generator.num_samples // args.num_sample)
+    print("Available chunks: ", generator.num_chunks)
+    chunk_write_interval = max(1, generator.num_chunks // args.num_chunks)
     print("Chunk interval: ", chunk_write_interval)
 
     sample_count = 0
@@ -113,13 +113,13 @@ def main() -> None:
             chunk = generator()
             if chunk_index % chunk_write_interval == 0:
                 sample_count += 1
-                name = str(chunk_index).zfill(len(str(generator.num_samples)))
+                name = str(chunk_index).zfill(len(str(generator.num_chunks)))
                 torchaudio.save(
                     args.output_dir / f"{name}.wav",
                     chunk,
                     args.target_rate,
                 )
-                print(f"\r{sample_count / min(args.num_sample, generator.num_samples) * 100:.2f}%", end="", flush=True)
+                print(f"\r{sample_count / min(args.num_chunks, generator.num_chunks) * 100:.2f}%", end="", flush=True)
             chunk_index += 1
 
     except StopIteration:

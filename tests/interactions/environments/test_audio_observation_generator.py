@@ -44,7 +44,7 @@ class TestChunkedStridedAudioReader:
         )
 
         expected_samples = (16000 - 4000) // 2000
-        assert reader.num_samples == expected_samples
+        assert reader.num_chunks == expected_samples
 
     def test_iterator_protocol(self, sample_audio_file):
         reader = ChunkedStridedAudioReader(
@@ -58,7 +58,7 @@ class TestChunkedStridedAudioReader:
 
         # Collect all chunks through iteration
         chunks = list(reader)
-        assert len(chunks) == reader.num_samples
+        assert len(chunks) == reader.num_chunks
 
         # Verify each chunk
         for chunk in chunks:
@@ -94,7 +94,7 @@ class TestChunkedStridedAudioReader:
             max_frames=max_frames,
         )
 
-        assert reader.num_samples == (max_frames - 4000) // 2000
+        assert reader.num_chunks == (max_frames - 4000) // 2000
 
     def test_error_handling(self, sample_audio_file):
         # Negative chunk size
@@ -189,7 +189,7 @@ class TestAudioFilesObservationGenerator:
             max_frames_per_file=None,
         )
         expected_samples = sum((8000 - 4000) // 2000 for _ in range(2))
-        assert generator.num_samples == expected_samples
+        assert generator.num_chunks == expected_samples
 
     def test_max_frames_per_file_list(self, sample_audio_files):
         max_frames = [8000, 12000]
@@ -201,7 +201,7 @@ class TestAudioFilesObservationGenerator:
             max_frames_per_file=max_frames,
         )
         expected_samples = sum((frames - 4000) // 2000 for frames in max_frames)
-        assert generator.num_samples == expected_samples
+        assert generator.num_chunks == expected_samples
 
     def test_max_frames_per_file_single_value(self, sample_audio_files):
         generator = AudioFilesObservationGenerator(
@@ -212,7 +212,7 @@ class TestAudioFilesObservationGenerator:
             max_frames_per_file=8000,
         )
         expected_samples = sum((8000 - 4000) // 2000 for _ in range(2))
-        assert generator.num_samples == expected_samples
+        assert generator.num_chunks == expected_samples
 
     def test_invalid_max_frames_per_file(self, sample_audio_files):
         with pytest.raises(ValueError):
@@ -240,7 +240,7 @@ class TestAudioFilesObservationGenerator:
         except StopIteration:
             pass
 
-        assert len(chunks) == generator.num_samples
+        assert len(chunks) == generator.num_chunks
         for chunk in chunks:
             assert isinstance(chunk, torch.Tensor)
             assert chunk.shape == (1, 4000)

@@ -70,7 +70,7 @@ class ChunkedStridedAudioReader:
         return sum(len(buf) for buf in self._audio_buffers)
 
     @property
-    def num_samples(self) -> int:
+    def num_chunks(self) -> int:
         """Number of valid chunks that can be read from the audio file.
 
         Returns:
@@ -87,7 +87,7 @@ class ChunkedStridedAudioReader:
         """
         self._current_sample_pos += 1
 
-        if self.num_samples < self._current_sample_pos:
+        if self.num_chunks < self._current_sample_pos:
             return None
 
         while self._audio_buffer_length < self._actual_chunk_size:
@@ -166,8 +166,8 @@ class AudioFilesObservationGenerator:
         self._current_reader_index = 0
 
     @property
-    def num_samples(self) -> int:
-        return sum(reader.num_samples for reader in self._audio_readers)
+    def num_chunks(self) -> int:
+        return sum(reader.num_chunks for reader in self._audio_readers)
 
     def __call__(self) -> torch.Tensor:
         if self._current_reader_index >= len(self._audio_readers):
