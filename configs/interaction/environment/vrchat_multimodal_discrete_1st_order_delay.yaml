@@ -1,0 +1,61 @@
+_target_: ami.interactions.environments.sensor_actuator_env.SensorActuatorEnv
+
+sensor:
+  _target_: ami.interactions.environments.sensors.dict_multimodal_sensor.DictMultimodalSensor
+  sensors:
+    image:
+      _target_: ami.interactions.environments.sensors.sensor_wrapper_from_io_wrapper.SensorWrapperFromIOWrapper
+      sensor:
+        _target_: ami.interactions.environments.sensors.opencv_image_sensor.OpenCVImageSensor
+        camera_index: 0
+        width: ${shared.image_width}
+        height: ${shared.image_height}
+        base_fps: 60
+
+      io_wrapper:
+        _target_: ami.interactions.io_wrappers.tensor_video_recorder.TensorVideoRecorder
+        output_dir: ${paths.io_log_dir}/video_recordings
+        width: ${shared.image_width}
+        height: ${shared.image_height}
+        frame_rate: ${python.eval:"1 / ${interaction.interval_adjustor.interval}"}
+
+    audio:
+      _target_: ami.interactions.environments.sensors.sensor_wrapper_from_io_wrapper.SensorWrapperFromIOWrapper
+      sensor:
+        _target_: ami.interactions.environments.sensors.soundcard_audio_sensor.SoundcardAudioSensor
+        device_name: null # default device
+        sample_rate: ${shared.audio_sample_rate}
+        channel_size: ${shared.audio_channel_size}
+        read_sample_size: ${shared.audio_sample_size}
+        block_size: 512
+
+      io_wrapper:
+        _target_: ami.interactions.io_wrappers.tensor_audio_recorder.TensorAudioRecorder
+        output_dir: ${paths.io_log_dir}/audio_recordings
+        sample_rate: ${shared.audio_sample_rate}
+        channel_size: ${shared.audio_channel_size}
+        sample_slice_size: ${python.eval:"int(${.sample_rate} * ${interaction.interval_adjustor.interval})"}
+
+actuator:
+  _target_: ami.interactions.environments.actuators.actuator_wrapper_from_io_wrapper.ActuatorWrapperFromIOWrapper
+
+  actuator:
+    _target_: ami.interactions.environments.actuators.vrchat_osc_discrete_actuator.FirstOrderDelaySystemDiscreteActuator
+    osc_address: "127.0.0.1"
+    osc_sender_port: 9000
+    max_move_vertical_velocity: 1.0
+    max_move_horizontal_velocity: 1.0
+    max_look_horizontal_velocity: 1.0
+    delta_time: 0.1
+    time_constant: 0.2
+
+  io_wrapper:
+    _target_: ami.interactions.io_wrappers.tensor_csv_recorder.TensorCSVRecorder
+    filename: ${paths.io_log_dir}/action_log.csv
+    timestamp_header: "Timestamp"
+    headers:
+      - "MoveVertical"
+      - "MoveHorizontal"
+      - "LookHorizontal"
+      - "Jump"
+      - "Run"
