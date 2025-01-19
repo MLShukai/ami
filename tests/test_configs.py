@@ -46,7 +46,7 @@ if not (DATA_DIR / "random_observation_action_log").exists():
 if not (DATA_DIR / "2024-09-14_09-42-23,678417.ckpt").exists():
     IGNORE_EXPERIMENT_CONFIGS.add("learn_only_sioconv.yaml")
 
-if not (DATA_DIR / "japan_street_images"):
+if not (DATA_DIR / "japan_street_images").exists():
     IGNORE_EXPERIMENT_CONFIGS.add("i_jepa_sioconv_ppo_fundamental_flickerimage.yaml")
     IGNORE_EXPERIMENT_CONFIGS.add("temporal/flickerimage_no_action.yaml")
 
