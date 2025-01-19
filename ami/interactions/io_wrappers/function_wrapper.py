@@ -44,7 +44,7 @@ def normalize_dict_tensors(x: dict[KeyType, torch.Tensor], eps: float = 1e-6) ->
         eps (float, optional): Small value to prevent division by zero. Defaults to 1e-6.
 
     Returns:
-        dict[str, torch.Tensor]: The dict of normalized tensors.
+        dict[KeyType, torch.Tensor]: The dict of normalized tensors.
     """
     out = {}
     for key, value in x.items():
