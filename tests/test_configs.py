@@ -1,8 +1,6 @@
 """This test checks whether object can be successfully instantiated from config
 file."""
 import logging
-import shutil
-import sys
 from pathlib import Path
 
 import cv2
@@ -70,7 +68,9 @@ EXPERIMENT_CONFIG_OVERRIDES = [
 ]
 HYDRA_OVERRIDES = [[]] + EXPERIMENT_CONFIG_OVERRIDES
 
+override_display_str = "\n".join([f"{i}: {obj}" for i, obj in enumerate(HYDRA_OVERRIDES)])
 logger = logging.getLogger(__name__)
+logger.info(f"Hydra overrides:\n{override_display_str}")
 
 
 @pytest.mark.parametrize("overrides", HYDRA_OVERRIDES)
