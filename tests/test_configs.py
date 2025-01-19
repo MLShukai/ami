@@ -50,7 +50,7 @@ if not (DATA_DIR / "2024-09-14_09-42-23,678417.ckpt").exists():
 
 if not (DATA_DIR / "japan_street_images"):
     IGNORE_EXPERIMENT_CONFIGS.add("i_jepa_sioconv_ppo_fundamental_flickerimage.yaml")
-    IGNORE_EXPERIMENT_CONFIGS.add("multimodal_temporal/flickerimage_no_action.yaml")
+    IGNORE_EXPERIMENT_CONFIGS.add("temporal/flickerimage_no_action.yaml")
 
 try:
     import soundcard
