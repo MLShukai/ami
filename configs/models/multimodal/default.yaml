@@ -12,15 +12,15 @@ i_jepa_target_encoder:
     _target_: ami.models.bool_mask_i_jepa.EncoderInferAveragePool
     n_patches:
       - >-
-        ${python.eval:"
+        ${python.eval:"(
           ${shared.image_height}
           // ${models.i_jepa_target_encoder.model.patch_size}
-        "}
+        )"}
       - >-
-        ${python.eval:"
+        ${python.eval:"(
           ${shared.image_width}
           // ${models.i_jepa_target_encoder.model.patch_size}
-        "}
+        )"}
     kernel_size: 1
     stride: null
   model:
@@ -35,6 +35,34 @@ i_jepa_target_encoder:
     depth: 6
     num_heads: 3
     mlp_ratio: 4.0
+
+i_jepa_context_encoder:
+  _target_: ami.models.model_wrapper.ModelWrapper
+  default_device: ${devices.0}
+  has_inference: False
+  model: ${..i_jepa_target_encoder.model}
+
+i_jepa_predictor:
+  _target_: ami.models.model_wrapper.ModelWrapper
+  default_device: ${devices.0}
+  has_inference: False
+  model:
+    _target_: ami.models.bool_mask_i_jepa.BoolTargetIJEPAPredictor
+    n_patches:
+      - >-
+        ${python.eval:"(
+          ${shared.image_height}
+          // ${models.i_jepa_target_encoder.model.patch_size}
+        )"}
+      - >-
+        ${python.eval:"(
+          ${shared.image_width}
+          // ${models.i_jepa_target_encoder.model.patch_size}
+        )"}
+    context_encoder_out_dim: ${models.i_jepa_target_encoder.model.out_dim}
+    hidden_dim: 108
+    depth: 6
+    num_heads: 2
 
 # AudioJEPA models
 audio_jepa_target_encoder:
@@ -70,10 +98,10 @@ audio_jepa_predictor:
     _target_: ami.models.bool_mask_audio_jepa.BoolTargetAudioJEPAPredictor
     n_patches: >-
       ${python.eval:"(
-        (${models.audio_jepa_target_encoder.input_sample_size}
-        - (${models.audio_jepa_target_encoder.patch_sample_size}
-        - ${models.audio_jepa_target_encoder.stride}))
-        // ${models.audio_jepa_target_encoder.stride}
+        (${models.audio_jepa_target_encoder.model.input_sample_size}
+        - (${models.audio_jepa_target_encoder.model.patch_sample_size}
+        - ${models.audio_jepa_target_encoder.model.stride}))
+        // ${models.audio_jepa_target_encoder.model.stride}
       )"}
     context_encoder_out_dim: ${models.audio_jepa_target_encoder.model.out_dim}
     hidden_dim: 108
@@ -96,30 +124,30 @@ multimodal_temporal_encoder:
         dim_in: ${models.i_jepa_target_encoder.model.out_dim}
         dim_out: 1024
         num_stack: >-
-          ${python.eval:"
-          (${models.i_jepa_predictor.model.n_patches.0}
-          // ${models.i_jepa_target_encoder.inference_forward.kernel_size})
-          * (${models.i_jepa_predictor.model.n_patches.1}
-          // ${models.i_jepa_target_encoder.inference_forward.kernel_size})
-          "}
+          ${python.eval:"(
+            (${models.i_jepa_predictor.model.n_patches.0}
+            // ${models.i_jepa_target_encoder.inference_forward.kernel_size})
+            * (${models.i_jepa_predictor.model.n_patches.1}
+            // ${models.i_jepa_target_encoder.inference_forward.kernel_size})
+          )"}
       audio:
         _target_: ami.models.components.stacked_features.LerpStackedFeatures
         dim_in: ${models.audio_jepa_target_encoder.model.out_dim}
         dim_out: 512
         num_stack: >-
           ${python.eval:"(
-            (${models.audio_jepa_target_encoder.input_sample_size}
-            - (${models.audio_jepa_target_encoder.patch_sample_size}
-            - ${models.audio_jepa_target_encoder.stride}))
-            // ${models.audio_jepa_target_encoder.stride}
+            (${models.audio_jepa_target_encoder.model.input_sample_size}
+            - (${models.audio_jepa_target_encoder.model.patch_sample_size}
+            - ${models.audio_jepa_target_encoder.model.stride}))
+            // ${models.audio_jepa_target_encoder.model.stride}
           )"}
     flattened_obses_projection:
       _target_: torch.nn.Linear
       in_features: >-
-        ${python.eval:"
+        ${python.eval:"(
           ${..observation_flattens.image.dim_out}
           + ${..observation_flattens.audio.dim_out}
-        "}
+        )"}
       out_features: ${..core_model.dim}
     core_model:
       _target_: ami.models.components.sioconvps.SioConvPS
@@ -171,10 +199,10 @@ forward_dynamics:
       _target_: torch.nn.Linear
       # action_embedding_dim * num_action_choices + obs_embedding_dim
       in_features: >-
-        ${python.eval:"
+        ${python.eval:"(
           ${models.multimodal_temporal_encoder.model.core_model.dim}
           + ${..action_flatten.embedding_dim} * 5
-        "}
+        )"}
       out_features: ${..core_model.dim}
     core_model:
       _target_: ami.models.components.sioconvps.SioConvPS
