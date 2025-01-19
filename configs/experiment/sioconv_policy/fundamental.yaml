@@ -7,7 +7,7 @@ defaults:
   - override /interaction/environment: dummy_image_io
   - override /models: sioconv_policy/default.yaml
   - override /data_collectors: multimodal_temporal_dynamics_ppo
-  - override /trainers: i_jepa_mulitmodal_temporal_dynamics_ppo
+  - override /trainers: i_jepa_temporal_dynamics_ppo
 
 shared:
   image_height: 144
