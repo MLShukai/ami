@@ -4,6 +4,12 @@ image:
   key_list:
     - "observation"
 
+audio:
+  _target_: ami.data.buffers.random_data_buffer.RandomDataBuffer.reconstructable_init
+  max_len: 2048 # From Primitive AMI.
+  key_list:
+    - "observation"
+
 multimodal_temporal:
   _target_: ami.data.buffers.multimodal_temporal_data_buffer.MultimodalTemporalDataBuffer.reconstructable_init
   max_len: 2048
