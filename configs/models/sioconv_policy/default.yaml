@@ -1,6 +1,6 @@
 # @package models
 
-# base config is `configs/models/multimodal_temporal/no_action.yaml`
+# base config is `configs/models/temporal/no_action.yaml`
 
 image_encoder: i_jepa_target_encoder # Alias for ImageEncodingAgent.
 

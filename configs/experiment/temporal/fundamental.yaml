@@ -74,4 +74,4 @@ trainers:
 
 max_uptime: ${cvt_time_str:8h}
 
-task_name: multimodal_temporal_fundamental
+task_name: temporal_fundamental
