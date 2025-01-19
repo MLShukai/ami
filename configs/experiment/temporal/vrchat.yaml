@@ -3,7 +3,7 @@
 # Multimodal Temporal Encoderを用いた場合の VRChat用
 
 defaults:
-  - override /interaction/agent: multimodal_temporal_curiosity
+  - override /interaction/agent: temporal_curiosity
   - override /interaction/environment: vrchat_image_discrete_1st_order_delay
   - override /models: temporal/no_action.yaml
   - override /data_collectors: multimodal_temporal_dynamics_ppo
