@@ -49,7 +49,7 @@ for run in {1..3}; do
             echo "Running with gamma=$gamma, entropy_coef=$entropy_coef (pattern $i)"
 
             python scripts/launch.py \
-                experiment=multimodal_temporal/${task_name}_no_action \
+                experiment=temporal/${task_name}_no_action \
                 models.multimodal_temporal_encoder.inference_forward.path=ami.models.temporal_encoder.inference_forward_with_layernorm \
                 data_collectors.ppo_trajectory.gamma=$gamma \
                 trainers.ppo.entropy_coef=$entropy_coef \

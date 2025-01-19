@@ -1,11 +1,11 @@
 # @package _global_
 
-# Multimodal Temporal Encoderの基礎実験用
+# Multimodal Temporal Encoderを用いた場合の VRChat用
 
 defaults:
   - override /interaction/agent: multimodal_temporal_curiosity
-  - override /interaction/environment: dummy_image_io
-  - override /models: multimodal_temporal/default.yaml
+  - override /interaction/environment: vrchat_image_discrete_1st_order_delay
+  - override /models: temporal/no_action.yaml
   - override /data_collectors: multimodal_temporal_dynamics_ppo
   - override /trainers: i_jepa_mulitmodal_temporal_dynamics_ppo
 
@@ -15,8 +15,10 @@ shared:
 
 interaction:
   agent:
+    include_action_modality: False
+    initial_action: null
     curiosity_agent:
-      max_imagination_steps: 1 # 0.1 sec
+      max_imagination_steps: 5 # 0.5 sec
 
   observation_wrappers:
     - _target_: ami.interactions.io_wrappers.function_wrapper.FunctionIOWrapper
@@ -33,7 +35,10 @@ interaction:
 models:
   i_jepa_target_encoder:
     inference_forward:
-      kernel_size: 1
+      kernel_size: 2
+  multimodal_temporal_encoder:
+    inference_forward:
+      path: ami.models.temporal_encoder.inference_forward_with_layernorm
 
 data_collectors:
   image:
@@ -68,10 +73,9 @@ trainers:
   ppo:
     entropy_coef: 0.04
     partial_dataloader:
-      batch_size: 8
-    max_epochs: 3
-    # 16 (= buffer size / batch size) * epochs = 48 iteration.
+      batch_size: 32
+    max_epochs: 6
+    # (buffer size / batch size) * epochs = iteration. (24.)
 
-max_uptime: ${cvt_time_str:8h}
-
-task_name: multimodal_temporal_fundamental
+task_name: temporal_fundamental
+subtask_name: vrchat
