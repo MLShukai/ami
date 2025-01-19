@@ -1,8 +1,8 @@
 # @package _global_
 
 defaults:
-  - multimodal_temporal/fundamental
-  - override /models: multimodal_temporal/no_action
+  - temporal/fundamental
+  - override /models: temporal/no_action
 
 interaction:
   agent:

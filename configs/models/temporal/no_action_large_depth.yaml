@@ -1,18 +1,16 @@
 # @package models
 
 defaults:
-  - multimodal_temporal/no_action.yaml
+  - temporal/no_action.yaml
 
 multimodal_temporal_encoder:
   model:
     core_model:
-      depth: 12
+      depth: 30
       dim: 1024
-      dim_ff_hidden: ${python.eval:"${.dim} * 4"}
 
 forward_dynamics:
   model:
     core_model:
       depth: 30
       dim: 1024
-      dim_ff_hidden: ${python.eval:"${.dim} * 4"}
