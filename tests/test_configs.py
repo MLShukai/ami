@@ -49,6 +49,7 @@ if not (DATA_DIR / "2024-09-14_09-42-23,678417.ckpt").exists():
 if not (DATA_DIR / "japan_street_images").exists():
     IGNORE_EXPERIMENT_CONFIGS.add("i_jepa_sioconv_ppo_fundamental_flickerimage.yaml")
     IGNORE_EXPERIMENT_CONFIGS.add("temporal/flickerimage_no_action.yaml")
+    IGNORE_EXPERIMENT_CONFIGS.add("sioconv_policy/flickerimage.yaml")
 
 try:
     import soundcard
@@ -64,7 +65,7 @@ def _get_experiment_name(path: Path) -> str:
 EXPERIMENT_CONFIG_OVERRIDES = [
     [f"experiment={_get_experiment_name(file)}"]
     for file in EXPERIMENT_CONFIG_FILES
-    if file.name not in IGNORE_EXPERIMENT_CONFIGS
+    if str(file)[len(str(EXPERIMENT_CONFIG_DIR)) + 1 :] not in IGNORE_EXPERIMENT_CONFIGS
 ]
 HYDRA_OVERRIDES = [[]] + EXPERIMENT_CONFIG_OVERRIDES
 
