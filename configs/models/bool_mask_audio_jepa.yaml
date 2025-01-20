@@ -40,9 +40,9 @@ audio_jepa_predictor:
         // ${models.audio_jepa_target_encoder.stride}
       )"}
     context_encoder_out_dim: ${models.audio_jepa_target_encoder.model.out_dim}
-    hidden_dim: 384
-    depth: 6
-    num_heads: 12
+    hidden_dim: 108
+    depth: 3
+    num_heads: 2
 
 # HifiGAN models
 hifigan_context_auralization_generator:
