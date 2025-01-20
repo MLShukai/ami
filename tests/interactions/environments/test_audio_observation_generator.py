@@ -45,8 +45,8 @@ class TestChunkedStridedAudioReader:
             sample_rate=16000,
         )
 
-        expected_chunks = (16000 - 4000) // 2000
-        assert reader.num_chunks == expected_chunks
+        expected_num_chunks = (16000 - 4000) // 2000
+        assert reader.num_chunks == expected_num_chunks
 
     def test_iterator_protocol(self, sample_audio_file):
         reader = ChunkedStridedAudioReader(
@@ -196,8 +196,8 @@ class TestAudioFilesObservationGenerator:
             sample_rate=8000,
             max_frames_per_file=None,
         )
-        expected_chunks = sum((8000 - 4000) // 2000 for _ in range(2))
-        assert generator.num_chunks == expected_chunks
+        expected_num_chunks = sum((8000 - 4000) // 2000 for _ in range(2))
+        assert generator.num_chunks == expected_num_chunks
 
     def test_max_frames_per_file_list(self, sample_audio_files):
         max_frames = [8000, 12000]
@@ -208,8 +208,8 @@ class TestAudioFilesObservationGenerator:
             sample_rate=16000,
             max_frames_per_file=max_frames,
         )
-        expected_chunks = sum((frames - 4000) // 2000 for frames in max_frames)
-        assert generator.num_chunks == expected_chunks
+        expected_num_chunks = sum((frames - 4000) // 2000 for frames in max_frames)
+        assert generator.num_chunks == expected_num_chunks
 
     def test_max_frames_per_file_single_value(self, sample_audio_files):
         generator = AudioFilesObservationGenerator(
@@ -219,8 +219,8 @@ class TestAudioFilesObservationGenerator:
             sample_rate=16000,
             max_frames_per_file=8000,
         )
-        expected_chunks = sum((8000 - 4000) // 2000 for _ in range(2))
-        assert generator.num_chunks == expected_chunks
+        expected_num_chunks = sum((8000 - 4000) // 2000 for _ in range(2))
+        assert generator.num_chunks == expected_num_chunks
 
     def test_invalid_max_frames_per_file(self, sample_audio_files):
         with pytest.raises(ValueError):
