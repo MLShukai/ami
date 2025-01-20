@@ -4,6 +4,7 @@ from pytest_mock import MockerFixture
 
 from ami.interactions.io_wrappers.function_wrapper import (
     FunctionIOWrapper,
+    normalize_dict_tensors,
     normalize_tensor,
     to_multimodal_dict,
 )
@@ -22,6 +23,15 @@ def test_normalize_tensor():
         out = normalize_tensor(torch.rand(100))
         assert out.mean() == pytest.approx(0.0, abs=1e-5)
         assert out.std() == pytest.approx(1.0, abs=1e-5)
+
+
+def test_normalize_dict_tensors():
+    for _ in range(10):
+        input = {i: torch.randn((i + 1) * 10) for i in range(10)}
+        out = normalize_dict_tensors(input)
+        for v in out.values():
+            assert v.mean() == pytest.approx(0.0, abs=1e-5)
+            assert v.std() == pytest.approx(1.0, abs=1e-5)
 
 
 def test_to_multimodal_dict():

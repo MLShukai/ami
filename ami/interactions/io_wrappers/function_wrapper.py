@@ -33,6 +33,25 @@ def normalize_tensor(x: torch.Tensor, eps: float = 1e-6) -> torch.Tensor:
     return (x - mean) / (std + eps)
 
 
+KeyType = TypeVar("KeyType")
+
+
+def normalize_dict_tensors(x: dict[KeyType, torch.Tensor], eps: float = 1e-6) -> dict[KeyType, torch.Tensor]:
+    """Normalizes the dictionary of tensors.
+
+    Args:
+        x (dict[KeyType, torch.Tensor]): Dictionary of tensors to be normalized
+        eps (float, optional): Small value to prevent division by zero. Defaults to 1e-6.
+
+    Returns:
+        dict[KeyType, torch.Tensor]: The dict of normalized tensors.
+    """
+    out = {}
+    for key, value in x.items():
+        out[key] = normalize_tensor(value, eps)
+    return out
+
+
 T = TypeVar("T")
 
 

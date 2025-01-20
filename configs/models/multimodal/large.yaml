@@ -1,0 +1,47 @@
+# @package models
+
+defaults:
+  - multimodal/default
+
+i_jepa_target_encoder:
+  model:
+    embed_dim: 432
+    num_heads: 6
+    out_dim: 128
+
+i_jepa_predictor:
+  model:
+    hidden_dim: 216
+    num_heads: 3
+
+audio_jepa_target_encoder:
+  model:
+    embed_dim: 432
+    num_heads: 6
+    out_dim: 64
+
+audio_jepa_predictor:
+  model:
+    hidden_dim: 216
+    num_heads: 3
+
+multimodal_temporal_encoder:
+  model:
+    core_model:
+      depth: 12
+      dim: 1024
+      dim_ff_hidden: ${python.eval:"${.dim} * 4"}
+
+forward_dynamics:
+  model:
+    core_model:
+      depth: 16
+      dim: 1024
+      dim_ff_hidden: ${python.eval:"${.dim} * 4"}
+
+policy_value:
+  model:
+    observation_hidden_projection:
+      depth: 12
+      dim: 1024
+      dim_ff_hidden: ${python.eval:"${.dim} * 4"}

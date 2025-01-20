@@ -55,6 +55,7 @@ try:
     import soundcard
 except Exception:
     IGNORE_EXPERIMENT_CONFIGS.add("random_observation_action_log.yaml")
+    IGNORE_EXPERIMENT_CONFIGS.add("multimodal/vrchat.yaml")
 
 
 def _get_experiment_name(path: Path) -> str:
