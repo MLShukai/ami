@@ -22,7 +22,7 @@ class ChunkedStridedAudioReader:
         audio_file: StrPath,
         chunk_size: int,
         stride: int,
-        target_sample_rate: int | None = None,
+        sample_rate: int | None = None,
         max_frames: int | None = None,
     ) -> None:
         """
@@ -42,16 +42,16 @@ class ChunkedStridedAudioReader:
             raise ValueError
 
         self._audio_file = sf.SoundFile(audio_file)
-        if target_sample_rate is None:
-            target_sample_rate = self._audio_file.samplerate
+        if sample_rate is None:
+            sample_rate = self._audio_file.samplerate
 
-        if target_sample_rate < 1:
+        if sample_rate < 1:
             raise ValueError
 
-        self._target_sample_rate = target_sample_rate
+        self._target_sample_rate = sample_rate
         self.chunk_size = chunk_size
 
-        sample_rate_ratio = self._audio_file.samplerate / target_sample_rate
+        sample_rate_ratio = self._audio_file.samplerate / sample_rate
 
         self._max_frames = self._audio_file.frames
         if max_frames is not None:
@@ -136,7 +136,7 @@ class AudioFilesObservationGenerator:
         audio_files: list[StrPath],
         chunk_size: int,
         stride: int,
-        target_sample_rate: int | None,
+        sample_rate: int,
         max_frames_per_file: list[int | None] | int | None,
     ) -> None:
         """
@@ -144,7 +144,7 @@ class AudioFilesObservationGenerator:
             audio_files: List of paths to audio files.
             chunk_size: Number of samples in each chunk.
             stride: Number of samples to advance between chunks.
-            target_sample_rate: Optional; target sample rate for resampling.
+            sample_rate: Optional; target sample rate for resampling.
             max_frames_per_file: Maximum number of frames to read from each file.
                 Can be either a single value for all files, a list of values
                 per file, or None for no limit.
@@ -160,7 +160,7 @@ class AudioFilesObservationGenerator:
             max_frames_per_file = [max_frames_per_file] * len(audio_files)
 
         self._audio_readers = [
-            ChunkedStridedAudioReader(f, chunk_size, stride, target_sample_rate, max_frames)
+            ChunkedStridedAudioReader(f, chunk_size, stride, sample_rate, max_frames)
             for f, max_frames in zip(audio_files, max_frames_per_file)
         ]
         self._current_reader_index = 0

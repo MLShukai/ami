@@ -66,12 +66,12 @@ class TestChunkedStridedAudioReader:
             assert chunk.shape[1] == 4000
 
     def test_resampling(self, sample_audio_file):
-        target_rate = 8000
+        sample_rate = 8000
         reader = ChunkedStridedAudioReader(
             audio_file=sample_audio_file,
             chunk_size=2000,  # Adjust chunk size to match target rate
             stride=1000,
-            target_sample_rate=target_rate,
+            sample_rate=sample_rate,
         )
 
         chunk = next(iter(reader))
@@ -174,7 +174,7 @@ class TestAudioFilesObservationGenerator:
             audio_files=sample_audio_files,
             chunk_size=4000,
             stride=2000,
-            target_sample_rate=None,
+            sample_rate=None,
             max_frames_per_file=None,
         )
         assert len(generator._audio_readers) == 2
@@ -185,7 +185,7 @@ class TestAudioFilesObservationGenerator:
             audio_files=sample_audio_files,
             chunk_size=4000,
             stride=2000,
-            target_sample_rate=8000,
+            sample_rate=8000,
             max_frames_per_file=None,
         )
         expected_samples = sum((8000 - 4000) // 2000 for _ in range(2))
@@ -197,7 +197,7 @@ class TestAudioFilesObservationGenerator:
             audio_files=sample_audio_files,
             chunk_size=4000,
             stride=2000,
-            target_sample_rate=None,
+            sample_rate=None,
             max_frames_per_file=max_frames,
         )
         expected_samples = sum((frames - 4000) // 2000 for frames in max_frames)
@@ -208,7 +208,7 @@ class TestAudioFilesObservationGenerator:
             audio_files=sample_audio_files,
             chunk_size=4000,
             stride=2000,
-            target_sample_rate=None,
+            sample_rate=None,
             max_frames_per_file=8000,
         )
         expected_samples = sum((8000 - 4000) // 2000 for _ in range(2))
@@ -220,7 +220,7 @@ class TestAudioFilesObservationGenerator:
                 audio_files=sample_audio_files,
                 chunk_size=4000,
                 stride=2000,
-                target_sample_rate=None,
+                sample_rate=None,
                 max_frames_per_file=[8000],  # Wrong length
             )
 
@@ -229,7 +229,7 @@ class TestAudioFilesObservationGenerator:
             audio_files=sample_audio_files,
             chunk_size=4000,
             stride=2000,
-            target_sample_rate=None,
+            sample_rate=None,
             max_frames_per_file=None,
         )
 
@@ -250,7 +250,7 @@ class TestAudioFilesObservationGenerator:
             audio_files=[],
             chunk_size=4000,
             stride=2000,
-            target_sample_rate=None,
+            sample_rate=None,
             max_frames_per_file=None,
         )
         with pytest.raises(StopIteration):

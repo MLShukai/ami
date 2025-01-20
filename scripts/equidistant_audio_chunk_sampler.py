@@ -5,7 +5,7 @@ This script samples audio chunks from audio files and saves them as WAV files.
 Usage:
     python equidistant_audio_sampler.py --audio_paths PATH [PATH ...] --output_dir PATH
                                        [--chunk_size SAMPLES] [--stride SAMPLES]
-                                       [--target_rate RATE] [--max_frames_per_file LIMIT]
+                                       [--sample_rate RATE] [--max_frames_per_file LIMIT]
                                        [--num_chunks SAMPLES]
 
 Arguments:
@@ -21,7 +21,7 @@ Arguments:
     --stride SAMPLES
         Number of samples to advance between chunks. Default is equal to chunk_size.
 
-    --target_rate RATE
+    --sample_rate RATE
         Target sample rate for resampling. Default is 16kHz.
 
     --max_frames_per_file LIMIT
@@ -62,7 +62,7 @@ def parse_args() -> argparse.Namespace:
         help="Number of samples to advance between chunks",
     )
     parser.add_argument(
-        "--target-rate",
+        "--sample-rate",
         type=int,
         default=16000,
         help="Target sample rate for resampling",
@@ -96,7 +96,7 @@ def main() -> None:
         audio_files=args.audio_paths,
         chunk_size=args.chunk_size,
         stride=stride,
-        target_sample_rate=args.target_rate,
+        sample_rate=args.sample_rate,
         max_frames_per_file=args.max_frames_per_file,
     )
 
@@ -117,7 +117,7 @@ def main() -> None:
                 torchaudio.save(
                     args.output_dir / f"{name}.wav",
                     chunk,
-                    args.target_rate,
+                    args.sample_rate,
                 )
                 print(f"\r{sample_count / min(args.num_chunks, generator.num_chunks) * 100:.2f}%", end="", flush=True)
             chunk_index += 1
