@@ -101,7 +101,7 @@ class TestChunkedStridedAudioReader:
         assert reader.num_chunks == (max_frames - 4000) // 2000
 
     def test_error_handling(self, sample_audio_file):
-        # Negative chunk size
+        # Non positive chunk size
         with pytest.raises(ValueError):
             ChunkedStridedAudioReader(
                 audio_file=sample_audio_file,
@@ -110,7 +110,7 @@ class TestChunkedStridedAudioReader:
                 sample_rate=16000,
             )
 
-        # Negative stride
+        # Non positive stride
         with pytest.raises(ValueError):
             ChunkedStridedAudioReader(
                 audio_file=sample_audio_file,
