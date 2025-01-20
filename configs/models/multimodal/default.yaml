@@ -1,7 +1,7 @@
 # @package models
 
-image_encoder: i_jepa_target_encoder # Alias for UnimodalEncodingAgent (Audio).
-audio_encoder: audio_jepa_target_encoder # Alias for UnimodalEncodingAgent (Image).
+image_encoder: i_jepa_target_encoder # Alias for UnimodalEncodingAgent (Image).
+audio_encoder: audio_jepa_target_encoder # Alias for UnimodalEncodingAgent (Audio).
 
 # Image JEPA Models
 i_jepa_target_encoder:
