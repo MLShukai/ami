@@ -22,7 +22,7 @@ class ChunkedStridedAudioReader:
         audio_file: StrPath,
         chunk_size: int,
         stride: int,
-        sample_rate: int | None = None,
+        sample_rate: int,
         max_frames: int | None = None,
     ) -> None:
         """
@@ -30,7 +30,7 @@ class ChunkedStridedAudioReader:
             audio_file: Path to the audio file.
             chunk_size: Number of samples in each chunk.
             stride: Number of samples to advance between chunks.
-            target_sample_rate: Optional; target sample rate for resampling.
+            sample_rate: Target sample rate for resampling.
             max_frames: Optional; maximum number of frames to read from file (specified sample rate).
 
         Raises:
@@ -42,8 +42,6 @@ class ChunkedStridedAudioReader:
             raise ValueError
 
         self._audio_file = sf.SoundFile(audio_file)
-        if sample_rate is None:
-            sample_rate = self._audio_file.samplerate
 
         if sample_rate < 1:
             raise ValueError
@@ -144,7 +142,7 @@ class AudioFilesObservationGenerator:
             audio_files: List of paths to audio files.
             chunk_size: Number of samples in each chunk.
             stride: Number of samples to advance between chunks.
-            sample_rate: Optional; target sample rate for resampling.
+            sample_rate: Target sample rate for resampling.
             max_frames_per_file: Maximum number of frames to read from each file.
                 Can be either a single value for all files, a list of values
                 per file, or None for no limit.

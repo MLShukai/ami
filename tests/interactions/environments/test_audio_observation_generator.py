@@ -29,6 +29,7 @@ class TestChunkedStridedAudioReader:
             audio_file=sample_audio_file,
             chunk_size=4000,
             stride=2000,
+            sample_rate=16000,
         )
 
         assert reader._audio_file.samplerate == 16000
@@ -41,6 +42,7 @@ class TestChunkedStridedAudioReader:
             audio_file=sample_audio_file,
             chunk_size=4000,
             stride=2000,
+            sample_rate=16000,
         )
 
         expected_samples = (16000 - 4000) // 2000
@@ -51,6 +53,7 @@ class TestChunkedStridedAudioReader:
             audio_file=sample_audio_file,
             chunk_size=4000,
             stride=2000,
+            sample_rate=16000,
         )
 
         # Test that class is iterable
@@ -92,6 +95,7 @@ class TestChunkedStridedAudioReader:
             chunk_size=4000,
             stride=2000,
             max_frames=max_frames,
+            sample_rate=16000,
         )
 
         assert reader.num_chunks == (max_frames - 4000) // 2000
@@ -103,6 +107,7 @@ class TestChunkedStridedAudioReader:
                 audio_file=sample_audio_file,
                 chunk_size=0,
                 stride=2000,
+                sample_rate=16000,
             )
 
         # Negative stride
@@ -111,6 +116,7 @@ class TestChunkedStridedAudioReader:
                 audio_file=sample_audio_file,
                 chunk_size=4000,
                 stride=0,
+                sample_rate=16000,
             )
 
         # Nonexistent file
@@ -119,6 +125,7 @@ class TestChunkedStridedAudioReader:
                 audio_file="nonexistent.wav",
                 chunk_size=4000,
                 stride=2000,
+                sample_rate=16000,
             )
 
     def test_consecutive_reads(self, sample_audio_file):
@@ -126,6 +133,7 @@ class TestChunkedStridedAudioReader:
             audio_file=sample_audio_file,
             chunk_size=4000,
             stride=2000,
+            sample_rate=16000,
         )
 
         # First chunk
@@ -174,7 +182,7 @@ class TestAudioFilesObservationGenerator:
             audio_files=sample_audio_files,
             chunk_size=4000,
             stride=2000,
-            sample_rate=None,
+            sample_rate=16000,
             max_frames_per_file=None,
         )
         assert len(generator._audio_readers) == 2
@@ -197,7 +205,7 @@ class TestAudioFilesObservationGenerator:
             audio_files=sample_audio_files,
             chunk_size=4000,
             stride=2000,
-            sample_rate=None,
+            sample_rate=16000,
             max_frames_per_file=max_frames,
         )
         expected_samples = sum((frames - 4000) // 2000 for frames in max_frames)
@@ -208,7 +216,7 @@ class TestAudioFilesObservationGenerator:
             audio_files=sample_audio_files,
             chunk_size=4000,
             stride=2000,
-            sample_rate=None,
+            sample_rate=16000,
             max_frames_per_file=8000,
         )
         expected_samples = sum((8000 - 4000) // 2000 for _ in range(2))
@@ -220,7 +228,7 @@ class TestAudioFilesObservationGenerator:
                 audio_files=sample_audio_files,
                 chunk_size=4000,
                 stride=2000,
-                sample_rate=None,
+                sample_rate=16000,
                 max_frames_per_file=[8000],  # Wrong length
             )
 
@@ -229,7 +237,7 @@ class TestAudioFilesObservationGenerator:
             audio_files=sample_audio_files,
             chunk_size=4000,
             stride=2000,
-            sample_rate=None,
+            sample_rate=16000,
             max_frames_per_file=None,
         )
 
@@ -250,7 +258,7 @@ class TestAudioFilesObservationGenerator:
             audio_files=[],
             chunk_size=4000,
             stride=2000,
-            sample_rate=None,
+            sample_rate=16000,
             max_frames_per_file=None,
         )
         with pytest.raises(StopIteration):
