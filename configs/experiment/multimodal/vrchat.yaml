@@ -64,7 +64,7 @@ trainers:
       max_samples: 64 # Iteraction count.
     minimum_new_data_count: 128
   forward_dynamics:
-    observation_encoder_name: # embed observationを直接使う
+    observation_encoder_name: # directly input embedded observation
     max_epochs: 1
     partial_sampler:
       sequence_length: ${python.eval:"256 + 1"} # +1 to generate future target data.
