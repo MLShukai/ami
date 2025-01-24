@@ -3,7 +3,6 @@ from pathlib import Path
 import pytest
 import torch
 import torchaudio
-from torchvision.io import write_jpeg
 
 from ami.trainers.components.auditory import IntervalSamplingAudioDataset
 
