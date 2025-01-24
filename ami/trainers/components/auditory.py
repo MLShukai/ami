@@ -64,7 +64,7 @@ class IntervalSamplingAudioDataset(Dataset[tuple[torch.Tensor]]):
         return sorted(files)
 
     def _sample_audio_files(self, audio_files: list[Path], interval: int) -> list[Path]:
-        files = []
+        files: list[Path] = []
         for i, file in enumerate(audio_files):
             if len(files) == self.num_select:
                 break
