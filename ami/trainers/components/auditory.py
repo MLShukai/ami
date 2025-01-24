@@ -38,7 +38,7 @@ class IntervalSamplingAudioDataset(Dataset[tuple[torch.Tensor]]):
         num_select: int,
         pre_loading: bool = True,
     ) -> None:
-        """Initializes the IntervalSamplingImageDataset.
+        """Initializes the IntervalSamplingAudioDataset.
 
         Args:
             audio_dir: Directory containing the audios.
