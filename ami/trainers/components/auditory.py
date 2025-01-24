@@ -49,6 +49,7 @@ class IntervalSamplingAudioDataset(Dataset[tuple[torch.Tensor]]):
         self.audio_dir = Path(audio_dir)
         assert self.audio_dir.is_dir()
         self.sample_rate = sample_rate
+        self.num_select = num_select
         available_audio_files = self._list_audio_files()
         self._interval = max(len(available_audio_files) // num_select, 1)
         self.audio_files = self._sample_audio_files(available_audio_files, self._interval)
@@ -62,10 +63,11 @@ class IntervalSamplingAudioDataset(Dataset[tuple[torch.Tensor]]):
         files.extend(self.audio_dir.glob("*.wav"))
         return sorted(files)
 
-    @staticmethod
-    def _sample_audio_files(audio_files: list[Path], interval: int) -> list[Path]:
+    def _sample_audio_files(self, audio_files: list[Path], interval: int) -> list[Path]:
         files = []
         for i, file in enumerate(audio_files):
+            if len(files) == self.num_select:
+                break
             if i % interval == 0:
                 files.append(file)
         return files

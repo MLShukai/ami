@@ -24,7 +24,7 @@ class TestIntervalSamplingAudioDataset:
     def expected_audios(self, original_audios) -> list[torch.Tensor]:
         return [
             torchaudio.functional.resample(original_audio, ORIGINAL_SAMPLE_RATE, OUTPUT_SAMPLE_RATE)
-            for original_audio in original_audios[::INTERVAL]
+            for original_audio in original_audios[::INTERVAL][:NUM_SELECT]
         ]
 
     @pytest.fixture
