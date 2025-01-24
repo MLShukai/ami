@@ -10,15 +10,15 @@ N_CHANNELS = 1
 ORIGINAL_SAMPLE_SIZE = 2048
 ORIGINAL_SAMPLE_RATE = 24000
 OUTPUT_SAMPLE_RATE = 16000
-NUM_TOTAL_AUDIOS = 10
+NUM_ORIGINAL_AUDIOS = 10
 NUM_SELECT = 5
-INTERVAL = max(NUM_TOTAL_AUDIOS // NUM_SELECT, 1)
+INTERVAL = max(NUM_ORIGINAL_AUDIOS // NUM_SELECT, 1)
 
 
 class TestIntervalSamplingAudioDataset:
     @pytest.fixture
     def original_audios(self) -> list[torch.Tensor]:
-        return [torch.rand(N_CHANNELS, ORIGINAL_SAMPLE_SIZE, dtype=torch.float32) for _ in range(NUM_TOTAL_AUDIOS)]
+        return [torch.rand(N_CHANNELS, ORIGINAL_SAMPLE_SIZE, dtype=torch.float32) for _ in range(NUM_ORIGINAL_AUDIOS)]
 
     @pytest.fixture
     def expected_audios(self, original_audios) -> list[torch.Tensor]:
@@ -48,7 +48,7 @@ class TestIntervalSamplingAudioDataset:
             original_audio_dir, sample_rate=OUTPUT_SAMPLE_RATE, num_select=NUM_SELECT
         )
         assert len(dataset.audio_files) == NUM_SELECT
-        assert dataset._interval == NUM_TOTAL_AUDIOS // NUM_SELECT
+        assert dataset._interval == NUM_ORIGINAL_AUDIOS // NUM_SELECT
 
     def test_len(self, dataset):
         assert len(dataset) == NUM_SELECT
