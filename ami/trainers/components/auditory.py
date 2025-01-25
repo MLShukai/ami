@@ -51,14 +51,7 @@ class IntervalSamplingAudioDataset(Dataset[tuple[torch.Tensor]]):
         assert self.audio_dir.is_dir()
         self.sample_rate = sample_rate
         self.num_select = num_select
-        available_audio_files = self._list_audio_files()
-        if len(available_audio_files) < num_select:
-            warnings.warn(
-                f"num_select({num_select}) is larger than num of available audio files({len(available_audio_files)})."
-            )
-        self._interval = max(len(available_audio_files) // num_select, 1)
-        self.audio_files = self._sample_audio_files(available_audio_files, self._interval)
-
+        self.audio_files = self._sample_audio_files()
         self.audio_data: list[torch.Tensor] | None = None
         if pre_loading:
             self.audio_data = [self._read_audio(f) for f in self.audio_files]
@@ -68,9 +61,16 @@ class IntervalSamplingAudioDataset(Dataset[tuple[torch.Tensor]]):
         files.extend(self.audio_dir.glob("*.wav"))
         return sorted(files)
 
-    def _sample_audio_files(self, audio_files: list[Path], interval: int) -> list[Path]:
+    def _sample_audio_files(self) -> list[Path]:
+        available_audio_files = self._list_audio_files()
+        if len(available_audio_files) < self.num_select:
+            warnings.warn(
+                f"num_select({self.num_select}) is larger than num of available audio files({len(available_audio_files)})."
+            )
+        interval = max(len(available_audio_files) // self.num_select, 1)
+
         files: list[Path] = []
-        for i, file in enumerate(audio_files):
+        for i, file in enumerate(available_audio_files):
             if len(files) == self.num_select:
                 break
             if i % interval == 0:
