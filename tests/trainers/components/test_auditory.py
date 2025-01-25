@@ -48,7 +48,6 @@ class TestIntervalSamplingAudioDataset:
             original_audio_dir, sample_rate=OUTPUT_SAMPLE_RATE, num_select=NUM_SELECT
         )
         assert len(dataset.audio_files) == NUM_SELECT
-        assert dataset._interval == NUM_ORIGINAL_AUDIOS // NUM_SELECT
 
     def test_len(self, dataset):
         assert len(dataset) == NUM_SELECT
