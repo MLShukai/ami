@@ -1,3 +1,4 @@
+import warnings
 from pathlib import Path
 
 import torch
@@ -51,6 +52,10 @@ class IntervalSamplingAudioDataset(Dataset[tuple[torch.Tensor]]):
         self.sample_rate = sample_rate
         self.num_select = num_select
         available_audio_files = self._list_audio_files()
+        if len(available_audio_files) < num_select:
+            warnings.warn(
+                f"num_select({num_select}) is larger than num of available audio files({len(available_audio_files)})."
+            )
         self._interval = max(len(available_audio_files) // num_select, 1)
         self.audio_files = self._sample_audio_files(available_audio_files, self._interval)
 
