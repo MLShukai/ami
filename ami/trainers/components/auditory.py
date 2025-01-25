@@ -35,6 +35,7 @@ class IntervalSamplingAudioDataset(Dataset[tuple[torch.Tensor]]):
         self,
         audio_dir: str | Path,
         sample_rate: int,
+        sample_size: int,
         num_select: int,
         pre_loading: bool = True,
     ) -> None:
@@ -43,6 +44,7 @@ class IntervalSamplingAudioDataset(Dataset[tuple[torch.Tensor]]):
         Args:
             audio_dir: Directory containing the audios.
             sample_rate: Sample rate of output audio.
+            sample_size: Sample size of output audio.
             num_select: Target number of .wav files to select.
             pre_loading: If True, pre-loads all audios into memory.
         """
@@ -50,6 +52,7 @@ class IntervalSamplingAudioDataset(Dataset[tuple[torch.Tensor]]):
         self.audio_dir = Path(audio_dir)
         assert self.audio_dir.is_dir()
         self.sample_rate = sample_rate
+        self.sample_size = sample_size
         self.num_select = num_select
         self.audio_files = self._sample_audio_files()
         self.audio_data: list[torch.Tensor] | None = None
@@ -81,6 +84,10 @@ class IntervalSamplingAudioDataset(Dataset[tuple[torch.Tensor]]):
         audio, _sample_rate = torchaudio.load(str(file))
         if _sample_rate != self.sample_rate:
             audio = torchaudio.functional.resample(audio, _sample_rate, self.sample_rate)
+        # Make length into self.sample_size.
+        if audio.size(-1) < self.sample_size:
+            audio = nn.functional.pad(audio, pad=[0, self.sample_size - audio.size(-1)], mode="constant", value=0.0)
+        audio = audio[..., : self.sample_size]
         return audio
 
     def __len__(self) -> int:
