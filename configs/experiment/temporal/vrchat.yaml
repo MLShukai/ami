@@ -3,11 +3,11 @@
 # Multimodal Temporal Encoderを用いた場合の VRChat用
 
 defaults:
-  - override /interaction/agent: multimodal_temporal_curiosity
+  - override /interaction/agent: temporal_curiosity
   - override /interaction/environment: vrchat_image_discrete_1st_order_delay
-  - override /models: multimodal_temporal/no_action.yaml
+  - override /models: temporal/no_action.yaml
   - override /data_collectors: multimodal_temporal_dynamics_ppo
-  - override /trainers: i_jepa_mulitmodal_temporal_dynamics_ppo
+  - override /trainers: i_jepa_temporal_dynamics_ppo
 
 shared:
   image_height: 144
@@ -77,5 +77,5 @@ trainers:
     max_epochs: 6
     # (buffer size / batch size) * epochs = iteration. (24.)
 
-task_name: multimodal_temporal_fundamental
+task_name: temporal_fundamental
 subtask_name: vrchat

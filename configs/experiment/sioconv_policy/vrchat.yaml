@@ -1,0 +1,19 @@
+# @package _global_
+
+defaults:
+  - sioconv_policy/fundamental
+  - override /interaction/environment: vrchat_image_discrete_1st_order_delay
+
+interaction:
+  agent:
+    curiosity_agent:
+      max_imagination_steps: 5 # 0.5 sec
+
+models:
+  i_jepa_target_encoder:
+    inference_forward:
+      kernel_size: 3
+
+max_uptime: inf
+
+subtask_name: vrchat

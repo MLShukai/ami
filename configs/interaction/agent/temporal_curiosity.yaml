@@ -14,9 +14,6 @@ multimodal_temporal_agent:
     image:
       _target_: ami.interactions.agents.unimodal_encoding_agent.UnimodalEncodingAgent
       modality: image
-    audio:
-      _target_: ami.interactions.agents.unimodal_encoding_agent.UnimodalEncodingAgent
-      modality: audio
 
 curiosity_agent:
   _target_: ami.interactions.agents.curiosity_agent.CuriosityAgent

@@ -1,0 +1,6 @@
+defaults:
+  - i_jepa: bool_mask
+  - audio_jepa: default
+  - multimodal_temporal: default
+  - forward_dynamics: with_action_reward
+  - ppo: default

@@ -1,0 +1,11 @@
+# @package _global_
+
+defaults:
+  - temporal/fundamental
+
+interaction:
+  environment:
+    observation_generator:
+      _target_: torch.randn
+
+subtask_name: whitenoize

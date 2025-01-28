@@ -1,14 +1,9 @@
 # @package _global_
 
 defaults:
-  - multimodal_temporal/fundamental
-  - override /models: multimodal_temporal/no_action
+  - sioconv_policy/fundamental
 
 interaction:
-  agent:
-    include_action_modality: False
-    initial_action: null
-
   environment:
     observation_generator:
       _partial_: false
@@ -19,4 +14,4 @@ interaction:
         - ${shared.image_height}
         - ${shared.image_width}
 
-subtask_name: flickerimage_no_action
+subtask_name: flickerimage

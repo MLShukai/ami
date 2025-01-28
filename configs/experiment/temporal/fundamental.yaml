@@ -1,0 +1,77 @@
+# @package _global_
+
+# Multimodal Temporal Encoderの基礎実験用
+
+defaults:
+  - override /interaction/agent: temporal_curiosity
+  - override /interaction/environment: dummy_image_io
+  - override /models: temporal/default.yaml
+  - override /data_collectors: multimodal_temporal_dynamics_ppo
+  - override /trainers: i_jepa_temporal_dynamics_ppo
+
+shared:
+  image_height: 144
+  image_width: 144
+
+interaction:
+  agent:
+    curiosity_agent:
+      max_imagination_steps: 1 # 0.1 sec
+
+  observation_wrappers:
+    - _target_: ami.interactions.io_wrappers.function_wrapper.FunctionIOWrapper
+      wrap_function:
+        _target_: ami.interactions.io_wrappers.function_wrapper.normalize_tensor
+        _partial_: True
+        eps: 1e-6
+    - _target_: ami.interactions.io_wrappers.function_wrapper.FunctionIOWrapper
+      wrap_function:
+        _target_: ami.interactions.io_wrappers.function_wrapper.to_multimodal_dict
+        _partial_: True
+        modality: image
+
+models:
+  i_jepa_target_encoder:
+    inference_forward:
+      kernel_size: 1
+
+data_collectors:
+  image:
+    max_len: ${python.eval:"24 * ${trainers.i_jepa.partial_dataloader.batch_size}"}
+  multimodal_temporal:
+    max_len: 1000
+  forward_dynamics_trajectory:
+    max_len: 1000 # 100 sec
+  ppo_trajectory:
+    max_len: ${python.eval:"128 + 1"} # +1 to retrieve final next value function output.
+    gamma: 0.97
+
+trainers:
+  i_jepa:
+    max_epochs: 1
+    partial_dataloader:
+      batch_size: 32
+    minimum_new_data_count: 128
+  multimodal_temporal:
+    max_epochs: 1
+    partial_sampler:
+      sequence_length: ${python.eval:"256 + 1"} # +1 to generate future target data.
+      max_samples: 64 # Iteraction count.
+    minimum_new_data_count: 128
+  forward_dynamics:
+    observation_encoder_name: # embed observationを直接使う
+    max_epochs: 1
+    partial_sampler:
+      sequence_length: ${python.eval:"256 + 1"} # +1 to generate future target data.
+      max_samples: 64 # Iteraction count.
+    minimum_new_data_count: 128
+  ppo:
+    entropy_coef: 0.04
+    partial_dataloader:
+      batch_size: 8
+    max_epochs: 3
+    # 16 (= buffer size / batch size) * epochs = 48 iteration.
+
+max_uptime: ${cvt_time_str:8h}
+
+task_name: temporal_fundamental
