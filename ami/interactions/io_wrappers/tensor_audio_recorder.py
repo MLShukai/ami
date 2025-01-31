@@ -21,7 +21,7 @@ class TensorAudioRecorder(BaseIOWrapper[Tensor, Tensor]):
         output_dir: str | Path,
         sample_rate: float,
         channel_size: int,
-        file_name_format: str = "%Y-%m-%d_%H-%M-%S.%f.mp3",
+        file_name_format: str = "%Y-%m-%d_%H-%M-%S.%f.wav",
         sample_slice_size: int | None = None,
     ) -> None:
         """Initializes the TensorAudioRecorder.
