@@ -3,12 +3,6 @@
 defaults:
   - override /models: bool_mask_audio_jepa
   - override /trainers: bool_mask_audio_jepa
-  - override /shared: default
-
-shared:
-  audio_sample_rate: 16000
-  audio_channel_size: 2
-  audio_sample_size: 16080
 
 interaction:
   observation_wrappers:
