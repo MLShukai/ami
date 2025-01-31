@@ -1,5 +1,5 @@
 defaults:
-  - audio_jepa: bool_mask
+  - audio_jepa: default
 
 audio_jepa_latent_auralization_context:
   _target_: ami.trainers.hifigan_trainer.HifiGANTrainer
