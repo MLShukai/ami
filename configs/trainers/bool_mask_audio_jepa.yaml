@@ -42,7 +42,7 @@ audio_jepa_latent_auralization_context:
     drop_last: false
     dataset:
       _target_: ami.trainers.components.auditory.IntervalSamplingAudioDataset
-      audio_dir: ${paths.data_dir}/random_observation_action_log/validation/audio/
+      audio_dir: ${paths.data_dir}/random_observation_action_log.20241123/validation/audio/
       sample_rate: ${shared.audio_sample_rate}
       sample_size: ${shared.audio_sample_size}
       num_select: 512
