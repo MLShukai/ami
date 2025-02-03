@@ -56,17 +56,7 @@ audio_jepa_latent_auralization_context:
 audio_jepa_latent_auralization_target:
   _target_: ami.trainers.hifigan_trainer.HifiGANTrainer
   generator_name: hifigan_context_auralization_generator
-  mel_spectrogram:
-    _target_: torchaudio.transforms.MelSpectrogram
-    sample_rate: ${shared.audio_sample_rate}
-    n_fft: 1024
-    win_length: 1024
-    hop_length: 256
-    n_mels: 128
-    window_fn: torch.hann_window
-    center: False
-    pad_mode: "reflect"
-    normalized: False
+  mel_spectrogram: ${..audio_jepa_latent_auralization_context.mel_spectrogram}
   rec_coef: 45.0
 
   partial_dataloader: ${..audio_jepa_latent_auralization_context.partial_dataloader}
