@@ -57,7 +57,7 @@ audio_jepa_latent_auralization_target:
   _target_: ami.trainers.hifigan_trainer.HifiGANTrainer
   generator_name: hifigan_context_auralization_generator
   mel_spectrogram: ${..audio_jepa_latent_auralization_context.mel_spectrogram}
-  rec_coef: 45.0
+  rec_coef: ${..audio_jepa_latent_auralization_context.rec_coef}
 
   partial_dataloader: ${..audio_jepa_latent_auralization_context.partial_dataloader}
 
