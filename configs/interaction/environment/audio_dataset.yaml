@@ -4,7 +4,7 @@ observation_generator:
   _target_: ami.interactions.environments.audio_observation_generator.AudioFilesObservationGenerator
   audio_files: ??? # Please specify dataset dir.
   chunk_size: ${shared.audio_sample_size}
-  stride: ${python.eval":int(${shared.audio_sample_rate} * 0.1)"}
+  stride: ${python.eval:"int(${shared.audio_sample_rate} * 0.1)"}
   sample_rate: ${shared.audio_sample_rate}
   max_frames_per_file: null
 
