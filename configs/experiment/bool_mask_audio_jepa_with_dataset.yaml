@@ -8,9 +8,8 @@ interaction:
   environment:
     observation_generator:
       audio_files:
-        - random_observation_action_log.20241123/2024-11-10_11-00-15/io/audio_recordings/2024-11-10_11-00-15.858323.wav
+        - data/random_observation_action_log.20241123/2024-11-10_11-00-15/io/audio_recordings/2024-11-10_11-00-15.858323.wav
         - ...
       max_frames_per_file: ${python.eval:"4 * 60 * 60 * ${shared.audio_sample_rate}"} # Each audio file is 4 hours.
 
-audio_data_dir: ??? # Specify as command line argument. `python launch.py experiment=<experiment file name> audio_data_dir=<path/to/image_data>
 task_name: bool_mask_audio_jepa_with_dataset
