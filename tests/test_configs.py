@@ -30,7 +30,6 @@ IGNORE_EXPERIMENT_CONFIGS = {
     "dreamer_unity.yaml",
     "i_jepa_with_dataset.yaml",
     "bool_mask_i_jepa_with_dataset.yaml",
-    "bool_mask_audio_jepa_with_dataset.yaml",
     "world_models_sioconv_lerp_hidden_unity.yaml",
     "i_jepa_sioconv_dreamer_multi_step_unity.yaml",
     "dreamer_multi_step_imagination_unity.yaml",
@@ -39,7 +38,6 @@ IGNORE_EXPERIMENT_CONFIGS = {
 DATA_DIR = PROJECT_ROOT / "data"
 if not (DATA_DIR / "random_observation_action_log").exists():
     IGNORE_EXPERIMENT_CONFIGS.add("bool_mask_i_jepa.yaml")
-    IGNORE_EXPERIMENT_CONFIGS.add("bool_mask_audio_jepa.yaml")
     IGNORE_EXPERIMENT_CONFIGS.add("bool_mask_i_jepa_with_videos.yaml")
     IGNORE_EXPERIMENT_CONFIGS.add("learn_only_sioconv.yaml")
     IGNORE_EXPERIMENT_CONFIGS.add("learn_i_jepa_sioconv.yaml")

@@ -5,6 +5,10 @@ defaults:
   - override /trainers: bool_mask_audio_jepa
 
 interaction:
+  observation_generator:
+    _args_:
+      - ${shared.audio_channels}
+      - ${shared.audio_sample_size}
   observation_wrappers:
     - _target_: ami.interactions.io_wrappers.function_wrapper.FunctionIOWrapper
       wrap_function:
