@@ -50,7 +50,7 @@ hifigan_context_auralization_generator:
   default_device: ${devices.0}
   has_inference: False
   model:
-    _target_: ami.models.hifigan.HifiGANGenerator
+    _target_: ami.models.hifigan.generator.HifiGANGenerator
     in_channels: ${models.audio_jepa_target_encoder.model.out_dim}
     out_channels: ${models.audio_jepa_target_encoder.model.in_channels}
     # Equivalent to window_size=400 and hop_size=320.
@@ -66,7 +66,7 @@ hifigan_context_auralization_multi_period_discriminator:
   default_device: ${devices.0}
   has_inference: False
   model:
-    _target_: ami.models.hifigan.MultiPeriodDiscriminator
+    _target_: ami.models.hifigan.discriminators.MultiPeriodDiscriminator
     in_channels: ${models.hifigan_context_auralization_generator.model.out_channels}
 
 hifigan_context_auralization_multi_scale_discriminator:
@@ -74,7 +74,7 @@ hifigan_context_auralization_multi_scale_discriminator:
   default_device: ${devices.0}
   has_inference: False
   model:
-    _target_: ami.models.hifigan.MultiScaleDiscriminator
+    _target_: ami.models.hifigan.discriminators.MultiScaleDiscriminator
     in_channels: ${models.hifigan_context_auralization_generator.model.out_channels}
 
 hifigan_target_auralization_generator: ${.hifigan_context_auralization_generator}
