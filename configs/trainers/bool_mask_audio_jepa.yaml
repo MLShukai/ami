@@ -11,7 +11,9 @@ audio_jepa_latent_auralization_context:
     win_length: 1024
     hop_length: 256
     n_mels: 128
-    window_fn: torch.hann_window
+    window_fn:
+      _target_: torch.hann_window
+      _partial_: true
     center: False
     pad_mode: "reflect"
     normalized: False
