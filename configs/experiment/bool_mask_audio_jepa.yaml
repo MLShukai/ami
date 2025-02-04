@@ -4,6 +4,7 @@ defaults:
   - override /data_collectors: audio
   - override /models: bool_mask_audio_jepa
   - override /trainers: bool_mask_audio_jepa
+  - override /interaction/agent: audio_encoding
   - override /interaction/environment: dummy_audio_io
 
 interaction:
