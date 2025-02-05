@@ -239,6 +239,8 @@ class HifiGANTrainer(BaseTrainer):
         )
 
         for i, (in_audio, rec_audio) in enumerate(zip(input_audio_selected, reconstruction_audio_selected)):
+            in_audio = in_audio.mean(dim=0, keepdim=True)
+            rec_audio = rec_audio.mean(dim=0, keepdim=True)
             self.logger.tensorboard.add_audio(
                 self.log_prefix + f"metrics/input-{i}",
                 in_audio,
