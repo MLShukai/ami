@@ -30,7 +30,7 @@ audio_jepa_latent_auralization_target:
   partial_optimizer:
     _target_: torch.optim.AdamW
     _partial_: true
-    lr: 0.0001
+    lr: 0.0002
     weight_decay: 0.01
 
   logger:
