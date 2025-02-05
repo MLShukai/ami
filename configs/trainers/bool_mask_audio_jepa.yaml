@@ -1,9 +1,10 @@
 defaults:
   - audio_jepa: default
 
-audio_jepa_latent_auralization_context:
+# To reduce VRAM consumption, auralize only target encoder.
+audio_jepa_latent_auralization_target:
   _target_: ami.trainers.hifigan_trainer.HifiGANTrainer
-  generator_name: hifigan_context_auralization_generator
+  generator_name: hifigan_target_auralization_generator
   mel_spectrogram:
     _target_: torchaudio.transforms.MelSpectrogram
     sample_rate: ${shared.audio_sample_rate}
@@ -34,7 +35,7 @@ audio_jepa_latent_auralization_context:
 
   logger:
     _target_: ami.tensorboard_loggers.StepIntervalLogger
-    log_dir: ${paths.tensorboard_dir}/audio_jepa_latent_auralization_context
+    log_dir: ${paths.tensorboard_dir}/audio_jepa_latent_auralization_target
     log_every_n_steps: 1
 
   validation_dataloader:
@@ -49,32 +50,6 @@ audio_jepa_latent_auralization_context:
       sample_size: ${shared.audio_sample_size}
       num_select: 512
       pre_loading: true
-
-  device: ${devices.0}
-  max_epochs: ${trainers.audio_jepa.max_epochs}
-  minimum_dataset_size: ${.partial_dataloader.batch_size}
-  minimum_new_data_count: ${trainers.audio_jepa.minimum_new_data_count}
-
-audio_jepa_latent_auralization_target:
-  _target_: ami.trainers.hifigan_trainer.HifiGANTrainer
-  generator_name: hifigan_context_auralization_generator
-  mel_spectrogram: ${..audio_jepa_latent_auralization_context.mel_spectrogram}
-  rec_coef: ${..audio_jepa_latent_auralization_context.rec_coef}
-
-  partial_dataloader: ${..audio_jepa_latent_auralization_context.partial_dataloader}
-
-  validation_dataloader: ${..audio_jepa_latent_auralization_context.validation_dataloader}
-
-  partial_optimizer:
-    _target_: torch.optim.AdamW
-    _partial_: true
-    lr: 0.0001
-    weight_decay: 0.01
-
-  logger:
-    _target_: ami.tensorboard_loggers.StepIntervalLogger
-    log_dir: ${paths.tensorboard_dir}/audio_jepa_latent_auralization_target
-    log_every_n_steps: 1
 
   device: ${devices.0}
   max_epochs: ${trainers.audio_jepa.max_epochs}
