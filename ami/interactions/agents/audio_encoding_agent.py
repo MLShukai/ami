@@ -1,7 +1,7 @@
 from torch import Tensor
 
 from ...data.step_data import DataKeys, StepData
-from ...models.utils import ModelNames
+from ...models.model_names import ModelNames
 from .base_agent import BaseAgent
 
 
