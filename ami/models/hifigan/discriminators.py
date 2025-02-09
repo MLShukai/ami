@@ -207,15 +207,18 @@ class MultiScaleDiscriminator(nn.Module):
         self,
         in_channels: int = 1,
         initial_hidden_channels: int = 128,  # referenced from discriminator channels in original impl.
+        n_scales: int = 3,  # referenced from original impl.
     ) -> None:
         super().__init__()
+        assert n_scales > 0
         self.discriminators = nn.ModuleList(
             [
                 ScaleDiscriminator(
-                    in_channels=in_channels, initial_hidden_channels=initial_hidden_channels, use_spectral_norm=True
-                ),
-                ScaleDiscriminator(in_channels=in_channels, initial_hidden_channels=initial_hidden_channels),
-                ScaleDiscriminator(in_channels=in_channels, initial_hidden_channels=initial_hidden_channels),
+                    in_channels=in_channels,
+                    initial_hidden_channels=initial_hidden_channels,
+                    use_spectral_norm=(i == 0),
+                )
+                for i in range(n_scales)
             ]
         )
         self.meanpools = nn.AvgPool1d(kernel_size=4, stride=2, padding=2)
