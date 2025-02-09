@@ -99,9 +99,10 @@ class MultiPeriodDiscriminator(nn.Module):
         self,
         in_channels: int = 1,
         initial_hidden_channels: int = 32,  # referenced from discriminator channels in original impl.
+        n_periods: int = 5,  # referenced from number of periods in original impl.
     ) -> None:
         super().__init__()
-        periods = [2, 3, 5, 7, 11]
+        periods = self._get_prime_numbers(n_primes=n_periods)
         self.discriminators = nn.ModuleList(
             [
                 PeriodDiscriminator(
@@ -110,6 +111,15 @@ class MultiPeriodDiscriminator(nn.Module):
                 for period in periods
             ]
         )
+
+    def _get_prime_numbers(self, n_primes: int) -> list[int]:
+        primes: list[int] = []
+        number = 2
+        while len(primes) < n_primes:
+            if not any([number % prime == 0 for prime in primes]):
+                primes.append(number)
+            number += 1
+        return primes
 
     def forward(self, input_waveforms: torch.Tensor) -> tuple[list[torch.Tensor], list[list[torch.Tensor]]]:
         """Discriminate authenticity of the periodicity of the input audio.
