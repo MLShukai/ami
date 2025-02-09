@@ -168,8 +168,9 @@ class AudioFilesObservationGenerator:
         return sum(reader.num_chunks for reader in self._audio_readers)
 
     def __call__(self) -> torch.Tensor:
-        if self._current_reader_index >= len(self._audio_readers):
-            raise StopIteration
+        # if self._current_reader_index >= len(self._audio_readers):
+        #     raise StopIteration
+        self._current_reader_index = self._current_reader_index % len(self._audio_readers)
         reader = self._audio_readers[self._current_reader_index]
         sample = reader.read()
         if sample is None:
