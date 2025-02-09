@@ -68,6 +68,7 @@ hifigan_context_auralization_multi_period_discriminator:
   model:
     _target_: ami.models.hifigan.discriminators.MultiPeriodDiscriminator
     in_channels: ${models.hifigan_context_auralization_generator.model.out_channels}
+    n_periods: 2
 
 hifigan_context_auralization_multi_scale_discriminator:
   _target_: ami.models.model_wrapper.ModelWrapper
@@ -76,7 +77,6 @@ hifigan_context_auralization_multi_scale_discriminator:
   model:
     _target_: ami.models.hifigan.discriminators.MultiScaleDiscriminator
     in_channels: ${models.hifigan_context_auralization_generator.model.out_channels}
-    initial_hidden_channels: 128
     n_scales: 1
 
 hifigan_target_auralization_generator: ${.hifigan_context_auralization_generator}
