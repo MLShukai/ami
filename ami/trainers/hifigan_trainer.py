@@ -108,18 +108,6 @@ class HifiGANTrainer(BaseTrainer):
 
         self.dataset_previous_get_time = float("-inf")
 
-        self._temp_mel = torchaudio.transforms.MelSpectrogram(
-            sample_rate=16000,
-            n_fft=400,
-            win_length=400,
-            hop_length=320,
-            n_mels=80,
-            window_fn=torch.hann_window,
-            center=False,
-            pad_mode="reflect",
-            normalized=False,
-        ).to(device)
-
     def on_data_users_dict_attached(self) -> None:
         self.audio_data_user: ThreadSafeDataUser[RandomDataBuffer] = self.get_data_user(BufferNames.AUDIO)
 
@@ -168,15 +156,12 @@ class HifiGANTrainer(BaseTrainer):
         batch: tuple[Tensor]
         for batch in dataloader:
             (audio_batch,) = batch
-            audio_batch = audio_batch.mean(dim=1, keepdim=True)
             input_audio_batch_list.append(audio_batch)
             audio_batch = audio_batch.to(self.device)
 
-            # latents = self.encoder.infer(audio_batch)
-            # latents = latents.transpose(-1, -2)
-            with torch.no_grad():
-                temp_mel = self._spectral_normalize(self._temp_mel(audio_batch).mean(dim=1))
-            reconstructions: Tensor = self.generator(temp_mel)
+            latents = self.encoder.infer(audio_batch)
+            latents = latents.transpose(-1, -2)
+            reconstructions: Tensor = self.generator(latents)
             reconstruction_audio_batch_list.append(reconstructions.cpu())
 
             # multi_period_discriminator
@@ -292,17 +277,15 @@ class HifiGANTrainer(BaseTrainer):
             batch: tuple[Tensor]
             for batch in dataloader:
                 (audio_batch,) = batch
-                audio_batch = audio_batch.mean(dim=1, keepdim=True)
                 audio_batch = audio_batch.to(self.device)
 
                 with torch.no_grad():
-                    # latents = self.encoder.infer(audio_batch)
-                    # # latents: [batch_size, n_patches, latents_dim]
-                    # latents = latents.transpose(-1, -2)
-                    temp_mel = self._spectral_normalize(self._temp_mel(audio_batch).mean(dim=1))
+                    latents = self.encoder.infer(audio_batch)
+                    # latents: [batch_size, n_patches, latents_dim]
+                    latents = latents.transpose(-1, -2)
 
                 # reconstruct
-                audio_out: Tensor = self.generator(temp_mel)
+                audio_out: Tensor = self.generator(latents)
 
                 # train multi_period_discriminator
                 authenticity_list_real, _ = self.multi_period_discriminator(audio_batch)

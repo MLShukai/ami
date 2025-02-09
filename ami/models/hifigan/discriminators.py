@@ -102,7 +102,6 @@ class MultiPeriodDiscriminator(nn.Module):
         n_periods: int = 5,  # referenced from number of periods in original impl.
     ) -> None:
         super().__init__()
-        print("aaaaaaaaaaaaaaaaaaaa", self._get_prime_numbers(n_primes=n_periods))
         periods = self._get_prime_numbers(n_primes=n_periods)
         self.discriminators = nn.ModuleList(
             [
