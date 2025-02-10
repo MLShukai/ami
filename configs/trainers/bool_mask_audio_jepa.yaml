@@ -15,6 +15,7 @@ audio_jepa_latent_auralization_target:
     window_fn:
       _target_: torch.hann_window
       _partial_: true
+    power: 1.0
     center: False
     pad_mode: "reflect"
     normalized: False
