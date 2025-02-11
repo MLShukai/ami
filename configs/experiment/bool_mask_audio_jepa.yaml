@@ -1,0 +1,29 @@
+# @package _global_
+
+defaults:
+  - override /data_collectors: audio
+  - override /models: bool_mask_audio_jepa
+  - override /trainers: bool_mask_audio_jepa
+  - override /interaction/agent: audio_encoding
+  - override /interaction/environment: dummy_audio_io
+
+interaction:
+  observation_wrappers:
+    - _target_: ami.interactions.io_wrappers.function_wrapper.FunctionIOWrapper
+      wrap_function:
+        _target_: ami.interactions.io_wrappers.function_wrapper.normalize_tensor
+        _partial_: True
+        eps: 1e-6
+
+data_collectors:
+  audio:
+    max_len: ${python.eval:"24 * ${trainers.audio_jepa.partial_dataloader.batch_size}"}
+
+trainers:
+  audio_jepa:
+    max_epochs: 1
+    partial_dataloader:
+      batch_size: 32
+    minimum_new_data_count: 128
+
+task_name: bool_mask_audio_jepa
