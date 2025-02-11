@@ -1,5 +1,6 @@
 # ref: https://github.com/jik876/hifi-gan/blob/master/train.py
 
+import random
 import time
 from functools import partial
 from pathlib import Path
@@ -46,6 +47,7 @@ class HifiGANTrainer(BaseTrainer):
             ModelNames.HIFIGAN_CONTEXT_AURALIZATION_GENERATOR, ModelNames.HIFIGAN_TARGET_AURALIZATION_GENERATOR
         ],
         mel_spectrogram: torchaudio.transforms.MelSpectrogram,
+        segment_size_during_train: int = 8192,
         rec_coef: float = 45.0,
         max_epochs: int = 1,
         minimum_dataset_size: int = 1,
@@ -62,6 +64,7 @@ class HifiGANTrainer(BaseTrainer):
             logger: The logger object for recording training metrics and auralizations.
             generator_name: Name of the generator (context or target) to be trained for auralization.
             mel_spectrogram: Converter waveform into mel-spec.
+            segment_size_during_train: Cutout size of audio used in training.
             rec_coef: Coefficient for reconstruction loss.
             max_epochs: Maximum number of epochs to train the generator and discriminators. Default is 1.
             minimum_dataset_size: Minimum number of samples required in the dataset to start training. Default is 1.
@@ -98,6 +101,7 @@ class HifiGANTrainer(BaseTrainer):
         self.multi_scale_discriminator_name = multi_scale_discriminator_name
 
         self.mel_spectrogram = mel_spectrogram.to(device)
+        self.segment_size_during_train = segment_size_during_train
         self.rec_coef = rec_coef
 
         self.max_epochs = max_epochs
@@ -283,9 +287,14 @@ class HifiGANTrainer(BaseTrainer):
                     latents = self.encoder.infer(audio_batch)
                     # latents: [batch_size, n_patches, latents_dim]
                     latents = latents.transpose(-1, -2)
-
                 # reconstruct
                 audio_out: Tensor = self.generator(latents)
+
+                # cutout segments
+                start_index = random.randint(0, audio_batch.size(-1) - self.segment_size_during_train)
+                end_index = start_index + self.segment_size_during_train
+                audio_batch = audio_batch[..., start_index:end_index]
+                audio_out = audio_out[..., start_index:end_index]
 
                 # train multi_period_discriminator
                 authenticity_list_real, _ = self.multi_period_discriminator(audio_batch)

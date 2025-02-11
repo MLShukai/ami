@@ -19,6 +19,7 @@ audio_jepa_latent_auralization_target:
     center: False
     pad_mode: "reflect"
     normalized: False
+  segment_size_during_train: 8192
   rec_coef: 45.0
 
   partial_dataloader:
