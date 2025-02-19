@@ -74,11 +74,16 @@ class TestTrainer:
         inference: ThreadSafeInferenceWrapper[ModelMultiplyP] = trainer._inference_wrappers_dict["model1"]
 
         wrapper.model.p.data += 1
+        wrapper.model.forward(torch.zeros(0)).mean().backward()  # Assign grad
         assert not torch.equal(wrapper.model.p, inference.model.p)
+        assert isinstance(wrapper.model.p.grad, torch.Tensor)
+        assert inference.model.p.grad is None
 
         trainer._sync_a_model("model1")
 
         assert torch.equal(wrapper.model.p, inference.model.p)
+        assert isinstance(wrapper.model.p.grad, torch.Tensor)
+        assert inference.model.p.grad is None
 
         assert_model_training(wrapper.model)
         assert_model_frozen(inference.model)

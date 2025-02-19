@@ -3,7 +3,7 @@ from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import Any, TypeAlias
 
-import torch.nn as nn
+import torch
 
 from ami.checkpointing import SaveAndLoadStateMixin
 from ami.threads import PauseResumeEventMixin
@@ -202,11 +202,21 @@ class BaseTrainer(ABC, SaveAndLoadStateMixin, PauseResumeEventMixin):
         # 学習されたモデルを推論用にセットアップ。
         model_wrapper.freeze_model()
 
+        # モデルの勾配パラメータを移動するために保持
+        grads: list[torch.Tensor | None] = []
+        for p in model_wrapper.model.parameters():
+            grads.append(p.grad)
+            p.grad = None
+
         # 学習モデルと推論モデルをスイッチ。
         model_wrapper.model, inference_wrapper.model = inference_wrapper.model, model_wrapper.model
 
         # model_wrapperには推論に使われていた古いモデルが渡されるため、パラメータを同期。
         model_wrapper.model.load_state_dict(inference_wrapper.model.state_dict())
+
+        # モデルの勾配パラメータを付与
+        for i, p in enumerate(model_wrapper.model.parameters()):
+            p.grad = grads[i]
 
         # 推論に使われていたモデルを学習モードにする。
         model_wrapper.unfreeze_model()
