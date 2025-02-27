@@ -43,6 +43,10 @@ if not (DATA_DIR / "random_observation_action_log").exists():
     IGNORE_EXPERIMENT_CONFIGS.add("learn_i_jepa_sioconv.yaml")
     IGNORE_EXPERIMENT_CONFIGS.add("i_jepa_mean_patch_with_videos.yaml")
 
+if not (DATA_DIR / "random_observation_action_log.20241123").exists():
+    IGNORE_EXPERIMENT_CONFIGS.add("bool_mask_audio_jepa.yaml")
+    IGNORE_EXPERIMENT_CONFIGS.add("bool_mask_audio_jepa_with_dataset.yaml")
+
 if not (DATA_DIR / "2024-09-14_09-42-23,678417.ckpt").exists():
     IGNORE_EXPERIMENT_CONFIGS.add("learn_only_sioconv.yaml")
 
