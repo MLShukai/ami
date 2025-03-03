@@ -1,7 +1,14 @@
 from typing import TypedDict
 
 import numpy as np
+import torch
+import torch.types
 from numpy.typing import NDArray
+from typing_extensions import override
+
+from ami.tensorboard_loggers import LoggableTypes, TensorBoardLogger
+
+from .base_environment import BaseEnvironment
 
 
 class RandomObservationGenerator:
@@ -27,6 +34,7 @@ class RandomObservationGenerator:
         sample_probability: float
         num_levels: int
         raw_length: int
+        average_time_interval: float
         entropy: float
         information_rate: float
 
@@ -98,6 +106,14 @@ class RandomObservationGenerator:
 
         # Calculate actual sampling length
         self.raw_length = max(round(self.observation_length * self.length_ratio), 1)
+
+    @property
+    def average_time_interval(self) -> float:
+        """Calculate average interval of sample."""
+        inv_interval = self.sample_probability / self.time_interval
+        if inv_interval > 0:
+            return inv_interval
+        return 1 / inv_interval
 
     def sample_observation(self) -> NDArray[np.float_]:
         """Sample a new observation.
@@ -196,6 +212,7 @@ class RandomObservationGenerator:
             sample_probability=self.sample_probability,
             num_levels=self.num_levels,
             raw_length=self.raw_length,
+            average_time_interval=self.average_time_interval,
             entropy=self.max_level_order * self.level_ratio,
             information_rate=self.calculate_information_rate(),
         )
@@ -222,3 +239,95 @@ class RandomObservationGenerator:
         """Reset the generator state."""
         self.prev_observation = np.zeros(self.observation_length)
         self.time_step = 0
+
+
+class RandomObservationEnvironment(BaseEnvironment[torch.Tensor, torch.Tensor]):
+    """An environment that generates random observations with controllable
+    information rate.
+
+    This environment wraps the RandomObservationGenerator to provide an interface compatible
+    with reinforcement learning or other AI systems expecting an environment with observe/affect
+    methods. The environment generates random observations from a discrete uniform distribution
+    with configurable parameters that allow precise control over the information rate.
+
+    The environment accepts actions that control three parameters of the observation generator:
+    level_ratio, length_ratio, and sample_probability. These parameters directly affect the
+    information rate of the generated observations.
+
+    Attributes:
+        _observation_generator: The underlying generator for random observations
+        _dtype: The torch data type to use for observations
+        _logger: Optional TensorboardLogger for logging metrics
+    """
+
+    def __init__(
+        self,
+        max_level_order: int = 2**8,
+        observation_length: int = 1024,
+        time_interval: float = 0.1,
+        level_ratio: float = 0.5,
+        length_ratio: float = 0.5,
+        sample_probability: float = 0.5,
+        dtype: torch.dtype = torch.float,
+        logger: TensorBoardLogger | None = None,
+    ) -> None:
+        """Initialize the random observation environment.
+
+        Args:
+            max_level_order: Maximum order of quantization levels (2^max_level_order possible values)
+            observation_length: Length of observation vector
+            time_interval: Time interval between timesteps (seconds)
+            level_ratio: Initial ratio of level order [0,1]
+            length_ratio: Initial ratio of observation length [0,1]
+            sample_probability: Initial probability of sampling a new observation [0,1]
+            dtype: Torch data type for observations
+            logger: Optional TensorboardLogger for logging metrics
+        """
+        super().__init__()
+
+        self._observation_generator = RandomObservationGenerator(
+            max_level_order, observation_length, time_interval, level_ratio, length_ratio, sample_probability
+        )
+        self._dtype = dtype
+        self._logger = logger
+
+    @override
+    def observe(self) -> torch.Tensor:
+        """Generate and return a new observation.
+
+        Returns:
+            A torch.Tensor observation with shape [observation_length]
+        """
+        return torch.tensor(self._observation_generator.sample_observation()).to(self._dtype)
+
+    @override
+    def affect(self, action: torch.Tensor) -> None:
+        """Apply an action to modify the environment parameters.
+
+        The action should be a 1D tensor with 3 elements representing:
+        [level_ratio, length_ratio, sample_probability]
+
+        Args:
+            action: A torch.Tensor with shape [3] containing control parameters
+                   in the range [0,1] for each parameter
+
+        Raises:
+            ValueError: If action has incorrect dimensions or type
+        """
+        if action.ndim != 1:
+            raise ValueError("Action must be a 1D tensor")
+        if action.numel() != 3:
+            raise ValueError("Action must have exactly 3 elements")
+        if not torch.is_floating_point(action):
+            raise ValueError("Action must be a floating-point tensor")
+
+        self._observation_generator.set_control_params(*action.cpu().detach().tolist())
+
+        # Logging
+        if self._logger is not None:
+            prefix = "random-observation/"
+            params = self._observation_generator.get_params()
+            for name, value in params.items():
+                if isinstance(value, LoggableTypes):
+                    self._logger.log(prefix + name, value)
+            self._logger.log(prefix + "average_sample_fps", 1 / params["average_time_interval"])

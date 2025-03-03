@@ -1,7 +1,15 @@
+from unittest.mock import MagicMock
+
 import numpy as np
 import pytest
+import torch
+from pytest_mock import MockerFixture
 
-from ami.interactions.environments.random_observation import RandomObservationGenerator
+from ami.interactions.environments.random_observation import (
+    RandomObservationEnvironment,
+    RandomObservationGenerator,
+)
+from ami.tensorboard_loggers import TensorBoardLogger
 
 
 class TestRandomObservationGenerator:
@@ -128,6 +136,7 @@ class TestRandomObservationGenerator:
             "sample_probability",
             "num_levels",
             "raw_length",
+            "average_time_interval",
             "entropy",
             "information_rate",
         ]
@@ -234,3 +243,140 @@ class TestRandomObservationGenerator:
         # Verify random.randint was called with correct parameters
         num_levels = generator.num_levels
         mock_randint.assert_called_once_with(0, num_levels, size=generator.raw_length)
+
+
+class TestRandomObservationEnvironment:
+    @pytest.fixture
+    def mock_generator(self, mocker: MockerFixture):
+        """Create a mocked RandomObservationGenerator."""
+        generator = mocker.patch(
+            "ami.interactions.environments.random_observation.RandomObservationGenerator", autospec=True
+        )
+        generator_instance = generator.return_value
+        generator_instance.sample_observation.return_value = np.zeros(10)
+        generator_instance.get_params.return_value = {
+            "max_level_order": 8,
+            "observation_length": 10,
+            "time_interval": 0.1,
+            "level_ratio": 0.5,
+            "length_ratio": 0.5,
+            "sample_probability": 0.5,
+            "num_levels": 16,
+            "raw_length": 5,
+            "average_time_interval": 0.2,
+            "entropy": 4.0,
+            "information_rate": 100.0,
+        }
+        return generator_instance
+
+    @pytest.fixture
+    def mock_logger(self):
+        """Create a mocked TensorBoardLogger."""
+        return MagicMock(spec=TensorBoardLogger)
+
+    def test_initialization(self):
+        """Test initialization with default parameters."""
+        env = RandomObservationEnvironment()
+
+        assert env._dtype == torch.float
+        assert env._logger is None
+
+        # Test with custom parameters
+        custom_env = RandomObservationEnvironment(
+            max_level_order=4,
+            observation_length=20,
+            time_interval=0.2,
+            level_ratio=0.7,
+            length_ratio=0.8,
+            sample_probability=0.9,
+            dtype=torch.float32,
+        )
+
+        assert custom_env._dtype == torch.float32
+
+    def test_observe(self, mocker: MockerFixture, mock_generator):
+        """Test the observe method."""
+        env = RandomObservationEnvironment(observation_length=10)
+
+        # Get an observation
+        observation = env.observe()
+
+        # Check that the generator's sample_observation method was called
+        mock_generator.sample_observation.assert_called_once()
+
+        # Check that the returned observation is a tensor of the right type and shape
+        assert isinstance(observation, torch.Tensor)
+        assert observation.dtype == torch.float
+        assert observation.shape == (10,)
+
+    def test_affect_valid_action(self, mocker: MockerFixture, mock_generator):
+        """Test the affect method with valid actions."""
+
+        env = RandomObservationEnvironment()
+
+        # Create a valid action tensor
+        action = torch.tensor([0.3, 0.6, 0.7], dtype=torch.float32)
+
+        # Apply the action
+        env.affect(action)
+
+    def test_affect_invalid_actions(self, mocker: MockerFixture, mock_generator):
+        """Test the affect method with invalid actions."""
+
+        env = RandomObservationEnvironment()
+
+        # Test with wrong dimensionality
+        with pytest.raises(ValueError, match="Action must be a 1D tensor"):
+            env.affect(torch.tensor([[0.3, 0.6, 0.7]], dtype=torch.float32))
+
+        # Test with wrong number of elements
+        with pytest.raises(ValueError, match="Action must have exactly 3 elements"):
+            env.affect(torch.tensor([0.3, 0.6, 0.7, 0.8], dtype=torch.float32))
+
+        # Test with non-floating-point tensor
+        with pytest.raises(ValueError, match="Action must be a floating-point tensor"):
+            env.affect(torch.tensor([3, 6, 7], dtype=torch.int32))
+
+    def test_logging(self, mocker: MockerFixture, mock_generator, mock_logger):
+        """Test logging functionality."""
+
+        # Create environment with logger
+        env = RandomObservationEnvironment(logger=mock_logger)
+
+        # Apply an action to trigger logging
+        action = torch.tensor([0.3, 0.6, 0.7], dtype=torch.float32)
+        env.affect(action)
+
+        # Check that log was called for each parameter
+        params = mock_generator.get_params.return_value
+        for name, value in params.items():
+            mock_logger.log.assert_any_call(f"random-observation/{name}", value)
+
+        # Check that average_sample_fps was logged
+        mock_logger.log.assert_any_call("random-observation/average_sample_fps", 1 / params["average_time_interval"])
+
+    def test_full_integration(self):
+        """Test full integration with actual instances (not mocks)."""
+        # Create environment with default parameters
+        env = RandomObservationEnvironment(max_level_order=4, observation_length=10, time_interval=0.1)
+
+        # Get an observation
+        observation = env.observe()
+        assert isinstance(observation, torch.Tensor)
+        assert observation.shape == (10,)
+        assert observation.dtype == torch.float
+
+        # Apply an action
+        action = torch.tensor([0.8, 0.7, 0.6], dtype=torch.float32)
+        env.affect(action)
+
+        # Get another observation after changing parameters
+        observation2 = env.observe()
+        assert isinstance(observation2, torch.Tensor)
+        assert observation2.shape == (10,)
+
+        # Check that the parameters were updated correctly
+        params = env._observation_generator.get_params()
+        assert params["level_ratio"] == pytest.approx(0.8)
+        assert params["length_ratio"] == pytest.approx(0.7)
+        assert params["sample_probability"] == pytest.approx(0.6)
