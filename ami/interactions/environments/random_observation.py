@@ -1,4 +1,4 @@
-from typing import TypedDict
+from typing import Any, TypedDict
 
 import numpy as np
 import torch
@@ -253,11 +253,6 @@ class RandomObservationEnvironment(BaseEnvironment[torch.Tensor, torch.Tensor]):
     The environment accepts actions that control three parameters of the observation generator:
     level_ratio, length_ratio, and sample_probability. These parameters directly affect the
     information rate of the generated observations.
-
-    Attributes:
-        _observation_generator: The underlying generator for random observations
-        _dtype: The torch data type to use for observations
-        _logger: Optional TensorboardLogger for logging metrics
     """
 
     def __init__(
@@ -331,3 +326,24 @@ class RandomObservationEnvironment(BaseEnvironment[torch.Tensor, torch.Tensor]):
                 if isinstance(value, LoggableTypes):
                     self._logger.log(prefix + name, value)
             self._logger.log(prefix + "average_sample_fps", 1 / params["average_time_interval"])
+
+
+class RandomObservationEnvironmentNoAction(RandomObservationEnvironment):
+    """A non-interactive variant of RandomObservationEnvironment that ignores
+    actions.
+
+    This environment subclasses RandomObservationEnvironment but
+    overrides the affect method to do nothing, making the environment
+    parameters immutable after initialization. This is useful for
+    scenarios where you want fixed observation dynamics or need to
+    isolate observation generation from action effects.
+    """
+
+    @override
+    def affect(self, action: Any = None) -> None:
+        """No-operation affect method that ignores all actions.
+
+        Args:
+            action: Ignored parameter (can be any type or None)
+        """
+        pass
