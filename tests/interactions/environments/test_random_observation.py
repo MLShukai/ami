@@ -380,3 +380,12 @@ class TestRandomObservationEnvironment:
         assert params["level_ratio"] == pytest.approx(0.8)
         assert params["length_ratio"] == pytest.approx(0.7)
         assert params["sample_probability"] == pytest.approx(0.6)
+
+    def test_save_and_load_state(self, mock_logger, tmp_path):
+        mock_logger.state_dict.return_value = 0
+        env = RandomObservationEnvironment(logger=mock_logger)
+        test_path = tmp_path / "env"
+        env.save_state(test_path)
+        assert (test_path / "random_observation.pkl").is_file()
+        env.load_state(test_path)
+        mock_logger.load_state_dict.assert_called_once_with(0)

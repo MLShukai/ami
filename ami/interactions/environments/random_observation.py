@@ -1,8 +1,9 @@
+import pickle
+from pathlib import Path
 from typing import Any, TypedDict
 
 import numpy as np
 import torch
-import torch.types
 from numpy.typing import NDArray
 from typing_extensions import override
 
@@ -326,6 +327,25 @@ class RandomObservationEnvironment(BaseEnvironment[torch.Tensor, torch.Tensor]):
                 if isinstance(value, LoggableTypes):
                     self._logger.log(prefix + name, value)
             self._logger.log(prefix + "average_sample_fps", 1 / params["average_time_interval"])
+
+    @override
+    def save_state(self, path: Path) -> None:
+        """Saves the state to file."""
+        path.mkdir()
+        with open(path / "random_observation.pkl", "wb") as f:
+            state = {}
+            if self._logger is not None:
+                state["logger"] = self._logger.state_dict()
+            pickle.dump(state, f)
+
+    @override
+    def load_state(self, path: Path) -> None:
+        """Loads the state from file."""
+        with open(path / "random_observation.pkl", "rb") as f:
+            state: dict[str, Any] = pickle.load(f)
+            if self._logger is not None:
+                if (logger_state := state.get("logger", None)) is not None:
+                    self._logger.load_state_dict(logger_state)
 
 
 class RandomObservationEnvironmentNoAction(RandomObservationEnvironment):
