@@ -27,7 +27,7 @@ class RandomObservationGenerator:
     """
 
     class ParameterDict(TypedDict):
-        max_level_order: int
+        max_level_order: float
         observation_length: int
         time_interval: float
         level_ratio: float
@@ -41,7 +41,7 @@ class RandomObservationGenerator:
 
     def __init__(
         self,
-        max_level_order: int,
+        max_level_order: float,
         observation_length: int,
         time_interval: float,
         level_ratio: float = 0.5,
