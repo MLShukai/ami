@@ -121,3 +121,37 @@ class ConcatFlattenedObservationAndLerpedHidden(nn.Module):
 
     def forward(self, flattened_obs: Tensor, lerped_hidden: Tensor) -> Tensor:
         return self.fc(torch.cat([flattened_obs, lerped_hidden], dim=-1))
+
+
+class PrimitivePolicyValueCommonNet(nn.Module):
+    """Primitive Policy and Value model.
+
+    pi: state -> action
+    """
+
+    def __init__(
+        self,
+        observation_projection: nn.Module,
+        core_model: nn.Module,
+        policy_head: nn.Module,
+        value_head: nn.Module,
+    ) -> None:
+        """Constructs the model with components.
+
+        Args:
+            observation_projection: Layer that processes observations only.
+            core_model: Layer that processes the integrated tensor.
+            policy_head: Layer that predicts actions.
+            value_head: Layer that predicts state values.
+        """
+        super().__init__()
+        self.observation_projection = observation_projection
+        self.core_model = core_model
+        self.policy_head = policy_head
+        self.value_head = value_head
+
+    def forward(self, observation: Tensor) -> tuple[Distribution, Tensor]:
+        """Returns the action distribution and estimated value."""
+        x = self.observation_projection(observation)
+        h = self.core_model(x)
+        return self.policy_head(h), self.value_head(h)
