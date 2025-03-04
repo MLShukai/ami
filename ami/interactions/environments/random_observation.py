@@ -367,3 +367,67 @@ class RandomObservationEnvironmentNoAction(RandomObservationEnvironment):
             action: Ignored parameter (can be any type or None)
         """
         pass
+
+
+class RandomObservationEnvironmentDiscreteAction(RandomObservationEnvironment):
+    """A variant of RandomObservationEnvironment that accepts discrete action
+    indices.
+
+    This environment extends the RandomObservationEnvironment to work
+    with discrete action spaces, which is common in many reinforcement
+    learning algorithms. It quantizes the continuous action space into
+    discrete values, allowing agents to select from a finite set of
+    actions. Each action dimension (level_ratio, length_ratio,
+    sample_probability) has its own quantization level.
+
+    The environment maps discrete action indices to corresponding
+    continuous values between 0 and 1, then passes these to the base
+    environment's affect method.
+    """
+
+    @override
+    def __init__(self, *args: Any, action_quantization_levels: list[int], **kwargs: Any) -> None:
+        """Initialize the discrete action environment.
+
+        Args:
+            *args: Arguments to pass to the parent class.
+            action_quantization_levels: List of 3 positive integers specifying the number
+                                       of discrete levels for each action dimension
+                                       [level_ratio, length_ratio, sample_probability].
+            **kwargs: Keyword arguments to pass to the parent class.
+
+        Raises:
+            ValueError: If action_quantization_levels is not a list of 3 positive integers.
+        """
+        super().__init__(*args, **kwargs)
+        if len(action_quantization_levels) != 3:
+            raise ValueError("action_quantization_levels must contain exactly 3 elements")
+        if not all(isinstance(level, int) for level in action_quantization_levels):
+            raise ValueError("action_quantization_levels must contain only integers")
+        if not all(level > 0 for level in action_quantization_levels):
+            raise ValueError("action_quantization_levels must contain only positive integers")
+
+        self.action_levels: list[torch.Tensor] = [torch.linspace(0, 1, levels) for levels in action_quantization_levels]
+
+    @override
+    def affect(self, action: torch.Tensor) -> None:
+        """Apply a discrete action by mapping it to continuous values.
+
+        Maps each discrete action index to its corresponding continuous value
+        and passes it to the parent class affect method.
+
+        Args:
+            action: A torch.Tensor with shape [3] containing discrete action indices
+                   for each action dimension.
+
+        Raises:
+            ValueError: If action does not have the correct shape.
+        """
+        if action.ndim != 1:
+            raise ValueError("Action must be a 1D tensor")
+        if action.numel() != 3:
+            raise ValueError("Action must have exactly 3 elements")
+
+        continuous_action = torch.tensor([self.action_levels[i][idx] for i, idx in enumerate(action.long())])
+
+        return super().affect(continuous_action)

@@ -7,6 +7,7 @@ from pytest_mock import MockerFixture
 
 from ami.interactions.environments.random_observation import (
     RandomObservationEnvironment,
+    RandomObservationEnvironmentDiscreteAction,
     RandomObservationGenerator,
 )
 from ami.tensorboard_loggers import TensorBoardLogger
@@ -389,3 +390,91 @@ class TestRandomObservationEnvironment:
         assert (test_path / "random_observation.pkl").is_file()
         env.load_state(test_path)
         mock_logger.load_state_dict.assert_called_once_with(0)
+
+
+class TestRandomObservationEnvironmentDiscreteAction:
+    def test_initialization_valid_params(self):
+        """Test initialization with valid parameters."""
+        # Test with default parameters plus action_quantization_levels
+        env = RandomObservationEnvironmentDiscreteAction(action_quantization_levels=[3, 4, 5])
+
+        assert env._dtype == torch.float
+        assert env._logger is None
+        assert len(env.action_levels) == 3
+        assert len(env.action_levels[0]) == 3
+        assert len(env.action_levels[1]) == 4
+        assert len(env.action_levels[2]) == 5
+
+        # Test action_levels are correctly created
+        assert env.action_levels[0][0] == 0.0
+        assert env.action_levels[0][-1] == 1.0
+        assert env.action_levels[1][0] == 0.0
+        assert env.action_levels[1][-1] == 1.0
+        assert env.action_levels[2][0] == 0.0
+        assert env.action_levels[2][-1] == 1.0
+
+        # Test with custom parameters
+        custom_env = RandomObservationEnvironmentDiscreteAction(
+            max_level_order=4,
+            observation_length=20,
+            time_interval=0.2,
+            level_ratio=0.7,
+            length_ratio=0.8,
+            sample_probability=0.9,
+            dtype=torch.float32,
+            action_quantization_levels=[2, 2, 2],
+        )
+
+        assert custom_env._dtype == torch.float32
+        assert len(custom_env.action_levels) == 3
+        assert all(len(level) == 2 for level in custom_env.action_levels)
+
+    def test_initialization_invalid_params(self):
+        """Test initialization with invalid parameters."""
+        # Test with wrong number of quantization levels
+        with pytest.raises(ValueError):
+            RandomObservationEnvironmentDiscreteAction(action_quantization_levels=[3, 4])  # Should be 3 elements
+
+        # Test with non-integer quantization levels
+        with pytest.raises(ValueError):
+            RandomObservationEnvironmentDiscreteAction(action_quantization_levels=[3, 4.5, 5])  # Should be all integers
+
+        # Test with non-positive quantization levels
+        with pytest.raises(ValueError):
+            RandomObservationEnvironmentDiscreteAction(action_quantization_levels=[3, 0, 5])  # Should be all positive
+
+        with pytest.raises(ValueError):
+            RandomObservationEnvironmentDiscreteAction(action_quantization_levels=[3, -1, 5])  # Should be all positive
+
+    def test_affect_valid_action(self, mocker: MockerFixture):
+        """Test the affect method with valid discrete actions."""
+        # Mock the parent class affect method
+        parent_affect = mocker.patch(
+            "ami.interactions.environments.random_observation.RandomObservationEnvironment.affect"
+        )
+
+        env = RandomObservationEnvironmentDiscreteAction(action_quantization_levels=[3, 3, 3])
+
+        # Create a valid discrete action tensor
+        action = torch.tensor([0, 1, 2], dtype=torch.long)
+
+        # Apply the action
+        env.affect(action)
+
+        # Check that parent affect was called with the correct continuous action
+        expected_continuous_action = torch.tensor([0.0, 0.5, 1.0])
+        parent_affect.assert_called_once()
+        continuous_action = parent_affect.call_args[0][0]
+        assert torch.allclose(continuous_action, expected_continuous_action)
+
+    def test_affect_invalid_actions(self):
+        """Test the affect method with invalid actions."""
+        env = RandomObservationEnvironmentDiscreteAction(action_quantization_levels=[3, 3, 3])
+
+        # Test with wrong dimensionality
+        with pytest.raises(ValueError, match="Action must be a 1D tensor"):
+            env.affect(torch.tensor([[0, 1, 2]], dtype=torch.long))
+
+        # Test with wrong number of elements
+        with pytest.raises(ValueError, match="Action must have exactly 3 elements"):
+            env.affect(torch.tensor([0, 1, 2, 0], dtype=torch.long))
