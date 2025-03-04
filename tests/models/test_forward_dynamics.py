@@ -158,10 +158,6 @@ class TestPrimitiveForwardDynamics:
         return FullyConnectedFixedStdNormal(DIM, DIM_OBS)
 
     @pytest.fixture
-    def action_hat_dist_head(self):
-        return FullyConnectedFixedStdNormal(DIM, DIM_ACTION)
-
-    @pytest.fixture
     def forward_dynamics(
         self,
         observation_flatten,
@@ -169,7 +165,6 @@ class TestPrimitiveForwardDynamics:
         obs_action_projection,
         core_model,
         obs_hat_dist_head,
-        action_hat_dist_head,
     ):
         return PrimitiveForwardDynamics(
             observation_flatten,
@@ -177,7 +172,6 @@ class TestPrimitiveForwardDynamics:
             obs_action_projection,
             core_model,
             obs_hat_dist_head,
-            action_hat_dist_head,
         )
 
     def test_forward_dynamycs(self, forward_dynamics):
@@ -186,6 +180,5 @@ class TestPrimitiveForwardDynamics:
         action_shape = (LEN, DIM_ACTION)
         action = torch.randn(*action_shape)
 
-        obs_hat_dist, action_hat_dist = forward_dynamics(obs, action)
+        obs_hat_dist = forward_dynamics(obs, action)
         assert obs_hat_dist.sample().shape == obs_shape
-        assert action_hat_dist.sample().shape == action_shape

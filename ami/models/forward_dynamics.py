@@ -77,7 +77,6 @@ class PrimitiveForwardDynamics(nn.Module):
         obs_action_projection: nn.Module,
         core_model: nn.Module,
         obs_hat_dist_head: nn.Module,
-        action_hat_dist_head: nn.Module,
     ) -> None:
         super().__init__()
         self.observation_flatten = observation_flatten
@@ -85,13 +84,11 @@ class PrimitiveForwardDynamics(nn.Module):
         self.obs_action_projection = obs_action_projection
         self.core_model = core_model
         self.obs_hat_dist_head = obs_hat_dist_head
-        self.action_hat_dist_head = action_hat_dist_head
 
-    def forward(self, obs: Tensor, action: Tensor) -> tuple[Distribution, Distribution]:
+    def forward(self, obs: Tensor, action: Tensor) -> Distribution:
         obs_flat = self.observation_flatten(obs)
         action_flat = self.action_flatten(action)
         x = self.obs_action_projection(torch.cat((obs_flat, action_flat), dim=-1))
         x = self.core_model(x)
         obs_hat_dist = self.obs_hat_dist_head(x)
-        action_hat_dist = self.action_hat_dist_head(x)
-        return obs_hat_dist, action_hat_dist
+        return obs_hat_dist
