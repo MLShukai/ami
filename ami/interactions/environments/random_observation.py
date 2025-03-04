@@ -62,8 +62,8 @@ class RandomObservationGenerator:
             sample_probability: Probability of sampling a new observation [0,1]
         """
         # Validate basic parameters
-        if not isinstance(max_level_order, int) or max_level_order <= 0:
-            raise ValueError("max_level_order must be a positive integer")
+        if not isinstance(max_level_order, (int, float)) or max_level_order <= 0:
+            raise ValueError("max_level_order must be a positive number")
         if not isinstance(observation_length, int) or observation_length <= 0:
             raise ValueError("observation_length must be a positive integer")
         if not isinstance(time_interval, (int, float)) or time_interval <= 0:
@@ -258,7 +258,7 @@ class RandomObservationEnvironment(BaseEnvironment[torch.Tensor, torch.Tensor]):
 
     def __init__(
         self,
-        max_level_order: int = 2**8,
+        max_level_order: float = 8,
         observation_length: int = 1024,
         time_interval: float = 0.1,
         level_ratio: float = 0.5,
@@ -270,7 +270,7 @@ class RandomObservationEnvironment(BaseEnvironment[torch.Tensor, torch.Tensor]):
         """Initialize the random observation environment.
 
         Args:
-            max_level_order: Maximum order of quantization levels (2^max_level_order possible values)
+            max_level_order: Maximum order of quantization levels
             observation_length: Length of observation vector
             time_interval: Time interval between timesteps (seconds)
             level_ratio: Initial ratio of level order [0,1]
