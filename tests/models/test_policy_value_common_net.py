@@ -10,6 +10,7 @@ from ami.models.policy_value_common_net import (
     ConcatFlattenedObservationAndStackedHidden,
     LerpStackedHidden,
     PolicyValueCommonNet,
+    PrimitivePolicyValueCommonNet,
 )
 
 
@@ -74,3 +75,21 @@ class TestConcatFlattenedObservationAndLerpedHidden:
         hidden = torch.randn(4, 64)
         out = mod.forward(obs, hidden)
         assert out.shape == (4, 128)
+
+
+class TestPrimitivePolicyValueCommonNet:
+    @pytest.fixture
+    def net(self) -> PrimitivePolicyValueCommonNet:
+        obs_layer = nn.Linear(128, 64)
+        core_model = nn.Linear(64, 16)
+        policy = DiscretePolicyHead(16, [8])
+        value = FullyConnectedValueHead(16)
+
+        return PrimitivePolicyValueCommonNet(obs_layer, core_model, policy, value)
+
+    def test_forward(self, net: PrimitivePolicyValueCommonNet):
+
+        action_dist, value = net.forward(torch.randn(128))
+        assert isinstance(action_dist, Distribution)
+        assert action_dist.sample().shape == (1,)
+        assert value.shape == (1,)
