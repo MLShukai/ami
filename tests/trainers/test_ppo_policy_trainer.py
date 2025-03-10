@@ -175,7 +175,7 @@ class TestPPOPrimitivePolicyTrainer:
                         DataKeys.OBSERVATION,
                         DataKeys.ACTION,
                         DataKeys.ACTION_LOG_PROBABILITY,
-                        DataKeys.RETURN,
+                        DataKeys.REWARD,
                         DataKeys.VALUE,
                     ],
                 )
