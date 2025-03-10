@@ -160,7 +160,7 @@ class TestPPOPrimitivePolicyTrainer:
                 DataKeys.OBSERVATION: torch.randn(128),
                 DataKeys.ACTION: torch.zeros((1,), dtype=torch.int64),
                 DataKeys.ACTION_LOG_PROBABILITY: torch.randn(1),
-                DataKeys.RETURN: torch.randn(1),
+                DataKeys.REWARD: torch.randn(1),
                 DataKeys.VALUE: torch.randn(1),
             }
         )
