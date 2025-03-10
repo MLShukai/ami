@@ -20,6 +20,7 @@ class DataKeys(str, Enum):
     # NEXT_OBSERVATION = "next_observation"  # o_{t+1}
     # NEXT_EMBED_OBSERVATION = "next_embed_observation"  # z_{t+1}
     REWARD = "reward"  # r_{t+1}
+    RETURN = "return"  # g_{t}
     # NEXT_VALUE = "next_value"  # v_{t+1}
     HIDDEN = "hidden"  # h_t
 

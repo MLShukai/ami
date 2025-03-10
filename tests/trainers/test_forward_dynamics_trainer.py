@@ -14,7 +14,11 @@ from ami.models.components.fully_connected_fixed_std_normal import (
     FullyConnectedFixedStdNormal,
 )
 from ami.models.components.sconv import SConv
-from ami.models.forward_dynamics import ForwardDynamcisWithActionReward, ForwardDynamics
+from ami.models.forward_dynamics import (
+    ForwardDynamcisWithActionReward,
+    ForwardDynamics,
+    PrimitiveForwardDynamics,
+)
 from ami.models.model_names import ModelNames
 from ami.models.model_wrapper import ModelWrapper
 from ami.models.utils import ModelWrappersDict
@@ -23,6 +27,7 @@ from ami.tensorboard_loggers import StepIntervalLogger
 from ami.trainers.forward_dynamics_trainer import (
     ForwardDynamicsTrainer,
     ForwardDynamicsWithActionRewardTrainer,
+    PrimitiveForwardDynamicsTrainer,
     RandomTimeSeriesSampler,
 )
 
@@ -342,6 +347,122 @@ class TestForwardDynamicsWithActionRewardTrainer:
 
     def test_save_and_load_state(self, trainer: ForwardDynamicsWithActionRewardTrainer, tmp_path, mocker) -> None:
         trainer_path = tmp_path / "forward_dynamics_with_action_reward"
+        trainer.save_state(trainer_path)
+        assert trainer_path.exists()
+        assert (trainer_path / "optimizer.pt").exists()
+        assert (trainer_path / "logger.pt").exists()
+        assert (trainer_path / "dataset_previous_get_time.pt").exists()
+        logger_state = trainer.logger.state_dict()
+        dataset_previous_get_time = trainer.dataset_previous_get_time
+
+        mocked_logger_load_state_dict = mocker.spy(trainer.logger, "load_state_dict")
+        trainer.optimizer_state.clear()
+        trainer.dataset_previous_get_time = None
+        assert trainer.optimizer_state == {}
+        trainer.load_state(trainer_path)
+        assert trainer.optimizer_state != {}
+        mocked_logger_load_state_dict.assert_called_once_with(logger_state)
+        assert trainer.dataset_previous_get_time == dataset_previous_get_time
+
+
+class TestPrimitiveForwardDynamicsTrainer:
+    @pytest.fixture
+    def forward_dynamics(
+        self,
+    ):
+        return PrimitiveForwardDynamics(
+            observation_flatten=nn.Identity(),
+            action_flatten=nn.Identity(),
+            obs_action_projection=nn.Identity(),
+            core_model=nn.Linear(DIM_OBS + DIM_ACTION, DIM),
+            obs_hat_dist_head=FullyConnectedFixedStdNormal(DIM, DIM_OBS),
+        )
+
+    @pytest.fixture
+    def forward_dynamics_wrappers_dict(self, forward_dynamics, device):
+        d = ModelWrappersDict(
+            {
+                ModelNames.FORWARD_DYNAMICS: ModelWrapper(forward_dynamics, device, True),
+            }
+        )
+        d.send_to_default_device()
+        return d
+
+    @pytest.fixture
+    def trajectory_step_data(self) -> StepData:
+        d = StepData()
+        d[DataKeys.OBSERVATION] = torch.randn(DIM_OBS)
+        d[DataKeys.ACTION] = torch.randn(DIM_ACTION)
+        return d
+
+    @pytest.fixture
+    def trajectory_buffer_dict(self, trajectory_step_data: StepData) -> DataCollectorsDict:
+        d = DataCollectorsDict.from_data_buffers(
+            **{
+                BufferNames.FORWARD_DYNAMICS_TRAJECTORY: CausalDataBuffer.reconstructable_init(
+                    32,
+                    [
+                        DataKeys.OBSERVATION,
+                        DataKeys.ACTION,
+                    ],
+                )
+            }
+        )
+
+        for _ in range(4):
+            d.collect(trajectory_step_data)
+        return d
+
+    @pytest.fixture
+    def partial_dataloader(self):
+        return partial(DataLoader, batch_size=1, shuffle=False)
+
+    @pytest.fixture
+    def partial_optimizer(self):
+        return partial(Adam, lr=0.001)
+
+    @pytest.fixture
+    def logger(self, tmp_path):
+        return StepIntervalLogger(f"{tmp_path}/tensorboard", 1)
+
+    @pytest.fixture
+    def trainer(
+        self,
+        partial_dataloader,
+        partial_optimizer,
+        device,
+        forward_dynamics_wrappers_dict,
+        trajectory_buffer_dict,
+        logger,
+    ):
+        trainer = PrimitiveForwardDynamicsTrainer(
+            partial_dataloader,
+            partial(RandomTimeSeriesSampler, sequence_length=2),
+            partial_optimizer,
+            device,
+            logger,
+            minimum_new_data_count=2,
+        )
+        trainer.attach_model_wrappers_dict(forward_dynamics_wrappers_dict)
+        trainer.attach_data_users_dict(trajectory_buffer_dict.get_data_users())
+        return trainer
+
+    def test_run(self, trainer) -> None:
+        trainer.run()
+
+    def test_is_trainable(self, trainer) -> None:
+        assert trainer.is_trainable() is True
+        trainer.trajectory_data_user.clear()
+        assert trainer.is_trainable() is False
+
+    def test_is_new_data_available(self, trainer: ForwardDynamicsWithActionRewardTrainer):
+        trainer.trajectory_data_user.update()
+        assert trainer._is_new_data_available() is True
+        trainer.run()
+        assert trainer._is_new_data_available() is False
+
+    def test_save_and_load_state(self, trainer: ForwardDynamicsWithActionRewardTrainer, tmp_path, mocker) -> None:
+        trainer_path = tmp_path / "primitive_forward_dynamics"
         trainer.save_state(trainer_path)
         assert trainer_path.exists()
         assert (trainer_path / "optimizer.pt").exists()
