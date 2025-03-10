@@ -7,14 +7,24 @@ from ami.data.buffers.buffer_names import BufferNames
 from ami.data.buffers.random_data_buffer import RandomDataBuffer
 from ami.data.step_data import DataKeys
 from ami.data.utils import DataCollectorsDict
-from ami.interactions.agents.curiosity_agent import CuriosityAgent
+from ami.interactions.agents.curiosity_agent import (
+    CuriosityAgent,
+    PrimitiveCuriosityAgent,
+)
 from ami.models.components.fully_connected_normal import FullyConnectedNormal
 from ami.models.components.fully_connected_value_head import FullyConnectedValueHead
 from ami.models.components.sioconv import SioConv
-from ami.models.forward_dynamics import ForwardDynamcisWithActionReward
+from ami.models.forward_dynamics import (
+    ForwardDynamcisWithActionReward,
+    PrimitiveForwardDynamics,
+)
 from ami.models.model_names import ModelNames
 from ami.models.policy_or_value_network import PolicyOrValueNetwork
-from ami.models.policy_value_common_net import PolicyValueCommonNet, SelectObservation
+from ami.models.policy_value_common_net import (
+    PolicyValueCommonNet,
+    PrimitivePolicyValueCommonNet,
+    SelectObservation,
+)
 from ami.models.utils import InferenceWrappersDict, ModelWrapper, ModelWrappersDict
 from ami.tensorboard_loggers import TimeIntervalLogger
 
@@ -177,3 +187,95 @@ class TestCuriosityAgent:
         agent.setup()
         action = agent.step(observation)
         assert action.shape == (ACTION_DIM,)
+
+
+class TestPrimitiveCuriosityAgent:
+    @pytest.fixture
+    def models(self, device) -> ModelWrappersDict:
+        # Create forward dynamics model
+        forward_dynamics = PrimitiveForwardDynamics(
+            nn.Identity(),
+            nn.Identity(),
+            nn.Linear(OBSERVATION_DIM + ACTION_DIM, HIDDEN_DIM),
+            nn.Linear(HIDDEN_DIM, HIDDEN_DIM),
+            FullyConnectedNormal(HIDDEN_DIM, OBSERVATION_DIM),
+        )
+        policy_value = PrimitivePolicyValueCommonNet(
+            nn.Linear(OBSERVATION_DIM, HIDDEN_DIM),
+            nn.Identity(),
+            FullyConnectedNormal(HIDDEN_DIM, ACTION_DIM),
+            FullyConnectedValueHead(HIDDEN_DIM, squeeze_value_dim=True),
+        )
+
+        return {
+            ModelNames.FORWARD_DYNAMICS: ModelWrapper(forward_dynamics, device, True),
+            ModelNames.POLICY_VALUE: ModelWrapper(policy_value, device, True),
+        }
+
+    @pytest.fixture
+    def inference_models(self, models) -> InferenceWrappersDict:
+        mwd = ModelWrappersDict(models)
+        mwd.send_to_default_device()
+
+        return mwd.inference_wrappers_dict
+
+    @pytest.fixture
+    def data_collectors(self) -> DataCollectorsDict:
+        empty_buffer = RandomDataBuffer(10, [DataKeys.OBSERVATION])
+        return DataCollectorsDict.from_data_buffers(
+            **{
+                BufferNames.FORWARD_DYNAMICS_TRAJECTORY: empty_buffer,
+                BufferNames.PPO_TRAJECTORY: empty_buffer,
+            }
+        )
+
+    @pytest.fixture
+    def logger(self, tmp_path):
+        return TimeIntervalLogger(f"{tmp_path}/tensorboard", 0)
+
+    @pytest.fixture
+    def agent(self, inference_models, data_collectors, logger) -> PrimitiveCuriosityAgent:
+        curiosity_agent = PrimitiveCuriosityAgent(
+            logger=logger,
+        )
+        curiosity_agent.attach_data_collectors(data_collectors)
+        curiosity_agent.attach_inference_models(inference_models)
+        return curiosity_agent
+
+    def test_setup_step_teardown(self, agent: PrimitiveCuriosityAgent, device):
+        """Test the main interaction loop of the agent."""
+        observation = torch.randn(OBSERVATION_DIM)
+        agent.setup()
+
+        assert agent.initial_step
+        for _ in range(10):
+            action = agent.step(observation)
+            assert not agent.initial_step
+            assert action.shape == (ACTION_DIM,)
+            assert isinstance(action, torch.Tensor)
+
+        # Check step data shapes
+        assert agent.step_data[DataKeys.OBSERVATION].shape == (OBSERVATION_DIM,)
+        assert agent.step_data[DataKeys.ACTION].shape == (ACTION_DIM,)
+        assert agent.step_data[DataKeys.ACTION_LOG_PROBABILITY].shape == (ACTION_DIM,)
+        assert agent.step_data[DataKeys.VALUE].shape == ()
+        assert agent.step_data[DataKeys.REWARD].shape == ()
+
+        # Check imagination states
+        assert isinstance(agent.predicted_obs_dist, Distribution)
+        assert agent.predicted_obs_device == device
+
+    def test_save_and_load_state(self, agent: CuriosityAgent, tmp_path):
+        """Test state saving and loading functionality."""
+        agent_path = tmp_path / "agent"
+        agent.save_state(agent_path)
+        assert (agent_path / "logger.pt").exists()
+
+        # Modify state and verify it's different
+        logger_state = agent.logger.state_dict()
+        agent.logger.global_step = -1
+        assert agent.logger.state_dict() != logger_state
+
+        # Load state and verify it's restored
+        agent.load_state(agent_path)
+        assert agent.logger.state_dict() == logger_state

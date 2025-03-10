@@ -8,10 +8,16 @@ from typing_extensions import override
 
 from ami.data.buffers.buffer_names import BufferNames
 from ami.data.step_data import DataKeys, StepData
-from ami.models.forward_dynamics import ForwardDynamcisWithActionReward
+from ami.models.forward_dynamics import (
+    ForwardDynamcisWithActionReward,
+    PrimitiveForwardDynamics,
+)
 from ami.models.model_names import ModelNames
 from ami.models.model_wrapper import ThreadSafeInferenceWrapper
-from ami.models.policy_value_common_net import PolicyValueCommonNet
+from ami.models.policy_value_common_net import (
+    PolicyValueCommonNet,
+    PrimitivePolicyValueCommonNet,
+)
 from ami.tensorboard_loggers import TimeIntervalLogger
 
 from .base_agent import BaseAgent
@@ -173,3 +179,109 @@ class CuriosityAgent(BaseAgent[Tensor, Tensor]):
             path / "head_forward_dynamics_hidden_state.pt",
             map_location=self.head_forward_dynamics_hidden_state.device,
         )
+
+
+class PrimitiveCuriosityAgent(BaseAgent[Tensor, Tensor]):
+    """Primitive Curiosity Agent Implementation."""
+
+    @override
+    def __init__(
+        self,
+        logger: TimeIntervalLogger,
+    ) -> None:
+        """Initializes the PrimitiveCuriosityAgent.
+
+        Args:
+            logger: Logger instance for recording metrics and rewards.
+        """
+        super().__init__()
+        self.logger = logger
+
+    @override
+    def on_inference_models_attached(self) -> None:
+        super().on_inference_models_attached()
+        self.forward_dynamics: ThreadSafeInferenceWrapper[PrimitiveForwardDynamics] = self.get_inference_model(
+            ModelNames.FORWARD_DYNAMICS
+        )
+        self.policy_value: ThreadSafeInferenceWrapper[PrimitivePolicyValueCommonNet] = self.get_inference_model(
+            ModelNames.POLICY_VALUE
+        )
+
+    @override
+    def on_data_collectors_attached(self) -> None:
+        super().on_data_collectors_attached()
+        self.forward_dynamics_collector = self.get_data_collector(
+            BufferNames.FORWARD_DYNAMICS_TRAJECTORY,
+        )
+        self.policy_collector = self.get_data_collector(
+            BufferNames.PPO_TRAJECTORY,
+        )
+
+    # ###### INTERACTION PROCESS ########
+
+    step_data: StepData
+    predicted_obs_dist: Distribution
+    predicted_obs_device: torch.device
+
+    @override
+    def setup(self) -> None:
+        super().setup()
+        self.step_data = StepData()
+        self.initial_step = True
+
+    @override
+    def step(self, observation: Tensor) -> Tensor:
+        action = self._common_step(observation, self.initial_step)
+        self.initial_step = False
+        return action
+
+    def _common_step(self, observation: Tensor, initial_step: bool) -> Tensor:
+        """Executes the common step procedure for the curiosity-driven agent.
+
+        Args:
+            observation (Tensor): Current observation from the environment
+            initial_step (bool): Whether this is the first step in an episode.
+                When True, skips reward calculation as there are no previous predictions.
+
+        Returns:
+            Tensor: Selected action to be executed in the environment
+        """
+
+        if not initial_step:
+            observation = observation.to(self.predicted_obs_device)  # convert type and send to device
+            reward = -self.predicted_obs_dist.log_prob(observation).mean()
+            self.logger.log("curiosity_agent/reward", reward)
+
+            self.step_data[DataKeys.REWARD] = reward
+            self.forward_dynamics_collector.collect(self.step_data)
+            self.policy_collector.collect(self.step_data)
+
+        action_dist: Distribution
+        value: Tensor
+        action_dist, value = self.policy_value(observation)
+        action = action_dist.sample()
+        action_log_prob = action_dist.log_prob(action)
+
+        predicted_obs_dist = self.forward_dynamics(observation, action)
+
+        self.step_data[DataKeys.OBSERVATION] = observation.cpu()
+        self.step_data[DataKeys.ACTION] = action
+        self.step_data[DataKeys.ACTION_LOG_PROBABILITY] = action_log_prob
+        self.step_data[DataKeys.VALUE] = value
+        self.logger.log("curiosity_agent/value", value)
+
+        self.predicted_obs_dist = predicted_obs_dist
+        self.predicted_obs_device = predicted_obs_dist.sample().device
+
+        self.logger.update()
+        return action
+
+    # ###### State saving ######
+    @override
+    def save_state(self, path: Path) -> None:
+        path.mkdir()
+        torch.save(self.logger.state_dict(), path / "logger.pt")
+
+    @override
+    def load_state(self, path: Path) -> None:
+        self.logger.load_state_dict(torch.load(path / "logger.pt"))
