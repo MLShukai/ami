@@ -467,8 +467,9 @@ class PPOTemporalPolicyTrainer(BaseTrainer):
             # advantanges = (advantanges - advantanges.mean()) / (advantanges.std() + 1e-8)
             advantanges = advantanges / (advantanges.std() + 1e-8)  # Advantageは符号が重要なので meanで引くのはダメ
 
-        if advantanges.ndim == 1:
-            advantanges = advantanges.unsqueeze(1)
+        if advantanges.ndim < ratio.ndim:
+            for _ in range(ratio.ndim - advantanges.ndim):
+                advantanges = advantanges.unsqueeze(-1)
 
         # Policy loss
         pg_loss1 = -advantanges * ratio
@@ -477,6 +478,8 @@ class PPOTemporalPolicyTrainer(BaseTrainer):
 
         # Value loss
         new_values = new_values.flatten()
+        returns = returns.flatten()
+        values = values.flatten()
         if self.clip_vloss:
             v_loss_unclipped = (new_values - returns) ** 2
             v_clipped = values + torch.clamp(new_values - values, -self.clip_coef, self.clip_coef)

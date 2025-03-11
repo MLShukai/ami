@@ -272,8 +272,8 @@ class TestPPOTemporalPolicyTrainer:
                 DataKeys.HIDDEN: torch.randn(3, 64),
                 DataKeys.ACTION: torch.zeros((1,), dtype=torch.int64),
                 DataKeys.ACTION_LOG_PROBABILITY: torch.randn(1),
-                DataKeys.REWARD: torch.randn(1),
-                DataKeys.VALUE: torch.randn(1),
+                DataKeys.REWARD: torch.randn(1).squeeze(),
+                DataKeys.VALUE: torch.randn(1).squeeze(),
             }
         )
 
