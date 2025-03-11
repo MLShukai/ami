@@ -506,19 +506,19 @@ class ImaginingForwardDynamicsTrainer(BaseTrainer):
                 )
                 optimizer.zero_grad()
 
-                observations_next_hat_dist: Distribution
+                obses_next_hat_dist: Distribution
                 loss_imaginations: list[Tensor] = []
                 for i in range(self.imagination_length):
                     action_imaginations = actions[:, i : -self.imagination_length + i]  # a_i:i+T-H
                     obs_targets = observations[
                         :, i + 1 : observations.size(1) - self.imagination_length + i + 1
                     ]  # o_i+1:T-H+i+1
-                    observations_next_hat_dist, next_hiddens = self.forward_dynamics(
+                    obses_next_hat_dist, next_hiddens = self.forward_dynamics(
                         obs_imaginations, hiddens, action_imaginations
                     )
-                    loss = -observations_next_hat_dist.log_prob(obs_targets).mean()
+                    loss = -obses_next_hat_dist.log_prob(obs_targets).mean()
                     loss_imaginations.append(loss)
-                    observations = observations_next_hat_dist.rsample()
+                    obs_imaginations = obses_next_hat_dist.rsample()
                     hiddens = next_hiddens[:, :, 0]  # h'_i
 
                 loss = self.imagination_average_method(torch.stack(loss_imaginations))
