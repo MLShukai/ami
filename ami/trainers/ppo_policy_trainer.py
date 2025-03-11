@@ -372,7 +372,7 @@ class PPOPrimitivePolicyTrainer(BaseTrainer):
 
 
 class PPOTemporalPolicyTrainer(BaseTrainer):
-    """Trainer for primitive policy.
+    """Trainer for temporal policy.
 
     Reference: https://github.com/vwxyzjn/cleanrl/blob/master/cleanrl/ppo.py
     From: https://github.com/MLShukai/PrimitiveAMI/blob/main/src/models/ppo_lit_module.py
