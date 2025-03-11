@@ -155,3 +155,38 @@ class PrimitivePolicyValueCommonNet(nn.Module):
         x = self.observation_projection(observation)
         h = self.core_model(x)
         return self.policy_head(h), self.value_head(h)
+
+
+class TemporalPolicyValueCommonNet(nn.Module):
+    """Module with shared models for policy and value functions.
+
+    (Temporal policy.)
+    """
+
+    def __init__(
+        self,
+        observation_flatten: nn.Module,
+        core_model: nn.Module,
+        policy_head: nn.Module,
+        value_head: nn.Module,
+    ) -> None:
+        """Constructs the model with components.
+
+        Args:
+            observation_flatten: Layer that processes observation.
+            core_model: Layer that processes observation with hidden state
+            policy_head: Layer that predicts actions.
+            value_head: Layer that predicts state values.
+        """
+        super().__init__()
+        self.observation_flatten = observation_flatten
+        self.core_model = core_model
+        self.policy_head = policy_head
+        self.value_head = value_head
+
+    def forward(self, observation: Tensor, hidden: Tensor) -> tuple[Distribution, Tensor, Tensor]:
+        """Returns the action distribution, estimated value and hidden
+        state."""
+        obs_embed = self.observation_flatten(observation)
+        x, hidden = self.core_model(obs_embed, hidden)
+        return self.policy_head(x), self.value_head(x), hidden

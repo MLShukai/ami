@@ -5,12 +5,14 @@ from torch.distributions import Distribution
 
 from ami.models.components.discrete_policy_head import DiscretePolicyHead
 from ami.models.components.fully_connected_value_head import FullyConnectedValueHead
+from ami.models.components.sioconvps import SioConvPS
 from ami.models.policy_value_common_net import (
     ConcatFlattenedObservationAndLerpedHidden,
     ConcatFlattenedObservationAndStackedHidden,
     LerpStackedHidden,
     PolicyValueCommonNet,
     PrimitivePolicyValueCommonNet,
+    TemporalPolicyValueCommonNet,
 )
 
 
@@ -93,3 +95,22 @@ class TestPrimitivePolicyValueCommonNet:
         assert isinstance(action_dist, Distribution)
         assert action_dist.sample().shape == (1,)
         assert value.shape == (1,)
+
+
+class TestTemporalPolicyValueCommonNet:
+    @pytest.fixture
+    def net(self) -> TemporalPolicyValueCommonNet:
+        obs_layer = nn.Linear(128, 64)
+        core_model = SioConvPS(3, 64, 128, 0.1)
+        policy = DiscretePolicyHead(64, [8])
+        value = FullyConnectedValueHead(64)
+
+        return TemporalPolicyValueCommonNet(obs_layer, core_model, policy, value)
+
+    def test_forward(self, net: TemporalPolicyValueCommonNet):
+
+        action_dist, value, hidden = net.forward(torch.randn(128), torch.randn(3, 64))
+        assert isinstance(action_dist, Distribution)
+        assert action_dist.sample().shape == (1,)
+        assert value.shape == (1,)
+        assert hidden.shape == (3, 64)
