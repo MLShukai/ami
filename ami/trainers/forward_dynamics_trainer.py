@@ -498,28 +498,35 @@ class ImaginingForwardDynamicsTrainer(BaseTrainer):
                 if observations.size(1) <= self.imagination_length:
                     raise ValueError("Time length must be larger than imagination length!")
 
-                observations = observations.to(self.device)
-                actions = actions.to(self.device)
+                observations = observations.to(self.device)  # (B, T, *)
+                actions = actions.to(self.device)  # (B, T)
                 obs_imaginations, hiddens = (
-                    observations[:, : -self.imagination_length],  # o_0:T-H
-                    hiddens[:, 0].to(self.device),  # h_-1
+                    observations[:, : -self.imagination_length],  # o_0:T-H, (B, T-H, *)
+                    hiddens[:, 0].to(self.device),  # h_-1, (B, *)
                 )
                 optimizer.zero_grad()
 
                 obses_next_hat_dist: Distribution
                 loss_imaginations: list[Tensor] = []
                 for i in range(self.imagination_length):
-                    action_imaginations = actions[:, i : -self.imagination_length + i]  # a_i:i+T-H
+                    action_imaginations = actions[:, i : -self.imagination_length + i]  # a_i:i+T-H, (B, T-H, *)
                     obs_targets = observations[
                         :, i + 1 : observations.size(1) - self.imagination_length + i + 1
-                    ]  # o_i+1:T-H+i+1
+                    ]  # o_i+1:T-H+i+1, (B, T-H, *)
+
+                    if i > 0:
+                        action_imaginations = action_imaginations.flatten(0, 1)  # (B', *)
+                        obs_targets = obs_targets.flatten(0, 1)  # (B', *)
+
                     obses_next_hat_dist, next_hiddens = self.forward_dynamics(
                         obs_imaginations, hiddens, action_imaginations
                     )
                     loss = -obses_next_hat_dist.log_prob(obs_targets).mean()
                     loss_imaginations.append(loss)
-                    obs_imaginations = obses_next_hat_dist.rsample()
-                    hiddens = next_hiddens[:, :, 0]  # h'_i
+                    obs_imaginations = obses_next_hat_dist.rsample().flatten(0, 1)  # (B, T-H, *) -> (B', *)
+                    hiddens = next_hiddens.movedim(2, 1).flatten(
+                        0, 1
+                    )  # h'_i, (B, D, T-H, *) -> (B, T-H, D, *) -> (B', D, *)
 
                 loss = self.imagination_average_method(torch.stack(loss_imaginations))
                 loss.backward()
