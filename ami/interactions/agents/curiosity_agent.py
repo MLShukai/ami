@@ -289,7 +289,7 @@ class PrimitiveCuriosityAgent(BaseAgent[Tensor, Tensor]):
         self.logger.load_state_dict(torch.load(path / "logger.pt"))
 
 
-class SeparatedHiddenCuriosityAgent(BaseAgent[Tensor, Tensor]):
+class IsolatedHiddenCuriosityAgent(BaseAgent[Tensor, Tensor]):
     """A reinforcement learning agent that uses curiosity-driven exploration
     through forward dynamics prediction.
 

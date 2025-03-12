@@ -9,8 +9,8 @@ from ami.data.step_data import DataKeys
 from ami.data.utils import DataCollectorsDict
 from ami.interactions.agents.curiosity_agent import (
     CuriosityAgent,
+    IsolatedHiddenCuriosityAgent,
     PrimitiveCuriosityAgent,
-    SeparatedHiddenCuriosityAgent,
 )
 from ami.models.components.fully_connected_normal import FullyConnectedNormal
 from ami.models.components.fully_connected_value_head import FullyConnectedValueHead
@@ -284,7 +284,7 @@ class TestPrimitiveCuriosityAgent:
         assert agent.logger.state_dict() == logger_state
 
 
-class TestSeparatedHiddenCuriosityAgent:
+class TestIsolatedHiddenCuriosityAgent:
     @pytest.fixture
     def models(self, device) -> ModelWrappersDict:
         # Create forward dynamics model
@@ -330,8 +330,8 @@ class TestSeparatedHiddenCuriosityAgent:
         return TimeIntervalLogger(f"{tmp_path}/tensorboard", 0)
 
     @pytest.fixture
-    def agent(self, inference_models, data_collectors, logger, device) -> SeparatedHiddenCuriosityAgent:
-        curiosity_agent = SeparatedHiddenCuriosityAgent(
+    def agent(self, inference_models, data_collectors, logger, device) -> IsolatedHiddenCuriosityAgent:
+        curiosity_agent = IsolatedHiddenCuriosityAgent(
             initial_forward_dynamics_hidden=torch.zeros(DEPTH, HIDDEN_DIM, device=device),
             initial_policy_hidden=torch.zeros(DEPTH, HIDDEN_DIM, device=device),
             logger=logger,
@@ -341,7 +341,7 @@ class TestSeparatedHiddenCuriosityAgent:
         curiosity_agent.attach_inference_models(inference_models)
         return curiosity_agent
 
-    def test_setup_step_teardown(self, agent: SeparatedHiddenCuriosityAgent):
+    def test_setup_step_teardown(self, agent: IsolatedHiddenCuriosityAgent):
         """Test the main interaction loop of the agent."""
         observation = torch.randn(OBSERVATION_DIM)
         agent.setup()
@@ -374,7 +374,7 @@ class TestSeparatedHiddenCuriosityAgent:
         assert len(agent.forward_dynamics_hidden_imaginations) == 3
         assert isinstance(agent.forward_dynamics_hidden_imaginations, torch.Tensor)
 
-    def test_save_and_load_state(self, agent: SeparatedHiddenCuriosityAgent, tmp_path):
+    def test_save_and_load_state(self, agent: IsolatedHiddenCuriosityAgent, tmp_path):
         """Test state saving and loading functionality."""
         agent_path = tmp_path / "agent"
         agent.save_state(agent_path)
@@ -398,7 +398,7 @@ class TestSeparatedHiddenCuriosityAgent:
     def test_initialization_with_invalid_steps(self, logger):
         """Test that agent raises error for invalid max_imagination_steps."""
         with pytest.raises(ValueError):
-            SeparatedHiddenCuriosityAgent(
+            IsolatedHiddenCuriosityAgent(
                 initial_forward_dynamics_hidden=torch.zeros(DEPTH, HIDDEN_DIM),
                 initial_policy_hidden=torch.zeros(DEPTH, HIDDEN_DIM),
                 logger=logger,
