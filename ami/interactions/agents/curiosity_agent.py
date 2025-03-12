@@ -403,6 +403,7 @@ class SeparatedHiddenCuriosityAgent(BaseAgent[Tensor, Tensor]):
             : self.max_imagination_steps
         ]  # (imaginations, depth, dim)
 
+        self.step_data_policy[DataKeys.HIDDEN] = self.policy_hidden_state
         action_dist: Distribution
         value: Tensor
         action_dist, value, policy_hidden_state = self.policy_value(obs_imaginations[0], hidden_imaginations[0])
@@ -418,11 +419,10 @@ class SeparatedHiddenCuriosityAgent(BaseAgent[Tensor, Tensor]):
 
         self.step_data_fd[DataKeys.OBSERVATION] = self.step_data_policy[DataKeys.OBSERVATION] = observation.cpu()
         self.step_data_fd[DataKeys.ACTION] = self.step_data_policy[DataKeys.ACTION] = action
-        self.forward_dynamics_collector.collect(self.step_data)
+        self.forward_dynamics_collector.collect(self.step_data_fd)
 
         self.step_data_policy[DataKeys.ACTION_LOG_PROBABILITY] = action_log_prob
         self.step_data_policy[DataKeys.VALUE] = value
-        self.step_data_policy[DataKeys.HIDDEN] = self.policy_hidden_state
         self.logger.log("curiosity_agent/value", value)
 
         self.obs_dist_imaginations = obs_dist_imaginations
@@ -439,7 +439,7 @@ class SeparatedHiddenCuriosityAgent(BaseAgent[Tensor, Tensor]):
     def save_state(self, path: Path) -> None:
         path.mkdir()
         torch.save(self.head_forward_dynamics_hidden_state, path / "head_forward_dynamics_hidden_state.pt")
-        torch.save(self.policy_hidden_state, "policy_hidden_state.pt")
+        torch.save(self.policy_hidden_state, path / "policy_hidden_state.pt")
         torch.save(self.logger.state_dict(), path / "logger.pt")
 
     @override
