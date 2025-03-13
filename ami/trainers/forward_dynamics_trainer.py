@@ -523,10 +523,13 @@ class ImaginingForwardDynamicsTrainer(BaseTrainer):
                     )
                     loss = -obses_next_hat_dist.log_prob(obs_targets).mean()
                     loss_imaginations.append(loss)
-                    obs_imaginations = obses_next_hat_dist.rsample().flatten(0, 1)  # (B, T-H, *) -> (B', *)
-                    hiddens = next_hiddens.movedim(2, 1).flatten(
-                        0, 1
-                    )  # h'_i, (B, D, T-H, *) -> (B, T-H, D, *) -> (B', D, *)
+                    obs_imaginations = obses_next_hat_dist.rsample()
+
+                    if i == 0:
+                        obs_imaginations = obs_imaginations.flatten(0, 1)  # (B, T-H, *) -> (B', *)
+                        hiddens = next_hiddens.movedim(2, 1).flatten(
+                            0, 1
+                        )  # h'_i, (B, D, T-H, *) -> (B, T-H, D, *) -> (B', D, *)
 
                 loss = self.imagination_average_method(torch.stack(loss_imaginations))
                 loss.backward()

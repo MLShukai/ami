@@ -519,13 +519,13 @@ class TestImaginingForwardDynamicsTrainer:
             }
         )
 
-        for _ in range(5):
+        for _ in range(10):
             d.collect(trajectory_step_data)
         return d
 
     @pytest.fixture
     def partial_dataloader(self):
-        return partial(DataLoader, batch_size=1, drop_last=True)
+        return partial(DataLoader, batch_size=2, drop_last=True)
 
     @pytest.fixture
     def partial_optimizer(self):
@@ -557,13 +557,13 @@ class TestImaginingForwardDynamicsTrainer:
     ):
         trainer = ImaginingForwardDynamicsTrainer(
             partial_dataloader,
-            partial(RandomTimeSeriesSampler, sequence_length=3 + 2),
+            partial(RandomTimeSeriesSampler, sequence_length=3 + 4),
             partial_optimizer,
             device,
             logger,
             minimum_new_data_count=2,
-            minimum_dataset_size=3 + 2,
-            imagination_length=2,
+            minimum_dataset_size=3 + 4,
+            imagination_length=4,
             imagination_average_method=torch.mean,
         )
         trainer.attach_model_wrappers_dict(forward_dynamics_wrappers_dict)
