@@ -1,0 +1,34 @@
+image:
+  _target_: ami.data.buffers.random_data_buffer.RandomDataBuffer.reconstructable_init
+  max_len: 2048 # From Primitive AMI.
+  key_list:
+    - "observation"
+
+audio:
+  _target_: ami.data.buffers.random_data_buffer.RandomDataBuffer.reconstructable_init
+  max_len: 2048 # From Primitive AMI.
+  key_list:
+    - "observation"
+
+multimodal_temporal:
+  _target_: ami.data.buffers.multimodal_temporal_data_buffer.MultimodalTemporalDataBuffer.reconstructable_init
+  max_len: 1000
+
+forward_dynamics_trajectory:
+  _target_: ami.data.buffers.causal_data_buffer.CausalDataBuffer.reconstructable_init
+  max_len: 1000
+  key_list:
+    - "observation"
+    - "hidden"
+    - "action"
+
+ppo_trajectory:
+  _target_: ami.data.buffers.causal_data_buffer.CausalDataBuffer.reconstructable_init
+  max_len: 1000
+  key_list:
+    - "observation"
+    - "hidden"
+    - "action"
+    - "action_log_probability"
+    - "reward"
+    - "value"
