@@ -1,6 +1,7 @@
 import time
 from functools import partial
 from pathlib import Path
+from typing import Callable
 
 import torch
 from torch import Tensor
@@ -387,6 +388,156 @@ class PrimitiveForwardDynamicsTrainer(BaseTrainer):
                 self.logger.log(prefix + "loss", loss)
 
                 loss.backward()
+
+                grad_norm = grad_norm = torch.cat(
+                    [p.grad.flatten() for p in self.forward_dynamics.parameters() if p.grad is not None]
+                ).norm()
+                self.logger.log(prefix + "metrics/grad_norm", grad_norm)
+                optimizer.step()
+                self.logger.update()
+
+        self.optimizer_state = optimizer.state_dict()
+
+    @override
+    def save_state(self, path: Path) -> None:
+        path.mkdir()
+        torch.save(self.optimizer_state, path / "optimizer.pt")
+        torch.save(self.logger.state_dict(), path / "logger.pt")
+        torch.save(self.dataset_previous_get_time, path / "dataset_previous_get_time.pt")
+
+    @override
+    def load_state(self, path: Path) -> None:
+        self.optimizer_state = torch.load(path / "optimizer.pt")
+        self.logger.load_state_dict(torch.load(path / "logger.pt"))
+        self.dataset_previous_get_time = torch.load(path / "dataset_previous_get_time.pt")
+
+
+class ImaginingForwardDynamicsTrainer(BaseTrainer):
+    def __init__(
+        self,
+        partial_dataloader: partial[DataLoader[torch.Tensor]],
+        partial_sampler: partial[RandomTimeSeriesSampler],
+        partial_optimizer: partial[Optimizer],
+        device: torch.device,
+        logger: StepIntervalLogger,
+        max_epochs: int = 1,
+        imagination_length: int = 1,
+        minimum_dataset_size: int = 2,
+        minimum_new_data_count: int = 0,
+        imagination_average_method: Callable[[Tensor], Tensor] = torch.mean,
+    ) -> None:
+        """Initialization.
+
+        Args:
+            partial_dataloader: A partially instantiated dataloader lacking a provided dataset.
+            partial_sampler: A partially instantiated sampler lacking a provided dataset.
+            partial_optimizer: A partially instantiated optimizer lacking provided parameters.
+            device: The accelerator device (e.g., CPU, GPU) utilized for training the model.
+            imagination_length: The length of imagination horizon.
+            minimum_dataset_size: Minimum number of dataset size to run the training.
+            minimum_new_data_count: Minimum number of new data count required to run the training.
+        """
+        super().__init__()
+        self.partial_optimizer = partial_optimizer
+        self.partial_dataloader = partial_dataloader
+        self.partial_sampler = partial_sampler
+        self.device = device
+        self.logger = logger
+        self.max_epochs = max_epochs
+        if imagination_length < 1:
+            raise ValueError("imagination_length must be larger than 0")
+        self.imagination_length = imagination_length
+        if minimum_dataset_size <= imagination_length:
+            raise ValueError("minimum_dataset_size must be larger than imagination_length.")
+        self.minimum_dataset_size = minimum_dataset_size
+        self.minimum_new_data_count = minimum_new_data_count
+        self.imagination_average_method = imagination_average_method
+
+        self.dataset_previous_get_time = float("-inf")
+
+    def on_data_users_dict_attached(self) -> None:
+        self.trajectory_data_user: ThreadSafeDataUser[CausalDataBuffer] = self.get_data_user(
+            BufferNames.FORWARD_DYNAMICS_TRAJECTORY
+        )
+
+    def on_model_wrappers_dict_attached(self) -> None:
+        self.forward_dynamics: ModelWrapper[ForwardDynamics] = self.get_training_model(ModelNames.FORWARD_DYNAMICS)
+        self.optimizer_state = self.partial_optimizer(self.forward_dynamics.parameters()).state_dict()
+
+    def is_trainable(self) -> bool:
+        self.trajectory_data_user.update()
+        return len(self.trajectory_data_user.buffer) >= self.minimum_dataset_size and self._is_new_data_available()
+
+    def _is_new_data_available(self) -> bool:
+        return (
+            self.trajectory_data_user.buffer.count_data_added_since(self.dataset_previous_get_time)
+            >= self.minimum_new_data_count
+        )
+
+    def get_dataset(self) -> Dataset[Tensor]:
+        dataset = self.trajectory_data_user.get_dataset()
+        self.dataset_previous_get_time = time.time()
+        return dataset
+
+    def train(self) -> None:
+        self.forward_dynamics.to(self.device)
+
+        optimizer = self.partial_optimizer(self.forward_dynamics.parameters())
+        optimizer.load_state_dict(self.optimizer_state)
+
+        dataset = self.get_dataset()
+        sampler = self.partial_sampler(dataset)
+        dataloader = self.partial_dataloader(dataset=dataset, sampler=sampler)
+
+        for _ in range(self.max_epochs):
+            batch: tuple[Tensor, ...]
+            for batch in dataloader:
+                observations, hiddens, actions = batch
+                if observations.shape[:2] != actions.shape[:2]:
+                    raise ValueError("The shape between observations and actions is not consistent!")
+                if observations.size(1) <= self.imagination_length:
+                    raise ValueError("Time length must be larger than imagination length!")
+
+                observations = observations.to(self.device)  # (B, T, *)
+                actions = actions.to(self.device)  # (B, T)
+                obs_imaginations, hiddens = (
+                    observations[:, : -self.imagination_length],  # o_0:T-H, (B, T-H, *)
+                    hiddens[:, 0].to(self.device),  # h_-1, (B, *)
+                )
+                optimizer.zero_grad()
+
+                obses_next_hat_dist: Distribution
+                loss_imaginations: list[Tensor] = []
+                for i in range(self.imagination_length):
+                    action_imaginations = actions[:, i : -self.imagination_length + i]  # a_i:i+T-H, (B, T-H, *)
+                    obs_targets = observations[
+                        :, i + 1 : observations.size(1) - self.imagination_length + i + 1
+                    ]  # o_i+1:T-H+i+1, (B, T-H, *)
+
+                    if i > 0:
+                        action_imaginations = action_imaginations.flatten(0, 1)  # (B', *)
+                        obs_targets = obs_targets.flatten(0, 1)  # (B', *)
+
+                    obses_next_hat_dist, next_hiddens = self.forward_dynamics(
+                        obs_imaginations, hiddens, action_imaginations
+                    )
+                    loss = -obses_next_hat_dist.log_prob(obs_targets).mean()
+                    loss_imaginations.append(loss)
+                    obs_imaginations = obses_next_hat_dist.rsample()
+
+                    if i == 0:
+                        obs_imaginations = obs_imaginations.flatten(0, 1)  # (B, T-H, *) -> (B', *)
+                        hiddens = next_hiddens.movedim(2, 1).flatten(
+                            0, 1
+                        )  # h'_i, (B, D, T-H, *) -> (B, T-H, D, *) -> (B', D, *)
+
+                loss = self.imagination_average_method(torch.stack(loss_imaginations))
+                loss.backward()
+
+                prefix = "forward_dynamics/"
+                self.logger.log(prefix + "loss", loss)
+                for i, loss_item in enumerate(loss_imaginations, start=1):
+                    self.logger.log(prefix + f"loss/imagination_{i}", loss_item)
 
                 grad_norm = grad_norm = torch.cat(
                     [p.grad.flatten() for p in self.forward_dynamics.parameters() if p.grad is not None]
