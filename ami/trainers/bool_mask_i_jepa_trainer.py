@@ -2,6 +2,7 @@ import itertools
 import time
 from functools import partial
 from pathlib import Path
+from typing import Any
 
 import torch
 import torch.nn.functional as F
@@ -24,7 +25,7 @@ from .base_trainer import BaseTrainer
 class BoolMaskIJEPATrainer(BaseTrainer):
     def __init__(
         self,
-        partial_dataloader: partial[DataLoader[torch.Tensor]],
+        partial_dataloader: partial[DataLoader[Any]],
         partial_optimizer: partial[Optimizer],
         device: torch.device,
         logger: StepIntervalLogger,
