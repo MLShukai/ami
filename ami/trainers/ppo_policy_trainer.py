@@ -386,7 +386,8 @@ class PPOTemporalPolicyTrainer(BaseTrainer):
         device: torch.device,
         logger: StepIntervalLogger,
         max_epochs: int = 1,
-        minimum_new_data_count: int = 1,
+        minimum_dataset_size: int = 1,
+        minimum_new_data_count: int = 0,
         norm_advantage: bool = False,
         clip_coef: float = 0.1,
         clip_vloss: bool = True,
@@ -416,8 +417,12 @@ class PPOTemporalPolicyTrainer(BaseTrainer):
         self.device = device
         self.logger = logger
         self.max_epochs = max_epochs
-        assert minimum_new_data_count >= 1
+        if minimum_new_data_count < 0:
+            raise ValueError("minimum_new_data_count must be >= 0")
+        if minimum_dataset_size < 1:
+            raise ValueError("minimum_dataset_size must be larger than 0")
         self.minimum_new_data_count = minimum_new_data_count
+        self.minimum_dataset_size = minimum_dataset_size
         self.norm_advantage = norm_advantage
         self.clip_coef = clip_coef
         self.clip_vloss = clip_vloss
@@ -438,7 +443,7 @@ class PPOTemporalPolicyTrainer(BaseTrainer):
 
     def is_trainable(self) -> bool:
         self.trajectory_data_user.update()
-        return (
+        return len(self.trajectory_data_user.buffer) >= self.minimum_dataset_size and (
             self.trajectory_data_user.buffer.count_data_added_since(self.dataset_previous_get_time)
             >= self.minimum_new_data_count
         )

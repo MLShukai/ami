@@ -1,0 +1,5 @@
+defaults:
+  - i_jepa: bool_mask
+  - multimodal_temporal: default
+  - forward_dynamics: imagining
+  - ppo: temporal

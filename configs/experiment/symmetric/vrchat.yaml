@@ -1,0 +1,71 @@
+# @package _global_
+
+defaults:
+  - override /interaction/agent: isolated_hidden_curiosity_agent
+  - override /interaction/environment: vrchat_multimodal_discrete_1st_order_delay
+  - override /models: symmetric/default
+  - override /data_collectors: symmetric_pi_f
+  - override /trainers: symmetric_pi_f
+
+shared:
+  image_height: 144
+  image_width: 144
+  buffer_trajectory_size: 1000 # 100 sec
+  imagination_length: 1
+  training_sequence_length: 256
+  training_iteration_count: 64
+
+interaction:
+  agent:
+    curiosity_agent:
+      max_imagination_steps: ${shared.imagination_length} # 0.1 sec
+
+  observation_wrappers:
+    - _target_: ami.interactions.io_wrappers.function_wrapper.FunctionIOWrapper
+      wrap_function:
+        _target_: ami.interactions.io_wrappers.function_wrapper.normalize_dict_tensors
+        _partial_: True
+        eps: 1e-6
+
+models:
+  i_jepa_target_encoder:
+    inference_forward:
+      kernel_size: 2
+
+data_collectors:
+  image:
+    max_len: ${python.eval:"24 * ${trainers.i_jepa.partial_dataloader.batch_size}"}
+  multimodal_temporal:
+    max_len: 1000
+  forward_dynamics_trajectory:
+    max_len: ${shared.buffer_trajectory_size}
+  ppo_trajectory:
+    max_len: ${shared.buffer_trajectory_size}
+
+trainers:
+  i_jepa:
+    max_epochs: 1
+    partial_dataloader:
+      batch_size: 32
+    minimum_new_data_count: 128
+  multimodal_temporal:
+    max_epochs: 1
+    partial_sampler:
+      sequence_length: ${python.eval:"256 + 1"} # +1 to generate future target data.
+      max_samples: 64 # Iteraction count.
+    minimum_new_data_count: 128
+  forward_dynamics:
+    max_epochs: 1
+    sequence_length: ${shared.training_sequence_length}
+    imagination_length: ${shared.imagination_length}
+    partial_sampler:
+      max_samples: ${shared.training_iteration_count} # Iteraction count.
+    minimum_new_data_count: 128
+  ppo:
+    partial_sampler:
+      sequence_length: ${shared.training_sequence_length}
+      max_samples: ${shared.training_iteration_count} # Iteraction count.
+    minimum_new_data_count: 128
+
+task_name: symmetric
+subtask_name: vrchat

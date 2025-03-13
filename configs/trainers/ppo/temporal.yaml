@@ -1,4 +1,4 @@
-_target_: from ami.trainers.ppo_policy_trainer import PPOTemporalPolicyTrainer
+_target_: ami.trainers.ppo_policy_trainer.PPOTemporalPolicyTrainer
 
 partial_dataloader:
   _target_: torch.utils.data.DataLoader

@@ -169,7 +169,7 @@ policy_value:
   has_inference: True
   model:
     _target_: ami.models.policy_value_common_net.TemporalPolicyValueCommonNet
-    observation_projection:
+    observation_flatten:
       _target_: torch.nn.Linear
       in_features: ${models.multimodal_temporal_encoder.model.core_model.dim}
       out_features: ${..core_model.dim}

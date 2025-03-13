@@ -20,10 +20,8 @@ logger:
   log_dir: ${paths.tensorboard_dir}/forward_dynamics
   log_every_n_steps: 1
 
-observation_encoder_name: image_encoder
 device: ${devices.0}
 max_epochs: 3
 sequence_length: 8
 imagination_length: 1
 minimum_new_data_count: 128 # From primitive AMI
-gradient_clip_norm: null
