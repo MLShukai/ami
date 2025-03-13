@@ -557,14 +557,14 @@ class TestImaginingForwardDynamicsTrainer:
     ):
         trainer = ImaginingForwardDynamicsTrainer(
             partial_dataloader,
-            partial(RandomTimeSeriesSampler, sequence_length=3 + 4),
+            partial(RandomTimeSeriesSampler),
             partial_optimizer,
             device,
             logger,
-            minimum_new_data_count=2,
-            minimum_dataset_size=3 + 4,
+            sequence_length=3,
             imagination_length=4,
             imagination_average_method=torch.mean,
+            minimum_new_data_count=1,
         )
         trainer.attach_model_wrappers_dict(forward_dynamics_wrappers_dict)
         trainer.attach_data_users_dict(trajectory_buffer_dict.get_data_users())

@@ -421,8 +421,8 @@ class ImaginingForwardDynamicsTrainer(BaseTrainer):
         device: torch.device,
         logger: StepIntervalLogger,
         max_epochs: int = 1,
+        sequence_length: int = 1,
         imagination_length: int = 1,
-        minimum_dataset_size: int = 2,
         minimum_new_data_count: int = 0,
         imagination_average_method: Callable[[Tensor], Tensor] = torch.mean,
     ) -> None:
@@ -433,8 +433,8 @@ class ImaginingForwardDynamicsTrainer(BaseTrainer):
             partial_sampler: A partially instantiated sampler lacking a provided dataset.
             partial_optimizer: A partially instantiated optimizer lacking provided parameters.
             device: The accelerator device (e.g., CPU, GPU) utilized for training the model.
+            sequence_length: The length of context sequence (not used as imagination)
             imagination_length: The length of imagination horizon.
-            minimum_dataset_size: Minimum number of dataset size to run the training.
             minimum_new_data_count: Minimum number of new data count required to run the training.
         """
         super().__init__()
@@ -446,10 +446,11 @@ class ImaginingForwardDynamicsTrainer(BaseTrainer):
         self.max_epochs = max_epochs
         if imagination_length < 1:
             raise ValueError("imagination_length must be larger than 0")
+        if sequence_length < 1:
+            raise ValueError("sequence_length must be larger than 0")
         self.imagination_length = imagination_length
-        if minimum_dataset_size <= imagination_length:
-            raise ValueError("minimum_dataset_size must be larger than imagination_length.")
-        self.minimum_dataset_size = minimum_dataset_size
+        self.sequence_length = sequence_length
+        self._sample_sequence_length = imagination_length + sequence_length
         self.minimum_new_data_count = minimum_new_data_count
         self.imagination_average_method = imagination_average_method
 
@@ -466,7 +467,7 @@ class ImaginingForwardDynamicsTrainer(BaseTrainer):
 
     def is_trainable(self) -> bool:
         self.trajectory_data_user.update()
-        return len(self.trajectory_data_user.buffer) >= self.minimum_dataset_size and self._is_new_data_available()
+        return len(self.trajectory_data_user.buffer) >= self._sample_sequence_length and self._is_new_data_available()
 
     def _is_new_data_available(self) -> bool:
         return (
@@ -486,7 +487,7 @@ class ImaginingForwardDynamicsTrainer(BaseTrainer):
         optimizer.load_state_dict(self.optimizer_state)
 
         dataset = self.get_dataset()
-        sampler = self.partial_sampler(dataset)
+        sampler = self.partial_sampler(dataset, sequence_length=self._sample_sequence_length)  # to sample target
         dataloader = self.partial_dataloader(dataset=dataset, sampler=sampler)
 
         for _ in range(self.max_epochs):
@@ -495,13 +496,13 @@ class ImaginingForwardDynamicsTrainer(BaseTrainer):
                 observations, hiddens, actions = batch
                 if observations.shape[:2] != actions.shape[:2]:
                     raise ValueError("The shape between observations and actions is not consistent!")
-                if observations.size(1) <= self.imagination_length:
-                    raise ValueError("Time length must be larger than imagination length!")
+                if observations.size(1) != self._sample_sequence_length:
+                    raise ValueError("Time length must be imagination_length + sequence_length!")
 
-                observations = observations.to(self.device)  # (B, T, *)
-                actions = actions.to(self.device)  # (B, T)
+                observations = observations.to(self.device)  # (B, T+H, *)
+                actions = actions.to(self.device)  # (B, T+H)
                 obs_imaginations, hiddens = (
-                    observations[:, : -self.imagination_length],  # o_0:T-H, (B, T-H, *)
+                    observations[:, : self.sequence_length],  # o_0:T, (B, T, *)
                     hiddens[:, 0].to(self.device),  # h_-1, (B, *)
                 )
                 optimizer.zero_grad()
@@ -509,10 +510,8 @@ class ImaginingForwardDynamicsTrainer(BaseTrainer):
                 obses_next_hat_dist: Distribution
                 loss_imaginations: list[Tensor] = []
                 for i in range(self.imagination_length):
-                    action_imaginations = actions[:, i : -self.imagination_length + i]  # a_i:i+T-H, (B, T-H, *)
-                    obs_targets = observations[
-                        :, i + 1 : observations.size(1) - self.imagination_length + i + 1
-                    ]  # o_i+1:T-H+i+1, (B, T-H, *)
+                    action_imaginations = actions[:, i : self.sequence_length + i]  # a_i:i+T, (B, T, *)
+                    obs_targets = observations[:, i + 1 : self.sequence_length + i + 1]  # o_i+1:T+i+1, (B, T, *)
 
                     if i > 0:
                         action_imaginations = action_imaginations.flatten(0, 1)  # (B', *)
@@ -526,10 +525,10 @@ class ImaginingForwardDynamicsTrainer(BaseTrainer):
                     obs_imaginations = obses_next_hat_dist.rsample()
 
                     if i == 0:
-                        obs_imaginations = obs_imaginations.flatten(0, 1)  # (B, T-H, *) -> (B', *)
+                        obs_imaginations = obs_imaginations.flatten(0, 1)  # (B, T, *) -> (B', *)
                         hiddens = next_hiddens.movedim(2, 1).flatten(
                             0, 1
-                        )  # h'_i, (B, D, T-H, *) -> (B, T-H, D, *) -> (B', D, *)
+                        )  # h'_i, (B, D, T, *) -> (B, T, D, *) -> (B', D, *)
 
                 loss = self.imagination_average_method(torch.stack(loss_imaginations))
                 loss.backward()
