@@ -1,0 +1,19 @@
+# @package models
+
+defaults:
+  - symmetric/default
+
+forward_dynamics:
+  model:
+    core_model:
+      depth: 9
+      dim: 1536
+      dim_ff_hidden: ${python.eval:"${.dim} * 4"}
+
+policy_value:
+  model:
+    core_model:
+      _target_: ami.models.components.sioconvps.SioConvPS
+      depth: 9
+      dim: 1536
+      dim_ff_hidden: ${python.eval:"${.dim} * 4"}

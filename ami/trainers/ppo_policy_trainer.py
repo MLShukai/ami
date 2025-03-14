@@ -388,7 +388,7 @@ class PPOTemporalPolicyTrainer(BaseTrainer):
         max_epochs: int = 1,
         minimum_dataset_size: int = 1,
         minimum_new_data_count: int = 0,
-        norm_advantage: bool = False,
+        norm_advantage: bool = True,
         clip_coef: float = 0.1,
         clip_vloss: bool = True,
         entropy_coef: float = 0.0,

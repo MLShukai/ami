@@ -1,0 +1,7 @@
+# @package _global_
+
+defaults:
+  - symmetric/vrchat
+
+shared:
+  imagination_length: 7

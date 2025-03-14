@@ -12,7 +12,7 @@ shared:
   image_width: 144
   buffer_trajectory_size: 1000 # 100 sec
   training_sequence_length: 256
-  training_iteration_count: 64
+  training_iteration_count: 32
   imagination_length: 1
   average_method:
     _target_: ami.interactions.agents.multi_step_imagination_curiosity_agent.average_exponentially
