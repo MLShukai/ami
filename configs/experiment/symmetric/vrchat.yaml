@@ -2,7 +2,7 @@
 
 defaults:
   - override /interaction/agent: isolated_hidden_curiosity_agent
-  - override /interaction/environment: vrchat_multimodal_discrete_1st_order_delay
+  - override /interaction/environment: vrchat_image_discrete_1st_order_delay
   - override /models: symmetric/default
   - override /data_collectors: symmetric_pi_f
   - override /trainers: symmetric_pi_f
@@ -23,9 +23,14 @@ interaction:
   observation_wrappers:
     - _target_: ami.interactions.io_wrappers.function_wrapper.FunctionIOWrapper
       wrap_function:
-        _target_: ami.interactions.io_wrappers.function_wrapper.normalize_dict_tensors
+        _target_: ami.interactions.io_wrappers.function_wrapper.normalize_tensor
         _partial_: True
         eps: 1e-6
+    - _target_: ami.interactions.io_wrappers.function_wrapper.FunctionIOWrapper
+      wrap_function:
+        _target_: ami.interactions.io_wrappers.function_wrapper.to_multimodal_dict
+        _partial_: True
+        modality: image
 
 models:
   i_jepa_target_encoder:

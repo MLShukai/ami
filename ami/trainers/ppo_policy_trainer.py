@@ -541,10 +541,6 @@ class PPOTemporalPolicyTrainer(BaseTrainer):
 
         self.optimizer_state = optimizer.state_dict()
 
-    def teardown(self) -> None:
-        super().teardown()
-        self.trajectory_data_user.clear()  # Can not use old buffer data because ppo is on-policy method.
-
     @override
     def save_state(self, path: Path) -> None:
         path.mkdir()

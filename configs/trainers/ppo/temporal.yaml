@@ -3,7 +3,6 @@ _target_: ami.trainers.ppo_policy_trainer.PPOTemporalPolicyTrainer
 partial_dataloader:
   _target_: torch.utils.data.DataLoader
   _partial_: true
-  shuffle: false
 
 partial_sampler:
   _target_: ami.trainers.components.random_time_series_sampler.RandomTimeSeriesSampler
