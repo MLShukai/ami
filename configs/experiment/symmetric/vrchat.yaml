@@ -11,14 +11,19 @@ shared:
   image_height: 144
   image_width: 144
   buffer_trajectory_size: 1000 # 100 sec
-  imagination_length: 1
   training_sequence_length: 256
   training_iteration_count: 64
+  imagination_length: 1
+  average_method:
+    _target_: ami.interactions.agents.multi_step_imagination_curiosity_agent.average_exponentially
+    _partial_: true
+    decay: ${python.eval:"2.71828 ** (-1 / ${..imagination_length})"}
 
 interaction:
   agent:
     curiosity_agent:
       max_imagination_steps: ${shared.imagination_length} # 0.1 sec
+      reward_average_method: ${shared.average_method}
 
   observation_wrappers:
     - _target_: ami.interactions.io_wrappers.function_wrapper.FunctionIOWrapper
@@ -66,6 +71,7 @@ trainers:
     partial_sampler:
       max_samples: ${shared.training_iteration_count} # Iteraction count.
     minimum_new_data_count: 128
+    imagination_average_method: ${shared.average_method}
   ppo:
     partial_sampler:
       sequence_length: ${shared.training_sequence_length}
