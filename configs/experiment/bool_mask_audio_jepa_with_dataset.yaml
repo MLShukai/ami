@@ -1,0 +1,14 @@
+# @package _global_
+
+defaults:
+  - bool_mask_audio_jepa
+  - override /interaction/environment: audio_dataset
+
+interaction:
+  environment:
+    observation_generator:
+      audio_files:
+        - data/random_observation_action_log.20241123/2024-11-10_11-00-15/io/audio_recordings/2024-11-10_11-00-15.858323.wav
+      max_frames_per_file: ${python.eval:"4 * 60 * 60 * ${shared.audio_sample_rate}"} # Each audio file is 4 hours.
+
+task_name: bool_mask_audio_jepa_with_dataset
