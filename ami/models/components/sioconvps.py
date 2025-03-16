@@ -50,9 +50,10 @@ class SioConvPSLayer(nn.Module):
     def forward(self, x: Tensor, hidden: Tensor) -> tuple[Tensor, Tensor]:
         ln_z = -F.softplus(-self.fc_ln_z(x))  # (batch, len, dim)
 
-        ln_da = -F.softplus(-self.fc_dt(x))  # (batch, len, dim)
+        fc_dt_x = self.fc_dt(x)
+        ln_da = -F.softplus(-fc_dt_x)  # (batch, len, dim)
         ln_z_da = ln_z + ln_da
-        ln_o_da = -F.softplus(self.fc_dt(x))  # (batch, len, dim)
+        ln_o_da = -F.softplus(fc_dt_x)  # (batch, len, dim)
         ln_o_da_cumsum = torch.cumsum(ln_o_da, dim=1)
 
         ln_z_da_ln_o_da_cumsum = ln_z_da - ln_o_da_cumsum  # (batch, len, dim)
