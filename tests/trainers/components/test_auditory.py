@@ -52,6 +52,7 @@ class TestIntervalSamplingAudioDataset:
                 uri=str(audio_dir / f"original_audio_{i}.wav"),
                 src=original_audio,
                 sample_rate=ORIGINAL_SAMPLE_RATE,
+                encoding="PCM_F",
             )
         return audio_dir
 
