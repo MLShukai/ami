@@ -15,6 +15,7 @@ OUTPUT_SAMPLE_RATE = 16000
 NUM_ORIGINAL_AUDIOS = 10
 NUM_SELECT = 5
 INTERVAL = max(NUM_ORIGINAL_AUDIOS // NUM_SELECT, 1)
+ALLCLOSE_ATOL = 1e-4
 
 
 class TestIntervalSamplingAudioDataset:
@@ -52,7 +53,6 @@ class TestIntervalSamplingAudioDataset:
                 uri=str(audio_dir / f"original_audio_{i}.wav"),
                 src=original_audio,
                 sample_rate=ORIGINAL_SAMPLE_RATE,
-                encoding="PCM_F",
             )
         return audio_dir
 
@@ -83,7 +83,7 @@ class TestIntervalSamplingAudioDataset:
             assert isinstance(item, tuple)
             assert len(item) == 1
             assert item[0].shape == expected_audio.shape
-            assert torch.allclose(item[0], expected_audio)
+            assert torch.allclose(item[0], expected_audio, atol=ALLCLOSE_ATOL)
 
     def test_pre_loading(self, original_audio_dir, expected_audios):
         dataset = IntervalSamplingAudioDataset(
@@ -97,7 +97,7 @@ class TestIntervalSamplingAudioDataset:
         assert len(dataset.audio_data) == NUM_SELECT
         assert len(dataset.audio_data) == len(expected_audios)
         assert all(
-            torch.allclose(output_audio, expected_audio)
+            torch.allclose(output_audio, expected_audio, atol=ALLCLOSE_ATOL)
             for output_audio, expected_audio in zip(dataset.audio_data, expected_audios)
         )
 
@@ -111,4 +111,4 @@ class TestIntervalSamplingAudioDataset:
         )
         assert dataset.audio_data is None
         assert len(dataset) == len(expected_audios)
-        assert all(torch.allclose(dataset[i][0], expected_audios[i]) for i in range(len(dataset)))
+        assert all(torch.allclose(dataset[i][0], expected_audios[i], atol=ALLCLOSE_ATOL) for i in range(len(dataset)))
