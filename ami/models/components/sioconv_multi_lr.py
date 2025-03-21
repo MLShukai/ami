@@ -6,11 +6,12 @@ from torch import Tensor
 
 from .sioconvps import RMSNorm, SioConvPSLayer
 from .stacked_hidden_state import StackedHiddenState
+from typing import Callable
 
 
 class MultiLRMLP(nn.Module):
     def __init__(
-        self, dim: int, dim_ff_hidden: int, lr_scale: float, weight_decay: float, activation: nn.Module = nn.SiLU()
+        self, dim: int, dim_ff_hidden: int, lr_scale: float, weight_decay: float, activation: Callable[[Tensor], Tensor] = nn.SiLU()
     ):
         super().__init__()
         self.fc1_weight = nn.Parameter(torch.randn(dim_ff_hidden, dim))
