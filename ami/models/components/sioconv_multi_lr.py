@@ -1,3 +1,5 @@
+from typing import Callable
+
 import numpy as np
 import torch
 import torch.nn as nn
@@ -6,12 +8,16 @@ from torch import Tensor
 
 from .sioconvps import RMSNorm, SioConvPSLayer
 from .stacked_hidden_state import StackedHiddenState
-from typing import Callable
 
 
 class MultiLRMLP(nn.Module):
     def __init__(
-        self, dim: int, dim_ff_hidden: int, lr_scale: float, weight_decay: float, activation: Callable[[Tensor], Tensor] = nn.SiLU()
+        self,
+        dim: int,
+        dim_ff_hidden: int,
+        lr_scale: float,
+        weight_decay: float,
+        activation: Callable[[Tensor], Tensor] = nn.SiLU(),
     ):
         super().__init__()
         self.fc1 = nn.Linear(dim, dim_ff_hidden)
