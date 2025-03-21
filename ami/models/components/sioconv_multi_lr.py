@@ -14,27 +14,25 @@ class MultiLRMLP(nn.Module):
         self, dim: int, dim_ff_hidden: int, lr_scale: float, weight_decay: float, activation: Callable[[Tensor], Tensor] = nn.SiLU()
     ):
         super().__init__()
-        self.fc1_weight = nn.Parameter(torch.randn(dim_ff_hidden, dim))
-        self.fc1_bias = nn.Parameter(torch.zeros(dim_ff_hidden))
-        self.fc2_weight = nn.Parameter(torch.randn(dim, dim_ff_hidden))
-        self.fc2_bias = nn.Parameter(torch.zeros(dim))
+        self.fc1 = nn.Linear(dim, dim_ff_hidden)
+        self.fc2 = nn.Linear(dim_ff_hidden, dim)
         self.activation = activation
 
         self.lr_scale = torch.exp(torch.linspace(0, np.log(lr_scale), dim_ff_hidden))
         self.weight_decay = torch.exp(np.log(weight_decay) + torch.linspace(-np.log(lr_scale), 0, dim_ff_hidden))
 
-        self.fc1_weight.register_hook(
-            lambda grad: grad.mul(self.lr_scale[:, None]) + self.fc1_weight.mul(self.weight_decay[:, None])
+        self.fc1.weight.register_hook(
+            lambda grad: grad.mul(self.lr_scale[:, None]) + self.fc1.weight.mul(self.weight_decay[:, None])
         )
-        self.fc1_bias.register_hook(lambda grad: grad.mul(self.lr_scale) + self.fc1_bias.mul(self.weight_decay))
-        self.fc2_weight.register_hook(
-            lambda grad: grad.mul(self.lr_scale[None, :]) + self.fc2_weight.mul(self.weight_decay[None, :])
+        self.fc1.bias.register_hook(lambda grad: grad.mul(self.lr_scale) + self.fc1.bias.mul(self.weight_decay))
+        self.fc2.weight.register_hook(
+            lambda grad: grad.mul(self.lr_scale[None, :]) + self.fc2.weight.mul(self.weight_decay[None, :])
         )
 
     def forward(self, x: Tensor) -> Tensor:
-        x = F.linear(x, self.fc1_weight, self.fc1_bias)
+        x = self.fc1(x)
         x = self.activation(x)
-        x = F.linear(x, self.fc2_weight, self.fc2_bias)
+        x = self.fc2(x)
         return x
 
 
