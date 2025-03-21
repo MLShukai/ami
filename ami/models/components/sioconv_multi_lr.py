@@ -23,11 +23,11 @@ class MultiLRMLP(nn.Module):
         self.weight_decay = torch.exp(np.log(weight_decay) + torch.linspace(-np.log(lr_scale), 0, dim_ff_hidden))
 
         self.fc1_weight.register_hook(
-            lambda grad: grad.mul_(self.lr_scale[:, None]) + self.fc1_weight.mul_(self.weight_decay[:, None])
+            lambda grad: grad.mul(self.lr_scale[:, None]) + self.fc1_weight.mul(self.weight_decay[:, None])
         )
-        self.fc1_bias.register_hook(lambda grad: grad.mul_(self.lr_scale) + self.fc1_bias.mul_(self.weight_decay))
+        self.fc1_bias.register_hook(lambda grad: grad.mul(self.lr_scale) + self.fc1_bias.mul(self.weight_decay))
         self.fc2_weight.register_hook(
-            lambda grad: grad.mul_(self.lr_scale[None, :]) + self.fc2_weight.mul_(self.weight_decay[None, :])
+            lambda grad: grad.mul(self.lr_scale[None, :]) + self.fc2_weight.mul(self.weight_decay[None, :])
         )
 
     def forward(self, x: Tensor) -> Tensor:
