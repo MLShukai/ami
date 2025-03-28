@@ -1,0 +1,84 @@
+audio_encoder: audio_jepa_target_encoder # Alias for AudioEncodingAgent.
+
+# AudioJEPA models
+audio_jepa_target_encoder:
+  _target_: ami.models.model_wrapper.ModelWrapper
+  default_device: ${devices.0}
+  has_inference: True
+  inference_forward:
+    _target_: hydra.utils.get_method
+    path: ami.models.bool_mask_audio_jepa.audio_jepa_encoder_infer
+  model:
+    _target_: ami.models.bool_mask_audio_jepa.BoolMaskAudioJEPAEncoder
+    input_sample_size: ${shared.audio_sample_size}
+    patch_sample_size: 400
+    stride: 320
+    in_channels: ${shared.audio_channel_size}
+    embed_dim: 216
+    out_dim: 32
+    depth: 6
+    num_heads: 3
+    mlp_ratio: 4.0
+
+audio_jepa_context_encoder:
+  _target_: ami.models.model_wrapper.ModelWrapper
+  default_device: ${devices.0}
+  has_inference: False
+  model: ${..audio_jepa_target_encoder.model}
+
+audio_jepa_predictor:
+  _target_: ami.models.model_wrapper.ModelWrapper
+  default_device: ${devices.0}
+  has_inference: False
+  model:
+    _target_: ami.models.bool_mask_audio_jepa.BoolTargetAudioJEPAPredictor
+    n_patches: >-
+      ${python.eval:"(
+        (${models.audio_jepa_target_encoder.model.input_sample_size}
+        - (${models.audio_jepa_target_encoder.model.patch_sample_size}
+        - ${models.audio_jepa_target_encoder.model.stride}))
+        // ${models.audio_jepa_target_encoder.model.stride}
+      )"}
+    context_encoder_out_dim: ${models.audio_jepa_target_encoder.model.out_dim}
+    hidden_dim: 108
+    depth: 3
+    num_heads: 2
+
+# HifiGAN models
+hifigan_context_auralization_generator:
+  _target_: ami.models.model_wrapper.ModelWrapper
+  default_device: ${devices.0}
+  has_inference: False
+  model:
+    _target_: ami.models.hifigan.generator.HifiGANGenerator
+    in_channels: ${models.audio_jepa_target_encoder.model.out_dim}
+    out_channels: ${models.audio_jepa_target_encoder.model.in_channels}
+    # Equivalent to window_size=400 and hop_size=320.
+    upsample_rates: [10, 8, 2, 2]
+    upsample_kernel_sizes: [20, 16, 4, 4]
+    upsample_paddings: [4, 2, 1, 1]
+    upsample_initial_channel: 512
+    resblock_kernel_sizes: [3, 7, 11]
+    resblock_dilation_sizes: [[1, 3, 5], [1, 3, 5], [1, 3, 5]]
+
+hifigan_context_auralization_multi_period_discriminator:
+  _target_: ami.models.model_wrapper.ModelWrapper
+  default_device: ${devices.0}
+  has_inference: False
+  model:
+    _target_: ami.models.hifigan.discriminators.MultiPeriodDiscriminator
+    in_channels: ${models.hifigan_context_auralization_generator.model.out_channels}
+    n_periods: 1 # Set 1 to save VRAM consumption (original: 5)
+
+hifigan_context_auralization_multi_scale_discriminator:
+  _target_: ami.models.model_wrapper.ModelWrapper
+  default_device: ${devices.0}
+  has_inference: False
+  model:
+    _target_: ami.models.hifigan.discriminators.MultiScaleDiscriminator
+    in_channels: ${models.hifigan_context_auralization_generator.model.out_channels}
+    n_scales: 1 # Set 1 to save VRAM consumption (original: 3)
+
+hifigan_target_auralization_generator: ${.hifigan_context_auralization_generator}
+hifigan_target_auralization_multi_period_discriminator: ${.hifigan_context_auralization_multi_period_discriminator}
+hifigan_target_auralization_multi_scale_discriminator: ${.hifigan_context_auralization_multi_scale_discriminator}

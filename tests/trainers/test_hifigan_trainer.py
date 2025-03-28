@@ -25,13 +25,17 @@ from ami.trainers.hifigan_trainer import (
 
 # input data params
 AUDIO_CHANNELS = 1
-AUDIO_SAMPLE_SIZE = 1040
+AUDIO_SAMPLE_SIZE = 3280
 PATCH_SAMPLE_SIZE = 400
 STRIDE = 320
 assert PATCH_SAMPLE_SIZE <= AUDIO_SAMPLE_SIZE
 assert STRIDE <= PATCH_SAMPLE_SIZE
 assert (AUDIO_SAMPLE_SIZE - (PATCH_SAMPLE_SIZE - STRIDE)) % STRIDE == 0
 N_PATCHES = (AUDIO_SAMPLE_SIZE - (PATCH_SAMPLE_SIZE - STRIDE)) // STRIDE
+
+# train params
+SEGMENT_SIZE_DURING_TRAIN = 2048
+assert SEGMENT_SIZE_DURING_TRAIN <= AUDIO_SAMPLE_SIZE
 
 # model params
 ENCODER_EMBEDDING_DIM = 16
@@ -167,6 +171,7 @@ class TestHifiGANTrainer:
             logger=logger,
             generator_name=generator_name,
             mel_spectrogram=mel_spectrogram,
+            segment_size_during_train=SEGMENT_SIZE_DURING_TRAIN,
             rec_coef=45.0,
             minimum_new_data_count=1,
             validation_dataloader=validation_dataloader,
