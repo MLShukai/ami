@@ -6,7 +6,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 from torch import Tensor
 
-from .sioconvps import RMSNorm, SioConvPSLayer
+from .sioconvps import FFNSwiGLU, RMSNorm, SioConvPSLayer
 from .stacked_hidden_state import StackedHiddenState
 
 
@@ -46,8 +46,10 @@ class SioConvMultiLRBlock(nn.Module):
     def __init__(self, dim: int, dim_ff_hidden: int, dropout: float, lr_scale: float, weight_decay: float):
         super().__init__()
         self.sioconv = SioConvPSLayer(dim)
-        self.ffn = MultiLRMLP(dim, dim_ff_hidden, lr_scale, weight_decay)
+        self.ffn_mr = MultiLRMLP(dim, dim_ff_hidden, lr_scale, weight_decay)
+        self.ffn = FFNSwiGLU(dim, dim_ff_hidden)
         self.norm_sioconv = RMSNorm(dim)
+        self.norm_ffn_mr = RMSNorm(dim)
         self.norm_ffn = RMSNorm(dim)
         self.dropout = nn.Dropout(dropout)
 
@@ -55,6 +57,12 @@ class SioConvMultiLRBlock(nn.Module):
         x_ = x
         x = self.norm_sioconv(x)
         x, hidden = self.sioconv(x, hidden)
+        x = self.dropout(x)
+        x = x + x_
+
+        x_ = x
+        x = self.norm_ffn_mr(x)
+        x = self.ffn_mr(x)
         x = self.dropout(x)
         x = x + x_
 
