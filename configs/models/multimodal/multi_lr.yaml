@@ -1,0 +1,39 @@
+# @package models
+
+defaults:
+  - multimodal/default
+
+# Multimodal Temporal Encoder models.
+multimodal_temporal_encoder:
+  model:
+    core_model:
+      _target_: ami.models.components.sioconv_multi_lr.SioConvMultiLR
+      depth: 6
+      dim: 1024
+      dim_ff_hidden: ${python.eval:"${.dim} * 2"}
+      dropout: 0.1
+      lr_scale: 100.0
+      weight_decay: 0.1
+
+# Curiosity Agent Models.
+forward_dynamics:
+  model:
+    core_model:
+      _target_: ami.models.components.sioconv_multi_lr.SioConvMultiLR
+      depth: 6
+      dim: 1024
+      dim_ff_hidden: ${python.eval:"${.dim} * 2"}
+      dropout: 0.1
+      lr_scale: 100.0
+      weight_decay: 0.1
+
+policy_value:
+  model:
+    observation_hidden_projection:
+      _target_: ami.models.components.sioconv_multi_lr.SioConvMultiLR
+      depth: 6
+      dim: 1024
+      dim_ff_hidden: ${python.eval:"${.dim} * 2"}
+      dropout: 0.1
+      lr_scale: 100.0
+      weight_decay: 0.1
